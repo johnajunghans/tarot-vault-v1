@@ -11,6 +11,8 @@ import Link from "next/link";
 import { SignUpButton } from "@clerk/nextjs";
 import { SignInButton } from "@clerk/nextjs";
 import { UserButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
+import { Login01Icon, UserAdd01Icon } from "hugeicons-react";
 
 export default function Home() {
   return (
@@ -36,17 +38,18 @@ export default function Home() {
 
 function SignInForm() {
   return (
-    <div className="flex flex-col gap-8 w-96 mx-auto">
-      <p>Log in to see the numbers</p>
+    <div className="flex gap-2 w-96 mx-auto">
       <SignInButton mode="modal">
-        <button className="bg-foreground text-background px-4 py-2 rounded-md">
+        <Button variant="outline">
+          <Login01Icon />
           Sign in
-        </button>
+        </Button>
       </SignInButton>
       <SignUpButton mode="modal">
-        <button className="bg-foreground text-background px-4 py-2 rounded-md">
+        <Button>
+          <UserAdd01Icon />
           Sign up
-        </button>
+        </Button>
       </SignUpButton>
     </div>
   );
