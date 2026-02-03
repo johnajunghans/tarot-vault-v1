@@ -265,6 +265,36 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/03/2026 (date) -- 1.1.2 (step) -- Claude 4.5 Sonnet (model)**
+Summary of actions taken:
+- Installed svix package for webhook signature verification
+- Created `/convex/http.ts` HTTP router with `/clerk-users-webhook` endpoint
+	- Converts request headers to plain object for action compatibility
+	- Routes to internal action handler with proper response formatting
+- Created `/convex/users.ts` with comprehensive user sync and management functions:
+	- `handleClerkWebhook`: Internal action that verifies webhook signatures and handles Clerk events (user.created, user.updated, user.deleted)
+	- `upsertFromClerk`: Internal mutation that creates new users with default settings or updates existing users
+	- `deleteFromClerk`: Internal mutation that removes users when deleted in Clerk
+	- `current`: Public query to get the currently authenticated user based on JWT token
+	- `get`: Internal query to fetch user by ID
+- Webhook handler extracts user data from Clerk events (authId, email, name) and syncs to database
+- Default user settings initialized on creation:
+	- appearance.theme: "system"
+	- preferences.useReverseMeanings: "auto"
+	- notifications.private.showToasts: true
+- All timestamps use `Date.now()` for milliseconds since epoch consistency
+- Token identifier constructed from Clerk JWT issuer domain and user authId
+
+Future considerations/recommendations/warnings:
+- **Add user settings management functions (getSettings, updateSettings) when building UI**
+- Use `current()` query to get userId for readings, spreads, and interpretations
+- Reference user settings for default preferences (reverse meanings, theme, AI tier)
+- Consider adding structured logging for webhook events in production
+- Implement error tracking for webhook processing failures
+- Test webhook thoroughly with Clerk's webhook testing UI before production
+- Handle user deletion cascades for related data (readings, spreads) in future steps
+- Current implementation follows Convex best practices with proper internal/public function separation
+
 **02/03/2026 (date) -- 1.1.1 (step) -- Claude 4.5 Sonnet (model)**
 Summary of actions taken:
 - Created complete Convex database schema in `/convex/schema.ts` with all four tables
@@ -286,7 +316,7 @@ Future considerations/recommendations/warnings:
 - Index design supports all planned query operations in step 1.1.3
 - Convex will auto-generate TypeScript types in `convex/_generated/dataModel.d.ts` on next dev server start
 - All timestamps use milliseconds since epoch (numbers) for consistency with Convex's _creationTime
-- aiMetadata object is currently required for all interpretations - consider making it optional for self-sourced interpretations or using a discriminated union based on source type (DONE by Tony)
+- ~~aiMetadata object is currently required for all interpretations - consider making it optional for self-sourced interpretations or using a discriminated union based on source type (DONE by Tony)~~
 - Consider adding index on readings.starred alone if filtering starred readings without userId becomes needed
 
 # 1_Build Plan
