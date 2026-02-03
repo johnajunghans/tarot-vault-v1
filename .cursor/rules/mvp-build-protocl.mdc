@@ -1,7 +1,7 @@
 ---
 alwaysApply: false
 ---
-**Agent Implementation Guide**
+**This rule should be loaded with [mvp-build.md](/mvp-build.md).**
 When given a step to work through (i.e. 1.1.1, 1.1.2, etc), do the following:
 1. Devise a plan for completing the step (you will be in Cursor in plan mode)
 2. Implement that plan upon user confirmation

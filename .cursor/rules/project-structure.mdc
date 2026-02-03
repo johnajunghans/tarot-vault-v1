@@ -157,7 +157,6 @@ Tarot Vault is a full-stack tarot reading application built with Next.js, Convex
 - Tailwind CSS 4 with custom configuration
 - shadcn/ui base-nova style with stone base color
 - CSS variables enabled for theming
-- Dark mode support via next-themes (planned)
 
 ### Scripts
 - `npm run dev`: Start both frontend (Next.js) and backend (Convex)
@@ -165,27 +164,6 @@ Tarot Vault is a full-stack tarot reading application built with Next.js, Convex
 - `npm run dev:backend`: Convex dev server only
 - `npm run build`: Production build
 - `npm run lint`: ESLint check
-
-## Development Status
-
-**Current Phase**: Database & Auth Setup (Stage 1.1)
-
-**Completed**:
-- Initial project scaffolding
-- Clerk authentication setup
-- Basic UI components (sidebar, buttons, etc.)
-- Convex integration
-
-**In Progress**:
-- Database schema implementation
-- Webhook for Clerk → Convex user sync
-- CRUD functions for all tables
-
-**Planned**:
-- Frontend UI for readings, spreads, interpretations
-- AI interpretation generation
-- Dark mode
-- Forms with react-hook-form + zod
 
 ## Important Files
 
