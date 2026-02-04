@@ -265,6 +265,78 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/04/2026 -- 1.1.5 -- Claude 4.5 Opus**
+Summary of actions taken:
+- Created comprehensive Vitest test infrastructure for Convex functions:
+  - Updated `package.json` with test scripts and dependencies (vitest, @edge-runtime/vm)
+  - Created `vitest.config.ts` configured with edge-runtime environment for Convex testing
+  - Created `convex/tests/test.setup.ts` with modules glob pattern and schema export for reuse across tests
+- Created test suite files in `/convex/tests/` directory:
+  - `users.test.ts` (7 tests): Tests for `current`, `upsertFromClerk`, and `deleteFromClerk` functions
+  - `readings.test.ts` (14 tests): Tests for `list`, `listStarred`, `create`, `update`, and `remove` functions
+  - `spreads.test.ts` (19 tests): Tests for `list`, `getById`, `create`, `update`, and `remove` functions
+  - `interpretations.test.ts` (19 tests): Tests for `list`, `listByReading`, `listBySource`, `create`, `update`, and `remove` functions
+  - `http.test.ts` (5 tests): Tests for Clerk webhook endpoint handling (user.created, user.updated, user.deleted events)
+- All tests cover:
+  - Happy path scenarios (successful operations)
+  - Error cases (not found, unauthorized access, validation failures)
+  - User isolation/multi-tenancy verification
+  - Data ordering and filtering
+  - Optional field handling
+- **Result**: All 64 tests pass successfully
+
+Test coverage includes:
+- Authentication and authorization checks
+- CRUD operations on all tables
+- Index-based query verification
+- Ownership validation for user data
+- Webhook event handling and validation
+- Error message accuracy
+
+Added npm test scripts:
+- `npm run test` - Run tests in watch mode
+- `npm run test:once` - Run tests once
+- `npm run test:debug` - Run tests with debugger attached
+- `npm run test:coverage` - Generate coverage report
+
+Future considerations/recommendations/warnings:
+- Tests provide a solid foundation for regression detection during future development
+- Consider adding coverage reporting to CI/CD pipeline once deployed
+- Additional integration tests may be needed for frontend-backend interactions
+- Mock Clerk webhook signing should be kept consistent with production setup
+- Consider adding performance/load tests for bulk operations before scaling to production
+- All tests follow Convex testing best practices using convex-test library and Vitest framework
+
+**02/04/2026 -- 1.1.4 -- GPT 5.2 codex + Claude Sonnet 4.5**
+What was completed:
+- Conducted comprehensive code review of step 1.1.3 implementation
+- Added missing `returns` validators to all Convex functions (users.ts, all table functions)
+- Removed disallowed `.filter()` usage in interpretations.list query, replaced with proper index-based query
+- Refactored validator pattern to use single source of truth:
+	- Created one base validator per table (excluding system fields `_id`, `_creationTime`)
+	- Schema uses base validators in `defineTable()`
+	- System fields added via `.extend()` inline in query return types where needed
+- Fixed create/update argument validators to properly separate concerns:
+	- Create args: omit only server-controlled fields (userId, updatedAt) from base validator
+	- Update args: use `.omit()`, `.partial()`, and `.extend({ _id })` pattern for true partial updates
+	- Removed redundant omission of system fields (already excluded in base validators)
+- Corrected `starred` field treatment - changed from server-controlled to user-controlled (available in create/update)
+- Standardized all delete and lookup operations to use `_id` consistently (removed mixed usage of `id` vs `_id`)
+- Exported base validators from schema.ts for reuse in function files
+
+Technical improvements:
+- DRY validator pattern using `.omit()`, `.partial()`, `.extend()` methods
+- Proper separation of system fields (auto-generated), server-controlled fields (derived from auth/timestamps), and user-controlled fields
+- Type-safe partial updates with explicit required `_id` field
+- Consistent API contracts across all table operations
+
+Files modified:
+- convex/schema.ts - simplified to single validator per table
+- convex/users.ts - added returns validators
+- convex/readings.ts - refactored args validators, fixed starred handling, standardized _id
+- convex/spreads.ts - refactored args validators, standardized _id
+- convex/interpretations.ts - refactored args validators, removed filter, standardized _id
+
 **02/03/2026 (date) -- 1.1.3 (step) -- Claude 4.5 Sonnet (model)**
 Summary of actions taken:
 - Created `/convex/readings.ts` with complete CRUD operations for readings table:
@@ -388,38 +460,10 @@ Future considerations/recommendations/warnings:
 			~~1. get interpretations by 'readingId' (foreign key)~~
 			~~2. get interpretations by 'source' (either 'self' or 'ai')~~
 
-### ~~1.1.4_Code Review & Schema Refactor~~
-~~Date Completed: 2026-02-03~~
-
-What was completed:
-- Conducted comprehensive code review of step 1.1.3 implementation
-- Added missing `returns` validators to all Convex functions (users.ts, all table functions)
-- Removed disallowed `.filter()` usage in interpretations.list query, replaced with proper index-based query
-- Refactored validator pattern to use single source of truth:
-	- Created one base validator per table (excluding system fields `_id`, `_creationTime`)
-	- Schema uses base validators in `defineTable()`
-	- System fields added via `.extend()` inline in query return types where needed
-- Fixed create/update argument validators to properly separate concerns:
-	- Create args: omit only server-controlled fields (userId, updatedAt) from base validator
-	- Update args: use `.omit()`, `.partial()`, and `.extend({ _id })` pattern for true partial updates
-	- Removed redundant omission of system fields (already excluded in base validators)
-- Corrected `starred` field treatment - changed from server-controlled to user-controlled (available in create/update)
-- Standardized all delete and lookup operations to use `_id` consistently (removed mixed usage of `id` vs `_id`)
-- Exported base validators from schema.ts for reuse in function files
-
-Technical improvements:
-- DRY validator pattern using `.omit()`, `.partial()`, `.extend()` methods
-- Proper separation of system fields (auto-generated), server-controlled fields (derived from auth/timestamps), and user-controlled fields
-- Type-safe partial updates with explicit required `_id` field
-- Consistent API contracts across all table operations
-
-Files modified:
-- convex/schema.ts - simplified to single validator per table
-- convex/users.ts - added returns validators
-- convex/readings.ts - refactored args validators, fixed starred handling, standardized _id
-- convex/spreads.ts - refactored args validators, standardized _id
-- convex/interpretations.ts - refactored args validators, removed filter, standardized _id
-
+### 1.1.4_Code Review
+	1. Review all code written in 1.1.1 - 1.1.3 and fix any major bugs or vulnerabilities.
+### 1.1.5_Create Convex Tests
+	1. Follow instructions and examples at [Convex Tests](https://docs.convex.dev/testing/convex-test) for writing tests and create one test for each table.
 ## 1.2_Frontend Setup
 
 

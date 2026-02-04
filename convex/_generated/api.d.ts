@@ -9,10 +9,10 @@
  */
 
 import type * as http from "../http.js";
-import type * as interpretations from "../interpretations.js";
-import type * as readings from "../readings.js";
-import type * as spreads from "../spreads.js";
-import type * as users from "../users.js";
+import type * as tables_interpretations from "../tables/interpretations.js";
+import type * as tables_readings from "../tables/readings.js";
+import type * as tables_spreads from "../tables/spreads.js";
+import type * as tables_users from "../tables/users.js";
 
 import type {
   ApiFromModules,
@@ -22,10 +22,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   http: typeof http;
-  interpretations: typeof interpretations;
-  readings: typeof readings;
-  spreads: typeof spreads;
-  users: typeof users;
+  "tables/interpretations": typeof tables_interpretations;
+  "tables/readings": typeof tables_readings;
+  "tables/spreads": typeof tables_spreads;
+  "tables/users": typeof tables_users;
 }>;
 
 /**
