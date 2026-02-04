@@ -387,6 +387,39 @@ Future considerations/recommendations/warnings:
 		~~3. interpretations~~
 			~~1. get interpretations by 'readingId' (foreign key)~~
 			~~2. get interpretations by 'source' (either 'self' or 'ai')~~
+
+### ~~1.1.4_Code Review & Schema Refactor~~
+~~Date Completed: 2026-02-03~~
+
+What was completed:
+- Conducted comprehensive code review of step 1.1.3 implementation
+- Added missing `returns` validators to all Convex functions (users.ts, all table functions)
+- Removed disallowed `.filter()` usage in interpretations.list query, replaced with proper index-based query
+- Refactored validator pattern to use single source of truth:
+	- Created one base validator per table (excluding system fields `_id`, `_creationTime`)
+	- Schema uses base validators in `defineTable()`
+	- System fields added via `.extend()` inline in query return types where needed
+- Fixed create/update argument validators to properly separate concerns:
+	- Create args: omit only server-controlled fields (userId, updatedAt) from base validator
+	- Update args: use `.omit()`, `.partial()`, and `.extend({ _id })` pattern for true partial updates
+	- Removed redundant omission of system fields (already excluded in base validators)
+- Corrected `starred` field treatment - changed from server-controlled to user-controlled (available in create/update)
+- Standardized all delete and lookup operations to use `_id` consistently (removed mixed usage of `id` vs `_id`)
+- Exported base validators from schema.ts for reuse in function files
+
+Technical improvements:
+- DRY validator pattern using `.omit()`, `.partial()`, `.extend()` methods
+- Proper separation of system fields (auto-generated), server-controlled fields (derived from auth/timestamps), and user-controlled fields
+- Type-safe partial updates with explicit required `_id` field
+- Consistent API contracts across all table operations
+
+Files modified:
+- convex/schema.ts - simplified to single validator per table
+- convex/users.ts - added returns validators
+- convex/readings.ts - refactored args validators, fixed starred handling, standardized _id
+- convex/spreads.ts - refactored args validators, standardized _id
+- convex/interpretations.ts - refactored args validators, removed filter, standardized _id
+
 ## 1.2_Frontend Setup
 
 

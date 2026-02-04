@@ -4,20 +4,32 @@ import { getCurrentUserOrThrow } from "./users";
 import { Doc } from "./_generated/dataModel";
 import { interpretationValidator } from "./schema";
 
+const interpretationsCreateArgs = interpretationValidator.omit(
+  "userId",
+  "updatedAt"
+);
+
+const interpretationsUpdateArgs = interpretationValidator
+  .omit("userId", "updatedAt", "readingId", "source", "aiMetadata")
+  .partial()
+  .extend({ _id: v.id("interpretations") });
+
 /**
  * List the most recent 10 interpretations for the current user, ordered by updatedAt desc.
  */
 export const list = query({
   args: {},
-  returns: v.array(interpretationValidator),
+  returns: v.array(interpretationValidator.extend({
+    _id: v.id("interpretations"),
+    _creationTime: v.number(),
+  })),
   handler: async (ctx) => {
     const user = await getCurrentUserOrThrow(ctx);
     
     // Get all interpretations for the user and sort by updatedAt
     const interpretations = await ctx.db
       .query("interpretations")
-      .withIndex("by_userId_and_source")
-      .filter((q) => q.eq(q.field("userId"), user._id))
+      .withIndex("by_user", q => q.eq("userId", user._id))
       .collect();
 
     // Sort by updatedAt desc and take 10
@@ -34,7 +46,10 @@ export const listByReading = query({
   args: {
     readingId: v.id("readings"),
   },
-  returns: v.array(interpretationValidator),
+  returns: v.array(interpretationValidator.extend({
+    _id: v.id("interpretations"),
+    _creationTime: v.number(),
+  })),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
 
@@ -61,7 +76,10 @@ export const listBySource = query({
   args: {
     source: v.union(v.literal("self"), v.literal("ai")),
   },
-  returns: v.array(interpretationValidator),
+  returns: v.array(interpretationValidator.extend({
+    _id: v.id("interpretations"),
+    _creationTime: v.number(),
+  })),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
     return await ctx.db
@@ -77,25 +95,7 @@ export const listBySource = query({
  * Create a new interpretation for a reading.
  */
 export const create = mutation({
-  args: {
-    readingId: v.id("readings"),
-    content: v.string(),
-    source: v.union(v.literal("self"), v.literal("ai")),
-    focus: v.optional(v.string()),
-    aiMetadata: v.optional(
-      v.object({
-        tier: v.union(v.literal("free"), v.literal("premium")),
-        model: v.object({
-          name: v.string(),
-          version: v.string(),
-        }),
-        requestTime: v.number(),
-        totalCost: v.number(),
-        tokensUsed: v.number(),
-        systemPrompt: v.optional(v.string()),
-      })
-    ),
-  },
+  args: interpretationsCreateArgs,
   returns: v.id("interpretations"),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
@@ -127,16 +127,12 @@ export const create = mutation({
  * Update an existing interpretation.
  */
 export const update = mutation({
-  args: {
-    id: v.id("interpretations"),
-    content: v.optional(v.string()),
-    focus: v.optional(v.string()),
-  },
+  args: interpretationsUpdateArgs,
   returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
 
-    const interpretation = await ctx.db.get(args.id);
+    const interpretation = await ctx.db.get(args._id);
     if (!interpretation) {
       throw new Error("Interpretation not found");
     }
@@ -154,7 +150,7 @@ export const update = mutation({
     if (args.content !== undefined) updates.content = args.content;
     if (args.focus !== undefined) updates.focus = args.focus;
 
-    await ctx.db.patch(args.id, updates);
+    await ctx.db.patch(args._id, updates);
     return null;
   },
 });
@@ -164,13 +160,13 @@ export const update = mutation({
  */
 export const remove = mutation({
   args: {
-    id: v.id("interpretations"),
+    _id: v.id("interpretations"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
 
-    const interpretation = await ctx.db.get(args.id);
+    const interpretation = await ctx.db.get(args._id);
     if (!interpretation) {
       throw new Error("Interpretation not found");
     }
@@ -180,7 +176,7 @@ export const remove = mutation({
       throw new Error("Not authorized to delete this interpretation");
     }
 
-    await ctx.db.delete(args.id);
+    await ctx.db.delete(args._id);
     return null;
   },
 });

@@ -9,8 +9,8 @@ const cardValidator = v.object({
   notes: v.string(),
 });
 
-// Users table field validator (without system fields)
-export const usersFields = {
+// Users table validator (without system fields)
+export const userValidator = v.object({
   authId: v.string(), // Clerk user ID
   tokenIdentifier: v.string(),
   updatedAt: v.number(), // milliseconds since epoch
@@ -38,10 +38,10 @@ export const usersFields = {
       }),
     }),
   }),
-};
+});
 
-// Readings table field validator (without system fields)
-export const readingsFields = {
+// Readings table validator (without system fields)
+export const readingValidator = v.object({
   userId: v.id("users"),
   updatedAt: v.number(), // milliseconds since epoch
   question: v.string(),
@@ -72,10 +72,10 @@ export const readingsFields = {
   notes: v.optional(v.string()),
   interpretations: v.optional(v.array(v.id("interpretations"))),
   starred: v.boolean(), // default: false
-};
+});
 
-// Interpretations table field validator (without system fields)
-export const interpretationsFields = {
+// Interpretations table validator (without system fields)
+export const interpretationValidator = v.object({
   userId: v.id("users"),
   readingId: v.id("readings"),
   updatedAt: v.number(), // milliseconds since epoch
@@ -95,10 +95,10 @@ export const interpretationsFields = {
       systemPrompt: v.optional(v.string()),
     })
   ),
-};
+});
 
-// Spreads table field validator (without system fields)
-export const spreadsFields = {
+// Spreads table validator (without system fields)
+export const spreadValidator = v.object({
   userId: v.id("users"),
   updatedAt: v.number(), // milliseconds since epoch
   name: v.string(),
@@ -116,49 +116,25 @@ export const spreadsFields = {
       }),
     })
   ),
-};
-
-// Export full document validators (with system fields) for use in function returns
-export const userValidator = v.object({
-  _id: v.id("users"),
-  _creationTime: v.number(),
-  ...usersFields,
-});
-
-export const readingValidator = v.object({
-  _id: v.id("readings"),
-  _creationTime: v.number(),
-  ...readingsFields,
-});
-
-export const interpretationValidator = v.object({
-  _id: v.id("interpretations"),
-  _creationTime: v.number(),
-  ...interpretationsFields,
-});
-
-export const spreadValidator = v.object({
-  _id: v.id("spreads"),
-  _creationTime: v.number(),
-  ...spreadsFields,
 });
 
 export default defineSchema({
   // Users table - stores user account information synced from Clerk
-  users: defineTable(usersFields).index("by_authId", ["authId"]),
+  users: defineTable(userValidator).index("by_authId", ["authId"]),
 
   // Readings table - stores tarot reading sessions
-  readings: defineTable(readingsFields)
+  readings: defineTable(readingValidator)
     .index("by_userId_and_updatedAt", ["userId", "updatedAt"])
     .index("by_userId_and_starred", ["userId", "starred"]),
 
   // Interpretations table - stores user and AI interpretations of readings
-  interpretations: defineTable(interpretationsFields)
+  interpretations: defineTable(interpretationValidator)
+    .index("by_user", ["userId"])
     .index("by_readingId", ["readingId"])
     .index("by_userId_and_source", ["userId", "source"]),
 
   // Spreads table - stores custom and default tarot spreads
-  spreads: defineTable(spreadsFields).index("by_userId_and_updatedAt", [
+  spreads: defineTable(spreadValidator).index("by_userId_and_updatedAt", [
     "userId",
     "updatedAt",
   ]),

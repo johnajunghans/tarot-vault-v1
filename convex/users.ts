@@ -1,10 +1,15 @@
 import { v, Validator } from "convex/values";
 import { internalMutation, query, QueryCtx } from "./_generated/server";
 import { UserJSON } from "@clerk/backend";
+import { userValidator } from "./schema";
 
 // Query to get the current authenticated user
 export const current = query({
   args: {},
+  returns: v.union(userValidator.extend({
+    _id: v.id("users"),
+    _creationTime: v.number(),
+  }), v.null()),
   handler: async (ctx) => {
     return await getCurrentUser(ctx);
   },
@@ -13,6 +18,7 @@ export const current = query({
 // Internal mutation to create or update user from Clerk webhook
 export const upsertFromClerk = internalMutation({
   args: { data: v.any() as Validator<UserJSON> }, // no runtime validation, trust Clerk
+  returns: v.null(),
   async handler(ctx, { data }) {
     // Get primary email
     const primaryEmail = data.email_addresses.find(
@@ -64,6 +70,7 @@ export const upsertFromClerk = internalMutation({
 // Internal mutation to delete user from Clerk webhook
 export const deleteFromClerk = internalMutation({
   args: { clerkUserId: v.string() },
+  returns: v.null(),
   async handler(ctx, { clerkUserId }) {
     const user = await userByAuthId(ctx, clerkUserId);
 

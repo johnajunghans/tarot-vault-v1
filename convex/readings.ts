@@ -2,14 +2,28 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUserOrThrow } from "./users";
 import { Doc } from "./_generated/dataModel";
-import { readingValidator, readingsFields } from "./schema";
+import { readingValidator } from "./schema";
+
+const readingsCreateArgs = readingValidator.omit(
+  "userId",
+  "updatedAt",
+  "interpretations"
+);
+
+const readingsUpdateArgs = readingValidator
+  .omit("userId", "updatedAt")
+  .partial()
+  .extend({ _id: v.id("readings") });
 
 /**
  * List the most recent 10 readings for the current user, ordered by updatedAt desc.
  */
 export const list = query({
   args: {},
-  returns: v.array(readingValidator),
+  returns: v.array(readingValidator.extend({
+    _id: v.id("readings"),
+    _creationTime: v.number(),
+  })),
   handler: async (ctx) => {
     const user = await getCurrentUserOrThrow(ctx);
     return await ctx.db
@@ -25,7 +39,10 @@ export const list = query({
  */
 export const listStarred = query({
   args: {},
-  returns: v.array(readingValidator),
+  returns: v.array(readingValidator.extend({
+    _id: v.id("readings"),
+    _creationTime: v.number(),
+  })),
   handler: async (ctx) => {
     const user = await getCurrentUserOrThrow(ctx);
     return await ctx.db
@@ -42,7 +59,7 @@ export const listStarred = query({
  * Create a new reading for the current user.
  */
 export const create = mutation({
-  args: readingsFields,
+  args: readingsCreateArgs,
   returns: v.id("readings"),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
@@ -77,7 +94,7 @@ export const create = mutation({
       image: args.image,
       parent: args.parent,
       notes: args.notes,
-      starred: false,
+      starred: args.starred,
     });
 
     return readingId;
@@ -88,7 +105,7 @@ export const create = mutation({
  * Update an existing reading.
  */
 export const update = mutation({
-  args: readingValidator,
+  args: readingsUpdateArgs,
   returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
@@ -104,7 +121,7 @@ export const update = mutation({
     }
 
     // Validate spread exists if being updated
-    if (args.spread.id) {
+    if (args.spread) {
       const spread = await ctx.db.get(args.spread.id);
       if (!spread) {
         throw new Error("Spread not found");
@@ -112,7 +129,7 @@ export const update = mutation({
     }
 
     // Validate parent reading exists if being updated
-    if (args.parent?.id) {
+    if (args.parent) {
       const parentReading = await ctx.db.get(args.parent.id);
       if (!parentReading) {
         throw new Error("Parent reading not found");
@@ -129,9 +146,7 @@ export const update = mutation({
     if (args.drawMethod !== undefined) updates.drawMethod = args.drawMethod;
     if (args.digitalDrawRandomness !== undefined)
       updates.digitalDrawRandomness = args.digitalDrawRandomness;
-    if (args.spread.id !== undefined && args.spread.version !== undefined) {
-      updates.spread = args.spread;
-    }
+    if (args.spread !== undefined) updates.spread = args.spread;
     if (args.useReverseMeanings !== undefined)
       updates.useReverseMeanings = args.useReverseMeanings;
     if (args.useSignifierCard !== undefined)
@@ -140,9 +155,7 @@ export const update = mutation({
     if (args.title !== undefined) updates.title = args.title;
     if (args.context !== undefined) updates.context = args.context;
     if (args.image !== undefined) updates.image = args.image;
-    if (args.parent?.id !== undefined) {
-      updates.parent = { type: "reading" as const, id: args.parent.id };
-    }
+    if (args.parent !== undefined) updates.parent = args.parent;
     if (args.notes !== undefined) updates.notes = args.notes;
     if (args.interpretations !== undefined)
       updates.interpretations = args.interpretations;
@@ -158,13 +171,13 @@ export const update = mutation({
  */
 export const remove = mutation({
   args: {
-    id: v.id("readings"),
+    _id: v.id("readings"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
 
-    const reading = await ctx.db.get(args.id);
+    const reading = await ctx.db.get(args._id);
     if (!reading) {
       throw new Error("Reading not found");
     }
@@ -174,7 +187,7 @@ export const remove = mutation({
       throw new Error("Not authorized to delete this reading");
     }
 
-    await ctx.db.delete(args.id);
+    await ctx.db.delete(args._id);
     return null;
   },
 });

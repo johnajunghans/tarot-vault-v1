@@ -2,14 +2,27 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUserOrThrow } from "./users";
 import { Doc } from "./_generated/dataModel";
-import { spreadsFields, spreadValidator } from "./schema";
+import { spreadValidator } from "./schema";
+
+const spreadsCreateArgs = spreadValidator.omit(
+  "userId",
+  "updatedAt"
+);
+
+const spreadsUpdateArgs = spreadValidator
+  .omit("userId", "updatedAt")
+  .partial()
+  .extend({ _id: v.id("spreads") });
 
 /**
  * List the most recent 10 spreads for the current user, ordered by updatedAt desc.
  */
 export const list = query({
   args: {},
-  returns: v.array(spreadValidator),
+  returns: v.array(spreadValidator.extend({
+    _id: v.id("spreads"),
+    _creationTime: v.number(),
+  })),
   handler: async (ctx) => {
     const user = await getCurrentUserOrThrow(ctx);
     return await ctx.db
@@ -25,13 +38,16 @@ export const list = query({
  */
 export const getById = query({
   args: {
-    id: v.id("spreads"),
+    _id: v.id("spreads"),
   },
-  returns: v.union(spreadValidator, v.null()),
+  returns: v.union(spreadValidator.extend({
+    _id: v.id("spreads"),
+    _creationTime: v.number(),
+  }), v.null()),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
 
-    const spread = await ctx.db.get(args.id);
+    const spread = await ctx.db.get(args._id);
     if (!spread) {
       return null;
     }
@@ -49,7 +65,7 @@ export const getById = query({
  * Create a new spread for the current user.
  */
 export const create = mutation({
-  args: spreadsFields,
+  args: spreadsCreateArgs,
   returns: v.id("spreads"),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
@@ -83,7 +99,7 @@ export const create = mutation({
  * Update an existing spread.
  */
 export const update = mutation({
-  args: spreadValidator,
+  args: spreadsUpdateArgs,
   returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
@@ -134,13 +150,13 @@ export const update = mutation({
  */
 export const remove = mutation({
   args: {
-    id: v.id("spreads"),
+    _id: v.id("spreads"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getCurrentUserOrThrow(ctx);
 
-    const spread = await ctx.db.get(args.id);
+    const spread = await ctx.db.get(args._id);
     if (!spread) {
       throw new Error("Spread not found");
     }
@@ -150,7 +166,7 @@ export const remove = mutation({
       throw new Error("Not authorized to delete this spread");
     }
 
-    await ctx.db.delete(args.id);
+    await ctx.db.delete(args._id);
     return null;
   },
 });
