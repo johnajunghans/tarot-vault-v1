@@ -265,6 +265,44 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/03/2026 (date) -- 1.1.3 (step) -- Claude 4.5 Sonnet (model)**
+Summary of actions taken:
+- Created `/convex/readings.ts` with complete CRUD operations for readings table:
+	- `list`: Query to get 10 most recent readings ordered by updatedAt desc (uses `by_userId_and_updatedAt` index)
+	- `listStarred`: Query to get starred readings (uses `by_userId_and_starred` index)
+	- `create`: Mutation to insert new reading with validation for spread and parent reading references
+	- `update`: Mutation to patch existing reading with ownership verification
+	- `remove`: Mutation to delete reading with ownership verification
+- Created `/convex/interpretations.ts` with complete CRUD operations for interpretations table:
+	- `list`: Query to get 10 most recent interpretations ordered by updatedAt desc
+	- `listByReading`: Query to get all interpretations for a specific reading (uses `by_readingId` index)
+	- `listBySource`: Query to get interpretations filtered by source type (uses `by_userId_and_source` index)
+	- `create`: Mutation to insert new interpretation with reading validation
+	- `update`: Mutation to patch content and focus fields with ownership verification
+	- `remove`: Mutation to delete interpretation with ownership verification
+- Created `/convex/spreads.ts` with complete CRUD operations for spreads table:
+	- `list`: Query to get 10 most recent spreads ordered by updatedAt desc (uses `by_userId_and_updatedAt` index)
+	- `getById`: Query to get specific spread by ID with ownership verification
+	- `create`: Mutation to insert new spread with validation that numberOfCards matches positions array length (1-78)
+	- `update`: Mutation to patch existing spread with validation and ownership verification
+	- `remove`: Mutation to delete spread with ownership verification
+- All functions use `getCurrentUserOrThrow` helper from `users.ts` for authentication
+- All queries filter by authenticated user's userId for multi-tenant data isolation
+- All mutations set `updatedAt: Date.now()` on create and update operations
+- All create operations return the new document ID
+- All update and remove operations return null
+- Comprehensive error handling with descriptive messages for not found and unauthorized cases
+
+Future considerations/recommendations/warnings:
+- All indexes verified to support the query patterns used by these functions
+- Foreign key validation ensures data integrity (spreads exist before readings reference them, readings exist before interpretations reference them)
+- Consider adding pagination support for queries that may return many results (currently limited to 10)
+- Consider adding batch operations for creating/updating multiple documents at once
+- Future cascade delete logic needed when deleting spreads or readings that have dependent data
+- The `interpretations.list` query uses filter + sort instead of index ordering - consider adding `by_userId_and_updatedAt` index if this becomes a performance bottleneck
+- Starred readings can be queried efficiently with the dedicated `by_userId_and_starred` index
+- All functions follow Convex best practices with proper validators on args and returns
+
 **02/03/2026 (date) -- 1.1.2 (step) -- Claude 4.5 Sonnet (model)**
 Summary of actions taken:
 - Installed svix package for webhook signature verification
@@ -329,26 +367,26 @@ Future considerations/recommendations/warnings:
 1. Follow guide located [here](https://docs.convex.dev/auth/database-auth#set-up-webhooks) to create /convex/users.ts file and /convex/http.ts file
 	1. Note: webhook has already been configured in Clerk with signing secret added as env variable to Convex
 2. Scan project and make recommendations for further updates and improvements to the authentication structure.
-### 1.1.3_Create database table functions
-1. Create files in /convex for each table (apart from users.ts which should already exist):
-	1. /convex/readings.ts
-	2. /convex/interpretations.ts
-	3. /convex/spreads.ts
-2. Within each file, create query and mutation functions (*Note: check to ensure that indexes are correct for handling all functions*)
-	1. All tables should have the following functions:
-		1. get documents (max 10)
-			1. should be ordered by 'updatedAt' property so most recently updated comes first
-		2. create/insert document
-		3. update document
-		4. delete document
-	2. Then certain tables should have extra functions:
-		1. readings
-			1. get starred readings (i.e. readings with property 'starred' = true)
-		2. spreads
-			1. get specific spread given id
-		3. interpretations
-			1. get interpretations by 'readingId' (foreign key)
-			2. get interpretations by 'source' (either 'self' or 'ai')
+### ~~1.1.3_Create database table functions~~
+~~1. Create files in /convex for each table (apart from users.ts which should already exist):~~
+	~~1. /convex/readings.ts~~
+	~~2. /convex/interpretations.ts~~
+	~~3. /convex/spreads.ts~~
+~~2. Within each file, create query and mutation functions (*Note: check to ensure that indexes are correct for handling all functions*)~~
+	~~1. All tables should have the following functions:~~
+		~~1. get documents (max 10)~~
+			~~1. should be ordered by 'updatedAt' property so most recently updated comes first~~
+		~~2. create/insert document~~
+		~~3. update document~~
+		~~4. delete document~~
+	~~2. Then certain tables should have extra functions:~~
+		~~1. readings~~
+			~~1. get starred readings (i.e. readings with property 'starred' = true)~~
+		~~2. spreads~~
+			~~1. get specific spread given id~~
+		~~3. interpretations~~
+			~~1. get interpretations by 'readingId' (foreign key)~~
+			~~2. get interpretations by 'source' (either 'self' or 'ai')~~
 ## 1.2_Frontend Setup
 
 

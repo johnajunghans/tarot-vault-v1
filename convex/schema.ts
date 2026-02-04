@@ -9,83 +9,81 @@ const cardValidator = v.object({
   notes: v.string(),
 });
 
-export default defineSchema({
-  // Users table - stores user account information synced from Clerk
-  users: defineTable({
-    authId: v.string(), // Clerk user ID
-    tokenIdentifier: v.string(),
-    updatedAt: v.number(), // milliseconds since epoch
-    lastSignedIn: v.number(), // milliseconds since epoch
-    name: v.string(),
-    email: v.string(),
-    settings: v.object({
-      appearance: v.object({
-        theme: v.union(
-          v.literal("light"),
-          v.literal("dark"),
-          v.literal("system")
-        ), // default: "system"
-      }),
-      preferences: v.object({
-        useReverseMeanings: v.union(
-          v.literal("auto"),
-          v.literal("always"),
-          v.literal("never")
-        ), // default: "auto"
-      }),
-      notifications: v.object({
-        private: v.object({
-          showToasts: v.boolean(), // default: true
-        }),
+// Users table field validator (without system fields)
+export const usersFields = {
+  authId: v.string(), // Clerk user ID
+  tokenIdentifier: v.string(),
+  updatedAt: v.number(), // milliseconds since epoch
+  lastSignedIn: v.number(), // milliseconds since epoch
+  name: v.string(),
+  email: v.string(),
+  settings: v.object({
+    appearance: v.object({
+      theme: v.union(
+        v.literal("light"),
+        v.literal("dark"),
+        v.literal("system")
+      ), // default: "system"
+    }),
+    preferences: v.object({
+      useReverseMeanings: v.union(
+        v.literal("auto"),
+        v.literal("always"),
+        v.literal("never")
+      ), // default: "auto"
+    }),
+    notifications: v.object({
+      private: v.object({
+        showToasts: v.boolean(), // default: true
       }),
     }),
-  }).index("by_authId", ["authId"]),
+  }),
+};
 
-  // Readings table - stores tarot reading sessions
-  readings: defineTable({
-    userId: v.id("users"),
-    updatedAt: v.number(), // milliseconds since epoch
-    question: v.string(),
-    date: v.number(), // milliseconds since epoch
-    drawMethod: v.union(v.literal("manual"), v.literal("digital")),
-    digitalDrawRandomness: v.optional(
-      v.union(v.literal("pseudo"), v.literal("real"))
-    ),
-    spread: v.object({
-      id: v.id("spreads"),
-      version: v.number(), // 0-77
-    }),
-    useReverseMeanings: v.boolean(),
-    useSignifierCard: v.boolean(),
-    results: v.object({
-      signifier: v.optional(cardValidator),
-      cards: v.array(cardValidator),
-    }),
-    title: v.optional(v.string()),
-    context: v.optional(v.string()),
-    image: v.optional(v.id("_storage")),
-    parent: v.optional(
-      v.object({
-        type: v.literal("reading"),
-        id: v.id("readings"),
-      })
-    ),
-    notes: v.optional(v.string()),
-    interpretations: v.optional(v.array(v.id("interpretations"))),
-    starred: v.boolean(), // default: false
-  })
-    .index("by_userId_and_updatedAt", ["userId", "updatedAt"])
-    .index("by_userId_and_starred", ["userId", "starred"]),
+// Readings table field validator (without system fields)
+export const readingsFields = {
+  userId: v.id("users"),
+  updatedAt: v.number(), // milliseconds since epoch
+  question: v.string(),
+  date: v.number(), // milliseconds since epoch
+  drawMethod: v.union(v.literal("manual"), v.literal("digital")),
+  digitalDrawRandomness: v.optional(
+    v.union(v.literal("pseudo"), v.literal("real"))
+  ),
+  spread: v.object({
+    id: v.id("spreads"),
+    version: v.number(),
+  }),
+  useReverseMeanings: v.boolean(),
+  useSignifierCard: v.boolean(),
+  results: v.object({
+    signifier: v.optional(cardValidator),
+    cards: v.array(cardValidator),
+  }),
+  title: v.optional(v.string()),
+  context: v.optional(v.string()),
+  image: v.optional(v.id("_storage")),
+  parent: v.optional(
+    v.object({
+      type: v.literal("reading"),
+      id: v.id("readings"),
+    })
+  ),
+  notes: v.optional(v.string()),
+  interpretations: v.optional(v.array(v.id("interpretations"))),
+  starred: v.boolean(), // default: false
+};
 
-  // Interpretations table - stores user and AI interpretations of readings
-  interpretations: defineTable({
-    userId: v.id("users"),
-    readingId: v.id("readings"),
-    updatedAt: v.number(), // milliseconds since epoch
-    content: v.string(),
-    source: v.union(v.literal("self"), v.literal("ai")),
-    focus: v.optional(v.string()),
-    aiMetadata: v.optional(v.object({
+// Interpretations table field validator (without system fields)
+export const interpretationsFields = {
+  userId: v.id("users"),
+  readingId: v.id("readings"),
+  updatedAt: v.number(), // milliseconds since epoch
+  content: v.string(),
+  source: v.union(v.literal("self"), v.literal("ai")),
+  focus: v.optional(v.string()),
+  aiMetadata: v.optional(
+    v.object({
       tier: v.union(v.literal("free"), v.literal("premium")),
       model: v.object({
         name: v.string(),
@@ -95,29 +93,73 @@ export default defineSchema({
       totalCost: v.number(),
       tokensUsed: v.number(),
       systemPrompt: v.optional(v.string()),
-    })),
-  })
+    })
+  ),
+};
+
+// Spreads table field validator (without system fields)
+export const spreadsFields = {
+  userId: v.id("users"),
+  updatedAt: v.number(), // milliseconds since epoch
+  name: v.string(),
+  description: v.optional(v.string()),
+  numberOfCards: v.number(), // 1-78
+  positions: v.array(
+    v.object({
+      name: v.string(),
+      description: v.optional(v.string()),
+      transform: v.object({
+        x: v.number(),
+        y: v.number(),
+        r: v.number(),
+        z: v.number(),
+      }),
+    })
+  ),
+};
+
+// Export full document validators (with system fields) for use in function returns
+export const userValidator = v.object({
+  _id: v.id("users"),
+  _creationTime: v.number(),
+  ...usersFields,
+});
+
+export const readingValidator = v.object({
+  _id: v.id("readings"),
+  _creationTime: v.number(),
+  ...readingsFields,
+});
+
+export const interpretationValidator = v.object({
+  _id: v.id("interpretations"),
+  _creationTime: v.number(),
+  ...interpretationsFields,
+});
+
+export const spreadValidator = v.object({
+  _id: v.id("spreads"),
+  _creationTime: v.number(),
+  ...spreadsFields,
+});
+
+export default defineSchema({
+  // Users table - stores user account information synced from Clerk
+  users: defineTable(usersFields).index("by_authId", ["authId"]),
+
+  // Readings table - stores tarot reading sessions
+  readings: defineTable(readingsFields)
+    .index("by_userId_and_updatedAt", ["userId", "updatedAt"])
+    .index("by_userId_and_starred", ["userId", "starred"]),
+
+  // Interpretations table - stores user and AI interpretations of readings
+  interpretations: defineTable(interpretationsFields)
     .index("by_readingId", ["readingId"])
     .index("by_userId_and_source", ["userId", "source"]),
 
   // Spreads table - stores custom and default tarot spreads
-  spreads: defineTable({
-    userId: v.id("users"),
-    updatedAt: v.number(), // milliseconds since epoch
-    name: v.string(),
-    description: v.optional(v.string()),
-    numberOfCards: v.number(), // 1-78
-    positions: v.array(
-      v.object({
-        name: v.string(),
-        description: v.optional(v.string()),
-        transform: v.object({
-          x: v.number(),
-          y: v.number(),
-          r: v.number(),
-          z: v.number(),
-        }),
-      })
-    ),
-  }).index("by_userId_and_updatedAt", ["userId", "updatedAt"]),
+  spreads: defineTable(spreadsFields).index("by_userId_and_updatedAt", [
+    "userId",
+    "updatedAt",
+  ]),
 });
