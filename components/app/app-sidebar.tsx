@@ -24,9 +24,11 @@ import {
   SidebarRail,
   useSidebar,
 } from "../ui/sidebar"
-import { UserButton } from "@clerk/clerk-react"
+import { UserButton, useUser } from "@clerk/clerk-react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
+import { Skeleton } from "../ui/skeleton"
 
 const routes = {
     personal: [
@@ -51,18 +53,28 @@ const routes = {
 
 export default function AppSidebar() {
     const { open } = useSidebar()
+    const { isLoaded } = useUser()
     const router = useRouter()
-    const { theme, setTheme } = useTheme()
+    const { theme, resolvedTheme, setTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    const activeTheme = resolvedTheme ?? theme
+    const isLightTheme = activeTheme === "light"
 
     function toggleTheme() {
-        setTheme(theme === "light" ? "dark" : "light")
+        const nextTheme = isLightTheme ? "dark" : "light"
+        setTheme(nextTheme)
     }  
 
   return (
     <Sidebar collapsible="icon">
 
       {/* Header */}
-      <SidebarHeader>
+      <SidebarHeader className="mt-[6px]">
         <button
           type="button"
           onClick={() => router.push("/app")}
@@ -122,13 +134,13 @@ export default function AppSidebar() {
                 tooltip="Theme"
                 onClick={toggleTheme}
             >
-                {theme === "light" ? <Sun01Icon /> : <Moon01Icon />}
+                {mounted ? (isLightTheme ? <Sun01Icon /> : <Moon01Icon />) : <Skeleton className="w-6 h-6 rounded-full" />}
                 <span className={`${open ? "scale-100" : "scale-0"} duration-150`}>Theme</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
         <div className="translate-x-[10px]">
-            <UserButton 
+            {isLoaded ? <UserButton 
                 showName={open}
                 appearance={{
                     elements: {
@@ -139,14 +151,15 @@ export default function AppSidebar() {
                         userButtonOuterIdentifier: {
                             scale: open ? "1" : "0",
                             transitionDuration: "150ms",
-                            textWrap: "nowrap"
+                            textWrap: "nowrap",
+                            color: "var(--foreground)"
                         }
                     },
                 }}
-            />
+            /> : <Skeleton className="w-6 h-6 rounded-full" />}
         </div>
       </SidebarFooter>
-      <SidebarRail />
+      {/* <SidebarRail /> */}
     </Sidebar>
   )
 }

@@ -1,6 +1,7 @@
-import AppSidebar from "@/components/app/app-sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { ReactNode } from "react";
+import AppSidebar from "@/components/app/app-sidebar"
+import AppTopbar from "@/components/app/app-topbar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { ReactNode } from "react"
 
 export default function AppLayout({
     children
@@ -8,9 +9,10 @@ export default function AppLayout({
     return (
         <SidebarProvider>
             <AppSidebar />
-            <main>
+            <SidebarInset>
+                <AppTopbar />
                 { children }
-            </main>
+            </SidebarInset>
         </SidebarProvider>
     )
 }

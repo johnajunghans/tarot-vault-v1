@@ -265,6 +265,19 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/04/2026 -- 1.2.3 -- GPT-5.2 Codex XHigh**
+Summary of actions taken:
+- Added `app-topbar.tsx` with sidebar toggle, breadcrumb navigation, and a New dropdown
+- Wired the app topbar into `/app` layout using `SidebarInset`
+- Implemented breadcrumb label formatting with ChevronRight separators
+- Added a placeholder center title slot for future page-specific headings
+- Ran `npm run lint` (warnings noted below)
+
+Future considerations/recommendations/warnings:
+- Breadcrumbs currently mirror route segments; revisit for custom labels later
+- New dropdown items intentionally have no actions yet
+- ESLint warnings remain for unused imports in `components/app/app-sidebar.tsx` and `convex/tests/spreads.test.ts`
+
 **02/04/2026 -- 1.2.2 -- GPT-5.2 Codex XHigh**
 Summary of actions taken:
 - Made the sidebar header link to `/app`
@@ -515,27 +528,27 @@ Future considerations/recommendations/warnings:
 			~~1. Add Interpretations button in personal menu group with Prism icon~~
 			~~2. Add Clerk's UserButton component to button of footer (already done)~~
 			~~3. Add button for settings using Settings01Icon. This should not trigger anything yet.~~ 
-### 1.2.3_App-Topbar
-1. Create app-topbar.tsx component in components/app folder
-	1. This component should be present for all /app routes and should have three sections (horizontal flex with justify-between to space out):
-		1. Left section: 2 sections (flex with gap-2)
-			1. Left section: Sidebar toggle
-				1. Should use PanelLeftCloseIcon or PanelLeftOpenIcon depending on whether sidebar is open or closed.
-			2. Right section: breadcrumbs showing current route and ability to easily go back. 
-				1. Should not show 'app'. 
-				2. Should use shadcn breadcrumbs component
-				3. Should use ChevronRight icon for arrows
-				4. Example (if at app/personal/readings/new-reading): Personal > Readings > New Reading
-		2. Middle section: Page title
-			1. Will only appear when viewing a page that displays a single doc with a name/id (e.g. viewing a single reading or creating a new reading, etc.)
-			2. Do NOT try and implement any complex logic for this yet. User will manually create this logic later. For now just include placeholder div.
-		3. Right section: New X Button
-			1. Should be a shadcn button of primary variant
-			2. Should trigger a dropdown menu when clicked showing three options (to the right of each text option should be an icon as show below in parentheses): 
-				1. New Reading (LibraryIcon)
-				2. New Spread (Card01Icon)
-				3. New Interpretation (Prism)
-			3. Do not yet create any action for when an option is pressed. 
+### ~~1.2.3_App-Topbar~~
+~~1. Create app-topbar.tsx component in components/app folder~~
+	~~1. This component should be present for all /app routes and should have three sections (horizontal flex with justify-between to space out):~~
+		~~1. Left section: 2 sections (flex with gap-2)~~
+			~~1. Left section: Sidebar toggle~~
+				~~1. Should use PanelLeftCloseIcon or PanelLeftOpenIcon depending on whether sidebar is open or closed.~~
+			~~2. Right section: breadcrumbs showing current route and ability to easily go back.~~ 
+				~~1. Should not show 'app'.~~ 
+				~~2. Should use shadcn breadcrumbs component~~
+				~~3. Should use ChevronRight icon for arrows~~
+				~~4. Example (if at app/personal/readings/new-reading): Personal > Readings > New Reading~~
+		~~2. Middle section: Page title~~
+			~~1. Will only appear when viewing a page that displays a single doc with a name/id (e.g. viewing a single reading or creating a new reading, etc.)~~
+			~~2. Do NOT try and implement any complex logic for this yet. User will manually create this logic later. For now just include placeholder div.~~
+		~~3. Right section: New X Button~~
+			~~1. Should be a shadcn button of primary variant~~
+			~~2. Should trigger a dropdown menu when clicked showing three options (to the right of each text option should be an icon as show below in parentheses):~~ 
+				~~1. New Reading (LibraryIcon)~~
+				~~2. New Spread (Card01Icon)~~
+				~~3. New Interpretation (Prism)~~
+			~~3. Do not yet create any action for when an option is pressed.~~ 
 
 
 
