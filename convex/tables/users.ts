@@ -1,7 +1,20 @@
 import { v, Validator } from "convex/values";
 import { internalMutation, query, QueryCtx } from "../_generated/server";
-import { UserJSON } from "@clerk/backend";
 import { userValidator } from "../schema";
+
+type ClerkEmailAddress = {
+  id: string;
+  email_address: string;
+};
+
+// Minimal Clerk user payload used by user webhooks.
+type ClerkUserWebhookData = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email_addresses: Array<ClerkEmailAddress>;
+  primary_email_address_id: string | null;
+};
 
 // Query to get the current authenticated user
 export const current = query({
@@ -17,7 +30,7 @@ export const current = query({
 
 // Internal mutation to create or update user from Clerk webhook
 export const upsertFromClerk = internalMutation({
-  args: { data: v.any() as Validator<UserJSON> }, // no runtime validation, trust Clerk
+  args: { data: v.any() as Validator<ClerkUserWebhookData> }, // no runtime validation, trust Clerk
   returns: v.null(),
   async handler(ctx, { data }) {
     // Get primary email
