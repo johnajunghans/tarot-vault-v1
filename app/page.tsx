@@ -1,144 +1,81 @@
 "use client";
 
-import {
-  Authenticated,
-  Unauthenticated,
-  useMutation,
-  useQuery,
-} from "convex/react";
-import { api } from "../convex/_generated/api";
-import Link from "next/link";
-import { SignUpButton } from "@clerk/nextjs";
-import { SignInButton } from "@clerk/nextjs";
-import { UserButton } from "@clerk/nextjs";
+import { Authenticated, Unauthenticated } from "convex/react";
+import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Login01Icon, UserAdd01Icon } from "hugeicons-react";
+import { Login01Icon, UserAdd01Icon, Wrench01Icon } from "hugeicons-react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   return (
     <>
-      <header className="sticky top-0 z-10 bg-background p-4 border-b-2 border-slate-200 dark:border-slate-800 flex flex-row justify-between items-center">
-        Convex + Next.js + Clerk
-        <UserButton />
+      <header className="sticky top-0 z-10 bg-background p-4 border-b-2 border-slate-200 dark:border-slate-800 flex items-center">
+        <div className="flex items-center justify-between w-full gap-3">
+          <h1 className="text-lg font-bold tracking-tight">
+            Tarot Vault
+          </h1>
+          <Unauthenticated>
+            <div className="flex items-center gap-2">
+              <SignInButton mode="modal">
+                <Button variant="outline">
+                  <Login01Icon />
+                  Sign in
+                </Button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <Button>
+                  <UserAdd01Icon />
+                  Sign up
+                </Button>
+              </SignUpButton>
+            </div>
+          </Unauthenticated>
+          <Authenticated>
+            <UserButton />
+          </Authenticated>
+        </div>
       </header>
       <main className="p-8 flex flex-col gap-8">
-        <h1 className="text-4xl font-bold text-center">
-          Convex + Next.js + Clerk
-        </h1>
         <Authenticated>
-          <Content />
+          <RedirectToApp />
         </Authenticated>
         <Unauthenticated>
-          <SignInForm />
+          <LandingContent />
         </Unauthenticated>
       </main>
     </>
   );
 }
 
-function SignInForm() {
-  return (
-    <div className="flex gap-2 w-96 mx-auto">
-      <SignInButton mode="modal">
-        <Button variant="outline">
-          <Login01Icon />
-          Sign in
-        </Button>
-      </SignInButton>
-      <SignUpButton mode="modal">
-        <Button>
-          <UserAdd01Icon />
-          Sign up
-        </Button>
-      </SignUpButton>
-    </div>
-  );
+function RedirectToApp() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/app");
+  }, [router]);
+
+  return null;
 }
 
-function Content() {
-
+function LandingContent() {
   return (
-    <div className="flex flex-col gap-8 max-w-lg mx-auto">
-     
-      <p>
-        Click the button below and open this page in another window - this data
-        is persisted in the Convex cloud database!
+    <div className="flex flex-col items-center gap-4 max-w-lg mx-auto text-center">
+       <p className="text-sm text-muted-foreground">
+        Sign in or create an account to continue.
       </p>
-      <p>
-        
+      {/* <h1 className="text-4xl font-bold">Tarot Vault</h1> */}
+      {/* <div
+          className="size-2 rounded-full bg-foreground/60 motion-safe:animate-pulse"
+          aria-hidden="true"
+        /> */}
+      <Wrench01Icon  
+        className="motion-safe:animate-pulse"
+        aria-hidden="true"
+      />
+      <p className="text-sm text-muted-foreground">
+        Site under construction.
       </p>
-      
-      <p>
-        Edit{" "}
-        <code className="text-sm font-bold font-mono bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded-md">
-          convex/myFunctions.ts
-        </code>{" "}
-        to change your backend
-      </p>
-      <p>
-        Edit{" "}
-        <code className="text-sm font-bold font-mono bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded-md">
-          app/page.tsx
-        </code>{" "}
-        to change your frontend
-      </p>
-      <p>
-        See the{" "}
-        <Link href="/server" className="underline hover:no-underline">
-          /server route
-        </Link>{" "}
-        for an example of loading data in a server component
-      </p>
-      <div className="flex flex-col">
-        <p className="text-lg font-bold">Useful resources:</p>
-        <div className="flex gap-2">
-          <div className="flex flex-col gap-2 w-1/2">
-            <ResourceCard
-              title="Convex docs"
-              description="Read comprehensive documentation for all Convex features."
-              href="https://docs.convex.dev/home"
-            />
-            <ResourceCard
-              title="Stack articles"
-              description="Learn about best practices, use cases, and more from a growing
-            collection of articles, videos, and walkthroughs."
-              href="https://www.typescriptlang.org/docs/handbook/2/basic-types.html"
-            />
-          </div>
-          <div className="flex flex-col gap-2 w-1/2">
-            <ResourceCard
-              title="Templates"
-              description="Browse our collection of templates to get started quickly."
-              href="https://www.convex.dev/templates"
-            />
-            <ResourceCard
-              title="Discord"
-              description="Join our developer community to ask questions, trade tips & tricks,
-            and show off your projects."
-              href="https://www.convex.dev/community"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ResourceCard({
-  title,
-  description,
-  href,
-}: {
-  title: string;
-  description: string;
-  href: string;
-}) {
-  return (
-    <div className="flex flex-col gap-2 bg-slate-200 dark:bg-slate-800 p-4 rounded-md h-28 overflow-auto">
-      <a href={href} className="text-sm underline hover:no-underline">
-        {title}
-      </a>
-      <p className="text-xs">{description}</p>
     </div>
   );
 }

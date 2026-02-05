@@ -1,5 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function App() {
-    return (
-        <div></div>
-    )
+  redirect("/app/personal");
 }

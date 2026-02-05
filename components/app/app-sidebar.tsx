@@ -2,6 +2,7 @@
 
 import { AdventureIcon, Cards01Icon, LibraryIcon, MoneySafeIcon } from "hugeicons-react";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, useSidebar } from "../ui/sidebar";
+import { UserButton } from "@clerk/clerk-react";
 
 export default function AppSidebar() {
 
@@ -49,7 +50,7 @@ export default function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
-
+                <UserButton />
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>

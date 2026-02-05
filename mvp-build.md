@@ -265,6 +265,19 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/04/2026 -- 1.2.1 -- GPT-5.2 Codex XHigh**
+Summary of actions taken:
+- Updated `app/layout.tsx` metadata title to "Tarot Vault"
+- Reworked `app/page.tsx` header with top-right site label and auth controls, plus signed-in redirect to `/app`
+- Removed default template content from `app/page.tsx` in favor of a minimal landing message
+- Added "site being built" copy and a simple pulse animation on the landing page
+- Redirected `/app` to `/app/personal` in `app/app/page.tsx`
+- Installed a subset of shadcn/ui components (avatar, badge, breadcrumb, card, collapsible, dropdown-menu, empty, label, popover, progress, radio-group, resizable, scroll-area, select, sonner, spinner, switch); remaining installs deferred to user
+
+Future considerations/recommendations/warnings:
+- Finish installing remaining shadcn/ui components from 0.2.1.1.2 (user to complete)
+- `date-picker` is missing from the base-nova registry and may need a manual implementation
+
 **02/04/2026 -- 1.1.5 -- Claude 4.5 Opus**
 Summary of actions taken:
 - Created comprehensive Vitest test infrastructure for Convex functions:
@@ -430,7 +443,7 @@ Future considerations/recommendations/warnings:
 - Consider adding index on readings.starred alone if filtering starred readings without userId becomes needed
 
 # 1_Build Plan
-## 1.1_Database & Auth Setup
+## ~~1.1_Database & Auth Setup~~
 ### ~~1.1.1_Create Database Tables~~
 ~~1. Create the database tables (found in 0.2.2.1.1) in /convex/schema.ts~~
 ~~2. Create indexes for all tables~~
@@ -460,11 +473,58 @@ Future considerations/recommendations/warnings:
 			~~1. get interpretations by 'readingId' (foreign key)~~
 			~~2. get interpretations by 'source' (either 'self' or 'ai')~~
 
-### 1.1.4_Code Review
+~~### 1.1.4_Code Review~~
 	1. Review all code written in 1.1.1 - 1.1.3 and fix any major bugs or vulnerabilities.
-### 1.1.5_Create Convex Tests
+~~### 1.1.5_Create Convex Tests~~
 	1. Follow instructions and examples at [Convex Tests](https://docs.convex.dev/testing/convex-test) for writing tests and create one test for each table.
 ## 1.2_Frontend Setup
+*Create placeholder landing page and main components shared by all routes on app.*
+### ~~1.2.1_Setup~~
+~~1. Update /app/layout.tsx in the following ways~~
+	~~1. Update site title~~
+~~2. Update /app/page.tsx in the following ways~~
+	~~1. Move signin/signup buttons to top right of topbar~~
+	~~2. Add site name to top right of topbar~~
+	~~3. Route to /app when user is signed in~~
+	~~4. For now, /app should route to /app/personal~~
+~~3. Install all shadcn components listed in 0.2.1.1.2~~
+### 1.2.2_App-Sidebar
+1. Complete app-sidebar.tsx component. There should be three sections: header, content, and footer.
+	1. Header: mostly already created
+		1. Changes to make
+			1. Should route to /app when clicked
+	2. Content
+		1. Already includes:
+			1. Personal group label that routes to /app/personal
+			2. Menu group for personal with buttons for readings and spreads
+		2. Issues to fix
+			1. When sidebar is collapsed, spreads icon blocks button being clicked on (mouse has to be carefully pointed at button space around icon to actually click link)
+			2. Tooltips do not show for readings and spreads when sidebar is collapsed
+		3. Changes to make
+			1. Add Interpretations button in personal menu group with Prism icon
+			2. Add Clerk's UserButton component to button of footer
+			3. Add button for settings using Settings01Icon. This should not trigger anything yet. 
+### 1.2.3_App-Topbar
+1. Create app-topbar.tsx component in components/app folder
+	1. This component should be present for all /app routes and should have three sections (horizontal flex with justify-between to space out):
+		1. Left section: 2 sections (flex with gap-2)
+			1. Left section: Sidebar toggle
+				1. Should use PanelLeftCloseIcon or PanelLeftOpenIcon depending on whether sidebar is open or closed.
+			2. Right section: breadcrumbs showing current route and ability to easily go back. 
+				1. Should not show 'app'. 
+				2. Should use shadcn breadcrumbs component
+				3. Should use ChevronRight icon for arrows
+				4. Example (if at app/personal/readings/new-reading): Personal > Readings > New Reading
+		2. Middle section: Page title
+			1. Will only appear when viewing a page that displays a single doc with a name/id (e.g. viewing a single reading or creating a new reading, etc.)
+			2. Do NOT try and implement any complex logic for this yet. User will manually create this logic later. For now just include placeholder div.
+		3. Right section: New X Button
+			1. Should be a shadcn button of primary variant
+			2. Should trigger a dropdown menu when clicked showing three options (to the right of each text option should be an icon as show below in parentheses): 
+				1. New Reading (LibraryIcon)
+				2. New Spread (Card01Icon)
+				3. New Interpretation (Prism)
+			3. Do not yet create any action for when an option is pressed. 
 
 
 
