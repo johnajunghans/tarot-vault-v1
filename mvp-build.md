@@ -265,6 +265,45 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/05/2026 -- 1.2.4 -- Claude 4.5 Haiku**
+Summary of actions taken:
+- **Complete landing page redesign** from barebones placeholder to production-grade sales/marketing page:
+  - Created hero section with centered sacred-geometry star SVG (rotating 180s), ambient gold glow, and staggered fade-in animations
+  - Implemented fixed navbar with diamond brand mark, sign-in/sign-up buttons, and scroll-aware styling
+  - Added Feature Cards section (Readings, Spreads, Interpretations) with icon backgrounds and hover effects
+  - Added How It Works section (Record → Reflect → Reveal) with numbered steps and gold-bordered indicators
+  - Added final CTA section and minimal footer
+  - All sections separated by diamond-motif dividers; smooth scroll behavior with motion-preference respect
+- **Global color palette redesign** (`app/globals.css`):
+  - Light mode: warm parchment cream (`#faf7f0`) background with dark warm text, dark gold primary (`#8b6914`)
+  - Dark mode: candlelit charcoal (`#0a0908`) background with cream text, bright gold primary (`#c4a35a`)
+  - Added custom Tailwind theme variables: `--gold`, `--gold-muted` registered as usable color tokens
+  - Added four custom CSS animations: `fade-up`, `fade-in`, `rotate-slow`, `pulse-glow`
+  - All animations gracefully disabled for `prefers-reduced-motion` users
+- **App sidebar refinement** (`components/app/app-sidebar.tsx`):
+  - Replaced MoneySafeIcon with rotating gold diamond motif matching landing page aesthetic
+  - Added active route detection via `usePathname()` with visual feedback on `SidebarMenuButton`
+  - Improved section labels with uppercase, letter-spaced styling for editorial feel
+  - Changed animation approach: opacity transitions instead of scale for smoother behavior
+  - Added subtle "Coming soon" italic label for future Collective section
+- **App topbar refinement** (`components/app/app-topbar.tsx`):
+  - Added semi-transparent background with backdrop blur for refined appearance
+  - Softened border color and added hover transitions on toggle icon
+  - Consistent spacing in dropdown menu items with muted icon styling
+  - All existing functionality (breadcrumbs, "New" dropdown) preserved and enhanced
+- **Updated root layout metadata** (`app/layout.tsx`):
+  - Changed description from generic to brand-specific: "A digital sanctuary for the cultivation of insight through tarot."
+
+Future considerations/recommendations/warnings:
+- Landing page is fully responsive (mobile-first design with Tailwind breakpoints)
+- All animations respect reduced-motion preferences for accessibility
+- Sacred-geometry star is pure SVG (lightweight, scalable, no external assets)
+- Gold color is now a core design token; use `text-gold`, `bg-gold`, `border-gold/30` etc. throughout the app
+- Consider future expansions to landing page: testimonials section, pricing (if tier-based), FAQ, blog link
+- The sidebar active-state styling uses `isActive` prop; ensure new routes at `/app/personal/*` are properly detected
+- Hero animations use staggered delays; adjust `animationDelay` values if timing feels off
+- Consider adding "Features" section content expansion (currently placeholder-friendly with detailed descriptions)
+
 **02/04/2026 -- 1.2.3 -- GPT-5.2 Codex XHigh**
 Summary of actions taken:
 - Added `app-topbar.tsx` with sidebar toggle, breadcrumb navigation, and a New dropdown

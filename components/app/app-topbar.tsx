@@ -25,7 +25,7 @@ import {
   PanelLeftOpenIcon,
   ArrowRight01Icon,
   ConstellationIcon,
-  ArrowDown01Icon
+  ArrowDown01Icon,
 } from "hugeicons-react"
 
 function formatSegment(segment: string) {
@@ -54,17 +54,16 @@ export default function AppTopbar() {
   })
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b bg-background px-4 py-3">
-
+    <header className="flex items-center justify-between gap-4 border-b border-border/60 bg-background/80 backdrop-blur-sm px-4 py-3">
       {/* Left Section */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
           onClick={toggleSidebar}
           aria-label="Toggle sidebar"
-          className="shadow-none"
+          className="shadow-none text-muted-foreground hover:text-foreground"
         >
           {isOpen ? (
             <PanelLeftOpenIcon strokeWidth={1.5} />
@@ -80,7 +79,9 @@ export default function AppTopbar() {
                   {crumb.isLast ? (
                     <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink href={crumb.href}>{crumb.label}</BreadcrumbLink>
+                    <BreadcrumbLink href={crumb.href}>
+                      {crumb.label}
+                    </BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
                 {!crumb.isLast && (
@@ -94,7 +95,7 @@ export default function AppTopbar() {
         </Breadcrumb>
       </div>
 
-      {/* Middle Section */}
+      {/* Spacer */}
       <div className="flex min-h-8 flex-1 items-center justify-center" />
 
       {/* Right Section */}
@@ -108,17 +109,17 @@ export default function AppTopbar() {
             <ArrowDown01Icon />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem className="justify-between">
+            <DropdownMenuItem className="justify-between gap-8">
               <span>Reading</span>
-              <LibraryIcon strokeWidth={1.25} className="ml-auto" />
+              <LibraryIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
             </DropdownMenuItem>
-            <DropdownMenuItem className="justify-between">
+            <DropdownMenuItem className="justify-between gap-8">
               <span>Spread</span>
-              <Cards01Icon strokeWidth={1.25} className="ml-auto" />
+              <Cards01Icon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
             </DropdownMenuItem>
-            <DropdownMenuItem className="justify-between">
+            <DropdownMenuItem className="justify-between gap-8">
               <span>Interpretation</span>
-              <ConstellationIcon strokeWidth={1.25} className="ml-auto" />
+              <ConstellationIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
