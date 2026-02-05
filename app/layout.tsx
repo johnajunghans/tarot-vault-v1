@@ -3,6 +3,7 @@ import { Philosopher, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const philosopher = Philosopher({
   weight: ["400", "700"],
@@ -34,7 +35,14 @@ export default function RootLayout({
         className={`${philosopher.variable} ${philosopher.className} ${geistMono.variable} antialiased`}
       >
         <ClerkProvider dynamic>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <ConvexClientProvider>{children}</ConvexClientProvider>
+        </ThemeProvider>
         </ClerkProvider>
       </body>
     </html>

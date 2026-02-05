@@ -265,6 +265,17 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/04/2026 -- 1.2.2 -- GPT-5.2 Codex XHigh**
+Summary of actions taken:
+- Made the sidebar header link to `/app`
+- Rebuilt personal menu buttons with tooltips, router navigation, and an Interpretations entry
+- Normalized personal route paths and icon sizing for collapsed state usability
+- Added a Settings button in the footer (no action yet)
+- Prevented collapsed group labels from blocking the last menu item (pointer-events fix)
+
+Future considerations/recommendations/warnings:
+- ESLint reports a pre-existing unused import warning in `convex/tests/spreads.test.ts`
+
 **02/04/2026 -- 1.2.1 -- GPT-5.2 Codex XHigh**
 Summary of actions taken:
 - Updated `app/layout.tsx` metadata title to "Tarot Vault"
@@ -488,22 +499,22 @@ Future considerations/recommendations/warnings:
 	~~3. Route to /app when user is signed in~~
 	~~4. For now, /app should route to /app/personal~~
 ~~3. Install all shadcn components listed in 0.2.1.1.2~~
-### 1.2.2_App-Sidebar
-1. Complete app-sidebar.tsx component. There should be three sections: header, content, and footer.
-	1. Header: mostly already created
-		1. Changes to make
-			1. Should route to /app when clicked
-	2. Content
-		1. Already includes:
-			1. Personal group label that routes to /app/personal
-			2. Menu group for personal with buttons for readings and spreads
-		2. Issues to fix
-			1. When sidebar is collapsed, spreads icon blocks button being clicked on (mouse has to be carefully pointed at button space around icon to actually click link)
-			2. Tooltips do not show for readings and spreads when sidebar is collapsed
-		3. Changes to make
-			1. Add Interpretations button in personal menu group with Prism icon
-			2. Add Clerk's UserButton component to button of footer
-			3. Add button for settings using Settings01Icon. This should not trigger anything yet. 
+### ~~1.2.2_App-Sidebar~~
+~~1. Complete app-sidebar.tsx component. There should be three sections: header, content, and footer.~~
+	~~1. Header: mostly already created~~
+		~~1. Changes to make~~
+			~~1. Should route to /app when clicked~~
+	~~2. Content~~
+		~~1. Already includes:~~
+			~~1. Personal group label that routes to /app/personal~~
+			~~2. Menu group for personal with buttons for readings and spreads~~
+		~~2. Issues to fix~~
+			~~1. When sidebar is collapsed, spreads icon blocks button being clicked on (mouse has to be carefully pointed at button space around icon to actually click link)~~
+			~~2. Tooltips do not show for readings and spreads when sidebar is collapsed~~
+		~~3. Changes to make~~
+			~~1. Add Interpretations button in personal menu group with Prism icon~~
+			~~2. Add Clerk's UserButton component to button of footer (already done)~~
+			~~3. Add button for settings using Settings01Icon. This should not trigger anything yet.~~ 
 ### 1.2.3_App-Topbar
 1. Create app-topbar.tsx component in components/app folder
 	1. This component should be present for all /app routes and should have three sections (horizontal flex with justify-between to space out):

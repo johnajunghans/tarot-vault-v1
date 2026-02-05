@@ -1,58 +1,152 @@
 "use client"
 
-import { AdventureIcon, Cards01Icon, LibraryIcon, MoneySafeIcon } from "hugeicons-react";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, useSidebar } from "../ui/sidebar";
-import { UserButton } from "@clerk/clerk-react";
+import {
+  Cards01Icon,
+  ConstellationIcon,
+  LibraryIcon,
+  MoneySafeIcon,
+  Moon01Icon,
+  NeuralNetworkIcon,
+  Prism01Icon,
+  Settings01Icon,
+  Sun01Icon,
+} from "hugeicons-react"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
+} from "../ui/sidebar"
+import { UserButton } from "@clerk/clerk-react"
+import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 
-export default function AppSidebar() {
-
-    const { open } = useSidebar()
-
-    const personalRoutes = [
+const routes = {
+    personal: [
         {
             name: "Readings",
-            url: "app/personal/readings",
-            icon: <LibraryIcon size={20} />
+            url: "/app/personal/readings",
+            icon: LibraryIcon,
         },
         {
             name: "Spreads",
-            url: "app/personal/spreads",
-            icon: <Cards01Icon />
-        }
-    ]
+            url: "/app/personal/spreads",
+            icon: Cards01Icon,
+        },
+        {
+            name: "Interpretations",
+            url: "/app/personal/interpretations",
+            icon: ConstellationIcon,
+        },
+    ],
+    // collectiveRoutes: []
+}
 
-    return (
-        <Sidebar collapsible="icon">
-            <SidebarHeader>
-                <div className="flex items-center justify-start gap-2 pl-[11px]">
-                    <MoneySafeIcon strokeWidth={2} className="shrink-0 text-violet-600" />
-                    <span className={`text-nowrap ${open ? "scale-100" : "scale-0"} duration-150 font-bold text-violet-600`}>Tarot Vault</span>
-                </div>
-            </SidebarHeader>
-            <SidebarContent>
-                <SidebarGroup className="pl-[13px]">
-                    <SidebarGroupLabel className="hover:underline"><a href="/app/personal">Personal</a></SidebarGroupLabel>
-                    <SidebarMenu>
-                        {personalRoutes.map(route => (
-                            <SidebarMenuItem key={route.name}>
-                                <SidebarMenuButton render={
-                                    <a href={route.url}>
-                                        {route.icon}
-                                        <span>{route.name}</span>
-                                    </a>
-                                } />
-                            </SidebarMenuItem>
-                        ))}
-                    </SidebarMenu>
-                </SidebarGroup>
-                <SidebarGroup>
-                    <SidebarGroupLabel>Collective (coming soon)</SidebarGroupLabel>
-                </SidebarGroup>
-            </SidebarContent>
-            <SidebarFooter>
-                <UserButton />
-            </SidebarFooter>
-            <SidebarRail />
-        </Sidebar>
-    )
+export default function AppSidebar() {
+    const { open } = useSidebar()
+    const router = useRouter()
+    const { theme, setTheme } = useTheme()
+
+    function toggleTheme() {
+        setTheme(theme === "light" ? "dark" : "light")
+    }  
+
+  return (
+    <Sidebar collapsible="icon">
+
+      {/* Header */}
+      <SidebarHeader>
+        <button
+          type="button"
+          onClick={() => router.push("/app")}
+          className="flex items-center justify-start gap-2 pl-2 text-left"
+        >
+          <MoneySafeIcon size={32} strokeWidth={1.5} className="shrink-0 text-violet-600" />
+          <span
+            className={`text-nowrap ${open ? "scale-100" : "scale-0"} duration-150 font-bold text-violet-600`}
+          >
+            Tarot Vault
+          </span>
+        </button>
+      </SidebarHeader>
+
+      {/* Content */}
+      <SidebarContent>
+
+        {/* Personal */}
+        <SidebarGroup className="pl-3">
+          <SidebarGroupLabel className="hover:underline group-data-[collapsible=icon]:pointer-events-none">
+            <a href="/app/personal">Personal</a>
+          </SidebarGroupLabel>
+          <SidebarMenu>
+            {routes.personal.map((route) => (
+              <SidebarMenuItem key={route.name}>
+                <SidebarMenuButton
+                  type="button"
+                  tooltip={route.name}
+                  onClick={() => router.push(route.url)}
+                >
+                  <route.icon strokeWidth={1.25} />
+                  <span className={`${open ? "scale-100" : "scale-0"} duration-150`}>{route.name}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+
+        {/* Collective */}
+        <SidebarGroup className="pl-3">
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none">Collective (coming soon)</SidebarGroupLabel>
+        </SidebarGroup>
+      </SidebarContent>
+
+      {/* Footer */}
+      <SidebarFooter className="">
+        <SidebarMenu className="translate-x-1">
+          <SidebarMenuItem>
+            <SidebarMenuButton type="button" tooltip="Settings">
+              <Settings01Icon strokeWidth={1.25} />
+              <span className={`${open ? "scale-100" : "scale-0"} duration-150`}>Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+                type="button" 
+                tooltip="Theme"
+                onClick={toggleTheme}
+            >
+                {theme === "light" ? <Sun01Icon /> : <Moon01Icon />}
+                <span className={`${open ? "scale-100" : "scale-0"} duration-150`}>Theme</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <div className="translate-x-[10px]">
+            <UserButton 
+                showName={open}
+                appearance={{
+                    elements: {
+                        userButtonBox: {
+                            flexDirection: 'row-reverse',
+                            gap: '2px'
+                        },
+                        userButtonOuterIdentifier: {
+                            scale: open ? "1" : "0",
+                            transitionDuration: "150ms",
+                            textWrap: "nowrap"
+                        }
+                    },
+                }}
+            />
+        </div>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  )
 }
