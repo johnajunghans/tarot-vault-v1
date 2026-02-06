@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description:
     "A digital sanctuary for the cultivation of insight through tarot.",
   icons: {
-    icon: "/convex.svg",
+    icon: "/diamond.svg",
   },
 };
 

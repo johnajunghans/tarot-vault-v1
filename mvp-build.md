@@ -265,7 +265,7 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
-**02/05/2026 -- 1.2.4 -- Claude 4.5 Haiku**
+**02/05/2026 -- Claude 4.6 Opus (with frontend-resign skill)**
 Summary of actions taken:
 - **Complete landing page redesign** from barebones placeholder to production-grade sales/marketing page:
   - Created hero section with centered sacred-geometry star SVG (rotating 180s), ambient gold glow, and staggered fade-in animations

@@ -205,3 +205,26 @@
     opacity: 1 !important;
   }
 }
+
+
+
+/* Standard implementation (Firefox, Modern Chrome/Edge) */
+* {
+  scrollbar-color: var(--border) transparent; /* thumb | track */
+  scrollbar-width: thin;
+}
+
+/* WebKit implementation (Chrome, Safari, older Edge) */
+::-webkit-scrollbar {
+  width: 8px;              /* Width of the vertical scrollbar */
+  height: 8px;             /* Height of the horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;  /* Removes the background/track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;      /* Rounds the thumb */
+}
