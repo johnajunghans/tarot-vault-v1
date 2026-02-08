@@ -18,6 +18,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useSidebar } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { useTopbarStore } from "@/stores/topbar"
 import {
   Cards01Icon,
   LibraryIcon,
@@ -39,6 +42,7 @@ export default function AppTopbar() {
   const pathname = usePathname()
   const { toggleSidebar, open, openMobile, isMobile } = useSidebar()
   const isOpen = isMobile ? openMobile : open
+  const { title, rightButtonGroup } = useTopbarStore()
 
   const rawSegments = pathname.split("/").filter(Boolean)
   const appIndex = rawSegments.indexOf("app")
@@ -95,34 +99,78 @@ export default function AppTopbar() {
         </Breadcrumb>
       </div>
 
-      {/* Spacer */}
-      <div className="flex min-h-8 flex-1 items-center justify-center" />
+      {/* Center Section - Title or Spacer */}
+      <div className="flex min-h-8 flex-1 items-center justify-center gap-3">
+        {title && (
+          <>
+            {/* Left: Title Name */}
+            <span className="font-bold text-foreground">{title.name}</span>
+
+            {/* Middle: Additional Info (optional) */}
+            {title.addInfo && (
+              <>
+                <Separator orientation="vertical" className="h-4" />
+                <span className="text-muted-foreground">{title.addInfo}</span>
+              </>
+            )}
+
+            {/* Right: Draft Badge (optional) */}
+            {title.draft && (
+              <Badge variant="secondary">draft</Badge>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Right Section */}
-      <div className="flex items-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            type="button"
-            className={buttonVariants({ variant: "default" })}
-          >
-            <span>New</span>
-            <ArrowDown01Icon />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-auto">
-            <DropdownMenuItem className="justify-between gap-8">
-              <span>Reading</span>
-              <LibraryIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
-            </DropdownMenuItem>
-            <DropdownMenuItem className="justify-between gap-8">
-              <span>Spread</span>
-              <Cards01Icon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
-            </DropdownMenuItem>
-            <DropdownMenuItem className="justify-between gap-8">
-              <span>Interpretation</span>
-              <ConstellationIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex items-center gap-2">
+        {rightButtonGroup ? (
+          <>
+            {/* Secondary Button (optional) */}
+            {rightButtonGroup.secondaryButton && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={rightButtonGroup.secondaryButton.action}
+              >
+                {rightButtonGroup.secondaryButton.text}
+              </Button>
+            )}
+
+            {/* Primary Button */}
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => rightButtonGroup.primaryButton.action(undefined)}
+            >
+              {rightButtonGroup.primaryButton.text}
+            </Button>
+          </>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              type="button"
+              className={buttonVariants({ variant: "default" })}
+            >
+              <span>New</span>
+              <ArrowDown01Icon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-auto">
+              <DropdownMenuItem className="justify-between gap-8">
+                <span>Reading</span>
+                <LibraryIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
+              </DropdownMenuItem>
+              <DropdownMenuItem className="justify-between gap-8">
+                <span>Spread</span>
+                <Cards01Icon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
+              </DropdownMenuItem>
+              <DropdownMenuItem className="justify-between gap-8">
+                <span>Interpretation</span>
+                <ConstellationIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </header>
   )

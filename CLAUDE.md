@@ -258,3 +258,35 @@ await createReading({ question: "...", spread: { id, version: 1 } });
 - Test files must use `edge-runtime` environment (configured in `vitest.config.ts`)
 - All Convex functions must include authentication checks via `getCurrentUserOrThrow()`
 - Route protection is handled by `proxy.ts` middleware for `/app/*` routes
+
+## MVP Build Protocol
+
+This protocol is used in conjunction with `mvp-build.md` to structure development work into discrete, testable steps.
+
+### How to Use
+
+When you have a step to complete (e.g., "Complete step 1.1.1"):
+
+1. **Planning**: Enter plan mode to devise an implementation strategy
+2. **Implementation**: Execute the plan upon user confirmation following this workflow:
+   - Execute the task
+   - Run tests with `npm run test:once`
+   - If all tests pass, proceed to step 3; if not, debug and rerun until passing
+   - Recommend any manual user actions (e.g., environment variable updates in Convex dashboard)
+   - Create an entry in the completion log (section 0.5.2 of `mvp-build.md`)
+3. **Follow-up**: Await potential follow-up prompts
+   - If the user provides additional feedback, repeat step 2 and update the completion log entry
+
+### Key Principles
+
+- **Test-First Validation**: All steps must pass their tests before being marked complete
+- **Atomic Changes**: Each step should be a self-contained, testable unit of work
+- **Manual Actions Logged**: Any actions requiring user intervention are documented
+- **Progressive Completion**: Completion log tracks all finished steps with timestamps and notes
+
+### Referencing mvp-build.md
+
+The `mvp-build.md` file contains:
+- **0.5.1**: Example completion log entry format
+- **0.5.2**: Actual completion log (updated as steps are finished)
+- **Sections 1+**: Individual step definitions with requirements and acceptance criteria

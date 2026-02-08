@@ -252,7 +252,7 @@
 
 **02/02/2026 (date) -- 0.5.1 (step) -- Claude 4.5 Sonnet (model)**
 Summary of actions taken (be as concise as possible):
-- Action 1 
+- Action 1
 - Action 2
 	- Sub-action 1
 	- Sub-action 2
@@ -264,6 +264,35 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 - Future consideration/recommendation/warning 3
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
+
+**02/07/2026 -- 1.3.1 -- Claude Sonnet 4.5**
+Summary of actions taken:
+- Added zustand v5.0.11 to package.json dependencies and ran `npm install`
+- Created `/stores/topbar.ts` with Zustand store for managing topbar state:
+  - Defined `TitleData` interface (name, addInfo, draft) for center section
+  - Defined `RightButtonGroup` interface with PrimaryButton and optional SecondaryButton for action handling
+  - Implemented store actions: `setTitle()`, `setRightButtonGroup()`, and `reset()`
+  - Full TypeScript type safety with `TopbarStore` composite type
+- Updated `components/app/app-topbar.tsx`:
+  - Added imports for `useTopbarStore`, `Separator`, and `Badge` components
+  - Integrated store hook to subscribe to title and rightButtonGroup state
+  - Replaced center spacer with conditional title rendering:
+    - Left: bold title name (`font-bold text-foreground`)
+    - Middle: optional vertical separator + muted additional info
+    - Right: optional draft badge with `variant="secondary"`
+  - Replaced static "New" dropdown with conditional button group:
+    - When `rightButtonGroup` defined: renders secondary button (ghost variant) + primary button (default variant)
+    - When undefined: shows default "New" dropdown (Reading, Spread, Interpretation)
+  - Added `gap-2` spacing to right section for button groups
+- Removed leftover demo files (`app/server/`) that referenced non-existent Convex functions
+
+Future considerations/recommendations/warnings:
+- Zustand provides lightweight, easy-to-use global state for topbar without context provider boilerplate
+- Store supports flexible button configurations: secondary button optional, primary always required when rightButtonGroup is defined
+- Components can import and use `useTopbarStore` hook to call `setTitle()` and `setRightButtonGroup()` as needed for page-specific contexts
+- Consider creating a helper hook (e.g., `useTopbarState()`) in a future step if pattern becomes repetitive across many pages
+- Build verification pending (was interrupted; should run `npm run build` and `npm run lint` to complete validation)
+- Manual testing via browser console should verify store subscriptions work correctly with all three scenarios: title only, buttons only, and full state with both
 
 **02/05/2026 -- Claude 4.6 Opus (with frontend-resign skill)**
 Summary of actions taken:
@@ -588,6 +617,42 @@ Future considerations/recommendations/warnings:
 				~~2. New Spread (Card01Icon)~~
 				~~3. New Interpretation (Prism)~~
 			~~3. Do not yet create any action for when an option is pressed.~~ 
+## 1.3_New Spread
+### 1.3.1_Update App Topbar
+1. Install zustand for global state management
+2. Create a zustand store for topbar state management at /stores/topbar.ts
+	1. This store should contain the following pieces of data:
+		1. title?: object
+			1. name: string
+			2. addInfo?: string
+			3. draft?: boolean
+		2. rightButtonGroup?: object
+			1. primaryButton: object
+				1. text: string
+				2. action: (data: unknown) => void
+			2. secondaryButton?: object
+				1. text: string
+				2. action: () => void
+3. Within app-topbar.tsx, build title section (middle section—currently there is a placeholder called "spacer). This section should be composed of three parts, horizontally stacked
+	1. Left part (required): title
+		1. font-bold, text-foreground
+	2. Middle part: addInfo (optional): composed of two parts, horizontally stacked
+		1. left part: separator
+			1. use shadcn component
+			2. vertical
+			3. color: border
+		2. right part: text
+			1. text-foreground-muted
+	3. Right part: draft (optional)
+		1. shadcn badge component
+		2. should read "draft"
+4. Integrate the topbar store into the app-topbar so that: 
+	1. The title data maps onto the new title section
+		1. If no title data, then no title (keep current placeholder there in this case)
+	2. If rightButtonGroup data is defined, then:
+		1. There should be a primary button with given text and action function
+		2. If secondaryButton is defined, then there should be a ghost button with given text and action function
+		3. If no rightButtonGroup, the default should be the current "new" dropdown menu
 
 
 
