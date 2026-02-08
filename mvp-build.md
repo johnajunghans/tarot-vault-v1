@@ -265,6 +265,42 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/07/2026 -- 1.3.2 -- Claude Sonnet 4.5**
+Summary of actions taken:
+- Installed react-hook-form, zod, and @hookform/resolvers for form validation
+- Installed shadcn/ui field component using `npx shadcn@latest add field`
+- Created `/app/app/personal/spreads/new-spread/page.tsx` with form-based spread creation interface:
+  - Defined Zod validation schema with three fields:
+    - `name`: string, min 3 chars, max 50 chars, required
+    - `numberOfCards`: number, integer, min 1, max 78, required
+    - `description`: string, max 1000 chars, optional
+  - Integrated react-hook-form with Zod resolver for client-side validation
+  - Set up default form values with `numberOfCards: 1`
+  - Implemented two-column layout:
+    - Left panel (1/3 width): Full-height form panel with "Spread Settings" title and three vertically-stacked form fields
+    - Right panel (2/3 width): Empty placeholder for future canvas/visualization work
+  - Integrated with topbar store:
+    - Initial mount: Sets title "New Spread" with addInfo "1-Card" and draft badge
+    - Sets right button group with "Save Spread" (primary) and "Discard" (secondary) buttons
+    - Cleanup: Resets topbar store when navigating away
+  - Form field changes trigger real-time topbar updates:
+    - Name field updates topbar title
+    - Number of cards updates topbar addInfo to show "{n}-Card" format
+  - Implemented action handlers:
+    - `handleDiscard`: Resets form and routes to `/app/personal/spreads`
+    - `handleSave`: Placeholder function for future implementation
+  - Used `valueAsNumber` option on number input field for proper numeric type handling
+- All tests pass (64 existing tests unaffected)
+- No linting errors in new page
+
+Future considerations/recommendations/warnings:
+- Save spread functionality is intentionally a placeholder - will be implemented in future step with Convex mutations
+- Right panel remains empty for future spread canvas/visualization features
+- Form validation is client-side only at this stage (server-side validation via Convex will be added when save is implemented)
+- Real-time topbar updates use form.watch() which provides reactive updates without excessive re-renders
+- The topbar cleanup in useEffect ensures state doesn't persist when navigating away from the page
+- Consider adding unsaved changes warning if user tries to navigate with dirty form in future enhancement
+
 **02/07/2026 -- 1.3.1 -- Claude Sonnet 4.5**
 Summary of actions taken:
 - Added zustand v5.0.11 to package.json dependencies and ran `npm install`
@@ -618,7 +654,7 @@ Future considerations/recommendations/warnings:
 				~~3. New Interpretation (Prism)~~
 			~~3. Do not yet create any action for when an option is pressed.~~ 
 ## 1.3_New Spread
-### 1.3.1_Update App Topbar
+### ~~1.3.1_Update App Topbar~~
 1. Install zustand for global state management
 2. Create a zustand store for topbar state management at /stores/topbar.ts
 	1. This store should contain the following pieces of data:
@@ -653,6 +689,31 @@ Future considerations/recommendations/warnings:
 		1. There should be a primary button with given text and action function
 		2. If secondaryButton is defined, then there should be a ghost button with given text and action function
 		3. If no rightButtonGroup, the default should be the current "new" dropdown menu
+### 1.3.2_Create New Spread Page
+1. Create new page at /app/app/personal/spreads/new-spread/page.tsx
+2. There should be two horizontally stacked sections on this page.
+	1. Left section should be 1/3 of the page width while the right section should be the remaining width. Only left section will be worked with for now.
+	2. Left section will be a panel containing form fields. Before beginnging to construct the following form fields, install react-hook-form and zod to build client-side validated form fields (in conjunction with the shadcn Field component which is already installed).
+	3. To start, please build the following three form fields which should be vertically stacked
+		1. Name: input, type=text
+			1. min=3, max=50
+		2. Number of Cards: input, type=number
+			1. min=1, max=78, integer only
+		3. Description, textarea, optional
+	4. This left panel should have the title: Spread Settings
+3. The topbar store should be set on page load in the following way
+	1. topbar rightButtonGroup should be set to:
+		primaryButton: { text: "Save Spread", action: (data: {}) => {} (placeholder) }
+		secondaryButton: { text: "Discard", action: handleDiscard }
+		1. `handleDiscard` function should:
+			1. Reset the form
+			2. Route the page to /app/personal/spreads
+	2. topbar title name should be set to "New Spread"
+	3. Topbar title draft should be set to true
+4. On name and numberOfCard field changes, the topbar title state should updated in the following way:
+	1. The name field should be bound to the topbar title name.
+	2. The number of cards should be bound to the topbar title addIndo as follows: `${numberOfCards}-Card`
+
 
 
 

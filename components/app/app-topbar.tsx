@@ -1,7 +1,7 @@
 "use client"
 
 import { Fragment } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -29,6 +29,7 @@ import {
   ArrowRight01Icon,
   ConstellationIcon,
   ArrowDown01Icon,
+  Menu01Icon,
 } from "hugeicons-react"
 
 function formatSegment(segment: string) {
@@ -43,6 +44,7 @@ export default function AppTopbar() {
   const { toggleSidebar, open, openMobile, isMobile } = useSidebar()
   const isOpen = isMobile ? openMobile : open
   const { title, rightButtonGroup } = useTopbarStore()
+  const router = useRouter()
 
   const rawSegments = pathname.split("/").filter(Boolean)
   const appIndex = rawSegments.indexOf("app")
@@ -69,11 +71,13 @@ export default function AppTopbar() {
           aria-label="Toggle sidebar"
           className="shadow-none text-muted-foreground hover:text-foreground"
         >
-          {isOpen ? (
-            <PanelLeftOpenIcon strokeWidth={1.5} />
-          ) : (
-            <PanelLeftCloseIcon strokeWidth={1.5} />
-          )}
+          {isMobile ? <Menu01Icon /> :
+            isOpen ? (
+              <PanelLeftOpenIcon strokeWidth={1.5} />
+            ) : (
+              <PanelLeftCloseIcon strokeWidth={1.5} />
+            )
+          }
         </Button>
         <Breadcrumb>
           <BreadcrumbList>
@@ -109,14 +113,14 @@ export default function AppTopbar() {
             {/* Middle: Additional Info (optional) */}
             {title.addInfo && (
               <>
-                <Separator orientation="vertical" className="h-4" />
+                <Separator orientation="vertical" />
                 <span className="text-muted-foreground">{title.addInfo}</span>
               </>
             )}
 
             {/* Right: Draft Badge (optional) */}
             {title.draft && (
-              <Badge variant="secondary">draft</Badge>
+              <Badge variant="secondary">DRAFT</Badge>
             )}
           </>
         )}
@@ -160,7 +164,10 @@ export default function AppTopbar() {
                 <span>Reading</span>
                 <LibraryIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
               </DropdownMenuItem>
-              <DropdownMenuItem className="justify-between gap-8">
+              <DropdownMenuItem 
+                className="justify-between gap-8"
+                onClick={() => router.push("/app/personal/spreads/new-spread")}
+              >
                 <span>Spread</span>
                 <Cards01Icon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
               </DropdownMenuItem>
