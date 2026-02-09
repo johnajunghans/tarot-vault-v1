@@ -653,7 +653,7 @@ Future considerations/recommendations/warnings:
 				~~2. New Spread (Card01Icon)~~
 				~~3. New Interpretation (Prism)~~
 			~~3. Do not yet create any action for when an option is pressed.~~ 
-## 1.3_New Spread
+## ~~1.3_New Spread~~
 ### ~~1.3.1_Update App Topbar~~
 1. Install zustand for global state management
 2. Create a zustand store for topbar state management at /stores/topbar.ts
@@ -689,7 +689,7 @@ Future considerations/recommendations/warnings:
 		1. There should be a primary button with given text and action function
 		2. If secondaryButton is defined, then there should be a ghost button with given text and action function
 		3. If no rightButtonGroup, the default should be the current "new" dropdown menu
-### 1.3.2_Create New Spread Page
+### ~~1.3.2_Create New Spread Page~~
 1. Create new page at /app/app/personal/spreads/new-spread/page.tsx
 2. There should be two horizontally stacked sections on this page.
 	1. Left section should be 1/3 of the page width while the right section should be the remaining width. Only left section will be worked with for now.
@@ -713,6 +713,32 @@ Future considerations/recommendations/warnings:
 4. On name and numberOfCard field changes, the topbar title state should updated in the following way:
 	1. The name field should be bound to the topbar title name.
 	2. The number of cards should be bound to the topbar title addIndo as follows: `${numberOfCards}-Card`
+### 1.3.3_Spread Canvas and Card
+1. Create /app/personal/spreads/canvas.tsx. Here are the overall specifications of this component:
+	1. This component will be integrated into the /new-spreads/page.tsx file, occupying the remainder of the page in addition to spread settings. 
+	2. This canvas will be built using SVG and will be a place where users can add and arrange tarot card slots to create their spread. 
+	3. The size of this canvas should be 1500x1500 px with scroll-auto so that it has its own scroll bars and does not cause the entire page to increase in either width or height. 
+	4. Users should be able to use their mouse/trackpad to scoll but should also be able to hold down the spacebar and move their mouse to scoll around in the canvas.
+		1. When spacebar is pressed, the mouse should change to the draghandle mode to indicate that dragging is being done.
+	5. There should be a grid on the canvas with each square unit measuring 15x15 px. The color of these grid lines should be `border/60`
+2. Create /app/personal/spreads/card.tsx. Here are the specifications of this component:
+	1. This component will be imported and used in the canvas.tsx component.
+	2. This component will be an svg rect element with a width of 90 and a height of 150 (the approximate aspect ratio of a standard tarot card).
+	3. This card should have a badge in the top left of the card showing its position number (positive, non-zero integer; indicates the order in which the cards should be drawn in the spread).
+	4. This card should have a text element in the center showing the name of the card. The default placeholder for this should be `Card-${position}`.
+	5. This card should have a background color of `gold/25` and a stroke color of `gold-muted`. The stroke should be dashed.
+3. The card.tsx and canvas.tsx components should work together in the following ways:
+	1. Cards should be able to be dragged around the canvas component. GSAP should be used to animate card dragging.
+		1. Dragging should not smooth but rather should snap onto grid lines. This means that the cards should always be perfectly lined up within a set of grid lines (since the grid lines are every 15px and the cards are 90 by 150 px). This also means that the x and y positions of the cards should only ever be multiples of 15 (inlcuding 0).
+		2. The number of cards on the grid should be bound to the existing `numberOfCard` variable in the /new-spread/page.tsx file. 
+			1. Because the default and minimum value of `numberOfCards` is 1, there should always be at least one card on the canvas. 
+			2. This first and default card will have a position value of 1 and its starting position on the canvas should be (15, 15). 
+			3. The second card added should have a position value of 2 and its starting position should be (120, 15). The starting position of each subsequent card should increase in x-offset by 105 (card width of 90 plus 15 for spacing) until card position #11 which should begin a new row. So, card #11 should be (15, 180). Each row should have up to 10 cards spaced by 15 px each. So, if a user wanted to make a spread with all of the cards, the starting configuration would be 7 rows of 10 cards, followed by an 8th row of 8 cards. These should fit confortably within the 1500 by 1500 canvas.
+			4. When the number of cards is decreased (i.e. the value of `numberOfCards` goes down), then cards should be removed starting with highest position numbers. So, if there are 10 cards in a spread and then the user decreases it to 8, the #9 and #10 cards should be removed.
+		3. While dragging a card, whenever its x or y offset aligns with another card (i.e when they line up), then a line should appear indicating to the user that the cards are lined up. So, if a user is trying to drag a card so that it is horizontally aligned with another card, lines should appear overtop of the grid lines, above and below the cards in question when the dragging card is properly aligned with the other card. The same should occur when vertically aligning cards, or when just one edge is lined up (e.g. the right edge of one card aligns with the left edge of another).
+2. Resources
+	1. Feel free to view /.resources/tarot-journal/canvas/spread-creation-canvas.tsx and /.resources/tarot-journal/canvas/draggable-card.tsx. These files contain a solution to this problem that seemed to mostly work. However, there were some issues with it. For example, the card positions were never whole numbers but rather were offset by 1.5 or so. This was, I think, because of the stroke, so ensure that you account for the width of the stroke to ensure that the cards' position are ALWAYS multiples of 15 (including 0) AND that the card fit perfectly in the grid lines (i.e. their final dimensions including stroke are 90 by 150).
+	2. While you may view this solution, you solution should be cleaner and better overall. Keep things as simple as possible and as clear as possible so it can be easily understood and maintained by humans. 
 
 
 
