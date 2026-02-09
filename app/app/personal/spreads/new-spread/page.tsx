@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PanelLeftIcon } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
+import SpreadCanvas from "../canvas";
+import { type CardPosition } from "../card";
 
 // Form validation schema
 const formSchema = z.object({
@@ -29,9 +31,22 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+// Generate starting positions for cards in a grid layout
+// All values are multiples of 15: x = 15 + col * 105, y = 15 + row * 165
+function generateCards(count: number): CardPosition[] {
+  const CARDS_PER_ROW = 10;
+  return Array.from({ length: count }, (_, i) => ({
+    position: i + 1,
+    name: "",
+    x: 15 + (i % CARDS_PER_ROW) * 105,
+    y: 15 + Math.floor(i / CARDS_PER_ROW) * 165,
+  }));
+}
+
 export default function NewSpreadPage() {
   const router = useRouter();
-  const [hideSettings, setHideSettings] = useState(false)
+  const [hideSettings, setHideSettings] = useState(false);
+  const [cards, setCards] = useState<CardPosition[]>(() => generateCards(1));
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<FormData>({
@@ -95,8 +110,46 @@ export default function NewSpreadPage() {
     return () => subscription.unsubscribe();
   }, [form]);
 
+  // Sync cards array when numberOfCards changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name !== "numberOfCards") return;
+      const count = value.numberOfCards;
+      if (count == null || count < 1 || count > 78) return;
+
+      setCards((prev) => {
+        if (count > prev.length) {
+          // Append new cards with calculated grid positions
+          const newCards = generateCards(count);
+          return [
+            ...prev,
+            ...newCards.slice(prev.length),
+          ];
+        } else if (count < prev.length) {
+          // Remove from the end
+          return prev.slice(0, count);
+        }
+        return prev;
+      });
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  // Update card position from canvas drag
+  const handlePositionChange = useCallback(
+    (position: number, x: number, y: number) => {
+      setCards((prev) =>
+        prev.map((card) =>
+          card.position === position ? { ...card, x, y } : card
+        )
+      );
+    },
+    []
+  );
+
   return (
-    <div className="flex h-full w-full relative">
+    <div className="flex flex-1 min-h-0 w-full relative">
 
       {/* Left Panel */}
       <div className={`flex min-w-[300px] ${hideSettings ? "absolute top-3 left-3 p-2 h-auto w-auto bg-sidebar border border-border rounded-lg shadow-md" : "h-full w-1/4 flex-col gap-4 p-4 border-r border-border/60"}`}>
@@ -167,8 +220,10 @@ export default function NewSpreadPage() {
             </form>}
       </div>
 
-      {/* Right Panel - Placeholder (2/3 width) */}
-      <div className="flex-[1_1_66.667%]" />
+      {/* Right Panel - Spread Canvas */}
+      <div className="flex-1 min-w-0 min-h-0">
+        <SpreadCanvas cards={cards} onPositionChange={handlePositionChange} />
+      </div>
     </div>
   );
 }

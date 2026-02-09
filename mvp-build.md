@@ -265,6 +265,39 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/08/2026 -- 1.3.3 -- Claude Opus 4.6**
+Summary of actions taken:
+- Installed `gsap` for drag-and-drop card positioning with snap-to-grid support
+- Created `app/app/personal/spreads/card.tsx` — SVG card component with GSAP Draggable:
+  - Exports `CardPosition` type: `{ position, name, x, y }`
+  - GSAP Draggable with `liveSnap` to 15px grid increments
+  - Bounds enforcement: cards stay within 1500x1500 canvas (maxX: 1410, maxY: 1350)
+  - Stroke-width-aware rect inset: rect at (1,1) with width=88, height=148, strokeWidth=2 for exact 90x150 visual footprint
+  - Position badge (gold circle, top-left) and name text (center)
+  - `React.memo` with custom comparator to prevent sibling re-renders
+  - Visual feedback: opacity 0.7 while dragging
+- Created `app/app/personal/spreads/canvas.tsx` — 1500x1500 SVG canvas:
+  - Fixed-size SVG (no viewBox) inside scrollable `overflow: auto` container
+  - 15x15 grid pattern using SVG `<pattern>` with `stroke="var(--border)"` at 0.6 opacity
+  - Alignment guides: computed via `useMemo` — when dragging, checks all 4 edges of dragged card against all other cards; exact equality (no tolerance needed since all positions snap to 15px grid); renders gold `<line>` elements at 50% opacity
+  - Spacebar panning: keydown/keyup on window, mousedown/mousemove/mouseup for scroll; skips INPUT/TEXTAREA/SELECT elements; all tracking via refs (no re-renders during mouse movement)
+- Modified `app/app/personal/spreads/new-spread/page.tsx`:
+  - Added `cards` state array initialized with 1 card at (15, 15)
+  - Added `useEffect` watching `numberOfCards` form field to resize cards array (append with grid layout or slice from end)
+  - Starting positions: `x = 15 + col * 105`, `y = 15 + row * 165`, 10 cards per row
+  - Added `handlePositionChange` callback to update card x/y in state
+  - Replaced right panel placeholder with `<SpreadCanvas>` component
+  - Changed outer div from `h-full` to `flex-1 min-h-0` for proper flex overflow containment
+- All 64 tests pass — no regressions
+- No new lint errors/warnings in new or modified files
+
+Future considerations/recommendations/warnings:
+- Card `name` field is empty by default — will need UI to set position names in a future step
+- Card rotation is not yet implemented (schema supports it but canvas doesn't expose it yet)
+- Save spread functionality still placeholder — canvas card positions need to be serialized to the spread's `positions` array when saving
+- The `handleDragStart` callback depends on `cards` array (not wrapped in ref) which means it recreates on card changes; this triggers SpreadCard memo checks but the custom comparator handles it efficiently
+- Consider adding zoom controls for the canvas in a future enhancement
+
 **02/07/2026 -- 1.3.2 -- Claude Sonnet 4.5**
 Summary of actions taken:
 - Installed react-hook-form, zod, and @hookform/resolvers for form validation
