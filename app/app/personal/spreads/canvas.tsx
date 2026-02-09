@@ -11,11 +11,15 @@ const CARD_HEIGHT = 150;
 interface SpreadCanvasProps {
   cards: CardPosition[];
   onPositionChange: (position: number, x: number, y: number) => void;
+  selectedCardPosition: number | null;
+  onCardSelect: (position: number | null) => void;
 }
 
 export default function SpreadCanvas({
   cards,
   onPositionChange,
+  selectedCardPosition,
+  onCardSelect,
 }: SpreadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +34,12 @@ export default function SpreadCanvas({
   const isSpaceHeld = useRef(false);
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollX: 0, scrollY: 0 });
+
+  // Sort cards by zIndex for correct SVG render order (higher zIndex renders on top)
+  const sortedCards = useMemo(
+    () => [...cards].sort((a, b) => a.zIndex - b.zIndex),
+    [cards]
+  );
 
   // === Alignment guides ===
   const guides = useMemo(() => {
@@ -192,6 +202,7 @@ export default function SpreadCanvas({
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
           fill="url(#canvas-grid)"
+          onClick={() => onCardSelect(null)}
         />
 
         {/* Alignment guide lines */}
@@ -221,15 +232,17 @@ export default function SpreadCanvas({
           )
         )}
 
-        {/* Draggable cards */}
-        {cards.map((card) => (
+        {/* Draggable cards — sorted by zIndex for correct layering */}
+        {sortedCards.map((card) => (
           <SpreadCard
             key={card.position}
             card={card}
+            selected={card.position === selectedCardPosition}
             onPositionChange={onPositionChange}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDrag={handleDrag}
+            onClick={onCardSelect}
           />
         ))}
       </svg>

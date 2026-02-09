@@ -265,6 +265,43 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/08/2026 -- 1.3.4 -- Claude Opus 4.6**
+Summary of actions taken:
+- Added `allowReverse: v.optional(v.boolean())` to spread position schema in `convex/schema.ts`
+  - Optional so existing test data (30+ positions across `spreads.test.ts`) remains valid
+  - Convention: `undefined` treated as `true` (default on); frontend always sets explicitly
+- Extended `CardPosition` type in `card.tsx` to include: `description`, `allowReverse`, `rotation`, `zIndex`
+- Added card selection support to `card.tsx`:
+  - `selected` prop: solid gold stroke + filled badge vs dashed muted stroke
+  - `onClick` prop with drag disambiguation: `wasDraggedRef` set false on dragStart, true on drag; click only fires if not dragged
+  - `e.stopPropagation()` prevents canvas background deselect on card click
+- Added inner rotation `<g>` wrapper in card — separate from GSAP's outer `<g>` x/y transforms to avoid conflict
+- Updated memo comparator to include `selected` and `onClick`
+- Updated `canvas.tsx`:
+  - Added `selectedCardPosition` and `onCardSelect` props
+  - Sort cards by `zIndex` via `useMemo` for correct SVG render layering
+  - Background `<rect>` click deselects (`onCardSelect(null)`)
+  - Passes `selected` and `onClick` to each `SpreadCard`
+- Updated `new-spread/page.tsx` with collapsible card details panel:
+  - `selectedCardPosition` state + `cardDetailsPanelRef` via `usePanelRef()`
+  - `useEffect` expands/collapses panel based on selection state (imperative API)
+  - Deselect guard effect: clears selection when selected card removed (numberOfCards decrease)
+  - Third `ResizablePanel` (collapsible, defaultSize=0%, minSize=15%, maxSize=40%)
+  - Panel header: "Card {n} Settings" + Cancel01Icon close button
+  - Card detail fields: Position (swap), Name, Description, Allow Reverse (Switch), X/Y-Offset (snap on blur), Rotation (step=45), Z-Index (step=1)
+  - `handleCardUpdate`: updates card fields in state array
+  - `handlePositionSwap`: swaps position numbers between two cards, follows selection
+  - `generateCards` updated with new fields: `description: ""`, `allowReverse: true`, `rotation: 0`, `zIndex: 0`
+  - Canvas center panel `minSize` set to 30% to stay visible with both side panels open
+- All 64 tests pass — no regressions
+- No new lint errors/warnings
+
+Future considerations/recommendations/warnings:
+- Card details panel fields update state directly (no form validation) — suitable for transient editing; validation happens at save time
+- Position swap is 1:1 (no gaps/duplicates) — if future features need reordering, consider a drag-to-reorder list
+- Rotation step=45 gives 8 orientations (0-315); finer granularity could be added later
+- Z-index max is 100; canvas sorts by zIndex for SVG render order
+
 **02/08/2026 -- 1.3.3 -- Claude Opus 4.6**
 Summary of actions taken:
 - Installed `gsap` for drag-and-drop card positioning with snap-to-grid support
@@ -746,7 +783,7 @@ Future considerations/recommendations/warnings:
 4. On name and numberOfCard field changes, the topbar title state should updated in the following way:
 	1. The name field should be bound to the topbar title name.
 	2. The number of cards should be bound to the topbar title addIndo as follows: `${numberOfCards}-Card`
-### 1.3.3_Spread Canvas and Card
+### ~~1.3.3_Spread Canvas and Card~~
 1. Create /app/personal/spreads/canvas.tsx. Here are the overall specifications of this component:
 	1. This component will be integrated into the /new-spreads/page.tsx file, occupying the remainder of the page in addition to spread settings. 
 	2. This canvas will be built using SVG and will be a place where users can add and arrange tarot card slots to create their spread. 
@@ -772,8 +809,23 @@ Future considerations/recommendations/warnings:
 2. Resources
 	1. Feel free to view /.resources/tarot-journal/canvas/spread-creation-canvas.tsx and /.resources/tarot-journal/canvas/draggable-card.tsx. These files contain a solution to this problem that seemed to mostly work. However, there were some issues with it. For example, the card positions were never whole numbers but rather were offset by 1.5 or so. This was, I think, because of the stroke, so ensure that you account for the width of the stroke to ensure that the cards' position are ALWAYS multiples of 15 (including 0) AND that the card fit perfectly in the grid lines (i.e. their final dimensions including stroke are 90 by 150).
 	2. While you may view this solution, you solution should be cleaner and better overall. Keep things as simple as possible and as clear as possible so it can be easily understood and maintained by humans. 
-
-
+### 1.3.4_Card Details Panel
+1. Within the /new-spread/page.tsx file, create a third resizable panel which should allow users to edit specific card details. 
+	1. This panel should appear when a user clicks on a card. 
+	2. While the given card is selected, this new righthand panel should appear and the card should change to have a solid stroke. 
+	3. This righthand panel should have a title which reads `Card ${Position} Settings`. This title should be on the right hand side of the panel and on the other side, opposite to the title, should be an 'x' icon (Cancel01 icon) which should close the panel and reducing its width to 0. Then when a card is clicked (and possibly moved) the panel reappears showing the card settings.
+	4. The body of this third panel should be a form with the following fields
+		1. Position: input type=number (min=1, max=numberOfCard, integer)
+		2. Name: input type=text (min=3, max=50)
+		3. Description: textarea (max=500)
+		4. Allow Reverse Orientation: switch (default=on)
+		5. X/Y offset: 2 fields, horizontally stacked
+			1. X-Offset: input type=number (min=0, max=1410, increment=15)
+			2. Y-Offset: input type=number (min=0, max=1350, increment=15)
+		6. Rotation/Z-index: horizontally stacked
+			1. Rotation: input type=number (min=0, max=315, increment=45)
+			2. Z-Index: input type=number (min=0, max=100, integer)
+2. Once this is complete, ensure that the type of a "spread" is linked to the spreadValidator in the /convex/schema.ts file (minus the server controlled fields). You can import this type by using Doc<"spreads"> and then omitting the server controlled fields.
 
 
 

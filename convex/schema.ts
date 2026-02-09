@@ -108,6 +108,7 @@ export const spreadValidator = v.object({
     v.object({
       name: v.string(),
       description: v.optional(v.string()),
+      allowReverse: v.optional(v.boolean()),
       transform: v.object({
         x: v.number(),
         y: v.number(),

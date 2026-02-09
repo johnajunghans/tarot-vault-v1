@@ -20,30 +20,39 @@ const BOUNDS = { minX: 0, minY: 0, maxX: 1410, maxY: 1350 };
 export type CardPosition = {
   position: number;
   name: string;
+  description: string;
+  allowReverse: boolean;
   x: number;
   y: number;
+  rotation: number;
+  zIndex: number;
 };
 
 interface SpreadCardProps {
   card: CardPosition;
+  selected: boolean;
   onPositionChange: (position: number, x: number, y: number) => void;
   onDragStart: (position: number) => void;
   onDragEnd: (position: number) => void;
   onDrag: (position: number, x: number, y: number) => void;
+  onClick: (position: number) => void;
 }
 
 // === Component ===
 
 function SpreadCard({
   card,
+  selected,
   onPositionChange,
   onDragStart,
   onDragEnd,
   onDrag,
+  onClick,
 }: SpreadCardProps) {
   const groupRef = useRef<SVGGElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const isDraggingRef = useRef(false);
+  const wasDraggedRef = useRef(false);
   const initialPos = useRef({ x: card.x, y: card.y });
 
   // Initialize GSAP Draggable
@@ -68,10 +77,12 @@ function SpreadCard({
       },
       onDragStart: function () {
         isDraggingRef.current = true;
+        wasDraggedRef.current = false;
         onDragStart(card.position);
         gsap.to(group, { opacity: 0.7, duration: 0.15 });
       },
       onDrag: function () {
+        wasDraggedRef.current = true;
         onDrag(card.position, this.x, this.y);
       },
       onDragEnd: function () {
@@ -99,48 +110,62 @@ function SpreadCard({
     }
   }, [card.x, card.y]);
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (!wasDraggedRef.current) {
+      e.stopPropagation();
+      onClick(card.position);
+    }
+  };
+
   return (
-    <g ref={groupRef} style={{ cursor: "grab" }}>
-      {/* Card background — inset by 1px so stroke centers on edge,
-          making total visual footprint exactly 90x150 */}
-      <rect
-        x={1}
-        y={1}
-        width={CARD_WIDTH - STROKE_WIDTH}
-        height={CARD_HEIGHT - STROKE_WIDTH}
-        rx={6}
-        fill="var(--gold)"
-        fillOpacity={0.25}
-        stroke="var(--gold-muted)"
-        strokeWidth={STROKE_WIDTH}
-        strokeDasharray="4 3"
-      />
+    <g
+      ref={groupRef}
+      style={{ cursor: "grab" }}
+      onClick={handleClick}
+    >
+      {/* Inner rotation wrapper — separate from GSAP's x/y transform on outer <g> */}
+      <g transform={`rotate(${card.rotation}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}>
+        {/* Card background — inset by 1px so stroke centers on edge,
+            making total visual footprint exactly 90x150 */}
+        <rect
+          x={1}
+          y={1}
+          width={CARD_WIDTH - STROKE_WIDTH}
+          height={CARD_HEIGHT - STROKE_WIDTH}
+          rx={6}
+          fill="var(--gold)"
+          fillOpacity={0.25}
+          stroke={selected ? "var(--gold)" : "var(--gold-muted)"}
+          strokeWidth={STROKE_WIDTH}
+          strokeDasharray={selected ? undefined : "4 3"}
+        />
 
-      {/* Position badge (top-left) */}
-      <circle cx={15} cy={15} r={10} fill="var(--gold-muted)" />
-      <text
-        x={15}
-        y={19}
-        textAnchor="middle"
-        fontSize={11}
-        fontWeight="bold"
-        fill="var(--background)"
-        style={{ pointerEvents: "none", userSelect: "none" }}
-      >
-        {card.position}
-      </text>
+        {/* Position badge (top-left) */}
+        <circle cx={15} cy={15} r={10} fill={selected ? "var(--gold)" : "var(--gold-muted)"} />
+        <text
+          x={15}
+          y={19}
+          textAnchor="middle"
+          fontSize={11}
+          fontWeight="bold"
+          fill="var(--background)"
+          style={{ pointerEvents: "none", userSelect: "none" }}
+        >
+          {card.position}
+        </text>
 
-      {/* Card name (center) */}
-      <text
-        x={CARD_WIDTH / 2}
-        y={CARD_HEIGHT / 2 + 4}
-        textAnchor="middle"
-        fontSize={11}
-        fill="var(--foreground)"
-        style={{ pointerEvents: "none", userSelect: "none" }}
-      >
-        {card.name}
-      </text>
+        {/* Card name (center) */}
+        <text
+          x={CARD_WIDTH / 2}
+          y={CARD_HEIGHT / 2 + 4}
+          textAnchor="middle"
+          fontSize={11}
+          fill="var(--foreground)"
+          style={{ pointerEvents: "none", userSelect: "none" }}
+        >
+          {card.name}
+        </text>
+      </g>
     </g>
   );
 }
@@ -150,10 +175,12 @@ function SpreadCard({
 function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
   return (
     prev.card === next.card &&
+    prev.selected === next.selected &&
     prev.onPositionChange === next.onPositionChange &&
     prev.onDragStart === next.onDragStart &&
     prev.onDragEnd === next.onDragEnd &&
-    prev.onDrag === next.onDrag
+    prev.onDrag === next.onDrag &&
+    prev.onClick === next.onClick
   );
 }
 

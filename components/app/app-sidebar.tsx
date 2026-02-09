@@ -6,7 +6,7 @@ import {
   LibraryIcon,
   Moon01Icon,
   Settings01Icon,
-  Sun01Icon,
+  Sun02Icon,
 } from "hugeicons-react"
 import {
   Sidebar,
@@ -96,7 +96,7 @@ function ThemeToggleMenuItem({
       >
         {mounted ? (
           isLightTheme ? (
-            <Sun01Icon strokeWidth={1.25} />
+            <Sun02Icon strokeWidth={1.25} />
           ) : (
             <Moon01Icon strokeWidth={1.25} />
           )
