@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PanelLeftIcon } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { Card, CardHeader, CardTitle, CardAction, CardContent } from "@/components/ui/card";
 import SpreadCanvas from "../canvas";
 import { type CardPosition } from "../card";
 
@@ -148,82 +150,106 @@ export default function NewSpreadPage() {
     []
   );
 
+  const settingsForm = (
+    <form className="flex flex-col gap-4">
+      {/* Name Field */}
+      <Field>
+        <FieldTitle>Name</FieldTitle>
+        <FieldContent>
+          <Input
+            type="text"
+            placeholder="Enter spread name"
+            autoFocus
+            {...form.register("name")}
+            aria-invalid={!!form.formState.errors.name}
+          />
+          <FieldError errors={form.formState.errors.name ? [form.formState.errors.name] : []} />
+        </FieldContent>
+      </Field>
+
+      {/* Number of Cards Field */}
+      <Field>
+        <FieldTitle>Number of Cards</FieldTitle>
+        <FieldContent>
+          <Input
+            type="number"
+            min={1}
+            max={78}
+            placeholder="1"
+            {...form.register("numberOfCards", { valueAsNumber: true })}
+            aria-invalid={!!form.formState.errors.numberOfCards}
+          />
+          <FieldError
+            errors={
+              form.formState.errors.numberOfCards
+                ? [form.formState.errors.numberOfCards]
+                : []
+            }
+          />
+        </FieldContent>
+      </Field>
+
+      {/* Description Field */}
+      <Field>
+        <FieldTitle>Description</FieldTitle>
+        <FieldContent>
+          <Textarea
+            placeholder="Enter spread description (optional)"
+            {...form.register("description")}
+            aria-invalid={!!form.formState.errors.description}
+          />
+          <FieldError
+            errors={
+              form.formState.errors.description
+                ? [form.formState.errors.description]
+                : []
+            }
+          />
+        </FieldContent>
+      </Field>
+    </form>
+  );
+
   return (
-    <div className="flex flex-1 min-h-0 w-full relative">
+    <div className="h-app-content relative">
+      <ResizablePanelGroup orientation="horizontal">
+        {/* Left Panel — Settings */}
+        {!hideSettings && (
+          <>
+            <ResizablePanel defaultSize="25%" minSize="10%" maxSize="40%">
+              <div className="flex h-full flex-col gap-4 p-4">
+                <div className="flex w-full justify-between items-center gap-8">
+                  <h3 className="text-md font-semibold">Spread Settings</h3>
+                  <Button variant="ghost" size="icon-sm" onClick={() => setHideSettings(true)}>
+                    <PanelLeftIcon />
+                  </Button>
+                </div>
+                {settingsForm}
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+          </>
+        )}
 
-      {/* Left Panel */}
-      <div className={`flex min-w-[300px] ${hideSettings ? "absolute top-3 left-3 p-2 h-auto w-auto bg-sidebar border border-border rounded-lg shadow-md" : "h-full w-1/4 flex-col gap-4 p-4 border-r border-border/60"}`}>
-        <div className="flex w-full justify-between items-center gap-8">
-          <h3 className="text-md font-semibold">Spread Settings</h3>
-          <Button variant="ghost" size="icon-sm" onClick={() => setHideSettings(!hideSettings)}>
-            <PanelLeftIcon />
-          </Button>
-        </div>
+        {/* Right Panel — Canvas */}
+        <ResizablePanel defaultSize="75%" minSize="60%" maxSize="90%">
+          <SpreadCanvas cards={cards} onPositionChange={handlePositionChange} />
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
-        {/* Spread Settings Form */}
-        {!hideSettings && <form className="flex flex-col gap-4">
-              {/* Name Field */}
-              <Field>
-                <FieldTitle>Name</FieldTitle>
-                <FieldContent>
-                  <Input
-                    type="text"
-                    placeholder="Enter spread name"
-                    autoFocus
-                    {...form.register("name")}
-                    aria-invalid={!!form.formState.errors.name}
-                  />
-                  <FieldError errors={form.formState.errors.name ? [form.formState.errors.name] : []} />
-                </FieldContent>
-              </Field>
-
-              {/* Number of Cards Field */}
-              <Field>
-                <FieldTitle>Number of Cards</FieldTitle>
-                <FieldContent>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={78}
-                    placeholder="1"
-                    {...form.register("numberOfCards", { valueAsNumber: true })}
-                    aria-invalid={!!form.formState.errors.numberOfCards}
-                  />
-                  <FieldError
-                    errors={
-                      form.formState.errors.numberOfCards
-                        ? [form.formState.errors.numberOfCards]
-                        : []
-                    }
-                  />
-                </FieldContent>
-              </Field>
-
-              {/* Description Field */}
-              <Field>
-                <FieldTitle>Description</FieldTitle>
-                <FieldContent>
-                  <Textarea
-                    placeholder="Enter spread description (optional)"
-                    {...form.register("description")}
-                    aria-invalid={!!form.formState.errors.description}
-                  />
-                  <FieldError
-                    errors={
-                      form.formState.errors.description
-                        ? [form.formState.errors.description]
-                        : []
-                    }
-                  />
-                </FieldContent>
-              </Field>
-            </form>}
-      </div>
-
-      {/* Right Panel - Spread Canvas */}
-      <div className="flex-1 min-w-0 min-h-0">
-        <SpreadCanvas cards={cards} onPositionChange={handlePositionChange} />
-      </div>
+      {/* Floating settings card when panel is hidden */}
+      {hideSettings && (
+        <Card className="absolute top-3 left-3 py-2 z-10 w-1/4 min-w-[150px] max-w-[350px] shadow-md bg-background">
+          <CardContent>
+            <div className="flex w-full justify-between items-center gap-8">
+              <h3 className="text-md font-semibold">Spread Settings</h3>
+              <Button variant="ghost" size="icon-sm" onClick={() => setHideSettings(false)}>
+                <PanelLeftIcon />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
