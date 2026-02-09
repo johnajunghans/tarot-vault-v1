@@ -99,7 +99,7 @@ export default function NewSpreadPage() {
     <div className="flex h-full w-full relative">
 
       {/* Left Panel */}
-      <div className={`flex min-w-[300px] ${hideSettings ? "absolute top-3 left-3 p-2 h-auto w-auto bg-sidebar border border-border rounded-lg" : "h-full w-1/4 flex-col gap-4 p-4 border-r border-border/60"}`}>
+      <div className={`flex min-w-[300px] ${hideSettings ? "absolute top-3 left-3 p-2 h-auto w-auto bg-sidebar border border-border rounded-lg shadow-md" : "h-full w-1/4 flex-col gap-4 p-4 border-r border-border/60"}`}>
         <div className="flex w-full justify-between items-center gap-8">
           <h3 className="text-md font-semibold">Spread Settings</h3>
           <Button variant="ghost" size="icon-sm" onClick={() => setHideSettings(!hideSettings)}>
