@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import SpreadCard, { type CardPosition } from "./card";
+import SpreadCard from "./card";
+import { CardPosition } from "@/types/spreads";
 
 const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
@@ -37,7 +38,7 @@ export default function SpreadCanvas({
 
   // Sort cards by zIndex for correct SVG render order (higher zIndex renders on top)
   const sortedCards = useMemo(
-    () => [...cards].sort((a, b) => a.zIndex - b.zIndex),
+    () => [...cards].sort((a, b) => a.z - b.z),
     [cards]
   );
 
@@ -95,13 +96,10 @@ export default function SpreadCanvas({
 
   // === Card drag callbacks ===
   const handleDragStart = useCallback(
-    (position: number) => {
-      const card = cards.find((c) => c.position === position);
-      if (card) {
-        setDragging({ position, x: card.x, y: card.y });
-      }
+    (position: number, x: number, y: number) => {
+      setDragging({ position, x, y });
     },
-    [cards]
+    []
   );
 
   const handleDrag = useCallback((position: number, x: number, y: number) => {
@@ -202,7 +200,6 @@ export default function SpreadCanvas({
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
           fill="url(#canvas-grid)"
-          onClick={() => onCardSelect(null)}
         />
 
         {/* Alignment guide lines */}

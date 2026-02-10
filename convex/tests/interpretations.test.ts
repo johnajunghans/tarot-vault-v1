@@ -42,7 +42,7 @@ async function createTestReading(
       updatedAt: Date.now(),
       name: "Test Spread",
       numberOfCards: 1,
-      positions: [{ name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+      positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
     });
 
     return await ctx.db.insert("readings", {
@@ -151,7 +151,7 @@ describe("interpretations", () => {
           updatedAt: Date.now(),
           name: "Other Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
         const otherReadingId = await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -274,7 +274,7 @@ describe("interpretations", () => {
           updatedAt: Date.now(),
           name: "Other Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
         return await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -491,7 +491,7 @@ describe("interpretations", () => {
           updatedAt: Date.now(),
           name: "Other Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
         return await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -597,7 +597,7 @@ describe("interpretations", () => {
           updatedAt: Date.now(),
           name: "Other Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
         const readingId = await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -703,7 +703,7 @@ describe("interpretations", () => {
           updatedAt: Date.now(),
           name: "Other Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
         const readingId = await ctx.db.insert("readings", {
           userId: otherUserId,

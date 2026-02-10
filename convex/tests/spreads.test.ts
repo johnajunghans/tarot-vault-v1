@@ -60,7 +60,7 @@ describe("spreads", () => {
           updatedAt: now - 2000,
           name: "First Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
         });
         await ctx.db.insert("spreads", {
           userId,
@@ -68,8 +68,8 @@ describe("spreads", () => {
           name: "Most Recent Spread",
           numberOfCards: 2,
           positions: [
-            { name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } },
-            { name: "Card 2", transform: { x: 100, y: 0, r: 0, z: 1 } },
+            { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 },
+            { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 1 },
           ],
         });
         await ctx.db.insert("spreads", {
@@ -77,7 +77,7 @@ describe("spreads", () => {
           updatedAt: now - 1000,
           name: "Middle Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
         });
       });
 
@@ -113,14 +113,14 @@ describe("spreads", () => {
           updatedAt: Date.now(),
           name: "My Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
         });
         await ctx.db.insert("spreads", {
           userId: otherUserId,
           updatedAt: Date.now(),
           name: "Other User Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
         });
       });
 
@@ -143,9 +143,9 @@ describe("spreads", () => {
           description: "A classic 10-card spread",
           numberOfCards: 3,
           positions: [
-            { name: "Significator", description: "The querent", transform: { x: 0, y: 0, r: 0, z: 0 } },
-            { name: "Crossing", description: "Challenge", transform: { x: 50, y: 0, r: 90, z: 1 } },
-            { name: "Foundation", description: "Root cause", transform: { x: 0, y: 100, r: 0, z: 2 } },
+            { position: 1, name: "Significator", description: "The querent", x: 0, y: 0, r: 0, z: 0 },
+            { position: 2, name: "Crossing", description: "Challenge", x: 50, y: 0, r: 90, z: 1 },
+            { position: 3, name: "Foundation", description: "Root cause", x: 0, y: 100, r: 0, z: 2 },
           ],
         });
       });
@@ -167,7 +167,7 @@ describe("spreads", () => {
           updatedAt: Date.now(),
           name: "Temp",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
         await ctx.db.delete(tempId);
         return tempId;
@@ -201,7 +201,7 @@ describe("spreads", () => {
           updatedAt: Date.now(),
           name: "Other Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
       });
 
@@ -221,9 +221,9 @@ describe("spreads", () => {
         description: "Past, Present, Future",
         numberOfCards: 3,
         positions: [
-          { name: "Past", description: "Past influences", transform: { x: 0, y: 0, r: 0, z: 0 } },
-          { name: "Present", description: "Current situation", transform: { x: 100, y: 0, r: 0, z: 1 } },
-          { name: "Future", description: "Outcome", transform: { x: 200, y: 0, r: 0, z: 2 } },
+          { position: 1, name: "Past", description: "Past influences", x: 0, y: 0, r: 0, z: 0 },
+          { position: 2, name: "Present", description: "Current situation", x: 100, y: 0, r: 0, z: 1 },
+          { position: 3, name: "Future", description: "Outcome", x: 200, y: 0, r: 0, z: 2 },
         ],
       });
 
@@ -249,7 +249,7 @@ describe("spreads", () => {
         name: "Simple Spread",
         numberOfCards: 1,
         positions: [
-          { name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } },
+          { position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 },
         ],
       });
 
@@ -269,8 +269,8 @@ describe("spreads", () => {
           name: "Invalid Spread",
           numberOfCards: 5, // Mismatch!
           positions: [
-            { name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } },
-            { name: "Card 2", transform: { x: 100, y: 0, r: 0, z: 1 } },
+            { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 },
+            { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 1 },
           ],
         })
       ).rejects.toThrowError(
@@ -306,7 +306,7 @@ describe("spreads", () => {
           updatedAt: Date.now() - 1000,
           name: "Original Name",
           numberOfCards: 1,
-          positions: [{ name: "Original Position", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Original Position", x: 0, y: 0, r: 0, z: 0 }],
         });
       });
 
@@ -334,7 +334,7 @@ describe("spreads", () => {
           updatedAt: Date.now(),
           name: "Expandable Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
         });
       });
 
@@ -342,8 +342,8 @@ describe("spreads", () => {
         _id: spreadId,
         numberOfCards: 2,
         positions: [
-          { name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } },
-          { name: "Card 2", transform: { x: 100, y: 0, r: 0, z: 1 } },
+          { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 },
+          { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 1 },
         ],
       });
 
@@ -365,7 +365,7 @@ describe("spreads", () => {
           updatedAt: Date.now(),
           name: "Temp",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
         await ctx.db.delete(tempId);
         return tempId;
@@ -402,7 +402,7 @@ describe("spreads", () => {
           updatedAt: Date.now(),
           name: "Other Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
       });
 
@@ -425,8 +425,8 @@ describe("spreads", () => {
           name: "Valid Spread",
           numberOfCards: 2,
           positions: [
-            { name: "Card 1", transform: { x: 0, y: 0, r: 0, z: 0 } },
-            { name: "Card 2", transform: { x: 100, y: 0, r: 0, z: 1 } },
+            { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 },
+            { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 1 },
           ],
         });
       });
@@ -453,7 +453,7 @@ describe("spreads", () => {
           updatedAt: Date.now(),
           name: "To be deleted",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
       });
 
@@ -476,7 +476,7 @@ describe("spreads", () => {
           updatedAt: Date.now(),
           name: "Temp",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
         await ctx.db.delete(tempId);
         return tempId;
@@ -510,7 +510,7 @@ describe("spreads", () => {
           updatedAt: Date.now(),
           name: "Other Spread",
           numberOfCards: 1,
-          positions: [{ name: "Card", transform: { x: 0, y: 0, r: 0, z: 0 } }],
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
         });
       });
 

@@ -97,6 +97,17 @@ export const interpretationValidator = v.object({
   ),
 });
 
+export const spreadPositionValidator = v.object({
+  position: v.number(),
+  name: v.string(),
+  description: v.optional(v.string()),
+  allowReverse: v.optional(v.boolean()),
+  x: v.number(),
+  y: v.number(),
+  r: v.number(),
+  z: v.number(),
+})
+
 // Spreads table validator (without system fields)
 export const spreadValidator = v.object({
   userId: v.id("users"),
@@ -104,19 +115,7 @@ export const spreadValidator = v.object({
   name: v.string(),
   description: v.optional(v.string()),
   numberOfCards: v.number(), // 1-78
-  positions: v.array(
-    v.object({
-      name: v.string(),
-      description: v.optional(v.string()),
-      allowReverse: v.optional(v.boolean()),
-      transform: v.object({
-        x: v.number(),
-        y: v.number(),
-        r: v.number(),
-        z: v.number(),
-      }),
-    })
-  ),
+  positions: v.array(spreadPositionValidator),
 });
 
 export default defineSchema({

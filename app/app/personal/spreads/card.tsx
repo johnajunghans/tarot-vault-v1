@@ -3,6 +3,7 @@
 import { memo, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
+import { CardPosition } from "@/types/spreads";
 
 gsap.registerPlugin(Draggable);
 
@@ -15,24 +16,11 @@ const GRID_SIZE = 15;
 // Bounds: keep cards within 1500x1500 canvas, snapped to multiples of 15
 const BOUNDS = { minX: 0, minY: 0, maxX: 1410, maxY: 1350 };
 
-// === Types ===
-
-export type CardPosition = {
-  position: number;
-  name: string;
-  description: string;
-  allowReverse: boolean;
-  x: number;
-  y: number;
-  rotation: number;
-  zIndex: number;
-};
-
 interface SpreadCardProps {
   card: CardPosition;
   selected: boolean;
   onPositionChange: (position: number, x: number, y: number) => void;
-  onDragStart: (position: number) => void;
+  onDragStart: (position: number, x: number, y: number) => void;
   onDragEnd: (position: number) => void;
   onDrag: (position: number, x: number, y: number) => void;
   onClick: (position: number) => void;
@@ -77,8 +65,7 @@ function SpreadCard({
       },
       onDragStart: function () {
         isDraggingRef.current = true;
-        wasDraggedRef.current = false;
-        onDragStart(card.position);
+        onDragStart(card.position, this.x, this.y);
         gsap.to(group, { opacity: 0.7, duration: 0.15 });
       },
       onDrag: function () {
@@ -110,6 +97,10 @@ function SpreadCard({
     }
   }, [card.x, card.y]);
 
+  const handleMouseDown = () => {
+    wasDraggedRef.current = false;
+  };
+
   const handleClick = (e: React.MouseEvent) => {
     if (!wasDraggedRef.current) {
       e.stopPropagation();
@@ -121,10 +112,11 @@ function SpreadCard({
     <g
       ref={groupRef}
       style={{ cursor: "grab" }}
+      onMouseDown={handleMouseDown}
       onClick={handleClick}
     >
       {/* Inner rotation wrapper — separate from GSAP's x/y transform on outer <g> */}
-      <g transform={`rotate(${card.rotation}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}>
+      <g transform={`rotate(${card.r}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}>
         {/* Card background — inset by 1px so stroke centers on edge,
             making total visual footprint exactly 90x150 */}
         <rect
