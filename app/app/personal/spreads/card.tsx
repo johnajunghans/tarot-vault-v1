@@ -1,9 +1,10 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, RefObject, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
+import { useGSAP } from '@gsap/react'
 
 gsap.registerPlugin(Draggable);
 
@@ -74,7 +75,7 @@ function SpreadCard({
   }, [form, index]);
 
   // Initialize GSAP Draggable
-  useEffect(() => {
+  useGSAP(() => {
     const group = groupRef.current;
     if (!group) return;
 
@@ -117,7 +118,7 @@ function SpreadCard({
     return () => {
       instance.kill();
     };
-  }, [index, onPositionChange, onDragStart, onDragEnd, onDrag]);
+  }, { dependencies: [index, onPositionChange, onDragStart, onDragEnd, onDrag], scope: groupRef });
 
   // Sync position from props when not dragging
   useEffect(() => {
