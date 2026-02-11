@@ -1,9 +1,9 @@
 "use client";
 
-import { memo, useEffect, useRef } from "react";
+import { useFormContext } from "react-hook-form";
+import { memo, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
-import { CardPosition } from "@/types/spreads";
 
 gsap.registerPlugin(Draggable);
 
@@ -16,20 +16,33 @@ const GRID_SIZE = 15;
 // Bounds: keep cards within 1500x1500 canvas, snapped to multiples of 15
 const BOUNDS = { minX: 0, minY: 0, maxX: 1410, maxY: 1350 };
 
+/** Card data for canvas (no position field; index is used instead). */
+export interface CanvasCard {
+  name: string;
+  description?: string;
+  allowReverse?: boolean;
+  x: number;
+  y: number;
+  r: number;
+  z: number;
+}
+
 interface SpreadCardProps {
-  card: CardPosition;
+  card: CanvasCard;
+  index: number;
   selected: boolean;
-  onPositionChange: (position: number, x: number, y: number) => void;
-  onDragStart: (position: number, x: number, y: number) => void;
-  onDragEnd: (position: number) => void;
-  onDrag: (position: number, x: number, y: number) => void;
-  onClick: (position: number) => void;
+  onPositionChange: (index: number, x: number, y: number) => void;
+  onDragStart: (index: number, x: number, y: number) => void;
+  onDragEnd: (index: number) => void;
+  onDrag: (index: number, x: number, y: number) => void;
+  onClick: (index: number) => void;
 }
 
 // === Component ===
 
 function SpreadCard({
   card,
+  index,
   selected,
   onPositionChange,
   onDragStart,
@@ -37,11 +50,28 @@ function SpreadCard({
   onDrag,
   onClick,
 }: SpreadCardProps) {
+  const form = useFormContext<{ positions: Array<{ name: string }> }>();
   const groupRef = useRef<SVGGElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const isDraggingRef = useRef(false);
   const wasDraggedRef = useRef(false);
   const initialPos = useRef({ x: card.x, y: card.y });
+
+  // Subscribe to this card's name so the label updates when the form field changes
+  const [displayName, setDisplayName] = useState(card.name);
+  useEffect(() => {
+    setDisplayName(card.name);
+  }, [card.name]);
+  useEffect(() => {
+    return form.subscribe({
+      name: [`positions.${index}.name`],
+      formState: { values: true },
+      callback: ({ values }) => {
+        const name = values?.positions?.[index]?.name ?? "";
+        setDisplayName(name);
+      },
+    });
+  }, [form, index]);
 
   // Initialize GSAP Draggable
   useEffect(() => {
@@ -65,18 +95,18 @@ function SpreadCard({
       },
       onDragStart: function () {
         isDraggingRef.current = true;
-        onDragStart(card.position, this.x, this.y);
+        onDragStart(index, this.x, this.y);
         gsap.to(group, { opacity: 0.7, duration: 0.15 });
       },
       onDrag: function () {
         wasDraggedRef.current = true;
-        onDrag(card.position, this.x, this.y);
+        onDrag(index, this.x, this.y);
       },
       onDragEnd: function () {
         isDraggingRef.current = false;
-        onDragEnd(card.position);
+        onDragEnd(index);
         gsap.to(group, { opacity: 1, duration: 0.15 });
-        onPositionChange(card.position, this.x, this.y);
+        onPositionChange(index, this.x, this.y);
       },
       cursor: "grab",
       activeCursor: "grabbing",
@@ -87,7 +117,7 @@ function SpreadCard({
     return () => {
       instance.kill();
     };
-  }, [card.position, onPositionChange, onDragStart, onDragEnd, onDrag]);
+  }, [index, onPositionChange, onDragStart, onDragEnd, onDrag]);
 
   // Sync position from props when not dragging
   useEffect(() => {
@@ -104,7 +134,7 @@ function SpreadCard({
   const handleClick = (e: React.MouseEvent) => {
     if (!wasDraggedRef.current) {
       e.stopPropagation();
-      onClick(card.position);
+      onClick(index);
     }
   };
 
@@ -132,7 +162,7 @@ function SpreadCard({
           strokeDasharray={selected ? undefined : "4 3"}
         />
 
-        {/* Position badge (top-left) */}
+        {/* Index badge (top-left, 1-based display) */}
         <circle cx={15} cy={15} r={10} fill={selected ? "var(--gold)" : "var(--gold-muted)"} />
         <text
           x={15}
@@ -143,10 +173,10 @@ function SpreadCard({
           fill="var(--background)"
           style={{ pointerEvents: "none", userSelect: "none" }}
         >
-          {card.position}
+          {index + 1}
         </text>
 
-        {/* Card name (center) */}
+        {/* Card name (center) — from form subscription so it updates immediately */}
         <text
           x={CARD_WIDTH / 2}
           y={CARD_HEIGHT / 2 + 4}
@@ -155,7 +185,7 @@ function SpreadCard({
           fill="var(--foreground)"
           style={{ pointerEvents: "none", userSelect: "none" }}
         >
-          {card.name}
+          {displayName}
         </text>
       </g>
     </g>
@@ -167,6 +197,7 @@ function SpreadCard({
 function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
   return (
     prev.card === next.card &&
+    prev.index === next.index &&
     prev.selected === next.selected &&
     prev.onPositionChange === next.onPositionChange &&
     prev.onDragStart === next.onDragStart &&

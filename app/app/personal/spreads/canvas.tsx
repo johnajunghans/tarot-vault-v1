@@ -1,32 +1,35 @@
 "use client";
 
+import type { UseFormReturn } from "react-hook-form";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import SpreadCard from "./card";
-import { CardPosition } from "@/types/spreads";
+import SpreadCard, { type CanvasCard } from "./card";
 
 const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
 const CARD_WIDTH = 90;
 const CARD_HEIGHT = 150;
 
+/** Form shape for spread positions (card name subscription). */
+type SpreadForm = UseFormReturn<{ positions: Array<{ name: string }> }>;
+
 interface SpreadCanvasProps {
-  cards: CardPosition[];
-  onPositionChange: (position: number, x: number, y: number) => void;
-  selectedCardPosition: number | null;
-  onCardSelect: (position: number | null) => void;
+  cards: CanvasCard[];
+  onPositionChange: (index: number, x: number, y: number) => void;
+  selectedCardIndex: number | null;
+  onCardSelect: (index: number | null) => void;
 }
 
 export default function SpreadCanvas({
   cards,
   onPositionChange,
-  selectedCardPosition,
+  selectedCardIndex,
   onCardSelect,
 }: SpreadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Track which card is being dragged and its live position
   const [dragging, setDragging] = useState<{
-    position: number;
+    index: number;
     x: number;
     y: number;
   } | null>(null);
@@ -36,9 +39,13 @@ export default function SpreadCanvas({
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollX: 0, scrollY: 0 });
 
-  // Sort cards by zIndex for correct SVG render order (higher zIndex renders on top)
+  // Sort cards by zIndex for correct SVG render order (higher zIndex renders on top).
+  // Preserve original index so callbacks and selection use the right card.
   const sortedCards = useMemo(
-    () => [...cards].sort((a, b) => a.z - b.z),
+    () =>
+      cards
+        .map((card, index) => ({ card, index }))
+        .sort((a, b) => a.card.z - b.card.z),
     [cards]
   );
 
@@ -55,8 +62,8 @@ export default function SpreadCanvas({
 
     const lines: { axis: "v" | "h"; pos: number }[] = [];
 
-    for (const card of cards) {
-      if (card.position === dragging.position) continue;
+    cards.forEach((card, i) => {
+      if (i === dragging.index) return;
 
       const otherEdges = {
         left: card.x,
@@ -82,7 +89,7 @@ export default function SpreadCanvas({
           }
         }
       }
-    }
+    });
 
     // Deduplicate
     const seen = new Set<string>();
@@ -96,14 +103,14 @@ export default function SpreadCanvas({
 
   // === Card drag callbacks ===
   const handleDragStart = useCallback(
-    (position: number, x: number, y: number) => {
-      setDragging({ position, x, y });
+    (index: number, x: number, y: number) => {
+      setDragging({ index, x, y });
     },
     []
   );
 
-  const handleDrag = useCallback((position: number, x: number, y: number) => {
-    setDragging({ position, x, y });
+  const handleDrag = useCallback((index: number, x: number, y: number) => {
+    setDragging({ index, x, y });
   }, []);
 
   const handleDragEnd = useCallback(() => {
@@ -230,11 +237,12 @@ export default function SpreadCanvas({
         )}
 
         {/* Draggable cards — sorted by zIndex for correct layering */}
-        {sortedCards.map((card) => (
+        {sortedCards.map(({ card, index }) => (
           <SpreadCard
-            key={card.position}
+            key={index}
             card={card}
-            selected={card.position === selectedCardPosition}
+            index={index}
+            selected={index === selectedCardIndex}
             onPositionChange={onPositionChange}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
