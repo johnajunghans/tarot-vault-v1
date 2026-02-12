@@ -71,35 +71,51 @@ export default function CardSettingsPanel({
           <FieldSeparator />
           <FieldSet>
             {/* Name */}
-            <Field>
-              <FieldLabel htmlFor="card-name">Name</FieldLabel>
-              <FieldContent>
-                <Input
-                  id="card-name"
-                  type="text"
-                  maxLength={50}
-                  placeholder="e.g. Past, Present, Future"
-                  {...form.register(`positions.${selectedCardIndex}.name`)}
-                  aria-invalid={!!cardErrors?.name}
-                />
-                <FieldError errors={cardErrors?.name ? [cardErrors.name] : []} />
-              </FieldContent>
-            </Field>
+            <Controller
+              name={`positions.${selectedCardIndex}.name`}
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="card-name">Name</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      id="card-name"
+                      type="text"
+                      maxLength={50}
+                      placeholder="e.g. Past, Present, Future"
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </FieldContent>
+                </Field>
+              )}
+            />
 
             {/* Description */}
-            <Field>
-              <FieldLabel htmlFor="card-description">Description</FieldLabel>
-              <FieldContent>
-                <Textarea
-                  id="card-description"
-                  maxLength={500}
-                  placeholder="What this position represents..."
-                  {...form.register(`positions.${selectedCardIndex}.description`)}
-                  aria-invalid={!!cardErrors?.description}
-                />
-                <FieldError errors={cardErrors?.description ? [cardErrors.description] : []} />
-              </FieldContent>
-            </Field>
+            <Controller
+              name={`positions.${selectedCardIndex}.description`}
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="card-description">Description</FieldLabel>
+                  <FieldContent>
+                    <Textarea
+                      id="card-description"
+                      maxLength={500}
+                      placeholder="What this position represents..."
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </FieldContent>
+                </Field>
+              )}
+            />
 
             {/* Allow Reverse Orientation */}
             <Field orientation="horizontal">
