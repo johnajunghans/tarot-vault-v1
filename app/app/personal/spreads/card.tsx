@@ -35,10 +35,12 @@ interface SpreadCardProps {
   card: CanvasCard;
   index: number;
   selected: boolean;
+  groupSelected: boolean;
   onDragStart: (index: number, x: number, y: number) => void;
   onDragEnd: (index: number) => void;
   onDrag: (index: number, x: number, y: number) => void;
   onClick: (index: number) => void;
+  registerRef: (index: number, el: SVGGElement | null) => void;
 }
 
 // === Component ===
@@ -47,10 +49,12 @@ function SpreadCard({
   card,
   index,
   selected,
+  groupSelected,
   onDragStart,
   onDragEnd,
   onDrag,
   onClick,
+  registerRef,
 }: SpreadCardProps) {
   const { control, setValue } = useFormContext<{ positions: cardData[] }>();
   const watched = useWatch({ control, name: `positions.${index}` });
@@ -125,6 +129,12 @@ function SpreadCard({
     }
   }, [watched.x, watched.y]);
 
+  // Register ref with canvas for group drag
+  useEffect(() => {
+    registerRef(index, groupRef.current);
+    return () => registerRef(index, null);
+  }, [index, registerRef]);
+
   const handleOpenPanel = (e: React.MouseEvent) => {
       e.stopPropagation();
       onClick(index);
@@ -151,14 +161,14 @@ function SpreadCard({
           height={CARD_HEIGHT - STROKE_WIDTH}
           rx={6}
           fill="var(--gold)"
-          fillOpacity={0.25}
-          stroke={selected ? "var(--gold)" : "var(--gold-muted)"}
+          fillOpacity={selected || groupSelected ? 0.35 : 0.25}
+          stroke={selected || groupSelected ? "var(--gold)" : "var(--gold-muted)"}
           strokeWidth={STROKE_WIDTH}
-          strokeDasharray={selected ? undefined : "4 3"}
+          strokeDasharray={selected || groupSelected ? undefined : "4 3"}
         />
 
         {/* Index badge (top-left, 1-based display) */}
-        <circle cx={15} cy={15} r={10} fill={selected ? "var(--gold)" : "var(--gold-muted)"} />
+        <circle cx={15} cy={15} r={10} fill={selected || groupSelected ? "var(--gold)" : "var(--gold-muted)"} />
         <text
           x={15}
           y={19}
@@ -211,10 +221,12 @@ function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
     prev.card.z === next.card.z &&
     prev.index === next.index &&
     prev.selected === next.selected &&
+    prev.groupSelected === next.groupSelected &&
     prev.onDragStart === next.onDragStart &&
     prev.onDragEnd === next.onDragEnd &&
     prev.onDrag === next.onDrag &&
-    prev.onClick === next.onClick
+    prev.onClick === next.onClick &&
+    prev.registerRef === next.registerRef
   );
 }
 

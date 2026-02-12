@@ -265,6 +265,30 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/11/2026 -- 1.3.5 -- Claude Opus 4.6**
+Summary of actions taken:
+- Added marquee (click-drag) multi-card selection to `canvas.tsx`:
+  - New `groupSelectedIndices` state + `groupSelectedRef` mirror for stable callbacks
+  - `svgRef` + `clientToSVG` helper for mouse-to-SVG coordinate conversion via `getScreenCTM().inverse()`
+  - Background `<rect>` `onMouseDown` starts marquee (suppressed when spacebar held for panning)
+  - Window `mousemove`/`mouseup` effect draws marquee and computes AABB intersection with card positions
+  - Tiny drag (<5px) treated as click → deselects all (group + single)
+  - Gold semi-transparent marquee rectangle rendered after cards with `pointerEvents="none"`
+- Added group drag to `canvas.tsx`:
+  - `cardGroupRefs` map populated via `registerCardRef` callback passed to each card
+  - `handleDragStart`: if dragged card is group-selected, records sibling starting positions from SVG transform matrices
+  - `handleDrag`: computes delta from drag start, applies snapped+clamped offset to siblings via `el.transform.baseVal.getItem(0).setTranslate()` (no form state updates mid-drag)
+  - `handleDragEnd`: commits final sibling positions to form state via `setValue`, clears drag origins
+  - `draggingRef` mirrors state to avoid stale closures in `handleDragEnd`, keeping all three callbacks dependency-free
+- Updated `card.tsx` with two new props:
+  - `groupSelected: boolean` — drives visual state (solid gold stroke, brighter fill at 0.35 opacity, gold-filled badge)
+  - `registerRef` callback — `useEffect` registers/unregisters outer `<g>` ref with canvas for group drag
+  - Updated `arePropsEqual` memo comparator with both new props
+
+Future considerations:
+- Group selection is not cleared on card add/remove (React compiler lint prevents setState in effect); stale indices are harmless since they won't match rendered cards. A new marquee or canvas click will reset.
+- Alignment guides still show against stale positions of group-dragged siblings during drag; guides snap correctly once drag ends.
+
 **02/08/2026 -- 1.3.4 -- Claude Opus 4.6**
 Summary of actions taken:
 - Added `allowReverse: v.optional(v.boolean())` to spread position schema in `convex/schema.ts`
