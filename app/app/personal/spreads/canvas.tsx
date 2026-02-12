@@ -458,21 +458,21 @@ export default function SpreadCanvas({
 
         {/* Draggable cards — sorted by zIndex for correct layering */}
         {sortedCards.map(({ card, index }) => {
-          const isGroupDragging =
+          // Check if this card is part of a group currently being dragged
+          const isDraggingInGroup =
             dragging !== null &&
             groupSelectedIndices.size > 1 &&
             groupSelectedIndices.has(dragging.index) &&
-            groupSelectedIndices.has(index) &&
-            index !== dragging.index;
+            groupSelectedIndices.has(index);
 
           return (
             <SpreadCard
-              key={index}
+              key={String(index)}
               card={card}
               index={index}
               selected={index === selectedCardIndex}
               groupSelected={groupSelectedIndices.has(index)}
-              isGroupDragging={isGroupDragging}
+              isDraggingInGroup={isDraggingInGroup}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               onDrag={handleDrag}

@@ -36,7 +36,7 @@ interface SpreadCardProps {
   index: number;
   selected: boolean;
   groupSelected: boolean;
-  isGroupDragging: boolean;
+  isDraggingInGroup: boolean;
   onDragStart: (index: number, x: number, y: number) => void;
   onDragEnd: (index: number) => void;
   onDrag: (index: number, x: number, y: number) => void;
@@ -51,7 +51,7 @@ function SpreadCard({
   index,
   selected,
   groupSelected,
-  isGroupDragging,
+  isDraggingInGroup,
   onDragStart,
   onDragEnd,
   onDrag,
@@ -145,23 +145,19 @@ function SpreadCard({
 
   // ------------ VISUAL STATE ------------ //
 
-  const isActiveDrag = isDraggingState || isGroupDragging;
+  const isActiveDrag = isDraggingState || isDraggingInGroup;
   const isGroupStyled = groupSelected;
   const isEditStyled = selected && !groupSelected;
 
-  const cardFill = isGroupStyled ? "var(--amethyst)" : "var(--gold)";
-  const cardFillOpacity = isEditStyled ? 0.3 : isGroupStyled ? 0.2 : 0.15;
-  const cardStroke = isEditStyled
-    ? "var(--gold)"
-    : isGroupStyled
-      ? "var(--amethyst)"
-      : "var(--gold-muted)";
-  const cardDashArray = isEditStyled || isGroupStyled ? undefined : "4 3";
-  const badgeColor = isEditStyled
-    ? "var(--gold)"
-    : isGroupStyled
-      ? "var(--amethyst)"
-      : "var(--gold-muted)";
+  // Simplified color scheme:
+  // - Edit-selected: gold (current styling with glow)
+  // - Group-selected: gold (prominent highlight)
+  // - Unselected: muted-foreground (neutral)
+  const cardFill = isEditStyled || isGroupStyled ? "var(--gold)" : "var(--muted-foreground)";
+  const cardFillOpacity = 0.3;
+  const cardStroke = isEditStyled || isGroupStyled ? "var(--gold)" : "var(--muted-foreground)";
+  const cardDashArray = undefined; // Always solid stroke
+  const badgeColor = isEditStyled || isGroupStyled ? "var(--gold)" : "var(--muted-foreground)";
 
   // ------------ RETURN ------------ //
 
@@ -265,7 +261,7 @@ function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
     prev.index === next.index &&
     prev.selected === next.selected &&
     prev.groupSelected === next.groupSelected &&
-    prev.isGroupDragging === next.isGroupDragging &&
+    prev.isDraggingInGroup === next.isDraggingInGroup &&
     prev.onDragStart === next.onDragStart &&
     prev.onDragEnd === next.onDragEnd &&
     prev.onDrag === next.onDrag &&

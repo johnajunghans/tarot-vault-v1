@@ -66,12 +66,12 @@ export default function SpreadSettingsPanel({
             </Button>
         </ButtonGroup>
     ) : (
-        <ButtonGroup className="w-full">
+        <ButtonGroup className="w-full duration-0">
             <Button
                 variant="secondary"
                 onClick={removeCard}
                 disabled={cards.length <= 1}
-                className="flex-1"
+                className="flex-1 transition-colors"
             >
                 <MinusSignIcon />
                 <span>Card</span>
@@ -80,7 +80,7 @@ export default function SpreadSettingsPanel({
                 variant="secondary"
                 onClick={addCard}
                 disabled={cards.length >= 78}
-                className="flex-1"
+                className="flex-1 transition-colors"
             >
                 <PlusSignIcon />
                 <span>Card</span>
