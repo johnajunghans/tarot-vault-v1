@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Delete02Icon, Edit01Icon, PlusSignIcon } from "hugeicons-react";
+import { Delete02Icon, PlusSignIcon } from "hugeicons-react";
 import { cardData } from "./spread-schema";
 
 gsap.registerPlugin(Draggable);
@@ -70,7 +70,8 @@ export default function CardOverview({
   useEffect(() => {
     cleanupDraggables();
 
-    const tiles = tileRefs.current.filter(Boolean) as HTMLDivElement[];
+    // Slice to cardCount to avoid stale refs from previous renders with more tiles
+    const tiles = tileRefs.current.slice(0, cardCount).filter(Boolean) as HTMLDivElement[];
     if (tiles.length === 0) return;
 
     const newDraggables: Draggable[] = [];
@@ -82,7 +83,7 @@ export default function CardOverview({
       const [instance] = Draggable.create(tile, {
         type: "y",
         bounds: containerRef.current!,
-        cursor: "grab",
+        cursor: "pointer",
         activeCursor: "grabbing",
         zIndexBoost: true,
         onDragStart() {
@@ -95,7 +96,7 @@ export default function CardOverview({
           const currentSlot = Math.round(dragY / SLOT_SIZE) + fromSlot;
           const clampedSlot = Math.max(0, Math.min(tiles.length - 1, currentSlot));
 
-          // Animate other tiles to make room
+          // Instantly shift displaced tiles to avoid animation overlap
           tiles.forEach((otherTile, j) => {
             if (j === i) return;
             let shift = 0;
@@ -104,7 +105,7 @@ export default function CardOverview({
             } else if (fromSlot > clampedSlot && j >= clampedSlot && j < fromSlot) {
               shift = SLOT_SIZE;
             }
-            gsap.to(otherTile, { y: shift, duration: 0.15, overwrite: true });
+            gsap.set(otherTile, { y: shift });
           });
         },
         onDragEnd() {
@@ -119,18 +120,19 @@ export default function CardOverview({
           });
 
           if (fromSlot !== toSlot) {
-            // Update selectedCardIndex to track the moved card
-            if (selectedCardIndex === fromSlot) {
-              setSelectedCardIndex(toSlot);
-            } else if (selectedCardIndex !== null) {
-              if (fromSlot < toSlot && selectedCardIndex > fromSlot && selectedCardIndex <= toSlot) {
-                setSelectedCardIndex(selectedCardIndex - 1);
-              } else if (fromSlot > toSlot && selectedCardIndex >= toSlot && selectedCardIndex < fromSlot) {
-                setSelectedCardIndex(selectedCardIndex + 1);
-              }
-            }
+            // Track the selected card through the reorder using functional updater
+            setSelectedCardIndex((prev) => {
+              if (prev === null) return null;
+              if (prev === fromSlot) return toSlot;
+              if (fromSlot < toSlot && prev > fromSlot && prev <= toSlot) return prev - 1;
+              if (fromSlot > toSlot && prev >= toSlot && prev < fromSlot) return prev + 1;
+              return prev;
+            });
             move(fromSlot, toSlot);
           }
+        },
+        onClick() {
+          setSelectedCardIndex(i);
         },
       });
       newDraggables.push(instance);
@@ -139,14 +141,7 @@ export default function CardOverview({
     draggablesRef.current = newDraggables;
 
     return cleanupDraggables;
-  }, [cardCount, move, selectedCardIndex, setSelectedCardIndex, cleanupDraggables]);
-
-  const handleEdit = useCallback(
-    (index: number) => {
-      setSelectedCardIndex(index);
-    },
-    [setSelectedCardIndex]
-  );
+  }, [cardCount, move, setSelectedCardIndex, cleanupDraggables]);
 
   const handleDeleteConfirm = useCallback(() => {
     if (deleteIndex === null) return;
@@ -175,7 +170,7 @@ export default function CardOverview({
           <div
             key={index}
             ref={(el) => { tileRefs.current[index] = el; }}
-            className={`flex items-center justify-between rounded-md border px-2 cursor-grab select-none ${
+            className={`flex items-center justify-between rounded-md border px-2 cursor-pointer select-none ${
               index === selectedCardIndex
                 ? "border-gold bg-gold/10"
                 : "border-border bg-muted/50 hover:bg-muted"
@@ -183,18 +178,14 @@ export default function CardOverview({
             style={{ height: `${TILE_HEIGHT}px` }}
           >
             <CardTileName index={index} />
-            <div className="flex items-center gap-0.5 shrink-0">
+            <div className="flex items-center shrink-0">
               <Button
                 variant="ghost"
                 size="icon-xs"
-                onClick={() => handleEdit(index)}
-              >
-                <Edit01Icon />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setDeleteIndex(index)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteIndex(index);
+                }}
                 disabled={cardCount <= 1}
               >
                 <Delete02Icon />

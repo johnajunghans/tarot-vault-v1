@@ -4,6 +4,16 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SpreadCard, { CARD_WIDTH, CARD_HEIGHT, type CanvasCard } from "./card";
 import { cardData } from "./spread-schema";
+import { UseFieldArrayRemove } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
@@ -13,12 +23,14 @@ interface SpreadCanvasProps {
   cards: CanvasCard[];
   selectedCardIndex: number | null;
   onCardSelect: (index: number | null) => void;
+  remove: UseFieldArrayRemove;
 }
 
 export default function SpreadCanvas({
   cards,
   selectedCardIndex,
   onCardSelect,
+  remove,
 }: SpreadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -386,6 +398,28 @@ export default function SpreadCanvas({
     [clientToSVG]
   );
 
+  // === Card delete ===
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+
+  const handleCardDelete = useCallback((index: number) => {
+    setDeleteIndex(index);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (deleteIndex === null) return;
+
+    if (selectedCardIndex !== null) {
+      if (selectedCardIndex === deleteIndex) {
+        onCardSelect(null);
+      } else if (selectedCardIndex > deleteIndex) {
+        onCardSelect(selectedCardIndex - 1);
+      }
+    }
+
+    remove(deleteIndex);
+    setDeleteIndex(null);
+  }, [deleteIndex, selectedCardIndex, onCardSelect, remove]);
+
   // Compute marquee rect for rendering
   const marqueeRect = useMemo(() => {
     if (!marquee) return null;
@@ -398,6 +432,7 @@ export default function SpreadCanvas({
   }, [marquee]);
 
   return (
+    <>
     <div ref={containerRef} className="h-full w-full overflow-auto">
       <svg
         ref={svgRef}
@@ -477,6 +512,7 @@ export default function SpreadCanvas({
               onDragEnd={handleDragEnd}
               onDrag={handleDrag}
               onClick={onCardSelect}
+              onDelete={handleCardDelete}
               registerRef={registerCardRef}
             />
           );
@@ -499,5 +535,30 @@ export default function SpreadCanvas({
         )}
       </svg>
     </div>
+
+    <Dialog
+      open={deleteIndex !== null}
+      onOpenChange={(open) => {
+        if (!open) setDeleteIndex(null);
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Remove Card {deleteIndex !== null ? deleteIndex + 1 : ""}?</DialogTitle>
+          <DialogDescription>
+            This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDeleteIndex(null)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDeleteConfirm}>
+            Remove
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

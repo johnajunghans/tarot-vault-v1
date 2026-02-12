@@ -93,11 +93,11 @@ export default function SpreadSettingsPanel({
         {hideSettings &&
           <Card className="absolute top-3 left-3 py-2 z-10 min-w-[150px] max-w-[350px] shadow-md bg-background">
             <CardContent>
-              <div className="flex w-full justify-between items-center gap-4">
+              <div className="flex w-full justify-between items-center gap-8">
                 <h3 className="text-md font-semibold">Spread Settings</h3>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="icon-sm"
                     onClick={addCard}
                     disabled={cards.length >= 78}
@@ -118,7 +118,7 @@ export default function SpreadSettingsPanel({
             id="spread-settings-panel"
             collapsible
             defaultSize="20%"
-            minSize={150}
+            minSize={240}
             maxSize="40%"
             panelRef={spreadSettingsPanelRef}
             onResize={handleResize}

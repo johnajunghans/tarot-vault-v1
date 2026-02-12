@@ -81,6 +81,7 @@ export default function CardSettingsPanel({
                     <Input
                       id="card-name"
                       type="text"
+                      autoFocus
                       maxLength={50}
                       placeholder="e.g. Past, Present, Future"
                       value={field.value ?? ""}
@@ -285,7 +286,7 @@ export default function CardSettingsPanel({
             onResize={handleResize}
             collapsible
             defaultSize="20%"
-            minSize="10%"
+            minSize={240}
             maxSize="40%"
           >
             <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">

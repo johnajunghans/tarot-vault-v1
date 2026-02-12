@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { useGSAP } from '@gsap/react'
-import { Edit01Icon } from "hugeicons-react";
+import { Delete02Icon } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { cardData } from "./spread-schema";
 
@@ -41,6 +41,7 @@ interface SpreadCardProps {
   onDragEnd: (index: number) => void;
   onDrag: (index: number, x: number, y: number) => void;
   onClick: (index: number) => void;
+  onDelete: (index: number) => void;
   registerRef: (index: number, el: SVGGElement | null) => void;
 }
 
@@ -56,11 +57,12 @@ function SpreadCard({
   onDragEnd,
   onDrag,
   onClick,
+  onDelete,
   registerRef,
 }: SpreadCardProps) {
   const { control, setValue } = useFormContext<{ positions: cardData[] }>();
   const watched = useWatch({ control, name: `positions.${index}` });
-  const [showEditButton, setShowEditButton] = useState(false)
+  const [showDeleteButton, setShowDeleteButton] = useState(false)
   const [isDraggingState, setIsDraggingState] = useState(false)
 
   // ------------ DRAG LOGIC ------------ //
@@ -68,7 +70,6 @@ function SpreadCard({
   const groupRef = useRef<SVGGElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const isDraggingRef = useRef(false);
-  const wasDraggedRef = useRef(false);
   const initialPos = useRef({ x: card.x, y: card.y });
 
   // Set x, y field values
@@ -103,7 +104,6 @@ function SpreadCard({
         onDragStart(index, this.x, this.y);
       },
       onDrag: function () {
-        wasDraggedRef.current = true;
         onDrag(index, this.x, this.y);
         handleCardTranslation(index, this.x, this.y);
       },
@@ -113,7 +113,10 @@ function SpreadCard({
         onDragEnd(index);
         handleCardTranslation(index, this.x, this.y);
       },
-      cursor: "grab",
+      onClick: function () {
+        onClick(index);
+      },
+      cursor: "pointer",
       activeCursor: "grabbing",
     });
 
@@ -122,7 +125,7 @@ function SpreadCard({
     return () => {
       instance.kill();
     };
-  }, { dependencies: [index, handleCardTranslation, onDragStart, onDragEnd, onDrag] });
+  }, { dependencies: [index, handleCardTranslation, onDragStart, onDragEnd, onDrag, onClick] });
 
   // Sync GSAP position from form state when not dragging (e.g. panel input changes)
   useEffect(() => {
@@ -138,9 +141,9 @@ function SpreadCard({
     return () => registerRef(index, null);
   }, [index, registerRef]);
 
-  const handleOpenPanel = (e: React.MouseEvent) => {
+  const handleDelete = (e: React.MouseEvent) => {
       e.stopPropagation();
-      onClick(index);
+      onDelete(index);
   };
 
   // ------------ VISUAL STATE ------------ //
@@ -165,13 +168,12 @@ function SpreadCard({
     <g
       ref={groupRef}
       style={{
-        cursor: "grab",
+        cursor: "pointer",
         opacity: isActiveDrag ? 0.7 : 1,
         transition: "opacity 150ms ease",
       }}
-      onMouseDown={() => wasDraggedRef.current = false}
-      onMouseOver={() => setShowEditButton(true)}
-      onMouseOut={() => setShowEditButton(false)}
+      onMouseOver={() => setShowDeleteButton(true)}
+      onMouseOut={() => setShowDeleteButton(false)}
     >
       {/* Inner rotation wrapper — separate from GSAP's x/y transform on outer <g> */}
       <g transform={`rotate(${watched.r}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}>
@@ -233,13 +235,13 @@ function SpreadCard({
         </text>
 
         <foreignObject width={32} height={32} x={CARD_WIDTH - 36} y={CARD_HEIGHT - 36}>
-          <Button 
+          <Button
             variant="secondary"
             size="icon"
-            onClick={handleOpenPanel}
-            className={`${showEditButton ? "translate-y-0 opacity-100 scale-100" : "translate-y-2 opacity-0 scale-75 pointer-events-none"} duration-100 cursor-pointer`}
+            onClick={handleDelete}
+            className={`${showDeleteButton ? "translate-y-0 opacity-100 scale-100" : "translate-y-2 opacity-0 scale-75 pointer-events-none"} duration-100 cursor-pointer`}
           >
-            <Edit01Icon />
+            <Delete02Icon />
           </Button>
         </foreignObject>
       </g>
@@ -266,6 +268,7 @@ function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
     prev.onDragEnd === next.onDragEnd &&
     prev.onDrag === next.onDrag &&
     prev.onClick === next.onClick &&
+    prev.onDelete === next.onDelete &&
     prev.registerRef === next.registerRef
   );
 }

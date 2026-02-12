@@ -10,7 +10,7 @@ import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import SpreadSettingsPanel from "../spread-settings-panel";
 import SpreadCanvas from "../canvas";
 import CardSettingsPanel from "../card-settings-panel";
-import { Layout, useDefaultLayout } from "react-resizable-panels";
+import { Layout } from "react-resizable-panels";
 import { generateCard } from "../spread-functions";
 
 interface PanelWrapperProps {
@@ -38,12 +38,6 @@ export default function PanelWrapper({
         control: form.control,
         name: "positions"
     });
-    
-    // CAUSES A VARIETY OF ISSUES: 1. localStorage not defined, 2. can't reopen spread settings panel after closed/collapsed.
-    // const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    //     id: "spread-creation-layout",
-    //     panelIds: ["spread-settings-panel", "spread-canvas-panel", "card-settings-panel"]
-    // })
 
     // Action handlers
     const handleDiscard = useCallback(() => {
@@ -126,6 +120,7 @@ export default function PanelWrapper({
                 cards={cards}
                 selectedCardIndex={selectedCardIndex}
                 onCardSelect={setSelectedCardIndex}
+                remove={remove}
                 />
             </ResizablePanel>
 

@@ -284,6 +284,15 @@ Summary of actions taken:
   - Destructured `move` from `useFieldArray`
   - Passes `move`, `selectedCardIndex`, `setSelectedCardIndex` to `SpreadSettingsPanel`
 
+Follow-up 1 — UI refinements:
+- Replaced edit buttons with click-to-select across both canvas cards and card tiles
+  - Canvas cards: clicking the card body opens the right-hand settings panel (drag disambiguation via `wasDraggedRef`)
+  - Card tiles: clicking the tile selects it (drag disambiguation via per-index `wasDraggedRef` array)
+- Changed cursor from `grab` to `pointer` on both canvas cards and card tiles; `grabbing` cursor shows during active drag
+- Replaced the edit button on canvas cards with a delete (trash) button that triggers the same confirmation dialog
+  - Delete dialog managed in `canvas.tsx` with `deleteIndex` state; `remove` prop passed from `panel-wrapper.tsx`
+  - Adjusts `selectedCardIndex` on delete (deselects if deleted card was selected, decrements if after deleted)
+
 Future considerations:
 - GSAP draggable instances are re-created on every `cardCount` change; for very large card counts, consider a virtualized list approach
 - The drag-to-reorder uses simple slot-based detection; for smoother UX with many cards, a threshold-based approach may be preferable
