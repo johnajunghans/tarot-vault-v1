@@ -14,14 +14,12 @@ type SpreadForm = UseFormReturn<{ positions: Array<{ name: string }> }>;
 
 interface SpreadCanvasProps {
   cards: CanvasCard[];
-  onPositionChange: (index: number, x: number, y: number) => void;
   selectedCardIndex: number | null;
   onCardSelect: (index: number | null) => void;
 }
 
 export default function SpreadCanvas({
   cards,
-  onPositionChange,
   selectedCardIndex,
   onCardSelect,
 }: SpreadCanvasProps) {
@@ -243,7 +241,6 @@ export default function SpreadCanvas({
             card={card}
             index={index}
             selected={index === selectedCardIndex}
-            onPositionChange={onPositionChange}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDrag={handleDrag}

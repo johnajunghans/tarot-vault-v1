@@ -95,20 +95,6 @@ export default function PanelWrapper({
         return () => subscription.unsubscribe();
     }, [form]);
 
-    // Update card position from canvas drag
-    const handleCardTranslation = useCallback((index: number, x: number, y: number) => {
-        // TWO DIFFERENT APPROACHES IN THIS FUNCTION, BOTH APPEAR TO WORK
-        const currentPositions = form.getValues("positions")
-        const currentCard = currentPositions[index]
-        update(index, {
-        ...currentCard, x, y
-        })
-        // const positions = form.getValues("positions");
-        // const updated = positions.map((card, i) =>
-        //   i === index ? { ...card, x, y } : card
-        // );
-        // form.setValue("positions", updated, { shouldDirty: true });
-    }, [form])
 
     return (
         <div className="h-app-content relative">
@@ -123,7 +109,6 @@ export default function PanelWrapper({
             >
             {/* Left Panel — Settings */}
             <SpreadSettingsPanel 
-                form={form}
                 append={append}
                 remove={remove}
                 cards={cards}
@@ -135,7 +120,6 @@ export default function PanelWrapper({
             >
                 <SpreadCanvas
                 cards={cards}
-                onPositionChange={handleCardTranslation}
                 selectedCardIndex={selectedCardIndex}
                 onCardSelect={setSelectedCardIndex}
                 />
@@ -143,7 +127,6 @@ export default function PanelWrapper({
 
             {/* Right Panel — Card Details */}
             <CardSettingsPanel 
-                form={form}
                 cards={cards}
                 selectedCardIndex={selectedCardIndex}
                 setSelectedCardIndex={setSelectedCardIndex}

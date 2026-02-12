@@ -6,12 +6,11 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Cancel01Icon } from "hugeicons-react";
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { Controller, UseFormReturn } from "react-hook-form";
-import { spreadData } from "./spread-schema";
+import { Controller, useFormContext, UseFormReturn } from "react-hook-form";
+import { cardData, spreadData } from "./spread-schema";
 import { usePanelRef } from "react-resizable-panels";
 
 interface CardSettingsPanelProps {
-    form: UseFormReturn<spreadData, any, spreadData>
     cards: Record<"id", string>[]
     selectedCardIndex: number | null,
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
@@ -25,11 +24,11 @@ function snapToGrid(value: number): number {
 }
 
 export default function CardSettingsPanel({
-    form,
     cards,
     selectedCardIndex,
     setSelectedCardIndex
 }: CardSettingsPanelProps) {
+    const form = useFormContext<{ positions: cardData[] }>();
     const cardDetailsPanelRef = usePanelRef();
     const selectedCard = selectedCardIndex !== null ? cards[selectedCardIndex] : null
 
@@ -65,14 +64,7 @@ export default function CardSettingsPanel({
 
     const cardErrors = selectedCardIndex !== null ? form.formState.errors.positions?.[selectedCardIndex] : undefined;
 
-    const registerCardX = selectedCardIndex !== null
-      ? form.register(`positions.${selectedCardIndex}.x`, { valueAsNumber: true })
-      : null;
-    const registerCardY = selectedCardIndex !== null
-      ? form.register(`positions.${selectedCardIndex}.y`, { valueAsNumber: true })
-      : null;
-
-    const cardDetailsPanel = selectedCard && selectedCardIndex !== null && registerCardX && registerCardY && (
+    const cardDetailsPanel = selectedCard && selectedCardIndex !== null && (
       <form>
         <FieldSet>
           <FieldSeparator />
@@ -136,82 +128,130 @@ export default function CardSettingsPanel({
           <FieldSet>
             {/* X-Offset / Y-Offset */}
             <FieldGroup className="gap-2">
-              <Field>
-                <FieldLabel htmlFor="card-x">X-Offset</FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="card-x"
-                    type="number"
-                    step={15}
-                    min={0}
-                    {...registerCardX}
-                    onBlur={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      if (!isNaN(val)) {
-                        form.setValue(`positions.${selectedCardIndex}.x`, snapToGrid(val));
-                      }
-                      registerCardX.onBlur(e);
-                    }}
-                    aria-invalid={!!cardErrors?.x}
-                  />
-                  <FieldError errors={cardErrors?.x ? [cardErrors.x] : []} />
-                </FieldContent>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="card-y">Y-Offset</FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="card-y"
-                    type="number"
-                    step={15}
-                    min={0}
-                    {...registerCardY}
-                    onBlur={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      if (!isNaN(val)) {
-                        form.setValue(`positions.${selectedCardIndex}.y`, snapToGrid(val));
-                      }
-                      registerCardY.onBlur(e);
-                    }}
-                    aria-invalid={!!cardErrors?.y}
-                  />
-                  <FieldError errors={cardErrors?.y ? [cardErrors.y] : []} />
-                </FieldContent>
-              </Field>
+              <Controller
+                name={`positions.${selectedCardIndex}.x`}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>X-Offset</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        type="number"
+                        step={15}
+                        min={0}
+                        aria-invalid={fieldState.invalid}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            field.onChange(val);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            field.onChange(snapToGrid(val));
+                          }
+                          field.onBlur();
+                        }}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+              <Controller
+                name={`positions.${selectedCardIndex}.y`}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Y-Offset</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        type="number"
+                        step={15}
+                        min={0}
+                        aria-invalid={fieldState.invalid}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            field.onChange(val);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            field.onChange(snapToGrid(val));
+                          }
+                          field.onBlur();
+                        }}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
             </FieldGroup>
 
             {/* Rotation / Z-Index */}
             <FieldGroup className="gap-2">
-              <Field>
-                <FieldLabel htmlFor="card-r">Rotation</FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="card-r"
-                    type="number"
-                    step={45}
-                    min={0}
-                    max={315}
-                    {...form.register(`positions.${selectedCardIndex}.r`, { valueAsNumber: true })}
-                    aria-invalid={!!cardErrors?.r}
-                  />
-                  <FieldError errors={cardErrors?.r ? [cardErrors.r] : []} />
-                </FieldContent>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="card-z">Z-Index</FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="card-z"
-                    type="number"
-                    step={1}
-                    min={0}
-                    max={100}
-                    {...form.register(`positions.${selectedCardIndex}.z`, { valueAsNumber: true })}
-                    aria-invalid={!!cardErrors?.z}
-                  />
-                  <FieldError errors={cardErrors?.z ? [cardErrors.z] : []} />
-                </FieldContent>
-              </Field>
+              <Controller
+                name={`positions.${selectedCardIndex}.r`}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Rotation</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        type="number"
+                        step={45}
+                        min={0}
+                        max={315}
+                        aria-invalid={fieldState.invalid}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            field.onChange(val);
+                          }
+                        }}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
+              <Controller
+                name={`positions.${selectedCardIndex}.z`}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Z-Index</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        type="number"
+                        step={1}
+                        min={0}
+                        max={100}
+                        aria-invalid={fieldState.invalid}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val)) {
+                            field.onChange(val);
+                          }
+                        }}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </FieldContent>
+                  </Field>
+                )}
+              />
             </FieldGroup>
           </FieldSet>
         </FieldSet>

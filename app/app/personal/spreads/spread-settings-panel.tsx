@@ -6,26 +6,28 @@ import { MinusPlus01Icon, MinusSignIcon, PanelLeftIcon, PlusMinus01Icon, PlusSig
 import { useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
 import { generateCard, spreadData } from "./spread-schema";
-import { UseFieldArrayAppend, UseFieldArrayRemove, UseFormReturn } from "react-hook-form";
+import { UseFieldArrayAppend, UseFieldArrayRemove, useFormContext, UseFormReturn } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 
 interface SpreadSettingsPanelProps {
-    form: UseFormReturn<spreadData, any, spreadData>
+    
     cards: Record<"id", string>[];
     append: UseFieldArrayAppend<spreadData, "positions">;
     remove: UseFieldArrayRemove
 }
 
 export default function SpreadSettingsPanel({ 
-    form,
+   
     cards,
     append,
     remove 
 }: SpreadSettingsPanelProps) {
     const spreadSettingsPanelRef = usePanelRef()
     const [hideSettings, setHideSettings] = useState(false)
+
+    const form = useFormContext()
 
     function handleResize() {
       if (spreadSettingsPanelRef.current) {

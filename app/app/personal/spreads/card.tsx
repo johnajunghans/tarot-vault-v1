@@ -1,10 +1,12 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { memo, RefObject, useEffect, useRef, useState } from "react";
+import { memo, RefObject, useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { useGSAP } from '@gsap/react'
+import { Edit01Icon, InformationCircleIcon } from "hugeicons-react";
+import { Button } from "@/components/ui/button";
 
 gsap.registerPlugin(Draggable);
 
@@ -32,7 +34,6 @@ interface SpreadCardProps {
   card: CanvasCard;
   index: number;
   selected: boolean;
-  onPositionChange: (index: number, x: number, y: number) => void;
   onDragStart: (index: number, x: number, y: number) => void;
   onDragEnd: (index: number) => void;
   onDrag: (index: number, x: number, y: number) => void;
@@ -45,13 +46,14 @@ function SpreadCard({
   card,
   index,
   selected,
-  onPositionChange,
   onDragStart,
   onDragEnd,
   onDrag,
   onClick,
 }: SpreadCardProps) {
   const form = useFormContext<{ positions: Array<{ name: string }> }>();
+  const [showEditButton, setShowEditButton] = useState(false)
+
   const groupRef = useRef<SVGGElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const isDraggingRef = useRef(false);
@@ -74,6 +76,21 @@ function SpreadCard({
     });
   }, [form, index]);
 
+  const handleCardTranslation = useCallback((index: number, x: number, y: number) => {
+      // console.log("updating card position...")
+      // // TWO DIFFERENT APPROACHES IN THIS FUNCTION, BOTH APPEAR TO WORK
+      // const currentPositions = form.getValues("positions")
+      // const currentCard = currentPositions[index]
+      // update(index, {
+      //     ...currentCard, x, y
+      // })
+      const positions = form.getValues("positions");
+      const updated = positions.map((card, i) =>
+        i === index ? { ...card, x, y } : card
+      );
+      form.setValue("positions", updated, { shouldDirty: true });
+  }, [form])
+
   // Initialize GSAP Draggable
   useGSAP(() => {
     const group = groupRef.current;
@@ -95,19 +112,23 @@ function SpreadCard({
         },
       },
       onDragStart: function () {
+        console.log("drag start. ending positions:", this.x, this.y)
         isDraggingRef.current = true;
         onDragStart(index, this.x, this.y);
         gsap.to(group, { opacity: 0.7, duration: 0.15 });
       },
       onDrag: function () {
+        console.log("dragging. ending positions:", this.x, this.y)
         wasDraggedRef.current = true;
         onDrag(index, this.x, this.y);
+        handleCardTranslation(index, this.x, this.y)
       },
       onDragEnd: function () {
+        console.log("drag end. ending positions:", this.x, this.y)
         isDraggingRef.current = false;
         onDragEnd(index);
         gsap.to(group, { opacity: 1, duration: 0.15 });
-        onPositionChange(index, this.x, this.y);
+        handleCardTranslation(index, this.x, this.y);
       },
       cursor: "grab",
       activeCursor: "grabbing",
@@ -118,7 +139,7 @@ function SpreadCard({
     return () => {
       instance.kill();
     };
-  }, { dependencies: [index, onPositionChange, onDragStart, onDragEnd, onDrag], scope: groupRef });
+  }, { dependencies: [index, handleCardTranslation, onDragStart, onDragEnd, onDrag] });
 
   // Sync position from props when not dragging
   useEffect(() => {
@@ -133,10 +154,11 @@ function SpreadCard({
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (!wasDraggedRef.current) {
+    // if (!wasDraggedRef.current) {
+      // console.log("card button clicked")
       e.stopPropagation();
       onClick(index);
-    }
+    // }
   };
 
   return (
@@ -144,7 +166,8 @@ function SpreadCard({
       ref={groupRef}
       style={{ cursor: "grab" }}
       onMouseDown={handleMouseDown}
-      onClick={handleClick}
+      onMouseOver={() => setShowEditButton(true)}
+      onMouseOut={() => setShowEditButton(false)}
     >
       {/* Inner rotation wrapper — separate from GSAP's x/y transform on outer <g> */}
       <g transform={`rotate(${card.r}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}>
@@ -188,6 +211,17 @@ function SpreadCard({
         >
           {displayName}
         </text>
+
+        <foreignObject width={32} height={32} x={CARD_WIDTH - 36} y={CARD_HEIGHT - 36}>
+          <Button 
+            variant="secondary"
+            size="icon"
+            onClick={handleClick}
+            className={`${showEditButton ? "translate-y-0 opacity-100 scale-100" : "translate-y-2 opacity-0 scale-75 pointer-events-none"} duration-100 cursor-pointer`}
+          >
+            <Edit01Icon />
+          </Button>
+        </foreignObject>
       </g>
     </g>
   );
@@ -197,10 +231,15 @@ function SpreadCard({
 
 function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
   return (
-    prev.card === next.card &&
+    prev.card.name === next.card.name &&
+    prev.card.description === next.card.description &&
+    prev.card.allowReverse === next.card.allowReverse &&
+    prev.card.x === next.card.x &&
+    prev.card.y === next.card.y &&
+    prev.card.r === next.card.r &&
+    prev.card.z === next.card.z &&
     prev.index === next.index &&
     prev.selected === next.selected &&
-    prev.onPositionChange === next.onPositionChange &&
     prev.onDragStart === next.onDragStart &&
     prev.onDragEnd === next.onDragEnd &&
     prev.onDrag === next.onDrag &&
