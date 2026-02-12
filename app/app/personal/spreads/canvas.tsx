@@ -1,7 +1,9 @@
 "use client";
 
+import { useFormContext, useWatch } from "react-hook-form";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SpreadCard, { type CanvasCard } from "./card";
+import { cardData } from "./spread-schema";
 
 const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
@@ -20,6 +22,8 @@ export default function SpreadCanvas({
   onCardSelect,
 }: SpreadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { control } = useFormContext<{ positions: cardData[] }>();
+  const positions = useWatch({ control, name: "positions" });
 
   // Track which card is being dragged and its live position
   const [dragging, setDragging] = useState<{
@@ -56,14 +60,14 @@ export default function SpreadCanvas({
 
     const lines: { axis: "v" | "h"; pos: number }[] = [];
 
-    cards.forEach((card, i) => {
+    positions.forEach((pos, i) => {
       if (i === dragging.index) return;
 
       const otherEdges = {
-        left: card.x,
-        right: card.x + CARD_WIDTH,
-        top: card.y,
-        bottom: card.y + CARD_HEIGHT,
+        left: pos.x,
+        right: pos.x + CARD_WIDTH,
+        top: pos.y,
+        bottom: pos.y + CARD_HEIGHT,
       };
 
       // Vertical guides (matching left/right edges)
@@ -93,7 +97,7 @@ export default function SpreadCanvas({
       seen.add(key);
       return true;
     });
-  }, [dragging, cards]);
+  }, [dragging, positions]);
 
   // === Card drag callbacks ===
   const handleDragStart = useCallback(

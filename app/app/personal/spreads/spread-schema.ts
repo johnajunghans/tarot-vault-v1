@@ -19,16 +19,3 @@ export const cardSchema = z.object({
   
 export type cardData = z.infer<typeof cardSchema>
 export type spreadData = z.infer<typeof spreadSchema>
-
-export function generateCard(index: number): cardData {
-    const CARDS_PER_ROW = 10;
-    return {
-      name: "",
-      description: "",
-      allowReverse: true,
-      x: 15 + (index % CARDS_PER_ROW) * 105,
-      y: 15 + Math.floor(index / CARDS_PER_ROW) * 165,
-      r: 0,
-      z: 0
-    }
-  }

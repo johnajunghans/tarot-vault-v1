@@ -1,15 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { Field, FieldContent, FieldError, FieldLabel, FieldSet } from "@/components/ui/field";
+import { Field, FieldContent, FieldError, FieldLabel, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { MinusPlus01Icon, MinusSignIcon, PanelLeftIcon, PlusMinus01Icon, PlusSignIcon } from "hugeicons-react";
+import { MinusSignIcon, PanelLeftIcon, PlusSignIcon } from "hugeicons-react";
 import { useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
-import { generateCard, spreadData } from "./spread-schema";
+import { spreadData } from "./spread-schema";
 import { UseFieldArrayAppend, UseFieldArrayRemove, useFormContext, UseFormReturn } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
+import { generateCard } from "./spread-functions";
 
 interface SpreadSettingsPanelProps {
     
@@ -45,28 +46,47 @@ export default function SpreadSettingsPanel({
       if (cards.length > 1) remove(cards.length - 1);
     };
 
-    const cardCountButtons = (
-      <ButtonGroup>
-        <Button
-          variant={hideSettings ? "secondary" : "outline"}
-          size={hideSettings ? "icon-sm" : "icon"}
-          // className="bg-gold-muted hover:bg-gold-muted/60"
-          onClick={removeCard}
-          disabled={cards.length <= 1}
-        >
-          <MinusSignIcon />
-        </Button>
-        <Button
-          variant={hideSettings ? "secondary" : "outline"}
-          size={hideSettings ? "icon-sm" : "icon"}
-          // className="bg-gold-muted hover:bg-gold-muted/60"
-          onClick={addCard}
-          disabled={cards.length >= 78}
-        >
-          <PlusSignIcon />
-        </Button>
-      </ButtonGroup>
-    );
+    const cardCountButtons = hideSettings ? (
+        <ButtonGroup>
+            <Button
+                variant="secondary"
+                size="icon-sm"
+                onClick={removeCard}
+                disabled={cards.length <= 1}
+            >
+            <MinusSignIcon />
+            </Button>
+            <Button
+                variant="secondary"
+                size="icon-sm"
+                onClick={addCard}
+                disabled={cards.length >= 78}
+            >
+            <PlusSignIcon />
+            </Button>
+        </ButtonGroup>
+    ) : (
+        <ButtonGroup className="w-full">
+            <Button
+                variant="secondary"
+                onClick={removeCard}
+                disabled={cards.length <= 1}
+                className="flex-1"
+            >
+                <MinusSignIcon />
+                <span>Card</span>
+            </Button>
+            <Button
+                variant="secondary"
+                onClick={addCard}
+                disabled={cards.length >= 78}
+                className="flex-1"
+            >
+                <PlusSignIcon />
+                <span>Card</span>
+            </Button>
+        </ButtonGroup>
+    )
 
     const settingsForm = (
       <form>
@@ -134,6 +154,8 @@ export default function SpreadSettingsPanel({
             />
           </FieldContent>
         </Field>
+        <FieldSeparator />
+        { cardCountButtons }
         </FieldSet>
       </form>
     );

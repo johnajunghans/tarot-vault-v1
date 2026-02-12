@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { generateCard, spreadData, spreadSchema } from "../spread-schema";
+import { spreadData, spreadSchema } from "../spread-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
 import { useTopbarStore } from "@/stores/topbar";
@@ -11,6 +11,7 @@ import SpreadSettingsPanel from "../spread-settings-panel";
 import SpreadCanvas from "../canvas";
 import CardSettingsPanel from "../card-settings-panel";
 import { Layout, useDefaultLayout } from "react-resizable-panels";
+import { generateCard } from "../spread-functions";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined

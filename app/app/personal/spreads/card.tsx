@@ -12,8 +12,8 @@ import { cardData } from "./spread-schema";
 gsap.registerPlugin(Draggable);
 
 // Card dimensions
-const CARD_WIDTH = 90;
-const CARD_HEIGHT = 150;
+export const CARD_WIDTH = 90;
+export const CARD_HEIGHT = 150;
 const STROKE_WIDTH = 2;
 const GRID_SIZE = 15;
 
@@ -56,12 +56,15 @@ function SpreadCard({
   const watched = useWatch({ control, name: `positions.${index}` });
   const [showEditButton, setShowEditButton] = useState(false)
 
+  // ------------ DRAG LOGIC ------------ //
+
   const groupRef = useRef<SVGGElement>(null);
   const draggableRef = useRef<Draggable | null>(null);
   const isDraggingRef = useRef(false);
   const wasDraggedRef = useRef(false);
   const initialPos = useRef({ x: card.x, y: card.y });
 
+  // Set x, y field values
   const handleCardTranslation = useCallback((index: number, x: number, y: number) => {
       setValue(`positions.${index}.x`, x, { shouldDirty: true });
       setValue(`positions.${index}.y`, y, { shouldDirty: true });
@@ -122,20 +125,18 @@ function SpreadCard({
     }
   }, [watched.x, watched.y]);
 
-  const handleMouseDown = () => {
-    wasDraggedRef.current = false;
-  };
-
   const handleOpenPanel = (e: React.MouseEvent) => {
       e.stopPropagation();
       onClick(index);
   };
 
+  // ------------ RETURN ------------ //
+
   return (
     <g
       ref={groupRef}
       style={{ cursor: "grab" }}
-      onMouseDown={handleMouseDown}
+      onMouseDown={() => wasDraggedRef.current = false}
       onMouseOver={() => setShowEditButton(true)}
       onMouseOut={() => setShowEditButton(false)}
     >

@@ -40,6 +40,7 @@ export default function CardSettingsPanel({
 
     // Expand when a card is selected, collapse when none. Defer so panel ref is set (e.g. on initial mount).
     useEffect(() => {
+        console.log(selectedCardIndex)
       const id = requestAnimationFrame(() => {
         const panel = cardDetailsPanelRef.current
         if (!panel) return
