@@ -1,6 +1,5 @@
 "use client";
 
-import type { UseFormReturn } from "react-hook-form";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SpreadCard, { type CanvasCard } from "./card";
 
@@ -8,9 +7,6 @@ const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
 const CARD_WIDTH = 90;
 const CARD_HEIGHT = 150;
-
-/** Form shape for spread positions (card name subscription). */
-type SpreadForm = UseFormReturn<{ positions: Array<{ name: string }> }>;
 
 interface SpreadCanvasProps {
   cards: CanvasCard[];

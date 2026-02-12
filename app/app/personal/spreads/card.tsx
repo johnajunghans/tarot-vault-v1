@@ -1,12 +1,13 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
-import { memo, RefObject, useCallback, useEffect, useRef, useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { useGSAP } from '@gsap/react'
-import { Edit01Icon, InformationCircleIcon } from "hugeicons-react";
+import { Edit01Icon } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
+import { cardData } from "./spread-schema";
 
 gsap.registerPlugin(Draggable);
 
@@ -51,7 +52,8 @@ function SpreadCard({
   onDrag,
   onClick,
 }: SpreadCardProps) {
-  const form = useFormContext<{ positions: Array<{ name: string }> }>();
+  const { control, setValue } = useFormContext<{ positions: cardData[] }>();
+  const watched = useWatch({ control, name: `positions.${index}` });
   const [showEditButton, setShowEditButton] = useState(false)
 
   const groupRef = useRef<SVGGElement>(null);
@@ -60,36 +62,10 @@ function SpreadCard({
   const wasDraggedRef = useRef(false);
   const initialPos = useRef({ x: card.x, y: card.y });
 
-  // Subscribe to this card's name so the label updates when the form field changes
-  const [displayName, setDisplayName] = useState(card.name);
-  useEffect(() => {
-    setDisplayName(card.name);
-  }, [card.name]);
-  useEffect(() => {
-    return form.subscribe({
-      name: [`positions.${index}.name`],
-      formState: { values: true },
-      callback: ({ values }) => {
-        const name = values?.positions?.[index]?.name ?? "";
-        setDisplayName(name);
-      },
-    });
-  }, [form, index]);
-
   const handleCardTranslation = useCallback((index: number, x: number, y: number) => {
-      // console.log("updating card position...")
-      // // TWO DIFFERENT APPROACHES IN THIS FUNCTION, BOTH APPEAR TO WORK
-      // const currentPositions = form.getValues("positions")
-      // const currentCard = currentPositions[index]
-      // update(index, {
-      //     ...currentCard, x, y
-      // })
-      const positions = form.getValues("positions");
-      const updated = positions.map((card, i) =>
-        i === index ? { ...card, x, y } : card
-      );
-      form.setValue("positions", updated, { shouldDirty: true });
-  }, [form])
+      setValue(`positions.${index}.x`, x, { shouldDirty: true });
+      setValue(`positions.${index}.y`, y, { shouldDirty: true });
+  }, [setValue])
 
   // Initialize GSAP Draggable
   useGSAP(() => {
@@ -112,19 +88,16 @@ function SpreadCard({
         },
       },
       onDragStart: function () {
-        console.log("drag start. ending positions:", this.x, this.y)
         isDraggingRef.current = true;
         onDragStart(index, this.x, this.y);
         gsap.to(group, { opacity: 0.7, duration: 0.15 });
       },
       onDrag: function () {
-        console.log("dragging. ending positions:", this.x, this.y)
         wasDraggedRef.current = true;
         onDrag(index, this.x, this.y);
-        handleCardTranslation(index, this.x, this.y)
+        handleCardTranslation(index, this.x, this.y);
       },
       onDragEnd: function () {
-        console.log("drag end. ending positions:", this.x, this.y)
         isDraggingRef.current = false;
         onDragEnd(index);
         gsap.to(group, { opacity: 1, duration: 0.15 });
@@ -141,24 +114,21 @@ function SpreadCard({
     };
   }, { dependencies: [index, handleCardTranslation, onDragStart, onDragEnd, onDrag] });
 
-  // Sync position from props when not dragging
+  // Sync GSAP position from form state when not dragging (e.g. panel input changes)
   useEffect(() => {
     if (groupRef.current && draggableRef.current && !isDraggingRef.current) {
-      gsap.set(groupRef.current, { x: card.x, y: card.y });
+      gsap.set(groupRef.current, { x: watched.x, y: watched.y });
       draggableRef.current.update();
     }
-  }, [card.x, card.y]);
+  }, [watched.x, watched.y]);
 
   const handleMouseDown = () => {
     wasDraggedRef.current = false;
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    // if (!wasDraggedRef.current) {
-      // console.log("card button clicked")
+  const handleOpenPanel = (e: React.MouseEvent) => {
       e.stopPropagation();
       onClick(index);
-    // }
   };
 
   return (
@@ -170,7 +140,7 @@ function SpreadCard({
       onMouseOut={() => setShowEditButton(false)}
     >
       {/* Inner rotation wrapper — separate from GSAP's x/y transform on outer <g> */}
-      <g transform={`rotate(${card.r}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}>
+      <g transform={`rotate(${watched.r}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}>
         {/* Card background — inset by 1px so stroke centers on edge,
             making total visual footprint exactly 90x150 */}
         <rect
@@ -200,7 +170,7 @@ function SpreadCard({
           {index + 1}
         </text>
 
-        {/* Card name (center) — from form subscription so it updates immediately */}
+        {/* Card name (center) — from useWatch so it updates immediately */}
         <text
           x={CARD_WIDTH / 2}
           y={CARD_HEIGHT / 2 + 4}
@@ -209,14 +179,14 @@ function SpreadCard({
           fill="var(--foreground)"
           style={{ pointerEvents: "none", userSelect: "none" }}
         >
-          {displayName}
+          {watched.name}
         </text>
 
         <foreignObject width={32} height={32} x={CARD_WIDTH - 36} y={CARD_HEIGHT - 36}>
           <Button 
             variant="secondary"
             size="icon"
-            onClick={handleClick}
+            onClick={handleOpenPanel}
             className={`${showEditButton ? "translate-y-0 opacity-100 scale-100" : "translate-y-2 opacity-0 scale-75 pointer-events-none"} duration-100 cursor-pointer`}
           >
             <Edit01Icon />
