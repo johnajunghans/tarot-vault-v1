@@ -265,6 +265,29 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/12/2026 -- 1.3.6 -- Claude Opus 4.6**
+Summary of actions taken:
+- Created `card-overview.tsx` — sortable card tile list component:
+  - Each tile shows position badge number + card name (or "Untitled") at 36px height
+  - Edit button calls `setSelectedCardIndex` to open card settings panel + gold highlight
+  - Delete button opens confirmation dialog; adjusts `selectedCardIndex` on delete
+  - GSAP `Draggable` drag-to-reorder: type "y", animates displaced tiles, calls `move()` on drop
+  - `selectedCardIndex` tracking through reorder (follows the moved card's new index)
+  - Dotted-border "New Card" button at bottom, disabled at 78 max
+  - `CardTileName` sub-component uses `useWatch` for live name updates
+- Updated `spread-settings-panel.tsx`:
+  - Removed `ButtonGroup` with +/- card count buttons
+  - Added "+" icon button next to PanelLeftIcon in header (both expanded and collapsed states)
+  - Renders `CardOverview` below the settings form
+  - Accepts new props: `move`, `selectedCardIndex`, `setSelectedCardIndex`
+- Updated `panel-wrapper.tsx`:
+  - Destructured `move` from `useFieldArray`
+  - Passes `move`, `selectedCardIndex`, `setSelectedCardIndex` to `SpreadSettingsPanel`
+
+Future considerations:
+- GSAP draggable instances are re-created on every `cardCount` change; for very large card counts, consider a virtualized list approach
+- The drag-to-reorder uses simple slot-based detection; for smoother UX with many cards, a threshold-based approach may be preferable
+
 **02/11/2026 -- 1.3.5 -- Claude Opus 4.6**
 Summary of actions taken:
 - Added marquee (click-drag) multi-card selection to `canvas.tsx`:

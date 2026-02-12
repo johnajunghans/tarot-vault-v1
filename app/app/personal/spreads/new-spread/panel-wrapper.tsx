@@ -34,7 +34,7 @@ export default function PanelWrapper({
         }
     });
     
-    const { fields: cards, update, append, remove } = useFieldArray({
+    const { fields: cards, update, append, remove, move } = useFieldArray({
         control: form.control,
         name: "positions"
     });
@@ -109,10 +109,13 @@ export default function PanelWrapper({
                 }}
             >
             {/* Left Panel — Settings */}
-            <SpreadSettingsPanel 
+            <SpreadSettingsPanel
                 append={append}
                 remove={remove}
+                move={move}
                 cards={cards}
+                selectedCardIndex={selectedCardIndex}
+                setSelectedCardIndex={setSelectedCardIndex}
             />
 
             {/* Center Panel — Canvas */}
