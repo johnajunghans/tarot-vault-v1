@@ -850,7 +850,7 @@ Future considerations/recommendations/warnings:
 			1. Rotation: input type=number (min=0, max=315, increment=45)
 			2. Z-Index: input type=number (min=0, max=100, integer)
 2. Once this is complete, ensure that the type of a "spread" is linked to the spreadValidator in the /convex/schema.ts file (minus the server controlled fields). You can import this type by using Doc<"spreads"> and then omitting the server controlled fields.
-### 1.3.5_Group Card Select
+### ~~1.3.5_Group Card Select~~
 1. Add functionality that allows multiple cards to be selected for simultaneous group dragging
 	1. Users should be able to click and drag across the canvas to select multiple cards at once
 	2. While the user clicks and drags on the canvas, a rectangle should be shown that gives the user feedback as to which cards will be selected when the user releases their mouse
@@ -859,6 +859,18 @@ Future considerations/recommendations/warnings:
 	5. Upon release of the mouse after click and drag, all cards that were selected should show some indication that they are being selected. At this point, click/hold and dragging should now move all cards in the group.
 	6. When cards are selected for this group click and drag, any single click on the canvas should deselect all cards.
 	7. Again, ensure that this functionality behaves like all standard click/drag and select functionality that modern users have come to expect. 
+### 1.3.6_Card Overview
+1. Create a card overview/manager in the spread settings panel
+	1. This should be below where +/- card button currently are. 
+	2. This should consist of a set of rectangular tiles (36px in height) which show the position number and name of the card on the left (e.g. 1. Past)
+	3. These cards should be able to be dragged and dropped between each other which should effectively change their order. 
+		1. Ideally, use GSAP for this drag and drop. But if another library is absolutely necessary, then use Atlassian Pragmatic DnD.
+	4. On the right hand side of the tile should be edit and delete buttons.
+		1. The edit button should open up the right hand card panel for the card (and should also then style the card on the canvas to be selected for edit)
+			1. This tile should show a similar gold style and glow as the card does when it is being edited.
+		2. The delete button should open up a dialog confirming that the user wants to remove the card.
+	5. At the bottom of the list of cards should be a button of the same height and width but with dotted border which says "New Card"
+		1. Remove the +/- card button group and replace with just a + icon button to the left of the panel left icon button (this should be present in both expanded and collapsed state)
 
 
 
