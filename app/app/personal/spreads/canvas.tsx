@@ -25,6 +25,10 @@ export default function SpreadCanvas({
   const { control, setValue } = useFormContext<{ positions: cardData[] }>();
   const positions = useWatch({ control, name: "positions" });
 
+  // Ref for accessing current positions in stable callbacks (avoids stale closures)
+  const positionsRef = useRef(positions);
+  positionsRef.current = positions;
+
   // Track which card is being dragged and its live position
   const [dragging, setDragging] = useState<{
     index: number;
@@ -99,6 +103,13 @@ export default function SpreadCanvas({
   const guides = useMemo(() => {
     if (!dragging) return [];
 
+    // Suppress guide lines during group movement
+    if (
+      groupSelectedIndices.size > 1 &&
+      groupSelectedIndices.has(dragging.index)
+    )
+      return [];
+
     const draggedEdges = {
       left: dragging.x,
       right: dragging.x + CARD_WIDTH,
@@ -145,7 +156,7 @@ export default function SpreadCanvas({
       seen.add(key);
       return true;
     });
-  }, [dragging, positions]);
+  }, [dragging, positions, groupSelectedIndices]);
 
   // Ref to store the dragged card's start position (for group drag delta)
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -158,20 +169,22 @@ export default function SpreadCanvas({
     (index: number, x: number, y: number) => {
       setDragging({ index, x, y });
       draggingRef.current = { index, x, y };
-      dragStartPos.current = { x, y };
+
+      // Use form-state position as the drag origin so the delta is measured
+      // from the card's true rest position (GSAP may have already shifted the card slightly by the time onDragStart fires).
+      const formPos = positionsRef.current[index];
+      dragStartPos.current = formPos
+        ? { x: formPos.x, y: formPos.y }
+        : { x, y };
 
       // If dragged card is group-selected, record origins for all group members
       if (groupSelectedRef.current.has(index)) {
         const origins = new Map<number, { x: number; y: number }>();
         for (const i of groupSelectedRef.current) {
           if (i === index) continue; // dragged card handled by its own Draggable
-          const el = cardGroupRefs.current.get(i);
-          if (el) {
-            const transform = el.transform.baseVal;
-            if (transform.numberOfItems > 0) {
-              const matrix = transform.getItem(0).matrix;
-              origins.set(i, { x: matrix.e, y: matrix.f });
-            }
+          const pos = positionsRef.current[i];
+          if (pos) {
+            origins.set(i, { x: pos.x, y: pos.y });
           }
         }
         groupDragOrigins.current = origins;
@@ -444,20 +457,30 @@ export default function SpreadCanvas({
         )}
 
         {/* Draggable cards — sorted by zIndex for correct layering */}
-        {sortedCards.map(({ card, index }) => (
-          <SpreadCard
-            key={index}
-            card={card}
-            index={index}
-            selected={index === selectedCardIndex}
-            groupSelected={groupSelectedIndices.has(index)}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDrag={handleDrag}
-            onClick={onCardSelect}
-            registerRef={registerCardRef}
-          />
-        ))}
+        {sortedCards.map(({ card, index }) => {
+          const isGroupDragging =
+            dragging !== null &&
+            groupSelectedIndices.size > 1 &&
+            groupSelectedIndices.has(dragging.index) &&
+            groupSelectedIndices.has(index) &&
+            index !== dragging.index;
+
+          return (
+            <SpreadCard
+              key={index}
+              card={card}
+              index={index}
+              selected={index === selectedCardIndex}
+              groupSelected={groupSelectedIndices.has(index)}
+              isGroupDragging={isGroupDragging}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDrag={handleDrag}
+              onClick={onCardSelect}
+              registerRef={registerCardRef}
+            />
+          );
+        })}
 
         {/* Marquee selection rectangle */}
         {marqueeRect && (

@@ -42,6 +42,7 @@
   /* CUSTOM COLORS */
   --color-gold: var(--gold);
   --color-gold-muted: var(--gold-muted);
+  --color-amethyst: var(--amethyst);
 
   /* BORDER RADIUS */
   --radius-sm: calc(var(--radius) - 4px);
@@ -80,6 +81,7 @@
   --ring: #8b6914;
   --gold: #b8941e;
   --gold-muted: #8b6914;
+  --amethyst: #8b6fc0;
   --chart-1: #b8941e;
   --chart-2: #6b8f71;
   --chart-3: #8b6c5c;
@@ -121,6 +123,7 @@
   --ring: #c4a35a;
   --gold: #c4a35a;
   --gold-muted: #9a7d30;
+  --amethyst: #a78bdb;
   --chart-1: #c4a35a;
   --chart-2: #6b8f71;
   --chart-3: #8b6c5c;

@@ -36,6 +36,7 @@ interface SpreadCardProps {
   index: number;
   selected: boolean;
   groupSelected: boolean;
+  isGroupDragging: boolean;
   onDragStart: (index: number, x: number, y: number) => void;
   onDragEnd: (index: number) => void;
   onDrag: (index: number, x: number, y: number) => void;
@@ -50,6 +51,7 @@ function SpreadCard({
   index,
   selected,
   groupSelected,
+  isGroupDragging,
   onDragStart,
   onDragEnd,
   onDrag,
@@ -59,6 +61,7 @@ function SpreadCard({
   const { control, setValue } = useFormContext<{ positions: cardData[] }>();
   const watched = useWatch({ control, name: `positions.${index}` });
   const [showEditButton, setShowEditButton] = useState(false)
+  const [isDraggingState, setIsDraggingState] = useState(false)
 
   // ------------ DRAG LOGIC ------------ //
 
@@ -96,8 +99,8 @@ function SpreadCard({
       },
       onDragStart: function () {
         isDraggingRef.current = true;
+        setIsDraggingState(true);
         onDragStart(index, this.x, this.y);
-        gsap.to(group, { opacity: 0.7, duration: 0.15 });
       },
       onDrag: function () {
         wasDraggedRef.current = true;
@@ -106,8 +109,8 @@ function SpreadCard({
       },
       onDragEnd: function () {
         isDraggingRef.current = false;
+        setIsDraggingState(false);
         onDragEnd(index);
-        gsap.to(group, { opacity: 1, duration: 0.15 });
         handleCardTranslation(index, this.x, this.y);
       },
       cursor: "grab",
@@ -140,18 +143,58 @@ function SpreadCard({
       onClick(index);
   };
 
+  // ------------ VISUAL STATE ------------ //
+
+  const isActiveDrag = isDraggingState || isGroupDragging;
+  const isGroupStyled = groupSelected;
+  const isEditStyled = selected && !groupSelected;
+
+  const cardFill = isGroupStyled ? "var(--amethyst)" : "var(--gold)";
+  const cardFillOpacity = isEditStyled ? 0.3 : isGroupStyled ? 0.2 : 0.15;
+  const cardStroke = isEditStyled
+    ? "var(--gold)"
+    : isGroupStyled
+      ? "var(--amethyst)"
+      : "var(--gold-muted)";
+  const cardDashArray = isEditStyled || isGroupStyled ? undefined : "4 3";
+  const badgeColor = isEditStyled
+    ? "var(--gold)"
+    : isGroupStyled
+      ? "var(--amethyst)"
+      : "var(--gold-muted)";
+
   // ------------ RETURN ------------ //
 
   return (
     <g
       ref={groupRef}
-      style={{ cursor: "grab" }}
+      style={{
+        cursor: "grab",
+        opacity: isActiveDrag ? 0.7 : 1,
+        transition: "opacity 150ms ease",
+      }}
       onMouseDown={() => wasDraggedRef.current = false}
       onMouseOver={() => setShowEditButton(true)}
       onMouseOut={() => setShowEditButton(false)}
     >
       {/* Inner rotation wrapper — separate from GSAP's x/y transform on outer <g> */}
       <g transform={`rotate(${watched.r}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}>
+        {/* Soft glow for edit-selected state */}
+        {isEditStyled && (
+          <rect
+            x={-3}
+            y={-3}
+            width={CARD_WIDTH + 6}
+            height={CARD_HEIGHT + 6}
+            rx={9}
+            fill="none"
+            stroke="var(--gold)"
+            strokeOpacity={0.25}
+            strokeWidth={5}
+            style={{ pointerEvents: "none" }}
+          />
+        )}
+
         {/* Card background — inset by 1px so stroke centers on edge,
             making total visual footprint exactly 90x150 */}
         <rect
@@ -160,15 +203,15 @@ function SpreadCard({
           width={CARD_WIDTH - STROKE_WIDTH}
           height={CARD_HEIGHT - STROKE_WIDTH}
           rx={6}
-          fill="var(--gold)"
-          fillOpacity={selected || groupSelected ? 0.35 : 0.25}
-          stroke={selected || groupSelected ? "var(--gold)" : "var(--gold-muted)"}
+          fill={cardFill}
+          fillOpacity={cardFillOpacity}
+          stroke={cardStroke}
           strokeWidth={STROKE_WIDTH}
-          strokeDasharray={selected || groupSelected ? undefined : "4 3"}
+          strokeDasharray={cardDashArray}
         />
 
         {/* Index badge (top-left, 1-based display) */}
-        <circle cx={15} cy={15} r={10} fill={selected || groupSelected ? "var(--gold)" : "var(--gold-muted)"} />
+        <circle cx={15} cy={15} r={10} fill={badgeColor} />
         <text
           x={15}
           y={19}
@@ -222,6 +265,7 @@ function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
     prev.index === next.index &&
     prev.selected === next.selected &&
     prev.groupSelected === next.groupSelected &&
+    prev.isGroupDragging === next.isGroupDragging &&
     prev.onDragStart === next.onDragStart &&
     prev.onDragEnd === next.onDragEnd &&
     prev.onDrag === next.onDrag &&
