@@ -809,7 +809,7 @@ Future considerations/recommendations/warnings:
 2. Resources
 	1. Feel free to view /.resources/tarot-journal/canvas/spread-creation-canvas.tsx and /.resources/tarot-journal/canvas/draggable-card.tsx. These files contain a solution to this problem that seemed to mostly work. However, there were some issues with it. For example, the card positions were never whole numbers but rather were offset by 1.5 or so. This was, I think, because of the stroke, so ensure that you account for the width of the stroke to ensure that the cards' position are ALWAYS multiples of 15 (including 0) AND that the card fit perfectly in the grid lines (i.e. their final dimensions including stroke are 90 by 150).
 	2. While you may view this solution, you solution should be cleaner and better overall. Keep things as simple as possible and as clear as possible so it can be easily understood and maintained by humans. 
-### 1.3.4_Card Details Panel
+### ~~1.3.4_Card Details Panel~~
 1. Within the /new-spread/page.tsx file, create a third resizable panel which should allow users to edit specific card details. 
 	1. This panel should appear when a user clicks on a card. 
 	2. While the given card is selected, this new righthand panel should appear and the card should change to have a solid stroke. 
@@ -826,6 +826,15 @@ Future considerations/recommendations/warnings:
 			1. Rotation: input type=number (min=0, max=315, increment=45)
 			2. Z-Index: input type=number (min=0, max=100, integer)
 2. Once this is complete, ensure that the type of a "spread" is linked to the spreadValidator in the /convex/schema.ts file (minus the server controlled fields). You can import this type by using Doc<"spreads"> and then omitting the server controlled fields.
+### 1.3.5_Group Card Select
+1. Add functionality that allows multiple cards to be selected for simultaneous group dragging
+	1. Users should be able to click and drag across the canvas to select multiple cards at once
+	2. While the user clicks and drags on the canvas, a rectangle should be shown that gives the user feedback as to which cards will be selected when the user releases their mouse
+	3. This should behave just like any other click, drag, and select functionality.
+	4. Use --gold/10 for the background and --gold/40 for the border of the dragging square.
+	5. Upon release of the mouse after click and drag, all cards that were selected should show some indication that they are being selected. At this point, click/hold and dragging should now move all cards in the group.
+	6. When cards are selected for this group click and drag, any single click on the canvas should deselect all cards.
+	7. Again, ensure that this functionality behaves like all standard click/drag and select functionality that modern users have come to expect. 
 
 
 
