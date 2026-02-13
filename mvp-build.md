@@ -891,7 +891,7 @@ Future considerations/recommendations/warnings:
 	5. Upon release of the mouse after click and drag, all cards that were selected should show some indication that they are being selected. At this point, click/hold and dragging should now move all cards in the group.
 	6. When cards are selected for this group click and drag, any single click on the canvas should deselect all cards.
 	7. Again, ensure that this functionality behaves like all standard click/drag and select functionality that modern users have come to expect. 
-### 1.3.6_Card Overview
+### ~~1.3.6_Card Overview~~
 1. Create a card overview/manager in the spread settings panel
 	1. This should be below where +/- card button currently are. 
 	2. This should consist of a set of rectangular tiles (36px in height) which show the position number and name of the card on the left (e.g. 1. Past)
@@ -903,8 +903,16 @@ Future considerations/recommendations/warnings:
 		2. The delete button should open up a dialog confirming that the user wants to remove the card.
 	5. At the bottom of the list of cards should be a button of the same height and width but with dotted border which says "New Card"
 		1. Remove the +/- card button group and replace with just a + icon button to the left of the panel left icon button (this should be present in both expanded and collapsed state)
-
-
+### 1.3.7_Save Functionality
+1. Create functionality to save new-spreads
+	1. Pressing the save button in the new-spreads page should save the new spread to the convex db using the `create` mutation in /convex/tables/spreads.ts
+	2. While the function is running, the save button should be disabled and show a spinner to the left of the text
+	3. If the save is succussful:
+		1. The router should push to /app/personal/spreads
+		2. After routing to spreads, a toast should pop up saying that the spread was successfully created.
+	5. If the save fails
+		1. A toast should appear saying that the there was an error (and what the error is)
+	6. For the toast, use the shadcn Sonner component which is already installed.
 
 
 
