@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment } from "react"
+import { Fragment, type ReactNode } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import {
   Breadcrumb,
@@ -18,10 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useSidebar } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { Spinner } from "@/components/ui/spinner"
-import { useTopbarStore } from "@/stores/topbar"
 import {
   Cards01Icon,
   LibraryIcon,
@@ -40,11 +36,15 @@ function formatSegment(segment: string) {
     .join(" ")
 }
 
-export default function AppTopbar() {
+interface AppTopbarProps {
+  centerTitle?: ReactNode
+  rightButtonGroup?: ReactNode
+}
+
+export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarProps) {
   const pathname = usePathname()
   const { toggleSidebar, open, openMobile, isMobile } = useSidebar()
   const isOpen = isMobile ? openMobile : open
-  const { title, rightButtonGroup } = useTopbarStore()
   const router = useRouter()
 
   const rawSegments = pathname.split("/").filter(Boolean)
@@ -104,56 +104,14 @@ export default function AppTopbar() {
         </Breadcrumb>
       </div>
 
-      {/* Center Section - Title or Spacer */}
+      {/* Center Section */}
       <div className="flex min-h-8 flex-1 items-center justify-center gap-3">
-        {title && (
-          <>
-            {/* Left: Title Name */}
-            <span className="font-bold text-foreground">{title.name}</span>
-
-            {/* Middle: Additional Info (optional) */}
-            {title.addInfo && (
-              <>
-                <Separator orientation="vertical" />
-                <span className="text-muted-foreground">{title.addInfo}</span>
-              </>
-            )}
-
-            {/* Right: Draft Badge (optional) */}
-            {title.draft && (
-              <Badge variant="secondary">DRAFT</Badge>
-            )}
-          </>
-        )}
+        {centerTitle}
       </div>
 
       {/* Right Section */}
       <div className="flex items-center gap-2">
-        {rightButtonGroup ? (
-          <>
-            {/* Secondary Button (optional) */}
-            {rightButtonGroup.secondaryButton && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={rightButtonGroup.secondaryButton.action}
-              >
-                {rightButtonGroup.secondaryButton.text}
-              </Button>
-            )}
-
-            {/* Primary Button */}
-            <Button
-              type="button"
-              variant="default"
-              disabled={rightButtonGroup.primaryButton.disabled}
-              onClick={() => rightButtonGroup.primaryButton.action(undefined)}
-            >
-              {rightButtonGroup.primaryButton.disabled && <Spinner />}
-              {rightButtonGroup.primaryButton.text}
-            </Button>
-          </>
-        ) : (
+        {rightButtonGroup ?? (
           <DropdownMenu>
             <DropdownMenuTrigger
               type="button"
@@ -167,7 +125,7 @@ export default function AppTopbar() {
                 <span>Reading</span>
                 <LibraryIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="justify-between gap-8"
                 onClick={() => router.push("/app/personal/spreads/new-spread")}
               >

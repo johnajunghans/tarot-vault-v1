@@ -1,5 +1,10 @@
+import AppTopbar from "@/components/app/app-topbar"
+
 export default function Personal() {
     return (
-        <div></div>
+        <>
+            <AppTopbar />
+            <div></div>
+        </>
     )
 }

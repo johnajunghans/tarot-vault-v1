@@ -1,5 +1,10 @@
+import AppTopbar from "@/components/app/app-topbar"
+
 export default function Spreads() {
     return (
-        <div></div>
+        <>
+            <AppTopbar />
+            <div></div>
+        </>
     )
 }

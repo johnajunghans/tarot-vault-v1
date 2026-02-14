@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { spreadData, spreadSchema } from "../spread-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useState } from "react";
-import { useTopbarStore } from "@/stores/topbar";
+import { useCallback, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
@@ -15,6 +14,11 @@ import SpreadCanvas from "../canvas";
 import CardSettingsPanel from "../card-settings-panel";
 import { Layout } from "react-resizable-panels";
 import { generateCard } from "../spread-functions";
+import AppTopbar from "@/components/app/app-topbar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -26,7 +30,8 @@ export default function PanelWrapper({
     groupId
 }: PanelWrapperProps) {
     const router = useRouter();
-    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);  
+    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const form = useForm<spreadData>({
         resolver: zodResolver(spreadSchema),
@@ -36,11 +41,14 @@ export default function PanelWrapper({
         positions: [generateCard(0)] // initial single card
         }
     });
-    
+
     const { fields: cards, append, remove, move } = useFieldArray({
         control: form.control,
         name: "positions"
     });
+
+    const watchedName = form.watch("name");
+    const watchedPositions = form.watch("positions");
 
     // Action handlers
     const handleDiscard = useCallback(() => {
@@ -52,14 +60,7 @@ export default function PanelWrapper({
 
     const handleSave = useCallback(() => {
         form.handleSubmit(async (data) => {
-            const store = useTopbarStore.getState();
-            store.setRightButtonGroup({
-                ...store.rightButtonGroup!,
-                primaryButton: {
-                    ...store.rightButtonGroup!.primaryButton,
-                    disabled: true,
-                },
-            });
+            setIsSaving(true);
 
             try {
                 const positions = data.positions.map((card, index) => ({
@@ -86,60 +87,38 @@ export default function PanelWrapper({
                 toast.error(
                     `Failed to create spread: ${error instanceof Error ? error.message : "Unknown error"}`
                 );
-                const storeAfterError = useTopbarStore.getState();
-                storeAfterError.setRightButtonGroup({
-                    ...storeAfterError.rightButtonGroup!,
-                    primaryButton: {
-                        ...storeAfterError.rightButtonGroup!.primaryButton,
-                        disabled: false,
-                    },
-                });
+                setIsSaving(false);
             }
         })();
     }, [form, createSpread, router]);
 
-    // Set topbar state on mount
-    useEffect(() => {
-        useTopbarStore.getState().setTitle({
-        name: "New Spread",
-        addInfo: "1-Card",
-        draft: true,
-        });
-
-        useTopbarStore.getState().setRightButtonGroup({
-        primaryButton: {
-            text: "Save Spread",
-            action: handleSave,
-        },
-        secondaryButton: {
-            text: "Discard",
-            action: handleDiscard,
-        },
-        });
-
-        return () => {
-        useTopbarStore.getState().reset();
-        };
-    }, [handleDiscard, handleSave]);
-
-    // Watch form fields and update topbar title dynamically
-    useEffect(() => {
-        const subscription = form.watch((value) => {
-        const currentName = value.name || "New Spread";
-        const addInfo = `${value.positions?.length ?? 0}-Card`
-
-        useTopbarStore.getState().setTitle({
-            name: currentName,
-            addInfo,
-            draft: true,
-        });
-        });
-
-        return () => subscription.unsubscribe();
-    }, [form]);
+    const spreadTitle = watchedName || "New Spread";
+    const cardCount = `${watchedPositions?.length ?? 0}-Card`;
 
 
     return (
+        <>
+        <AppTopbar
+            centerTitle={
+                <>
+                    <span className="font-bold text-foreground">{spreadTitle}</span>
+                    <Separator orientation="vertical" />
+                    <span className="text-muted-foreground">{cardCount}</span>
+                    <Badge variant="secondary">DRAFT</Badge>
+                </>
+            }
+            rightButtonGroup={
+                <>
+                    <Button type="button" variant="ghost" onClick={handleDiscard}>
+                        Discard
+                    </Button>
+                    <Button type="button" variant="default" disabled={isSaving} onClick={handleSave}>
+                        {isSaving && <Spinner />}
+                        Save Spread
+                    </Button>
+                </>
+            }
+        />
         <div className="h-app-content relative">
         <FormProvider {...form}>
             <ResizablePanelGroup
@@ -182,5 +161,6 @@ export default function PanelWrapper({
             </ResizablePanelGroup>
         </FormProvider>
         </div>
+        </>
     )
 }

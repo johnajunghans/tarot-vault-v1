@@ -265,6 +265,18 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/14/2026 -- Refactor: AppTopbar props instead of Zustand store -- Claude Opus 4.6**
+Summary of actions taken:
+- Refactored `AppTopbar` to accept `centerTitle?: ReactNode` and `rightButtonGroup?: ReactNode` props instead of reading from Zustand store
+- Removed `<AppTopbar />` from `app/app/layout.tsx` — pages now own their topbar rendering
+- Added `<AppTopbar />` to `personal/page.tsx`, `readings/page.tsx`, and `spreads/page.tsx` (default props: no title, "New" dropdown)
+- Refactored `panel-wrapper.tsx` to render `<AppTopbar>` with custom JSX props (dynamic title via `form.watch()`, save/discard buttons with local `isSaving` state)
+- Deleted `stores/topbar.ts` (Zustand store) and empty `stores/` directory
+
+Future considerations:
+- The `react-hooks/incompatible-library` warning on `form.watch()` is expected — React Hook Form's watch API is inherently non-memoizable by the React Compiler
+- If more pages need custom topbar content, the pattern is now straightforward: import `AppTopbar` and pass props
+
 **02/13/2026 -- 1.3.7 -- Claude Opus 4.6**
 Summary of actions taken:
 - Added `<Toaster />` from Sonner to root layout (`app/layout.tsx`) for global toast notifications
