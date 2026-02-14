@@ -20,6 +20,7 @@ import {
 import { useSidebar } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { Spinner } from "@/components/ui/spinner"
 import { useTopbarStore } from "@/stores/topbar"
 import {
   Cards01Icon,
@@ -145,8 +146,10 @@ export default function AppTopbar() {
             <Button
               type="button"
               variant="default"
+              disabled={rightButtonGroup.primaryButton.disabled}
               onClick={() => rightButtonGroup.primaryButton.action(undefined)}
             >
+              {rightButtonGroup.primaryButton.disabled && <Spinner />}
               {rightButtonGroup.primaryButton.text}
             </Button>
           </>

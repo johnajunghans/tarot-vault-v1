@@ -4,6 +4,7 @@ import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 const philosopher = Philosopher({
   weight: ["400", "700"],
@@ -45,6 +46,7 @@ export default function RootLayout({
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </ThemeProvider>
         </ClerkProvider>
+        <Toaster />
       </body>
     </html>
   );

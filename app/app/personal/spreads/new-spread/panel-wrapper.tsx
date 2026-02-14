@@ -6,6 +6,9 @@ import { spreadData, spreadSchema } from "../spread-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
 import { useTopbarStore } from "@/stores/topbar";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { toast } from "sonner";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import SpreadSettingsPanel from "../spread-settings-panel";
 import SpreadCanvas from "../canvas";
@@ -34,7 +37,7 @@ export default function PanelWrapper({
         }
     });
     
-    const { fields: cards, update, append, remove, move } = useFieldArray({
+    const { fields: cards, append, remove, move } = useFieldArray({
         control: form.control,
         name: "positions"
     });
@@ -45,10 +48,55 @@ export default function PanelWrapper({
         router.push("/app/personal/spreads");
     }, [form, router]);
 
+    const createSpread = useMutation(api.tables.spreads.create);
+
     const handleSave = useCallback(() => {
-        // Placeholder - will be implemented in future step
-        console.log("Save spread:", form.getValues());
-    }, [form]);
+        form.handleSubmit(async (data) => {
+            const store = useTopbarStore.getState();
+            store.setRightButtonGroup({
+                ...store.rightButtonGroup!,
+                primaryButton: {
+                    ...store.rightButtonGroup!.primaryButton,
+                    disabled: true,
+                },
+            });
+
+            try {
+                const positions = data.positions.map((card, index) => ({
+                    position: index + 1,
+                    name: card.name,
+                    description: card.description,
+                    allowReverse: card.allowReverse,
+                    x: card.x,
+                    y: card.y,
+                    r: card.r,
+                    z: card.z,
+                }));
+
+                await createSpread({
+                    name: data.name,
+                    description: data.description,
+                    numberOfCards: positions.length,
+                    positions,
+                });
+
+                router.push("/app/personal/spreads");
+                toast.success("Spread created successfully");
+            } catch (error) {
+                toast.error(
+                    `Failed to create spread: ${error instanceof Error ? error.message : "Unknown error"}`
+                );
+                const storeAfterError = useTopbarStore.getState();
+                storeAfterError.setRightButtonGroup({
+                    ...storeAfterError.rightButtonGroup!,
+                    primaryButton: {
+                        ...storeAfterError.rightButtonGroup!.primaryButton,
+                        disabled: false,
+                    },
+                });
+            }
+        })();
+    }, [form, createSpread, router]);
 
     // Set topbar state on mount
     useEffect(() => {

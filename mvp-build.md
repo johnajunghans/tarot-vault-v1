@@ -265,6 +265,23 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/13/2026 -- 1.3.7 -- Claude Opus 4.6**
+Summary of actions taken:
+- Added `<Toaster />` from Sonner to root layout (`app/layout.tsx`) for global toast notifications
+- Added `disabled` field to `PrimaryButton` interface in topbar store (`stores/topbar.ts`)
+- Updated topbar primary button to render disabled state with spinner icon (`components/app/app-topbar.tsx`)
+- Wired up `handleSave` in `panel-wrapper.tsx` with:
+  - Form validation via `form.handleSubmit`
+  - Data mapping from frontend `cardData[]` to Convex `spreadPositionValidator[]` (adding 1-indexed `position` field)
+  - `spreads.create` Convex mutation call
+  - Loading state (disable button + spinner) during save
+  - Success: route to `/app/personal/spreads` + success toast
+  - Error: error toast + re-enable button
+
+Future considerations:
+- Optimistic UI could be added if save latency becomes an issue
+- Consider adding a "Saving..." text change to the button alongside the spinner
+
 **02/12/2026 -- 1.3.6 -- Claude Opus 4.6**
 Summary of actions taken:
 - Created `card-overview.tsx` — sortable card tile list component:

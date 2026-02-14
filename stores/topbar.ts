@@ -14,6 +14,7 @@ export interface SecondaryButton {
 export interface PrimaryButton {
   text: string;
   action: (data: unknown) => void;
+  disabled?: boolean;
 }
 
 export interface RightButtonGroup {
