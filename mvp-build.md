@@ -932,7 +932,7 @@ Future considerations/recommendations/warnings:
 		2. The delete button should open up a dialog confirming that the user wants to remove the card.
 	5. At the bottom of the list of cards should be a button of the same height and width but with dotted border which says "New Card"
 		1. Remove the +/- card button group and replace with just a + icon button to the left of the panel left icon button (this should be present in both expanded and collapsed state)
-### 1.3.7_Save Functionality
+### ~~1.3.7_Save Functionality~~
 1. Create functionality to save new-spreads
 	1. Pressing the save button in the new-spreads page should save the new spread to the convex db using the `create` mutation in /convex/tables/spreads.ts
 	2. While the function is running, the save button should be disabled and show a spinner to the left of the text
@@ -942,6 +942,31 @@ Future considerations/recommendations/warnings:
 	5. If the save fails
 		1. A toast should appear saying that the there was an error (and what the error is)
 	6. For the toast, use the shadcn Sonner component which is already installed.
-
-
-
+### 1.3.8_Final Polishing 1
+1. Remove the delete button from the card component (which appears on the card on mouse over) and instead add in a "remove card" button at the bottom of the card settings panel. Thus, cards will be able to be deleted from both the spread settings panel and card settings panel. 
+2. Creating a new card should select that card to open up the card settings panel for that new card.
+3. If a group of cards is selected for group drag, clicking on one should deselect the group.
+	1. Clicking on one currently does select it but the group remains intact, ready for group drag, and the style of the card does not change to that of a selected card with panel open.
+4. If the user attempts to save the spread and any form errors trigger (i.e. no name given, or name is too small), then a sonner should appear giving the user the error. 
+	1. If there are multiple form errors, then there should be one sonner per error. 
+	2. Each such error sonner should have the same title (Error saving form) but also should have a unique description outlining the issue (e.g. Spread name is required.)
+	3. Along the same lines, if there is a react-hook-form validation error while saving, then the related panel should open if it is collapsed.
+		1. For example, if the user attempts to save without a spread name and the spread settings panel is closed, then the spread settings panel should open so that the user can see the field error. (this happen alongside the sonner outlining the error.)
+5. The canvas svg should have a min width/height of 1500px. However, it should fill its parent container (the top level div in the spreads/canvas.tsx file) if that parent container has either a width or height greater than 1500px.
+	1. Use a resize observer to watch this parent div (which already has a ref to use) and then update the svg width and height if the width/height of the parent div is greater than 1500. 
+6. Add tooltips to the icon buttons in the spread settings panel header. These are the add new card and show/hide panel icon buttons. They should read, "New Card" and "Hide/Show Panel", respectively.
+7. Add tooltip to the delete spread icon button in the righthand button group which is passed as a prop to the app-topbar in the new-spread/panel-wrapper.tsx component.
+### 1.3.9_Local Storage Draft Saving
+1. Create localStorage draft saving
+	1. Create a ref in new-spread/panel-wrapper.tsx called "spreadDraftId" which is of type number | null (default null). 
+	2. Add in a useEffect hook to update this ref to change it to Date.now() whenever the form state appears
+		1. This should only run if spreadDraftId = null rather than updating the Date.now() each time
+	3. Add in a piece of code that only runs if spreadDraftId is truthy. This code should set a localStorage item with key=`spread-${spreadDraftId}` and value of the form state.
+		1. This code should rerun to keep the localStorage object in sync with form state whenever the form state changes
+	4. The 'discard' button should be updated to trigger a modal confirming deletion of the spread draft only if spreadDraftId is truthy (i.e. changes have been made that will be lost). Otherwise, is spreadDraftId is null, then the discard button should just route back to /app/personal/spreads.
+		1. The modal that appears confirming deletion should have three buttons:
+			1. On the right hand side will be two buttons:
+				1. The right button on the right hand side will confirm deletion of the spread draft. This should delete the localStorage object and route back to spreads page.
+				2. The left button on the right hand side should "save as draft" which will simply not delete the localStorage object but will still route back to spreads page.
+			2. The single button on the left hand side will be "cancel" will will close the modal. 
+	5. If you think that there is a better and more efficient way to implement this logic to save spreads as localStorage please do that instead.

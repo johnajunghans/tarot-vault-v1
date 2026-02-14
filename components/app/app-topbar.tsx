@@ -28,6 +28,7 @@ import {
   ArrowDown01Icon,
   Menu01Icon,
 } from "hugeicons-react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 function formatSegment(segment: string) {
   return segment
@@ -40,6 +41,7 @@ interface AppTopbarProps {
   centerTitle?: ReactNode
   rightButtonGroup?: ReactNode
 }
+
 
 export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarProps) {
   const pathname = usePathname()
@@ -80,34 +82,40 @@ export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarPr
             )
           }
         </Button>
-        <Breadcrumb>
-          <BreadcrumbList>
-            {breadcrumbs.map((crumb) => (
-              <Fragment key={crumb.href}>
-                <BreadcrumbItem>
-                  {crumb.isLast ? (
-                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink href={crumb.href}>
-                      {crumb.label}
-                    </BreadcrumbLink>
+
+        { isMobile ?
+          <div className="flex min-h-8 flex-1 items-center justify-center gap-3">
+            {centerTitle}
+          </div> :
+          <Breadcrumb>
+            <BreadcrumbList>
+              {breadcrumbs.map((crumb) => (
+                <Fragment key={crumb.href}>
+                  <BreadcrumbItem>
+                    {crumb.isLast ? (
+                      <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink href={crumb.href}>
+                        {crumb.label}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                  {!crumb.isLast && (
+                    <BreadcrumbSeparator>
+                      <ArrowRight01Icon strokeWidth={2} />
+                    </BreadcrumbSeparator>
                   )}
-                </BreadcrumbItem>
-                {!crumb.isLast && (
-                  <BreadcrumbSeparator>
-                    <ArrowRight01Icon strokeWidth={2} />
-                  </BreadcrumbSeparator>
-                )}
-              </Fragment>
-            ))}
-          </BreadcrumbList>
-        </Breadcrumb>
+                </Fragment>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
+        }
       </div>
 
       {/* Center Section */}
-      <div className="flex min-h-8 flex-1 items-center justify-center gap-3">
+      {!isMobile && <div className="flex min-h-8 flex-1 items-center justify-center gap-3">
         {centerTitle}
-      </div>
+      </div>}
 
       {/* Right Section */}
       <div className="flex items-center gap-2">

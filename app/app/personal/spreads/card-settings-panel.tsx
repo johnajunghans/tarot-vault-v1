@@ -68,7 +68,7 @@ export default function CardSettingsPanel({
     const cardDetailsPanel = selectedCard && selectedCardIndex !== null && (
       <form>
         <FieldSet>
-          <FieldSeparator />
+          {/* <FieldSeparator /> */}
           <FieldSet>
             {/* Name */}
             <Controller

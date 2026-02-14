@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { Delete01Icon, Delete02Icon, FloppyDiskIcon } from "hugeicons-react";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -109,12 +110,12 @@ export default function PanelWrapper({
             }
             rightButtonGroup={
                 <>
-                    <Button type="button" variant="ghost" onClick={handleDiscard}>
-                        Discard
+                    <Button type="button" variant="destructive" size="icon" onClick={handleDiscard}>
+                        <Delete02Icon />
                     </Button>
                     <Button type="button" variant="default" disabled={isSaving} onClick={handleSave}>
-                        {isSaving && <Spinner />}
-                        Save Spread
+                        {isSaving ? <Spinner /> : <FloppyDiskIcon />}
+                        <span>Save</span>
                     </Button>
                 </>
             }
