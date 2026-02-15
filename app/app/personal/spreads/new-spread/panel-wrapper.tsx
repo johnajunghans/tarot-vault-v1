@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { spreadData, spreadSchema } from "../spread-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
@@ -22,6 +22,14 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Delete02Icon, FloppyDiskIcon } from "hugeicons-react";
 import { FieldErrors } from "react-hook-form";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -36,6 +44,8 @@ export default function PanelWrapper({
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
+    const draftKey = useRef(`spread-draft-${Date.now()}`);
+    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
     const form = useForm<spreadData>({
         resolver: zodResolver(spreadSchema),
@@ -54,9 +64,34 @@ export default function PanelWrapper({
     const watchedName = form.watch("name");
     const watchedPositions = form.watch("positions");
 
+    // Persist form data to localStorage as a draft
+    useEffect(() => {
+        const subscription = form.watch((values) => {
+            if (form.formState.isDirty) {
+                localStorage.setItem(draftKey.current, JSON.stringify(values));
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, [form]);
+
     // Action handlers
     const handleDiscard = useCallback(() => {
+        if (!form.formState.isDirty) {
+            router.push("/app/personal/spreads");
+            return;
+        }
+        setShowDiscardDialog(true);
+    }, [form.formState.isDirty, router]);
+
+    const handleSaveAsDraft = useCallback(() => {
+        setShowDiscardDialog(false);
+        router.push("/app/personal/spreads");
+    }, [router]);
+
+    const handleConfirmDiscard = useCallback(() => {
+        localStorage.removeItem(draftKey.current);
         form.reset();
+        setShowDiscardDialog(false);
         router.push("/app/personal/spreads");
     }, [form, router]);
 
@@ -112,6 +147,7 @@ export default function PanelWrapper({
                     positions,
                 });
 
+                localStorage.removeItem(draftKey.current);
                 router.push("/app/personal/spreads");
                 toast.success("Spread created successfully");
             } catch (error) {
@@ -201,6 +237,30 @@ export default function PanelWrapper({
             </ResizablePanelGroup>
         </FormProvider>
         </div>
+
+        <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Discard spread?</DialogTitle>
+                    <DialogDescription>
+                        You have unsaved changes. Would you like to save this spread as a draft for later, or discard it entirely?
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="sm:justify-between">
+                    <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
+                        Cancel
+                    </Button>
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                        <Button variant="secondary" onClick={handleSaveAsDraft}>
+                            Save as Draft
+                        </Button>
+                        <Button variant="destructive" onClick={handleConfirmDiscard}>
+                            Discard
+                        </Button>
+                    </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
         </>
     )
 }

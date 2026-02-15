@@ -265,6 +265,21 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/14/2026 -- 1.3.9 Local Storage Draft Saving -- Claude Opus 4.6**
+Summary of actions taken:
+- Added localStorage draft persistence to `new-spread/panel-wrapper.tsx` using `form.watch(callback)` subscription pattern
+- Draft key generated once via `useRef(`spread-draft-${Date.now()}`)` — avoids React Compiler ref mutation lint error
+- Form changes are synced to localStorage only when `form.formState.isDirty` is true
+- Rewrote `handleDiscard`: navigates directly if form is clean, opens confirmation dialog if dirty
+- Added three-button discard confirmation dialog: Cancel (outline), Save as Draft (secondary), Discard (destructive)
+- "Save as Draft" navigates away leaving localStorage intact; "Discard" removes localStorage entry then navigates
+- Added `localStorage.removeItem()` in `handleSave` try block to clean up draft on successful save
+
+Future considerations:
+- Draft restoration (loading a saved draft back into the form) is not yet implemented — this is a natural follow-up
+- The `react-hooks/incompatible-library` warning on `form.watch()` inside `useEffect` is expected and harmless (React Compiler skips memoizing the component)
+- Old drafts are never cleaned up automatically — consider a TTL or cleanup mechanism if drafts accumulate
+
 **02/14/2026 -- 1.3.8 Final Polishing 1 -- Claude Opus 4.6**
 Summary of actions taken:
 - Removed hover-delete button from canvas cards (`card.tsx`): removed `showDeleteButton` state, `handleDelete`, mouse handlers, `foreignObject`, `onDelete` prop
@@ -959,7 +974,7 @@ Future considerations/recommendations/warnings:
 	5. If the save fails
 		1. A toast should appear saying that the there was an error (and what the error is)
 	6. For the toast, use the shadcn Sonner component which is already installed.
-### 1.3.8_Final Polishing 1
+### ~~1.3.8_Final Polishing 1~~
 1. Remove the delete button from the card component (which appears on the card on mouse over) and instead add in a "remove card" button at the bottom of the card settings panel. Thus, cards will be able to be deleted from both the spread settings panel and card settings panel. 
 2. Creating a new card should select that card to open up the card settings panel for that new card.
 3. If a group of cards is selected for group drag, clicking on one should deselect the group.
