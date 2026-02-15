@@ -265,6 +265,19 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/14 — Step 1.4.1 — Spreads Page** | Model: Claude Opus 4.6
+
+Summary
+- Created `spread-card.tsx` — reusable card component with name, date, and optional DRAFT badge using shadcn Card/Badge
+- Updated `page.tsx` — client component that loads saved spreads via `useQuery(api.tables.spreads.list)` and draft spreads from localStorage (`spread-draft-*` keys)
+- Responsive grid layout (`sm:grid-cols-2 lg:grid-cols-3`) with loading spinner, empty state, and conditional Drafts section
+- All 64 existing tests pass (no backend changes)
+
+Future considerations/recommendations/warnings
+- Click handlers on SpreadCard (navigate to edit/view) deferred to a future step
+- Draft cleanup (deleting stale drafts, resuming drafts) not yet implemented
+- May want to add a "New Spread" button/CTA on the empty state
+
 ### 0.5.3_Archived Entries
 - 1.3.9 — Local Storage Draft Saving
 - 1.3.8 — Final Polishing 1
