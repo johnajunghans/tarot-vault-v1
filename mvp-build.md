@@ -265,7 +265,7 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
-*Archived entries see mvp-build-archive.md for full text.*
+### 0.5.3_Archived Entries
 - 1.3.9 — Local Storage Draft Saving
 - 1.3.8 — Final Polishing 1
 - Refactor — AppTopbar props instead of Zustand store
@@ -312,3 +312,13 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 - **1.3.7** — Save: Convex create mutation, disabled+spinner, toasts (Sonner). ~~Complete~~
 - **1.3.8** — Final polishing: remove card hover-delete (use panel "Remove Card"), auto-select new card, group-deselect on card click, validation toasts + expand panel, responsive canvas, tooltips. ~~Complete~~
 - **1.3.9** — Local storage draft saving: persist form to localStorage; discard confirmation (Cancel / Save as draft / Discard). *In progress / see archive for full spec.*
+
+## 1.4_View/Edit Spreads
+### 1.4.1_Spreads Page
+1. Create a component in /app/personal/spreads to that renders a shadcn card component showing a given spread. Eventually, clicking on the spread will open up the page to view or edit the given spread.
+	1. The component should accept a prop for whether the spread is a draft or not, in which case it should have a badge indicating that it is a draft.
+	2. The component should display the name of the spread along with the date (just MM/DD/YYYY).
+2. The spreads page (/app/personal/spreads/page.tsx) should use the `list` query in the spreads table functions to read the 10 most recently created spreads. These should be displayed using the above card component.
+3. The spreads page should also read local storage and pull all items with a key matching the pattern `spread-draft-${Date.now()}`. The date.now() value in the key can be parsed to give the date of the spread draft. 
+	1. If the draft has no name, then "Untitled Spread" can be used.
+	2. These spread drafts should be rendered in a separate section from the spreads taken from the db.

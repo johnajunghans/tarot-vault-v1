@@ -1,8 +1,4 @@
-# MVP Build Archive — 1.1, 1.2, 1.3
-
-Archived content from `mvp-build.md`: completion log entries and full build steps for Database & Auth Setup (1.1), Frontend Setup (1.2), and New Spread (1.3). See `mvp-build.md` for succinct summaries.
-
----
+# MVP Build Archive
 
 ## 0.5.2_Entries (archived)
 
