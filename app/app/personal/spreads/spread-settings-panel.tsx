@@ -2,13 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldContent, FieldError, FieldLabel, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PanelLeftIcon, PlusSignIcon } from "hugeicons-react";
-import { Dispatch, SetStateAction, useState } from "react";
-import { usePanelRef } from "react-resizable-panels";
+import { Dispatch, type RefObject, SetStateAction, useEffect, useState } from "react";
+import type { PanelImperativeHandle } from "react-resizable-panels";
 import { spreadData } from "./spread-schema";
 import { UseFieldArrayAppend, UseFieldArrayMove, UseFieldArrayRemove, useFormContext } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateCard } from "./spread-functions";
 import CardOverview from "./card-overview";
 
@@ -19,6 +20,7 @@ interface SpreadSettingsPanelProps {
     move: UseFieldArrayMove;
     selectedCardIndex: number | null;
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
+    panelRef: RefObject<PanelImperativeHandle | null>;
 }
 
 export default function SpreadSettingsPanel({
@@ -28,8 +30,9 @@ export default function SpreadSettingsPanel({
     move,
     selectedCardIndex,
     setSelectedCardIndex,
+    panelRef,
 }: SpreadSettingsPanelProps) {
-    const spreadSettingsPanelRef = usePanelRef()
+    const spreadSettingsPanelRef = panelRef
     const [hideSettings, setHideSettings] = useState(false)
 
     const form = useFormContext()
@@ -42,7 +45,8 @@ export default function SpreadSettingsPanel({
 
     const addCard = () => {
       const newCard = generateCard(cards.length);
-      append(newCard);
+      append(newCard, { focusName: `positions.${selectedCardIndex}.name` });
+      setSelectedCardIndex(cards.length);
     };
 
     const settingsForm = (
@@ -96,17 +100,31 @@ export default function SpreadSettingsPanel({
               <div className="flex w-full justify-between items-center gap-8">
                 <h3 className="text-md font-semibold">Spread Settings</h3>
                 <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={addCard}
-                    disabled={cards.length >= 78}
-                  >
-                    <PlusSignIcon />
-                  </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.expand()}>
-                    <PanelLeftIcon />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={addCard}
+                          disabled={cards.length >= 78}
+                        >
+                          <PlusSignIcon />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>New Card</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.expand()}>
+                          <PanelLeftIcon />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>Show Panel</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </CardContent>
@@ -127,17 +145,31 @@ export default function SpreadSettingsPanel({
               <div className="flex w-full justify-between items-center gap-8">
                 <h3 className="text-md font-semibold">Spread Settings</h3>
                 <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={addCard}
-                    disabled={cards.length >= 78}
-                  >
-                    <PlusSignIcon />
-                  </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.collapse()}>
-                    <PanelLeftIcon />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={addCard}
+                          disabled={cards.length >= 78}
+                        >
+                          <PlusSignIcon />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>New Card</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.collapse()}>
+                          <PanelLeftIcon />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>Hide Panel</TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
               {settingsForm}

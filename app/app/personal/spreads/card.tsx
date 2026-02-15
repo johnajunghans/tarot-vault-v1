@@ -5,8 +5,6 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { useGSAP } from '@gsap/react'
-import { Delete02Icon } from "hugeicons-react";
-import { Button } from "@/components/ui/button";
 import { cardData } from "./spread-schema";
 
 gsap.registerPlugin(Draggable);
@@ -41,7 +39,6 @@ interface SpreadCardProps {
   onDragEnd: (index: number) => void;
   onDrag: (index: number, x: number, y: number) => void;
   onClick: (index: number) => void;
-  onDelete: (index: number) => void;
   registerRef: (index: number, el: SVGGElement | null) => void;
 }
 
@@ -57,12 +54,10 @@ function SpreadCard({
   onDragEnd,
   onDrag,
   onClick,
-  onDelete,
   registerRef,
 }: SpreadCardProps) {
   const { control, setValue } = useFormContext<{ positions: cardData[] }>();
   const watched = useWatch({ control, name: `positions.${index}` });
-  const [showDeleteButton, setShowDeleteButton] = useState(false)
   const [isDraggingState, setIsDraggingState] = useState(false)
 
   // ------------ DRAG LOGIC ------------ //
@@ -141,11 +136,6 @@ function SpreadCard({
     return () => registerRef(index, null);
   }, [index, registerRef]);
 
-  const handleDelete = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onDelete(index);
-  };
-
   // ------------ VISUAL STATE ------------ //
 
   const isActiveDrag = isDraggingState || isDraggingInGroup;
@@ -172,8 +162,6 @@ function SpreadCard({
         opacity: isActiveDrag ? 0.7 : 1,
         transition: "opacity 150ms ease",
       }}
-      onMouseOver={() => setShowDeleteButton(true)}
-      onMouseOut={() => setShowDeleteButton(false)}
     >
       {/* Inner rotation wrapper — separate from GSAP's x/y transform on outer <g> */}
       <g transform={`rotate(${watched.r}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}>
@@ -234,16 +222,6 @@ function SpreadCard({
           {watched.name}
         </text>
 
-        <foreignObject width={32} height={32} x={CARD_WIDTH - 36} y={CARD_HEIGHT - 36}>
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={handleDelete}
-            className={`${showDeleteButton ? "translate-y-0 opacity-100 scale-100" : "translate-y-2 opacity-0 scale-75 pointer-events-none"} duration-100 cursor-pointer`}
-          >
-            <Delete02Icon />
-          </Button>
-        </foreignObject>
       </g>
     </g>
   );
@@ -268,7 +246,6 @@ function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
     prev.onDragEnd === next.onDragEnd &&
     prev.onDrag === next.onDrag &&
     prev.onClick === next.onClick &&
-    prev.onDelete === next.onDelete &&
     prev.registerRef === next.registerRef
   );
 }

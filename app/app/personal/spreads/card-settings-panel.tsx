@@ -1,19 +1,29 @@
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Cancel01Icon } from "hugeicons-react";
-import { Dispatch, SetStateAction, useEffect } from "react";
-import { Controller, useFormContext, UseFormReturn } from "react-hook-form";
-import { cardData, spreadData } from "./spread-schema";
+import { Cancel01Icon, Delete02Icon } from "hugeicons-react";
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
+import { Controller, useFormContext, UseFieldArrayRemove, useForm } from "react-hook-form";
+import { cardData } from "./spread-schema";
 import { usePanelRef } from "react-resizable-panels";
 
 interface CardSettingsPanelProps {
     cards: Record<"id", string>[]
     selectedCardIndex: number | null,
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
+    remove: UseFieldArrayRemove
+    cardCount: number
 }
 
 const GRID_SIZE = 15;
@@ -26,11 +36,14 @@ function snapToGrid(value: number): number {
 export default function CardSettingsPanel({
     cards,
     selectedCardIndex,
-    setSelectedCardIndex
+    setSelectedCardIndex,
+    remove,
+    cardCount,
 }: CardSettingsPanelProps) {
     const form = useFormContext<{ positions: cardData[] }>();
     const cardDetailsPanelRef = usePanelRef();
     const selectedCard = selectedCardIndex !== null ? cards[selectedCardIndex] : null
+    const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
     function handleResize() {
       if (cardDetailsPanelRef.current && cardDetailsPanelRef.current.isCollapsed()) {
@@ -40,7 +53,6 @@ export default function CardSettingsPanel({
 
     // Expand when a card is selected, collapse when none. Defer so panel ref is set (e.g. on initial mount).
     useEffect(() => {
-        console.log(selectedCardIndex)
       const id = requestAnimationFrame(() => {
         const panel = cardDetailsPanelRef.current
         if (!panel) return
@@ -63,10 +75,25 @@ export default function CardSettingsPanel({
       }
     }, [cards, selectedCardIndex]);
 
+    const handleDeleteConfirm = useCallback(() => {
+      if (deleteIndex === null) return;
+
+      if (selectedCardIndex !== null) {
+        if (selectedCardIndex === deleteIndex) {
+          setSelectedCardIndex(null);
+        } else if (selectedCardIndex > deleteIndex) {
+          setSelectedCardIndex(selectedCardIndex - 1);
+        }
+      }
+
+      remove(deleteIndex);
+      setDeleteIndex(null);
+    }, [deleteIndex, selectedCardIndex, setSelectedCardIndex, remove]);
+
     const cardErrors = selectedCardIndex !== null ? form.formState.errors.positions?.[selectedCardIndex] : undefined;
 
     const cardDetailsPanel = selectedCard && selectedCardIndex !== null && (
-      <form>
+      <form key={selectedCardIndex}>
         <FieldSet>
           {/* <FieldSeparator /> */}
           <FieldSet>
@@ -272,6 +299,21 @@ export default function CardSettingsPanel({
               />
             </FieldGroup>
           </FieldSet>
+
+          <FieldSeparator />
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={cardCount <= 1}
+            onClick={() => {
+              if (selectedCardIndex !== null) setDeleteIndex(selectedCardIndex);
+            }}
+          >
+            <Delete02Icon />
+            Remove Card
+          </Button>
         </FieldSet>
       </form>
     );
@@ -309,6 +351,30 @@ export default function CardSettingsPanel({
             </div>
           </ResizablePanel>
         </>
+
+        <Dialog
+          open={deleteIndex !== null}
+          onOpenChange={(open) => {
+            if (!open) setDeleteIndex(null);
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Remove Card {deleteIndex !== null ? deleteIndex + 1 : ""}?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteIndex(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteConfirm}>
+                Remove
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     )
   }

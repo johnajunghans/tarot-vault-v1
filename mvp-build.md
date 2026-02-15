@@ -265,6 +265,23 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/14/2026 -- 1.3.8 Final Polishing 1 -- Claude Opus 4.6**
+Summary of actions taken:
+- Removed hover-delete button from canvas cards (`card.tsx`): removed `showDeleteButton` state, `handleDelete`, mouse handlers, `foreignObject`, `onDelete` prop
+- Removed card delete dialog from canvas (`canvas.tsx`): removed `deleteIndex` state, `handleCardDelete`, `handleDeleteConfirm`, Dialog imports
+- Added group deselection on card click: clicking a card now clears marquee group selection
+- Added "Remove Card" button to card settings panel (`card-settings-panel.tsx`) with delete confirmation dialog
+- Auto-select new cards: `addCard()` in `spread-settings-panel.tsx` now calls `setSelectedCardIndex(cards.length)` after append
+- Added form validation error toasts on save (`panel-wrapper.tsx`): `onInvalid` callback shows toast per field error and expands collapsed spread settings panel
+- Lifted `spreadSettingsPanelRef` from `SpreadSettingsPanel` to `PanelWrapper` for parent access
+- Made canvas SVG responsive (`canvas.tsx`): `ResizeObserver` sets SVG width/height to `Math.max(1500, containerSize)`, grid and guide lines extend to full size
+- Added tooltips to icon buttons: "New Card", "Hide Panel"/"Show Panel" in spread settings, "Discard Spread" in topbar
+- Removed stray `console.log` from card-settings-panel
+
+Future considerations:
+- Card bounds (BOUNDS) still constrain cards to 1500x1500 area even when SVG is larger — cards cannot be placed in the extended area
+- If edit-spread flow reuses these components, the panelRef lifting pattern is already in place
+
 **02/14/2026 -- Refactor: AppTopbar props instead of Zustand store -- Claude Opus 4.6**
 Summary of actions taken:
 - Refactored `AppTopbar` to accept `centerTitle?: ReactNode` and `rightButtonGroup?: ReactNode` props instead of reading from Zustand store

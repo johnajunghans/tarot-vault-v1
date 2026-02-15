@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { spreadData, spreadSchema } from "../spread-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
@@ -12,14 +12,16 @@ import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import SpreadSettingsPanel from "../spread-settings-panel";
 import SpreadCanvas from "../canvas";
 import CardSettingsPanel from "../card-settings-panel";
-import { Layout } from "react-resizable-panels";
+import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { generateCard } from "../spread-functions";
 import AppTopbar from "@/components/app/app-topbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import { Delete01Icon, Delete02Icon, FloppyDiskIcon } from "hugeicons-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Delete02Icon, FloppyDiskIcon } from "hugeicons-react";
+import { FieldErrors } from "react-hook-form";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -33,6 +35,7 @@ export default function PanelWrapper({
     const router = useRouter();
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
 
     const form = useForm<spreadData>({
         resolver: zodResolver(spreadSchema),
@@ -60,6 +63,33 @@ export default function PanelWrapper({
     const createSpread = useMutation(api.tables.spreads.create);
 
     const handleSave = useCallback(() => {
+        const onInvalid = (errors: FieldErrors<spreadData>) => {
+            // Show toast for each field error
+            if (errors.name) {
+                toast.error("Spread name is required", {
+                    description: errors.name.message,
+                });
+            }
+            if (errors.description) {
+                toast.error("Invalid description", {
+                    description: errors.description.message,
+                });
+            }
+            if (errors.positions) {
+                toast.error("Card errors", {
+                    description: "One or more cards have invalid fields.",
+                });
+            }
+
+            // Expand spread settings panel if it's collapsed and there are spread-level errors
+            if (errors.name || errors.description) {
+                const panel = spreadSettingsPanelRef.current;
+                if (panel?.isCollapsed()) {
+                    panel.expand();
+                }
+            }
+        };
+
         form.handleSubmit(async (data) => {
             setIsSaving(true);
 
@@ -90,7 +120,7 @@ export default function PanelWrapper({
                 );
                 setIsSaving(false);
             }
-        })();
+        }, onInvalid)();
     }, [form, createSpread, router]);
 
     const spreadTitle = watchedName || "New Spread";
@@ -110,9 +140,16 @@ export default function PanelWrapper({
             }
             rightButtonGroup={
                 <>
-                    <Button type="button" variant="destructive" size="icon" onClick={handleDiscard}>
-                        <Delete02Icon />
-                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button type="button" variant="destructive" size="icon" onClick={handleDiscard}>
+                                    <Delete02Icon />
+                                </Button>
+                            }
+                        />
+                        <TooltipContent>Discard Spread</TooltipContent>
+                    </Tooltip>
                     <Button type="button" variant="default" disabled={isSaving} onClick={handleSave}>
                         {isSaving ? <Spinner /> : <FloppyDiskIcon />}
                         <span>Save</span>
@@ -138,6 +175,7 @@ export default function PanelWrapper({
                 cards={cards}
                 selectedCardIndex={selectedCardIndex}
                 setSelectedCardIndex={setSelectedCardIndex}
+                panelRef={spreadSettingsPanelRef}
             />
 
             {/* Center Panel — Canvas */}
@@ -148,15 +186,16 @@ export default function PanelWrapper({
                 cards={cards}
                 selectedCardIndex={selectedCardIndex}
                 onCardSelect={setSelectedCardIndex}
-                remove={remove}
                 />
             </ResizablePanel>
 
             {/* Right Panel — Card Details */}
-            <CardSettingsPanel 
+            <CardSettingsPanel
                 cards={cards}
                 selectedCardIndex={selectedCardIndex}
                 setSelectedCardIndex={setSelectedCardIndex}
+                remove={remove}
+                cardCount={cards.length}
             />
             
             </ResizablePanelGroup>
