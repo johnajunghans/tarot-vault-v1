@@ -4,15 +4,20 @@ import { Badge } from "@/components/ui/badge"
 import {
     Card,
     CardAction,
+    CardContent,
     CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import SpreadThumbnail from "./spread-thumbnail"
+import { CardPosition } from "@/types/spreads"
+import { cardData } from "./spread-schema"
 
 interface SpreadCardProps {
     name: string
     date: Date
     isDraft?: boolean
+    cards: CardPosition[]
 }
 
 function formatDate(date: Date): string {
@@ -22,9 +27,14 @@ function formatDate(date: Date): string {
     return `${month}/${day}/${year}`
 }
 
-export default function SpreadCard({ name, date, isDraft }: SpreadCardProps) {
+export default function SpreadCard({ 
+    name, 
+    date, 
+    isDraft,
+    cards 
+}: SpreadCardProps) {
     return (
-        <Card size="sm" className="shadow-none hover:shadow-sm -translate-y-0 hover:-translate-y-1 duration-150 cursor-pointer">
+        <Card className="shadow-none hover:shadow-sm -translate-y-0 hover:-translate-y-1 duration-150 cursor-pointer">
             <CardHeader>
                 <CardTitle>{name}</CardTitle>
                 {isDraft && (
@@ -33,6 +43,9 @@ export default function SpreadCard({ name, date, isDraft }: SpreadCardProps) {
                     </CardAction>
                 )}
             </CardHeader>
+            <CardContent className="flex justify-center">
+                <SpreadThumbnail cards={cards} width={150} height={150} />
+            </CardContent>
             <CardFooter>
                 <span className="text-xs text-muted-foreground">
                     {formatDate(date)}

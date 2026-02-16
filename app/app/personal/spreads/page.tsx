@@ -6,12 +6,19 @@ import { api } from "@/convex/_generated/api"
 import AppTopbar from "@/components/app/app-topbar"
 import SpreadCard from "./spread-card"
 import { Spinner } from "@/components/ui/spinner"
+import { CardPosition } from "@/types/spreads"
+import { cardData, spreadData } from "./spread-schema"
 
 interface DraftSpread {
-    key: string
-    name: string
-    date: Date
+    name: string,
+    description?: string,
+    date: number,
+    positions: CardPosition[]
 }
+
+// interface DraftSpread extends spreadData {
+//     date: number
+// }
 
 function loadDrafts(): DraftSpread[] {
     const drafts: DraftSpread[] = []
@@ -23,21 +30,28 @@ function loadDrafts(): DraftSpread[] {
         const timestamp = Number(key.replace("spread-draft-", ""))
         if (isNaN(timestamp)) continue
 
-        let name = "Untitled Spread"
+        // let name = "Untitled Spread"
+        // let positions: cardData[] = []
+        let draft: DraftSpread | undefined = undefined
         try {
             const raw = localStorage.getItem(key)
             if (raw) {
                 const parsed = JSON.parse(raw)
-                if (parsed.name) name = parsed.name
+                draft = {
+                    ...parsed,
+                    name: parsed.name || "Untitiled Spread"
+                }
+                // if (parsed.name) name = parsed.name
+                // if (parsed.positions.length > 0) positions = parsed.positions
             }
         } catch {
             // ignore parse errors
         }
 
-        drafts.push({ key, name, date: new Date(timestamp) })
+        draft && drafts.push(draft)
     }
 
-    return drafts.sort((a, b) => b.date.getTime() - a.date.getTime())
+    return drafts.sort((a, b) => b.date - a.date)
 }
 
 export default function Spreads() {
@@ -61,10 +75,11 @@ export default function Spreads() {
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {drafts.map((draft) => (
                                 <SpreadCard
-                                    key={draft.key}
+                                    key={draft.date}
                                     name={draft.name}
-                                    date={draft.date}
+                                    date={new Date(draft.date)}
                                     isDraft
+                                    cards={draft.positions}
                                 />
                             ))}
                         </div>
@@ -91,6 +106,7 @@ export default function Spreads() {
                                     key={spread._id}
                                     name={spread.name}
                                     date={new Date(spread._creationTime)}
+                                    cards={spread.positions}
                                 />
                             ))}
                         </div>

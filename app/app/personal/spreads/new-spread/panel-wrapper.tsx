@@ -19,8 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Delete02Icon, FloppyDiskIcon } from "hugeicons-react";
 import { FieldErrors } from "react-hook-form";
 import {
     Dialog,
@@ -40,12 +38,10 @@ export default function PanelWrapper({
     defaultLayout,
     groupId
 }: PanelWrapperProps) {
-    const router = useRouter();
-    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
-    const draftKey = useRef(`spread-draft-${Date.now()}`);
-    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+    const router = useRouter(); // router
+    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null); // state to control selected card
+    
+    // ------------ SPREAD FORM ------------ //
 
     const form = useForm<spreadData>({
         resolver: zodResolver(spreadSchema),
@@ -61,41 +57,37 @@ export default function PanelWrapper({
         name: "positions"
     });
 
-    const watchedName = form.watch("name");
-    const watchedPositions = form.watch("positions");
+    // ------------ SPREAD DRAFT LOGIC ------------ //
 
-    // Persist form data to localStorage as a draft
+    const draftDate = useRef(Date.now());
+    const draftKey = draftDate.current ? `spread-draft-${draftDate.current}` : ""
+
     useEffect(() => {
         const subscription = form.watch((values) => {
             if (form.formState.isDirty) {
-                localStorage.setItem(draftKey.current, JSON.stringify(values));
+                localStorage.setItem(draftKey, JSON.stringify({
+                    ...values,
+                    date: draftDate.current,
+                    positions: values.positions?.map((p, i) => ({ ...p, position: i + 1 }))
+                }));
             }
         });
         return () => subscription.unsubscribe();
     }, [form]);
 
-    // Action handlers
-    const handleDiscard = useCallback(() => {
-        if (!form.formState.isDirty) {
-            router.push("/app/personal/spreads");
-            return;
-        }
-        setShowDiscardDialog(true);
-    }, [form.formState.isDirty, router]);
+    // ------------ APP TOPBAR LOGIC ------------ //
 
-    const handleSaveAsDraft = useCallback(() => {
-        setShowDiscardDialog(false);
-        router.push("/app/personal/spreads");
-    }, [router]);
+    const watchedName = form.watch("name");
+    const watchedPositions = form.watch("positions");
 
-    const handleConfirmDiscard = useCallback(() => {
-        localStorage.removeItem(draftKey.current);
-        form.reset();
-        setShowDiscardDialog(false);
-        router.push("/app/personal/spreads");
-    }, [form, router]);
+    const spreadTitle = watchedName || "New Spread";
+    const cardCount = `${watchedPositions?.length ?? 0}-Card`;
 
-    const createSpread = useMutation(api.tables.spreads.create);
+    // ------------ SAVE SPREAD LOGIC ------------ //
+
+    const createSpread = useMutation(api.tables.spreads.create); // create spread mutation
+    const [isSaving, setIsSaving] = useState(false); // state to track save loading
+    const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null); // spread settings panel ref — defined here to control expansion of panel if there is an error during save 
 
     const handleSave = useCallback(() => {
         const onInvalid = (errors: FieldErrors<spreadData>) => {
@@ -147,7 +139,7 @@ export default function PanelWrapper({
                     positions,
                 });
 
-                localStorage.removeItem(draftKey.current);
+                localStorage.removeItem(draftKey);
                 router.push("/app/personal/spreads");
                 toast.success("Spread created successfully");
             } catch (error) {
@@ -159,12 +151,34 @@ export default function PanelWrapper({
         }, onInvalid)();
     }, [form, createSpread, router]);
 
-    const spreadTitle = watchedName || "New Spread";
-    const cardCount = `${watchedPositions?.length ?? 0}-Card`;
+    // ------------ DELETE SPREAD MODAL LOGIC ------------ //
+
+    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
+    const handleDiscard = useCallback(() => {
+        if (!form.formState.isDirty) {
+            router.push("/app/personal/spreads");
+            return;
+        }
+        setShowDiscardDialog(true);
+    }, [form.formState.isDirty, router]);
+
+    const handleSaveAsDraft = useCallback(() => {
+        setShowDiscardDialog(false);
+        router.push("/app/personal/spreads");
+    }, [router]);
+
+    const handleConfirmDiscard = useCallback(() => {
+        localStorage.removeItem(draftKey);
+        form.reset();
+        setShowDiscardDialog(false);
+        router.push("/app/personal/spreads");
+    }, [form, router]);
 
 
     return (
         <>
+        {/* App Topbar */}
         <AppTopbar
             centerTitle={
                 <>
@@ -176,68 +190,62 @@ export default function PanelWrapper({
             }
             rightButtonGroup={
                 <>
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <Button type="button" variant="destructive" size="icon" onClick={handleDiscard}>
-                                    <Delete02Icon />
-                                </Button>
-                            }
-                        />
-                        <TooltipContent>Discard Spread</TooltipContent>
-                    </Tooltip>
-                    <Button type="button" variant="default" disabled={isSaving} onClick={handleSave}>
-                        {isSaving ? <Spinner /> : <FloppyDiskIcon />}
-                        <span>Save</span>
+                    <Button type="button" variant="ghost" onClick={handleDiscard}>Discard</Button>
+                    <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
+                        {isSaving && <Spinner />}
+                        Save Spread
                     </Button>
                 </>
             }
         />
+
+        {/* Main Content */}
         <div className="h-app-content relative">
-        <FormProvider {...form}>
-            <ResizablePanelGroup
-                id={groupId}
-                orientation="horizontal"
-                defaultLayout={defaultLayout}
-                onLayoutChanged={(layout) => {
-                    document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
-                }}
-            >
-            {/* Left Panel — Settings */}
-            <SpreadSettingsPanel
-                append={append}
-                remove={remove}
-                move={move}
-                cards={cards}
-                selectedCardIndex={selectedCardIndex}
-                setSelectedCardIndex={setSelectedCardIndex}
-                panelRef={spreadSettingsPanelRef}
-            />
-
-            {/* Center Panel — Canvas */}
-            <ResizablePanel 
-                id="spread-canvas-panel"
-            >
-                <SpreadCanvas
-                cards={cards}
-                selectedCardIndex={selectedCardIndex}
-                onCardSelect={setSelectedCardIndex}
+            <FormProvider {...form}>
+                <ResizablePanelGroup
+                    id={groupId}
+                    orientation="horizontal"
+                    defaultLayout={defaultLayout}
+                    onLayoutChanged={(layout) => {
+                        document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
+                    }}
+                >
+                {/* Left Panel — Settings */}
+                <SpreadSettingsPanel
+                    append={append}
+                    remove={remove}
+                    move={move}
+                    cards={cards}
+                    selectedCardIndex={selectedCardIndex}
+                    setSelectedCardIndex={setSelectedCardIndex}
+                    panelRef={spreadSettingsPanelRef}
                 />
-            </ResizablePanel>
 
-            {/* Right Panel — Card Details */}
-            <CardSettingsPanel
-                cards={cards}
-                selectedCardIndex={selectedCardIndex}
-                setSelectedCardIndex={setSelectedCardIndex}
-                remove={remove}
-                cardCount={cards.length}
-            />
-            
-            </ResizablePanelGroup>
-        </FormProvider>
+                {/* Center Panel — Canvas */}
+                <ResizablePanel 
+                    id="spread-canvas-panel"
+                >
+                    <SpreadCanvas
+                    cards={cards}
+                    selectedCardIndex={selectedCardIndex}
+                    onCardSelect={setSelectedCardIndex}
+                    />
+                </ResizablePanel>
+
+                {/* Right Panel — Card Details */}
+                <CardSettingsPanel
+                    cards={cards}
+                    selectedCardIndex={selectedCardIndex}
+                    setSelectedCardIndex={setSelectedCardIndex}
+                    remove={remove}
+                    cardCount={cards.length}
+                />
+                
+                </ResizablePanelGroup>
+            </FormProvider>
         </div>
 
+        {/* Delete Spread Dialog */}
         <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
             <DialogContent>
                 <DialogHeader>
