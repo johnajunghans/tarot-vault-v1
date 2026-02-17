@@ -28,6 +28,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Delete02Icon } from "hugeicons-react";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -40,6 +42,7 @@ export default function PanelWrapper({
 }: PanelWrapperProps) {
     const router = useRouter(); // router
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null); // state to control selected card
+    const isMobile = useIsMobile()
     
     // ------------ SPREAD FORM ------------ //
 
@@ -182,18 +185,22 @@ export default function PanelWrapper({
         <AppTopbar
             centerTitle={
                 <>
-                    <span className="font-bold text-foreground">{spreadTitle}</span>
-                    <Separator orientation="vertical" />
-                    <span className="text-muted-foreground">{cardCount}</span>
+                    <span className="font-bold text-foreground text-sm md:text-md">{spreadTitle}</span>
+                    {!isMobile && <>
+                        <Separator orientation="vertical" />
+                        <span className="text-muted-foreground">{cardCount}</span>
+                    </>}
                     <Badge variant="secondary">DRAFT</Badge>
                 </>
             }
             rightButtonGroup={
                 <>
-                    <Button type="button" variant="ghost" onClick={handleDiscard}>Discard</Button>
+                    <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleDiscard}>
+                        {isMobile ? <Delete02Icon /> : <span>Discard</span> }
+                    </Button>
                     <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
                         {isSaving && <Spinner />}
-                        Save Spread
+                        <span>{isMobile ? "Save" : "Save Spread"}</span>
                     </Button>
                 </>
             }
