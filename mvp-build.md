@@ -327,7 +327,7 @@ Future considerations/recommendations/warnings
 - **1.3.9** — Local storage draft saving: persist form to localStorage; discard confirmation (Cancel / Save as draft / Discard). *In progress / see archive for full spec.*
 
 ## 1.4_View/Edit Spreads
-### 1.4.1_Spreads Page
+### ~~1.4.1_Spreads Page~~
 1. Create a component in /app/personal/spreads to that renders a shadcn card component showing a given spread. Eventually, clicking on the spread will open up the page to view or edit the given spread.
 	1. The component should accept a prop for whether the spread is a draft or not, in which case it should have a badge indicating that it is a draft.
 	2. The component should display the name of the spread along with the date (just MM/DD/YYYY).
