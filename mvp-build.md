@@ -265,6 +265,25 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/17 — Step 1.3.10 — New Spread Responsive Design** | Model: Claude Opus 4.6
+
+Summary
+- Added `truncate max-w-[120px] md:max-w-[200px]` to spread title in panel-wrapper topbar to prevent long titles pushing buttons off-screen
+- Added `min-w-0` to centerTitle flex containers in `app-topbar.tsx` to allow flex children to shrink
+- Extracted `SpreadSettingsContent` and `CardSettingsContent` as reusable content components from their panel wrappers
+- Lifted `addCard` callback from spread-settings-panel up to panel-wrapper for shared use
+- On mobile (`isMobile`), replaced ResizablePanelGroup with: floating toolbar (settings + add card buttons), full-width SpreadCanvas, left Sheet for spread settings, right Sheet for card settings
+- Sheets positioned below topbar with `!top-[57px] !h-[calc(100vh-57px)]` to avoid overlaying topbar
+- `handleSave` onInvalid opens spread settings sheet on mobile instead of expanding panel
+- Desktop layout unchanged (ResizablePanelGroup with collapsible panels)
+- Removed unused `useIsMobile` import from `app-topbar.tsx`
+- All 64 existing tests pass; no new lint errors
+
+Future considerations/recommendations/warnings
+- Sheet overlay covers full viewport (standard UX); only sheet content is constrained below topbar
+- Topbar height (57px) is hardcoded — if topbar height changes, sheet positioning needs updating
+- Card settings sheet auto-opens when a card is selected and auto-closes on deselect via `selectedCardIndex !== null`
+
 **02/14 — Step 1.4.1 — Spreads Page** | Model: Claude Opus 4.6
 
 Summary

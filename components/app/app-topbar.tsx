@@ -28,7 +28,6 @@ import {
   ArrowDown01Icon,
   Menu01Icon,
 } from "hugeicons-react"
-import { useIsMobile } from "@/hooks/use-mobile"
 
 function formatSegment(segment: string) {
   return segment
@@ -63,9 +62,9 @@ export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarPr
   })
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-border/60 bg-background/80 backdrop-blur-sm px-4 py-3">
+    <header className="flex items-center justify-between gap-4 border-b border-border/60 bg-background/80 backdrop-blur-sm px-2 lg:px-4 py-3">
       {/* Left Section */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1 lg:gap-3">
         <Button
           type="button"
           variant="ghost"
@@ -84,7 +83,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarPr
         </Button>
 
         { isMobile ?
-          <div className="flex min-h-8 flex-1 items-center justify-center gap-3">
+          <div className="flex min-h-8 min-w-0 flex-1 items-center justify-center gap-3">
             {centerTitle}
           </div> :
           <Breadcrumb>
@@ -113,12 +112,12 @@ export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarPr
       </div>
 
       {/* Center Section */}
-      {!isMobile && <div className="flex min-h-8 flex-1 items-center justify-center gap-3">
+      {!isMobile && <div className="flex min-h-8 min-w-0 flex-1 items-center justify-center gap-1.5 lg:gap-3">
         {centerTitle}
       </div>}
 
       {/* Right Section */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 lg:gap-2">
         {rightButtonGroup ?? (
           <DropdownMenu>
             <DropdownMenuTrigger

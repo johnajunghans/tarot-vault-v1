@@ -10,8 +10,10 @@ import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import SpreadSettingsPanel from "../spread-settings-panel";
+import { SpreadSettingsContent } from "../spread-settings-panel";
 import SpreadCanvas from "../canvas";
 import CardSettingsPanel from "../card-settings-panel";
+import { CardSettingsContent } from "../card-settings-panel";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { generateCard } from "../spread-functions";
 import AppTopbar from "@/components/app/app-topbar";
@@ -28,8 +30,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import {
+    Sheet,
+    SheetContent,
+    SheetTitle,
+} from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Delete02Icon } from "hugeicons-react";
+import { Cancel01Icon, Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -40,10 +48,10 @@ export default function PanelWrapper({
     defaultLayout,
     groupId
 }: PanelWrapperProps) {
-    const router = useRouter(); // router
-    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null); // state to control selected card
+    const router = useRouter();
+    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const isMobile = useIsMobile()
-    
+
     // ------------ SPREAD FORM ------------ //
 
     const form = useForm<spreadData>({
@@ -51,7 +59,7 @@ export default function PanelWrapper({
         defaultValues: {
         name: "",
         description: "",
-        positions: [generateCard(0)] // initial single card
+        positions: [generateCard(0)]
         }
     });
 
@@ -78,6 +86,14 @@ export default function PanelWrapper({
         return () => subscription.unsubscribe();
     }, [form]);
 
+    // ------------ ADD CARD ------------ //
+
+    const addCard = useCallback(() => {
+        const newCard = generateCard(cards.length);
+        append(newCard, { focusName: `positions.${selectedCardIndex}.name` });
+        setSelectedCardIndex(cards.length);
+    }, [cards.length, append, selectedCardIndex, setSelectedCardIndex]);
+
     // ------------ APP TOPBAR LOGIC ------------ //
 
     const watchedName = form.watch("name");
@@ -86,15 +102,18 @@ export default function PanelWrapper({
     const spreadTitle = watchedName || "New Spread";
     const cardCount = `${watchedPositions?.length ?? 0}-Card`;
 
+    // ------------ MOBILE SHEET STATE ------------ //
+
+    const [spreadSheetOpen, setSpreadSheetOpen] = useState(false);
+
     // ------------ SAVE SPREAD LOGIC ------------ //
 
-    const createSpread = useMutation(api.tables.spreads.create); // create spread mutation
-    const [isSaving, setIsSaving] = useState(false); // state to track save loading
-    const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null); // spread settings panel ref — defined here to control expansion of panel if there is an error during save 
+    const createSpread = useMutation(api.tables.spreads.create);
+    const [isSaving, setIsSaving] = useState(false);
+    const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
 
     const handleSave = useCallback(() => {
         const onInvalid = (errors: FieldErrors<spreadData>) => {
-            // Show toast for each field error
             if (errors.name) {
                 toast.error("Spread name is required", {
                     description: errors.name.message,
@@ -111,11 +130,15 @@ export default function PanelWrapper({
                 });
             }
 
-            // Expand spread settings panel if it's collapsed and there are spread-level errors
+            // Open spread settings (sheet on mobile, panel on desktop)
             if (errors.name || errors.description) {
-                const panel = spreadSettingsPanelRef.current;
-                if (panel?.isCollapsed()) {
-                    panel.expand();
+                if (isMobile) {
+                    setSpreadSheetOpen(true);
+                } else {
+                    const panel = spreadSettingsPanelRef.current;
+                    if (panel?.isCollapsed()) {
+                        panel.expand();
+                    }
                 }
             }
         };
@@ -152,7 +175,7 @@ export default function PanelWrapper({
                 setIsSaving(false);
             }
         }, onInvalid)();
-    }, [form, createSpread, router]);
+    }, [form, createSpread, router, isMobile]);
 
     // ------------ DELETE SPREAD MODAL LOGIC ------------ //
 
@@ -185,10 +208,10 @@ export default function PanelWrapper({
         <AppTopbar
             centerTitle={
                 <>
-                    <span className="font-bold text-foreground text-sm md:text-md">{spreadTitle}</span>
+                    <span className="font-bold text-foreground text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]">{spreadTitle}</span>
                     {!isMobile && <>
                         <Separator orientation="vertical" />
-                        <span className="text-muted-foreground">{cardCount}</span>
+                        <span className="text-muted-foreground text-sm lg:text-base text-nowrap">{cardCount}</span>
                     </>}
                     <Badge variant="secondary">DRAFT</Badge>
                 </>
@@ -196,11 +219,11 @@ export default function PanelWrapper({
             rightButtonGroup={
                 <>
                     <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleDiscard}>
-                        {isMobile ? <Delete02Icon /> : <span>Discard</span> }
+                        {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Discard</span> }
                     </Button>
                     <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
                         {isSaving && <Spinner />}
-                        <span>{isMobile ? "Save" : "Save Spread"}</span>
+                        <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Spread"}</span>
                     </Button>
                 </>
             }
@@ -209,46 +232,129 @@ export default function PanelWrapper({
         {/* Main Content */}
         <div className="h-app-content relative">
             <FormProvider {...form}>
-                <ResizablePanelGroup
-                    id={groupId}
-                    orientation="horizontal"
-                    defaultLayout={defaultLayout}
-                    onLayoutChanged={(layout) => {
-                        document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
-                    }}
-                >
-                {/* Left Panel — Settings */}
-                <SpreadSettingsPanel
-                    append={append}
-                    remove={remove}
-                    move={move}
-                    cards={cards}
-                    selectedCardIndex={selectedCardIndex}
-                    setSelectedCardIndex={setSelectedCardIndex}
-                    panelRef={spreadSettingsPanelRef}
-                />
+                {isMobile ? (
+                    <>
+                        {/* Floating Toolbar */}
+                        <Card className="absolute bottom-3 left-3 py-2 z-10 shadow-md bg-background">
+                            <CardContent>
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        onClick={() => setSpreadSheetOpen(true)}
+                                    >
+                                        <Settings02Icon />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        onClick={addCard}
+                                        disabled={cards.length >= 78}
+                                    >
+                                        <PlusSignIcon />
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                {/* Center Panel — Canvas */}
-                <ResizablePanel 
-                    id="spread-canvas-panel"
-                >
-                    <SpreadCanvas
-                    cards={cards}
-                    selectedCardIndex={selectedCardIndex}
-                    onCardSelect={setSelectedCardIndex}
+                        {/* Full Canvas */}
+                        <SpreadCanvas
+                            cards={cards}
+                            selectedCardIndex={selectedCardIndex}
+                            onCardSelect={setSelectedCardIndex}
+                        />
+
+                        {/* Spread Settings Sheet (left) */}
+                        <Sheet open={spreadSheetOpen} onOpenChange={setSpreadSheetOpen}>
+                            <SheetContent
+                                side="left"
+                                // className="!top-[57px] !h-[calc(100vh-57px)]"
+                            >
+                                <SheetTitle className="sr-only">Spread Settings</SheetTitle>
+                                <SpreadSettingsContent
+                                    cards={cards}
+                                    addCard={addCard}
+                                    remove={remove}
+                                    move={move}
+                                    selectedCardIndex={selectedCardIndex}
+                                    setSelectedCardIndex={setSelectedCardIndex}
+                                />
+                            </SheetContent>
+                        </Sheet>
+
+                        {/* Card Settings Sheet (right) */}
+                        <Sheet
+                            open={selectedCardIndex !== null}
+                            onOpenChange={(open) => {
+                                if (!open) setSelectedCardIndex(null);
+                            }}
+                        >
+                            <SheetContent
+                                side="right"
+                                // className="!top-[57px] !h-[calc(100vh-57px)]"
+                            >
+                                <SheetTitle className="sr-only">Card Settings</SheetTitle>
+                                <CardSettingsContent
+                                    cards={cards}
+                                    selectedCardIndex={selectedCardIndex}
+                                    setSelectedCardIndex={setSelectedCardIndex}
+                                    remove={remove}
+                                    cardCount={cards.length}
+                                    headerActions={
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            onClick={() => setSelectedCardIndex(null)}
+                                        >
+                                            <Cancel01Icon />
+                                        </Button>
+                                    }
+                                />
+                            </SheetContent>
+                        </Sheet>
+                    </>
+                ) : (
+                    <ResizablePanelGroup
+                        id={groupId}
+                        orientation="horizontal"
+                        defaultLayout={defaultLayout}
+                        onLayoutChanged={(layout) => {
+                            document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
+                        }}
+                    >
+                    {/* Left Panel — Settings */}
+                    <SpreadSettingsPanel
+                        addCard={addCard}
+                        remove={remove}
+                        move={move}
+                        cards={cards}
+                        selectedCardIndex={selectedCardIndex}
+                        setSelectedCardIndex={setSelectedCardIndex}
+                        panelRef={spreadSettingsPanelRef}
                     />
-                </ResizablePanel>
 
-                {/* Right Panel — Card Details */}
-                <CardSettingsPanel
-                    cards={cards}
-                    selectedCardIndex={selectedCardIndex}
-                    setSelectedCardIndex={setSelectedCardIndex}
-                    remove={remove}
-                    cardCount={cards.length}
-                />
-                
-                </ResizablePanelGroup>
+                    {/* Center Panel — Canvas */}
+                    <ResizablePanel
+                        id="spread-canvas-panel"
+                    >
+                        <SpreadCanvas
+                        cards={cards}
+                        selectedCardIndex={selectedCardIndex}
+                        onCardSelect={setSelectedCardIndex}
+                        />
+                    </ResizablePanel>
+
+                    {/* Right Panel — Card Details */}
+                    <CardSettingsPanel
+                        cards={cards}
+                        selectedCardIndex={selectedCardIndex}
+                        setSelectedCardIndex={setSelectedCardIndex}
+                        remove={remove}
+                        cardCount={cards.length}
+                    />
+
+                    </ResizablePanelGroup>
+                )}
             </FormProvider>
         </div>
 

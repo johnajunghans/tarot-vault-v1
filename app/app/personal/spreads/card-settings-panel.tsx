@@ -14,17 +14,9 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Cancel01Icon, Delete02Icon } from "hugeicons-react";
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
-import { Controller, useFormContext, UseFieldArrayRemove, useForm } from "react-hook-form";
+import { Controller, useFormContext, UseFieldArrayRemove } from "react-hook-form";
 import { cardData } from "./spread-schema";
 import { usePanelRef } from "react-resizable-panels";
-
-interface CardSettingsPanelProps {
-    cards: Record<"id", string>[]
-    selectedCardIndex: number | null,
-    setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
-    remove: UseFieldArrayRemove
-    cardCount: number
-}
 
 const GRID_SIZE = 15;
 
@@ -33,47 +25,28 @@ function snapToGrid(value: number): number {
   return Math.round(value / GRID_SIZE) * GRID_SIZE;
 }
 
-export default function CardSettingsPanel({
+// ------------ Shared Content Component ------------ //
+
+interface CardSettingsContentProps {
+    cards: Record<"id", string>[]
+    selectedCardIndex: number | null
+    setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
+    remove: UseFieldArrayRemove
+    cardCount: number
+    headerActions?: React.ReactNode
+}
+
+export function CardSettingsContent({
     cards,
     selectedCardIndex,
     setSelectedCardIndex,
     remove,
     cardCount,
-}: CardSettingsPanelProps) {
+    headerActions,
+}: CardSettingsContentProps) {
     const form = useFormContext<{ positions: cardData[] }>();
-    const cardDetailsPanelRef = usePanelRef();
     const selectedCard = selectedCardIndex !== null ? cards[selectedCardIndex] : null
     const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-
-    function handleResize() {
-      if (cardDetailsPanelRef.current && cardDetailsPanelRef.current.isCollapsed()) {
-        setSelectedCardIndex(null)
-      }
-    }
-
-    // Expand when a card is selected, collapse when none. Defer so panel ref is set (e.g. on initial mount).
-    useEffect(() => {
-      const id = requestAnimationFrame(() => {
-        const panel = cardDetailsPanelRef.current
-        if (!panel) return
-        if (selectedCardIndex !== null) {
-          panel.expand()
-        } else {
-          panel.collapse()
-        }
-      })
-      return () => cancelAnimationFrame(id)
-    }, [selectedCardIndex])
-
-    // Deselect card if it no longer exists (e.g., numberOfCards decreased)
-    useEffect(() => {
-      if (
-        selectedCardIndex !== null &&
-        !cards.some((_, i) => i === selectedCardIndex)
-      ) {
-        setSelectedCardIndex(null);
-      }
-    }, [cards, selectedCardIndex]);
 
     const handleDeleteConfirm = useCallback(() => {
       if (deleteIndex === null) return;
@@ -95,7 +68,6 @@ export default function CardSettingsPanel({
     const cardDetailsPanel = selectedCard && selectedCardIndex !== null && (
       <form key={selectedCardIndex}>
         <FieldSet>
-          {/* <FieldSeparator /> */}
           <FieldSet>
             {/* Name */}
             <Controller
@@ -320,37 +292,15 @@ export default function CardSettingsPanel({
 
     return (
       <>
-        <>
-          <ResizableHandle withHandle className={selectedCardIndex === null ? "hidden" : ""} />
-          <ResizablePanel
-            id="card-settings-panel"
-            panelRef={cardDetailsPanelRef}
-            onResize={handleResize}
-            collapsible
-            defaultSize="20%"
-            minSize={240}
-            maxSize="40%"
-          >
-            <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
-              <div className="flex w-full justify-between items-center gap-4">
-                <h3 className="text-md font-semibold">
-                  Card {selectedCardIndex !== null && selectedCardIndex + 1} Settings
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => {
-                    setSelectedCardIndex(null)
-                    cardDetailsPanelRef.current?.collapse()
-                  }}
-                >
-                  <Cancel01Icon />
-                </Button>
-              </div>
-              {cardDetailsPanel}
-            </div>
-          </ResizablePanel>
-        </>
+        <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+          <div className="flex w-full justify-between items-center gap-4">
+            <h3 className="text-md font-semibold">
+              Card {selectedCardIndex !== null && selectedCardIndex + 1} Settings
+            </h3>
+            {headerActions}
+          </div>
+          {cardDetailsPanel}
+        </div>
 
         <Dialog
           open={deleteIndex !== null}
@@ -375,6 +325,91 @@ export default function CardSettingsPanel({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </>
+    )
+}
+
+// ------------ Desktop Panel Component ------------ //
+
+interface CardSettingsPanelProps {
+    cards: Record<"id", string>[]
+    selectedCardIndex: number | null,
+    setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
+    remove: UseFieldArrayRemove
+    cardCount: number
+}
+
+export default function CardSettingsPanel({
+    cards,
+    selectedCardIndex,
+    setSelectedCardIndex,
+    remove,
+    cardCount,
+}: CardSettingsPanelProps) {
+    const cardDetailsPanelRef = usePanelRef();
+
+    function handleResize() {
+      if (cardDetailsPanelRef.current && cardDetailsPanelRef.current.isCollapsed()) {
+        setSelectedCardIndex(null)
+      }
+    }
+
+    // Expand when a card is selected, collapse when none.
+    useEffect(() => {
+      const id = requestAnimationFrame(() => {
+        const panel = cardDetailsPanelRef.current
+        if (!panel) return
+        if (selectedCardIndex !== null) {
+          panel.expand()
+        } else {
+          panel.collapse()
+        }
+      })
+      return () => cancelAnimationFrame(id)
+    }, [selectedCardIndex])
+
+    // Deselect card if it no longer exists
+    useEffect(() => {
+      if (
+        selectedCardIndex !== null &&
+        !cards.some((_, i) => i === selectedCardIndex)
+      ) {
+        setSelectedCardIndex(null);
+      }
+    }, [cards, selectedCardIndex]);
+
+    return (
+      <>
+        <ResizableHandle withHandle className={selectedCardIndex === null ? "hidden" : ""} />
+        <ResizablePanel
+          id="card-settings-panel"
+          panelRef={cardDetailsPanelRef}
+          onResize={handleResize}
+          collapsible
+          defaultSize="20%"
+          minSize={240}
+          maxSize="40%"
+        >
+          <CardSettingsContent
+            cards={cards}
+            selectedCardIndex={selectedCardIndex}
+            setSelectedCardIndex={setSelectedCardIndex}
+            remove={remove}
+            cardCount={cardCount}
+            headerActions={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => {
+                  setSelectedCardIndex(null)
+                  cardDetailsPanelRef.current?.collapse()
+                }}
+              >
+                <Cancel01Icon />
+              </Button>
+            }
+          />
+        </ResizablePanel>
       </>
     )
   }
