@@ -72,9 +72,11 @@ export default function PanelWrapper({
 
     const draftDate = useRef(Date.now());
     const draftKey = draftDate.current ? `spread-draft-${draftDate.current}` : ""
+    const isDiscardingRef = useRef(false);
 
     useEffect(() => {
         const subscription = form.watch((values) => {
+            if (isDiscardingRef.current) return;
             if (form.formState.isDirty) {
                 localStorage.setItem(draftKey, JSON.stringify({
                     ...values,
@@ -195,7 +197,9 @@ export default function PanelWrapper({
     }, [router]);
 
     const handleConfirmDiscard = useCallback(() => {
-        localStorage.removeItem(draftKey);
+        const key = draftKey;
+        isDiscardingRef.current = true;
+        localStorage.removeItem(key);
         form.reset();
         setShowDiscardDialog(false);
         router.push("/app/personal/spreads");
