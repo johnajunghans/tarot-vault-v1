@@ -62,7 +62,7 @@ export function ResponsivePanel({
 
     return (
         <>
-            {!hideHandle && handlePosition === "before" && <ResizableHandle withHandle />}
+            {handlePosition === "before" && <ResizableHandle withHandle className={hideHandle ? "hidden" : ""} />}
             <ResizablePanel
                 id={panelId}
                 collapsible={collapsible}
@@ -74,7 +74,7 @@ export function ResponsivePanel({
             >
                 {children}
             </ResizablePanel>
-            {!hideHandle && handlePosition === "after" && <ResizableHandle withHandle />}
+            {handlePosition === "after" && <ResizableHandle withHandle className={hideHandle ? "hidden" : ""} />}
         </>
     );
 }
