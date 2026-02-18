@@ -37,13 +37,13 @@ interface SpreadCardProps {
     favorite?: boolean
 }
 
-function formatDate(date: number): string {
-    const dateStr = new Date(date)
-    const month = String(dateStr.getMonth() + 1).padStart(2, "0")
-    const day = String(dateStr.getDate()).padStart(2, "0")
-    const year = dateStr.getFullYear()
-    return `${month}/${day}/${year}`
-}
+// function formatDate(date: number): string {
+//     const dateStr = new Date(date)
+//     const month = String(dateStr.getMonth() + 1).padStart(2, "0")
+//     const day = String(dateStr.getDate()).padStart(2, "0")
+//     const year = dateStr.getFullYear()
+//     return `${month}/${day}/${year}`
+// }
 
 export default function SpreadCard({
     name,
@@ -78,8 +78,8 @@ export default function SpreadCard({
                 <SpreadThumbnail cards={cards} width={150} height={150} />
             </CardContent>
             <CardFooter className="flex justify-between">
-                <span className="text-xs text-muted-foreground">
-                    {formatDate(date)}
+                <span className="text-sm text-muted-foreground">
+                    {`${cards.length}-Card`}
                 </span>
                 {isDraft && (
                     <Button variant="destructive" size="icon" onClick={() => setShowDeleteDialog(true)}>
