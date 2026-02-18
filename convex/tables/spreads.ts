@@ -6,11 +6,12 @@ import { spreadValidator } from "../schema";
 
 const spreadsCreateArgs = spreadValidator.omit(
   "userId",
-  "updatedAt"
+  "updatedAt",
+  "favorite"
 );
 
 const spreadsUpdateArgs = spreadValidator
-  .omit("userId", "updatedAt")
+  .omit("userId", "updatedAt", "favorite")
   .partial()
   .extend({ _id: v.id("spreads") });
 
@@ -89,6 +90,7 @@ export const create = mutation({
       description: args.description,
       numberOfCards: args.numberOfCards,
       positions: args.positions,
+      favorite: false,
     });
 
     return spreadId;
@@ -142,6 +144,52 @@ export const update = mutation({
 
     await ctx.db.patch(args._id, updates);
     return null;
+  },
+});
+
+/**
+ * Toggle the favorite state of a spread.
+ */
+export const toggleFavorite = mutation({
+  args: {
+    _id: v.id("spreads"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await getCurrentUserOrThrow(ctx);
+
+    const spread = await ctx.db.get(args._id);
+    if (!spread) {
+      throw new Error("Spread not found");
+    }
+
+    if (spread.userId !== user._id) {
+      throw new Error("Not authorized to update this spread");
+    }
+
+    await ctx.db.patch(args._id, { favorite: !spread.favorite });
+    return null;
+  },
+});
+
+/**
+ * List all favorited spreads for the current user.
+ */
+export const listFavorited = query({
+  args: {},
+  returns: v.array(spreadValidator.extend({
+    _id: v.id("spreads"),
+    _creationTime: v.number(),
+  })),
+  handler: async (ctx) => {
+    const user = await getCurrentUserOrThrow(ctx);
+    return await ctx.db
+      .query("spreads")
+      .withIndex("by_userId_and_favorite", (q) =>
+        q.eq("userId", user._id).eq("favorite", true)
+      )
+      .order("desc")
+      .collect();
   },
 });
 

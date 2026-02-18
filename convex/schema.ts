@@ -116,6 +116,7 @@ export const spreadValidator = v.object({
   description: v.optional(v.string()),
   numberOfCards: v.number(), // 1-78
   positions: v.array(spreadPositionValidator),
+  favorite: v.boolean(), // default: false
 });
 
 export default defineSchema({
@@ -134,8 +135,7 @@ export default defineSchema({
     .index("by_userId_and_source", ["userId", "source"]),
 
   // Spreads table - stores custom and default tarot spreads
-  spreads: defineTable(spreadValidator).index("by_userId_and_updatedAt", [
-    "userId",
-    "updatedAt",
-  ]),
+  spreads: defineTable(spreadValidator)
+    .index("by_userId_and_updatedAt", ["userId", "updatedAt"])
+    .index("by_userId_and_favorite", ["userId", "favorite"]),
 });

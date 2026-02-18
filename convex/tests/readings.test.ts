@@ -48,6 +48,7 @@ async function createTestSpread(
         { position: 2, name: "Present", description: "Current situation", x: 100, y: 0, r: 0, z: 1 },
         { position: 3, name: "Future", description: "Future outcome", x: 200, y: 0, r: 0, z: 2 },
       ],
+      favorite: false,
     });
   });
 }
@@ -301,6 +302,7 @@ describe("readings", () => {
           name: "Temp",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Temp", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         await ctx.db.delete(tempId);
         return tempId;
@@ -369,6 +371,7 @@ describe("readings", () => {
           name: "Temp",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Temp", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         const tempId = await ctx.db.insert("readings", {
           userId,
@@ -419,6 +422,7 @@ describe("readings", () => {
           name: "Other Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Pos", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         const readingId = await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -485,6 +489,7 @@ describe("readings", () => {
           name: "Temp",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Temp", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         const tempId = await ctx.db.insert("readings", {
           userId,
@@ -532,6 +537,7 @@ describe("readings", () => {
           name: "Other Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Pos", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         return await ctx.db.insert("readings", {
           userId: otherUserId,

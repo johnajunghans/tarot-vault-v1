@@ -265,6 +265,23 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/17 — Step 1.4.2 — Favoriting Spreads** | Model: Claude Sonnet 4.6
+
+Summary
+- Added `favorite: v.boolean()` to `spreadValidator` in `convex/schema.ts`; added `by_userId_and_favorite: ["userId", "favorite"]` index to spreads table
+- Omitted `"favorite"` from both `spreadsCreateArgs` and `spreadsUpdateArgs` in `convex/tables/spreads.ts`; `create` mutation now always inserts `favorite: false`
+- Added `toggleFavorite` mutation: verifies ownership, patches `favorite` to `!spread.favorite`
+- Added `listFavorited` query: uses the new index to return all spreads where `favorite === true` for the current user
+- Updated all direct `ctx.db.insert("spreads", ...)` calls across `spreads.test.ts`, `readings.test.ts`, and `interpretations.test.ts` to include `favorite: false`
+- Added 7 new tests: `toggleFavorite` (false→true, true→false, not-found, unauthorized) and `listFavorited` (unauthenticated, empty when none favorited, returns only favorited, excludes other users')
+- Updated `spread-card.tsx`: added `id?: Id<"spreads">` and `favorite?: boolean` props; wired star button to call `toggleFavorite`; star icon now uses `fill={favorite ? "var(--gold)" : "none"}` with `color="var(--gold)"`; tooltip text toggles between "Favorite Spread" / "Unfavorite Spread"
+- Updated `page.tsx`: passes `id={spread._id}` and `favorite={spread.favorite}` to `SpreadCard` for each saved spread
+- All 72 tests pass; no lint errors
+
+Future considerations/recommendations/warnings
+- `listFavorited` collects all favorited spreads without a limit — if a user favorites many spreads, consider adding pagination in a future step
+- The star button uses `e.stopPropagation()` to prevent card click propagation; once card navigation is wired up (future step), verify this still behaves correctly
+
 **02/17 — Step 1.3.10 — New Spread Responsive Design** | Model: Claude Opus 4.6
 
 Summary
@@ -363,3 +380,10 @@ Future considerations/recommendations/warnings
 3. The spreads page should also read local storage and pull all items with a key matching the pattern `spread-draft-${Date.now()}`. The date.now() value in the key can be parsed to give the date of the spread draft. 
 	1. If the draft has no name, then "Untitled Spread" can be used.
 	2. These spread drafts should be rendered in a separate section from the spreads taken from the db.
+
+### ~~1.4.2_Favoriting Spreads~~
+1. Add a boolean value to the spreads convex schema called "favorite" which is a boolean. This should be false by default.
+2. This favorite boolean should not be present in the new spread form. Instead, users should be able to favorite the spreads they have saved by clicking the star icon which is currently present in the spread card component. 
+3. This star icon should toggle the favorite boolean in the db. 
+4. When a spread is favorited (i.e. favorite = true for that spread), then the fill of the star icon should be var(--gold).
+5. Include a function in the spreads table function which grabs the user's favorited spreads. This will be used later.

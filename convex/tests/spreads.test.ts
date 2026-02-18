@@ -61,6 +61,7 @@ describe("spreads", () => {
           name: "First Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         await ctx.db.insert("spreads", {
           userId,
@@ -71,6 +72,7 @@ describe("spreads", () => {
             { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 },
             { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 1 },
           ],
+          favorite: false,
         });
         await ctx.db.insert("spreads", {
           userId,
@@ -78,6 +80,7 @@ describe("spreads", () => {
           name: "Middle Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
       });
 
@@ -114,6 +117,7 @@ describe("spreads", () => {
           name: "My Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         await ctx.db.insert("spreads", {
           userId: otherUserId,
@@ -121,6 +125,7 @@ describe("spreads", () => {
           name: "Other User Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
       });
 
@@ -147,6 +152,7 @@ describe("spreads", () => {
             { position: 2, name: "Crossing", description: "Challenge", x: 50, y: 0, r: 90, z: 1 },
             { position: 3, name: "Foundation", description: "Root cause", x: 0, y: 100, r: 0, z: 2 },
           ],
+          favorite: false,
         });
       });
 
@@ -168,6 +174,7 @@ describe("spreads", () => {
           name: "Temp",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         await ctx.db.delete(tempId);
         return tempId;
@@ -202,6 +209,7 @@ describe("spreads", () => {
           name: "Other Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
       });
 
@@ -307,6 +315,7 @@ describe("spreads", () => {
           name: "Original Name",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Original Position", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
       });
 
@@ -335,6 +344,7 @@ describe("spreads", () => {
           name: "Expandable Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
       });
 
@@ -366,6 +376,7 @@ describe("spreads", () => {
           name: "Temp",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         await ctx.db.delete(tempId);
         return tempId;
@@ -403,6 +414,7 @@ describe("spreads", () => {
           name: "Other Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
       });
 
@@ -428,6 +440,7 @@ describe("spreads", () => {
             { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 },
             { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 1 },
           ],
+          favorite: false,
         });
       });
 
@@ -454,6 +467,7 @@ describe("spreads", () => {
           name: "To be deleted",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
       });
 
@@ -477,6 +491,7 @@ describe("spreads", () => {
           name: "Temp",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
         await ctx.db.delete(tempId);
         return tempId;
@@ -511,12 +526,201 @@ describe("spreads", () => {
           name: "Other Spread",
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
         });
       });
 
       await expect(
         asUser.mutation(api.tables.spreads.remove, { _id: spreadId })
       ).rejects.toThrowError("Not authorized to delete this spread");
+    });
+  });
+
+  describe("toggleFavorite", () => {
+    it("toggles favorite from false to true", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      const spreadId = await t.run(async (ctx) => {
+        return await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "My Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+        });
+      });
+
+      await asUser.mutation(api.tables.spreads.toggleFavorite, { _id: spreadId });
+
+      const spread = await t.run(async (ctx) => ctx.db.get(spreadId));
+      expect(spread?.favorite).toBe(true);
+    });
+
+    it("toggles favorite from true back to false", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      const spreadId = await t.run(async (ctx) => {
+        return await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Favorited Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: true,
+        });
+      });
+
+      await asUser.mutation(api.tables.spreads.toggleFavorite, { _id: spreadId });
+
+      const spread = await t.run(async (ctx) => ctx.db.get(spreadId));
+      expect(spread?.favorite).toBe(false);
+    });
+
+    it("throws error when spread does not exist", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      const fakeSpreadId = await t.run(async (ctx) => {
+        const tempId = await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Temp",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+        });
+        await ctx.db.delete(tempId);
+        return tempId;
+      });
+
+      await expect(
+        asUser.mutation(api.tables.spreads.toggleFavorite, { _id: fakeSpreadId })
+      ).rejects.toThrowError("Spread not found");
+    });
+
+    it("throws error when user does not own the spread", async () => {
+      const t = convexTest(schema, modules);
+      const { asUser } = await setupAuthenticatedUser(t);
+
+      const spreadId = await t.run(async (ctx) => {
+        const otherUserId = await ctx.db.insert("users", {
+          authId: "other_user",
+          tokenIdentifier: "https://clerk.test|other_user",
+          updatedAt: Date.now(),
+          lastSignedIn: Date.now(),
+          name: "Other User",
+          email: "other@example.com",
+          settings: {
+            appearance: { theme: "system" },
+            preferences: { useReverseMeanings: "auto" },
+            notifications: { private: { showToasts: true } },
+          },
+        });
+        return await ctx.db.insert("spreads", {
+          userId: otherUserId,
+          updatedAt: Date.now(),
+          name: "Other Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+        });
+      });
+
+      await expect(
+        asUser.mutation(api.tables.spreads.toggleFavorite, { _id: spreadId })
+      ).rejects.toThrowError("Not authorized to update this spread");
+    });
+  });
+
+  describe("listFavorited", () => {
+    it("throws error when not authenticated", async () => {
+      const t = convexTest(schema, modules);
+
+      await expect(
+        t.query(api.tables.spreads.listFavorited)
+      ).rejects.toThrowError("Can't get current user");
+    });
+
+    it("returns empty array when no spreads are favorited", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      await t.run(async (ctx) => {
+        await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Not Favorited",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+        });
+      });
+
+      const favorited = await asUser.query(api.tables.spreads.listFavorited);
+      expect(favorited).toEqual([]);
+    });
+
+    it("returns only favorited spreads for the current user", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      await t.run(async (ctx) => {
+        await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Favorited Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: true,
+        });
+        await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Not Favorited",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+        });
+      });
+
+      const favorited = await asUser.query(api.tables.spreads.listFavorited);
+      expect(favorited).toHaveLength(1);
+      expect(favorited[0].name).toBe("Favorited Spread");
+    });
+
+    it("does not return another user's favorited spreads", async () => {
+      const t = convexTest(schema, modules);
+      const { asUser } = await setupAuthenticatedUser(t);
+
+      await t.run(async (ctx) => {
+        const otherUserId = await ctx.db.insert("users", {
+          authId: "other_user",
+          tokenIdentifier: "https://clerk.test|other_user",
+          updatedAt: Date.now(),
+          lastSignedIn: Date.now(),
+          name: "Other User",
+          email: "other@example.com",
+          settings: {
+            appearance: { theme: "system" },
+            preferences: { useReverseMeanings: "auto" },
+            notifications: { private: { showToasts: true } },
+          },
+        });
+        await ctx.db.insert("spreads", {
+          userId: otherUserId,
+          updatedAt: Date.now(),
+          name: "Other User Favorited",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: true,
+        });
+      });
+
+      const favorited = await asUser.query(api.tables.spreads.listFavorited);
+      expect(favorited).toEqual([]);
     });
   });
 });

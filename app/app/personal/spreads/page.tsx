@@ -93,6 +93,8 @@ export default function Spreads() {
                                     date={spread._creationTime}
                                     cards={spread.positions}
                                     setDrafts={setDrafts}
+                                    id={spread._id}
+                                    favorite={spread.favorite}
                                 />
                             ))}
                         </div>

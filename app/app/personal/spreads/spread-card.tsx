@@ -23,13 +23,18 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Delete02Icon, StarIcon } from "hugeicons-react"
 import { Dispatch, SetStateAction, useState } from "react"
+import { useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
 interface SpreadCardProps {
     name: string
     date: number
     isDraft?: boolean
-    cards: CardDB[],
+    cards: CardDB[]
     setDrafts: Dispatch<SetStateAction<SpreadDraft[]>>
+    id?: Id<"spreads">
+    favorite?: boolean
 }
 
 function formatDate(date: number): string {
@@ -41,13 +46,16 @@ function formatDate(date: number): string {
 }
 
 export default function SpreadCard({
-    name, 
-    date, 
+    name,
+    date,
     isDraft,
     cards,
-    setDrafts
+    setDrafts,
+    id,
+    favorite,
 }: SpreadCardProps) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+    const toggleFavorite = useMutation(api.tables.spreads.toggleFavorite)
 
     function handleDeleteDraft(draftDate: number) {
         localStorage.removeItem(`spread-draft-${draftDate}`)
@@ -78,16 +86,26 @@ export default function SpreadCard({
                         <Delete02Icon />
                     </Button>
                 )}
-                {!isDraft && (
+                {!isDraft && id !== undefined && (
                     <Tooltip>
                         <TooltipTrigger
                             render={
-                                <Button variant="ghost" size="icon-lg">
-                                    <StarIcon className="stroke-gold" color="var(--gold)" />
+                                <Button
+                                    variant="ghost"
+                                    size="icon-lg"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        toggleFavorite({ _id: id })
+                                    }}
+                                >
+                                    <StarIcon
+                                        color="var(--gold)"
+                                        fill={favorite ? "var(--gold)" : "none"}
+                                    />
                                 </Button>
                             }
                         />
-                        <TooltipContent>Favorite Spread</TooltipContent>
+                        <TooltipContent>{favorite ? "Unfavorite Spread" : "Favorite Spread"}</TooltipContent>
                     </Tooltip>
                 )}
             </CardFooter>
