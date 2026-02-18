@@ -3,7 +3,7 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SpreadCard, { CARD_WIDTH, CARD_HEIGHT, type CanvasCard } from "./card";
-import { cardData } from "./spread-schema";
+import { CardForm } from "@/types/spreads";
 
 const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
@@ -22,7 +22,7 @@ export default function SpreadCanvas({
 }: SpreadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const { control, setValue } = useFormContext<{ positions: cardData[] }>();
+  const { control, setValue } = useFormContext<{ positions: CardForm[] }>();
   const positions = useWatch({ control, name: "positions" });
 
   // Responsive SVG sizing

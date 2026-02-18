@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { spreadData, spreadSchema } from "../spread-schema";
+import { spreadSchema } from "../spread-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
@@ -38,6 +38,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Cancel01Icon, Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { SpreadForm } from "@/types/spreads";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -54,7 +55,7 @@ export default function PanelWrapper({
 
     // ------------ SPREAD FORM ------------ //
 
-    const form = useForm<spreadData>({
+    const form = useForm<SpreadForm>({
         resolver: zodResolver(spreadSchema),
         defaultValues: {
         name: "",
@@ -81,7 +82,8 @@ export default function PanelWrapper({
                 localStorage.setItem(draftKey, JSON.stringify({
                     ...values,
                     date: draftDate.current,
-                    positions: values.positions?.map((p, i) => ({ ...p, position: i + 1 }))
+                    positions: values.positions?.map((p, i) => ({ ...p, position: i + 1 })),
+                    numberOfCards: values.positions?.length
                 }));
             }
         });
@@ -115,7 +117,7 @@ export default function PanelWrapper({
     const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
 
     const handleSave = useCallback(() => {
-        const onInvalid = (errors: FieldErrors<spreadData>) => {
+        const onInvalid = (errors: FieldErrors<SpreadForm>) => {
             if (errors.name) {
                 toast.error("Spread name is required", {
                     description: errors.name.message,

@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Cancel01Icon, Delete02Icon } from "hugeicons-react";
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
 import { Controller, useFormContext, UseFieldArrayRemove } from "react-hook-form";
-import { cardData } from "./spread-schema";
+import { CardForm } from "@/types/spreads";
 import { usePanelRef } from "react-resizable-panels";
 
 const GRID_SIZE = 15;
@@ -44,7 +44,7 @@ export function CardSettingsContent({
     cardCount,
     headerActions,
 }: CardSettingsContentProps) {
-    const form = useFormContext<{ positions: cardData[] }>();
+    const form = useFormContext<{ positions: CardForm[] }>();
     const selectedCard = selectedCardIndex !== null ? cards[selectedCardIndex] : null
     const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 

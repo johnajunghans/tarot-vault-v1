@@ -1,8 +1,7 @@
-import { CardPosition, CardTransform } from "@/types/spreads";
+import { CardDB, CardForm, CardTransform } from "@/types/spreads";
 import { CARD_HEIGHT, CARD_WIDTH } from "./card";
-import { cardData } from "./spread-schema";
 
-export function generateCard(index: number): cardData {
+export function generateCard(index: number): CardForm {
     const CARDS_PER_ROW = 10;
     return {
       name: "",
@@ -16,7 +15,7 @@ export function generateCard(index: number): cardData {
   }
 
 // get the rectangular dimensions of a box that will fit the entire spread 
-export function calcSpreadDimensions(cards: CardPosition[]) {
+export function calcSpreadDimensions(cards: CardDB[]) {
     const xValues = cards.map(c => c.x)
     const xMin = Math.min(...xValues)
     const xMax = Math.max(...xValues) + CARD_WIDTH

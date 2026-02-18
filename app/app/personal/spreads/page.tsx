@@ -6,22 +6,10 @@ import { api } from "@/convex/_generated/api"
 import AppTopbar from "@/components/app/app-topbar"
 import SpreadCard from "./spread-card"
 import { Spinner } from "@/components/ui/spinner"
-import { CardPosition } from "@/types/spreads"
-import { cardData, spreadData } from "./spread-schema"
+import { SpreadDraft } from "@/types/spreads"
 
-interface DraftSpread {
-    name: string,
-    description?: string,
-    date: number,
-    positions: CardPosition[]
-}
-
-// interface DraftSpread extends spreadData {
-//     date: number
-// }
-
-function loadDrafts(): DraftSpread[] {
-    const drafts: DraftSpread[] = []
+function loadDrafts(): SpreadDraft[] {
+    const drafts: SpreadDraft[] = []
 
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i)
@@ -30,22 +18,18 @@ function loadDrafts(): DraftSpread[] {
         const timestamp = Number(key.replace("spread-draft-", ""))
         if (isNaN(timestamp)) continue
 
-        // let name = "Untitled Spread"
-        // let positions: cardData[] = []
-        let draft: DraftSpread | undefined = undefined
+        let draft: SpreadDraft | undefined = undefined
         try {
             const raw = localStorage.getItem(key)
             if (raw) {
                 const parsed = JSON.parse(raw)
                 draft = {
                     ...parsed,
-                    name: parsed.name || "Untitiled Spread"
+                    name: parsed.name || "Untitiled Spread",
                 }
-                // if (parsed.name) name = parsed.name
-                // if (parsed.positions.length > 0) positions = parsed.positions
             }
-        } catch {
-            // ignore parse errors
+        } catch (error) {
+            console.error(`Error loading spread drafts: ${error}`)
         }
 
         draft && drafts.push(draft)
@@ -56,7 +40,7 @@ function loadDrafts(): DraftSpread[] {
 
 export default function Spreads() {
     const spreads = useQuery(api.tables.spreads.list)
-    const [drafts, setDrafts] = useState<DraftSpread[]>([])
+    const [drafts, setDrafts] = useState<SpreadDraft[]>([])
 
     useEffect(() => {
         setDrafts(loadDrafts())
@@ -77,9 +61,10 @@ export default function Spreads() {
                                 <SpreadCard
                                     key={draft.date}
                                     name={draft.name}
-                                    date={new Date(draft.date)}
+                                    date={draft.date}
                                     isDraft
                                     cards={draft.positions}
+                                    setDrafts={setDrafts}
                                 />
                             ))}
                         </div>
@@ -105,7 +90,7 @@ export default function Spreads() {
                                 <SpreadCard
                                     key={spread._id}
                                     name={spread.name}
-                                    date={new Date(spread._creationTime)}
+                                    date={spread._creationTime}
                                     cards={spread.positions}
                                 />
                             ))}

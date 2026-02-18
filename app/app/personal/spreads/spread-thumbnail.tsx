@@ -1,13 +1,11 @@
-import { X } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
 import { calcSpreadDimensions } from "./spread-functions";
-import { CardPosition } from "@/types/spreads";
+import { CardDB } from "@/types/spreads";
 import { CARD_HEIGHT, CARD_WIDTH } from "./card";
-import { cardData } from "./spread-schema";
 
 interface SpreadThumbnailProps {
     width: number;
     height: number;
-    cards: CardPosition[];
+    cards: CardDB[];
 }
 
 export default function SpreadThumbnail({

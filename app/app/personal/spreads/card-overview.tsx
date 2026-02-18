@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Delete02Icon, PlusSignIcon } from "hugeicons-react";
-import { cardData } from "./spread-schema";
+import { CardForm } from "@/types/spreads";
 
 gsap.registerPlugin(Draggable);
 
@@ -34,7 +34,7 @@ interface CardOverviewProps {
 }
 
 function CardTileName({ index }: { index: number }) {
-  const { control } = useFormContext<{ positions: cardData[] }>();
+  const { control } = useFormContext<{ positions: CardForm[] }>();
   const name = useWatch({ control, name: `positions.${index}.name` });
   return (
     <span className="truncate text-sm">

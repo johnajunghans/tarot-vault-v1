@@ -345,7 +345,7 @@ Future considerations/recommendations/warnings
 - **1.3.8** — Final polishing: remove card hover-delete (use panel "Remove Card"), auto-select new card, group-deselect on card click, validation toasts + expand panel, responsive canvas, tooltips. ~~Complete~~
 - **1.3.9** — Local storage draft saving: persist form to localStorage; discard confirmation (Cancel / Save as draft / Discard). *In progress / see archive for full spec.*
 
-### 1.3.10_New Spread Responsive Design
+### ~~1.3.10_New Spread Responsive Design~~
 1. For all screen widths, new spread title in topbar should be truncated with ellipses so that it does encroach on surrounding elements. For example, in mobile view, as the user types in their spread title, the corresponding string in the topbar should truncate at a certain width such that the right hand button group is not pushed off to the side. 
 2. Both spread settings panel and card settings panel should turn into sheets (shadcn sheet components) at mobile viewports.
 	1. Use the useIsMobile hook to dynamically determine mobile viewports.

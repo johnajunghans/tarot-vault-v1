@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { useGSAP } from '@gsap/react'
-import { cardData } from "./spread-schema";
+import { CardForm } from "@/types/spreads";
 
 gsap.registerPlugin(Draggable);
 
@@ -56,7 +56,7 @@ function SpreadCard({
   onClick,
   registerRef,
 }: SpreadCardProps) {
-  const { control, setValue } = useFormContext<{ positions: cardData[] }>();
+  const { control, setValue } = useFormContext<{ positions: CardForm[] }>();
   const watched = useWatch({ control, name: `positions.${index}` });
   const [isDraggingState, setIsDraggingState] = useState(false)
 
