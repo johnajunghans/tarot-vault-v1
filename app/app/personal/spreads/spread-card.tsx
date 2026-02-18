@@ -20,7 +20,8 @@ import {
 import SpreadThumbnail from "./spread-thumbnail"
 import { CardDB, SpreadDraft } from "@/types/spreads"
 import { Button } from "@/components/ui/button"
-import { Delete02Icon } from "hugeicons-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Delete02Icon, StarIcon } from "hugeicons-react"
 import { Dispatch, SetStateAction, useState } from "react"
 
 interface SpreadCardProps {
@@ -76,6 +77,18 @@ export default function SpreadCard({
                     <Button variant="destructive" size="icon" onClick={() => setShowDeleteDialog(true)}>
                         <Delete02Icon />
                     </Button>
+                )}
+                {!isDraft && (
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button variant="ghost" size="icon-lg">
+                                    <StarIcon className="stroke-gold" color="var(--gold)" />
+                                </Button>
+                            }
+                        />
+                        <TooltipContent>Favorite Spread</TooltipContent>
+                    </Tooltip>
                 )}
             </CardFooter>
         </Card>
