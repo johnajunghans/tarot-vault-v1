@@ -8,7 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FieldGroup, FieldSeparator, FieldSet } from "@/components/ui/field";
-import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 import { Cancel01Icon, Delete02Icon } from "hugeicons-react";
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
 import { Controller, useFormContext, UseFieldArrayRemove } from "react-hook-form";
@@ -18,6 +17,7 @@ import TextField from "@/components/form/text-field";
 import TextareaField from "@/components/form/textarea-field";
 import SwitchField from "@/components/form/switch-field";
 import NumberField from "@/components/form/number-field";
+import { ResponsivePanel } from "@/components/app/responsive-panel";
 
 const GRID_SIZE = 15;
 
@@ -267,6 +267,9 @@ interface CardSettingsPanelProps {
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
     remove: UseFieldArrayRemove
     cardCount: number
+    isMobile: boolean;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
 export default function CardSettingsPanel({
@@ -275,6 +278,9 @@ export default function CardSettingsPanel({
     setSelectedCardIndex,
     remove,
     cardCount,
+    isMobile,
+    open = false,
+    onOpenChange,
 }: CardSettingsPanelProps) {
     const cardDetailsPanelRef = usePanelRef();
 
@@ -309,37 +315,41 @@ export default function CardSettingsPanel({
     }, [cards, selectedCardIndex]);
 
     return (
-      <>
-        <ResizableHandle withHandle className={selectedCardIndex === null ? "hidden" : ""} />
-        <ResizablePanel
-          id="card-settings-panel"
-          panelRef={cardDetailsPanelRef}
-          onResize={handleResize}
-          collapsible
-          defaultSize="20%"
-          minSize={240}
-          maxSize="40%"
-        >
-          <CardSettingsContent
-            cards={cards}
-            selectedCardIndex={selectedCardIndex}
-            setSelectedCardIndex={setSelectedCardIndex}
-            remove={remove}
-            cardCount={cardCount}
-            headerActions={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => {
-                  setSelectedCardIndex(null)
-                  cardDetailsPanelRef.current?.collapse()
-                }}
-              >
-                <Cancel01Icon />
-              </Button>
-            }
-          />
-        </ResizablePanel>
-      </>
+      <ResponsivePanel
+        isMobile={isMobile}
+        panelId="card-settings-panel"
+        panelRef={cardDetailsPanelRef}
+        onPanelResize={handleResize}
+        collapsible
+        defaultSize="20%"
+        minSize={240}
+        maxSize="40%"
+        handlePosition="before"
+        hideHandle={selectedCardIndex === null}
+        side="right"
+        sheetTitle="Card Settings"
+        open={open}
+        onOpenChange={onOpenChange}
+      >
+        <CardSettingsContent
+          cards={cards}
+          selectedCardIndex={selectedCardIndex}
+          setSelectedCardIndex={setSelectedCardIndex}
+          remove={remove}
+          cardCount={cardCount}
+          headerActions={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => {
+                setSelectedCardIndex(null)
+                cardDetailsPanelRef.current?.collapse()
+              }}
+            >
+              <Cancel01Icon />
+            </Button>
+          }
+        />
+      </ResponsivePanel>
     )
   }

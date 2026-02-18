@@ -10,10 +10,8 @@ import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import SpreadSettingsPanel from "../spread-settings-panel";
-import { SpreadSettingsContent } from "../spread-settings-panel";
 import SpreadCanvas from "../canvas";
 import CardSettingsPanel from "../card-settings-panel";
-import { CardSettingsContent } from "../card-settings-panel";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { generateCard } from "../spread-functions";
 import AppTopbar from "@/components/app/app-topbar";
@@ -30,13 +28,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import {
-    Sheet,
-    SheetContent,
-    SheetTitle,
-} from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Cancel01Icon, Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
+import { Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
 
@@ -271,54 +264,33 @@ export default function PanelWrapper({
                             onCardSelect={setSelectedCardIndex}
                         />
 
-                        {/* Spread Settings Sheet (left) */}
-                        <Sheet open={spreadSheetOpen} onOpenChange={setSpreadSheetOpen}>
-                            <SheetContent
-                                side="left"
-                                // className="!top-[57px] !h-[calc(100vh-57px)]"
-                            >
-                                <SheetTitle className="sr-only">Spread Settings</SheetTitle>
-                                <SpreadSettingsContent
-                                    cards={cards}
-                                    addCard={addCard}
-                                    remove={remove}
-                                    move={move}
-                                    selectedCardIndex={selectedCardIndex}
-                                    setSelectedCardIndex={setSelectedCardIndex}
-                                />
-                            </SheetContent>
-                        </Sheet>
+                        {/* Spread Settings (Sheet on mobile via ResponsivePanel) */}
+                        <SpreadSettingsPanel
+                            isMobile={isMobile}
+                            open={spreadSheetOpen}
+                            onOpenChange={setSpreadSheetOpen}
+                            cards={cards}
+                            addCard={addCard}
+                            remove={remove}
+                            move={move}
+                            selectedCardIndex={selectedCardIndex}
+                            setSelectedCardIndex={setSelectedCardIndex}
+                            panelRef={spreadSettingsPanelRef}
+                        />
 
-                        {/* Card Settings Sheet (right) */}
-                        <Sheet
+                        {/* Card Settings (Sheet on mobile via ResponsivePanel) */}
+                        <CardSettingsPanel
+                            isMobile={isMobile}
                             open={selectedCardIndex !== null}
                             onOpenChange={(open) => {
                                 if (!open) setSelectedCardIndex(null);
                             }}
-                        >
-                            <SheetContent
-                                side="right"
-                                // className="!top-[57px] !h-[calc(100vh-57px)]"
-                            >
-                                <SheetTitle className="sr-only">Card Settings</SheetTitle>
-                                <CardSettingsContent
-                                    cards={cards}
-                                    selectedCardIndex={selectedCardIndex}
-                                    setSelectedCardIndex={setSelectedCardIndex}
-                                    remove={remove}
-                                    cardCount={cards.length}
-                                    headerActions={
-                                        <Button
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            onClick={() => setSelectedCardIndex(null)}
-                                        >
-                                            <Cancel01Icon />
-                                        </Button>
-                                    }
-                                />
-                            </SheetContent>
-                        </Sheet>
+                            cards={cards}
+                            selectedCardIndex={selectedCardIndex}
+                            setSelectedCardIndex={setSelectedCardIndex}
+                            remove={remove}
+                            cardCount={cards.length}
+                        />
                     </>
                 ) : (
                     <ResizablePanelGroup
@@ -331,6 +303,9 @@ export default function PanelWrapper({
                     >
                     {/* Left Panel — Settings */}
                     <SpreadSettingsPanel
+                        isMobile={isMobile}
+                        open={spreadSheetOpen}
+                        onOpenChange={setSpreadSheetOpen}
                         addCard={addCard}
                         remove={remove}
                         move={move}
@@ -353,6 +328,11 @@ export default function PanelWrapper({
 
                     {/* Right Panel — Card Details */}
                     <CardSettingsPanel
+                        isMobile={isMobile}
+                        open={selectedCardIndex !== null}
+                        onOpenChange={(open) => {
+                            if (!open) setSelectedCardIndex(null);
+                        }}
                         cards={cards}
                         selectedCardIndex={selectedCardIndex}
                         setSelectedCardIndex={setSelectedCardIndex}

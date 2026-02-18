@@ -5,11 +5,11 @@ import { Dispatch, type RefObject, SetStateAction, useState } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 import { UseFieldArrayMove, UseFieldArrayRemove, useFormContext } from "react-hook-form";
 import { Card, CardContent } from "@/components/ui/card";
-import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import CardOverview from "./card-overview";
 import TextField from "@/components/form/text-field";
 import TextareaField from "@/components/form/textarea-field";
+import { ResponsivePanel } from "@/components/app/responsive-panel";
 
 // ------------ Shared Content Component ------------ //
 
@@ -84,6 +84,9 @@ interface SpreadSettingsPanelProps {
     selectedCardIndex: number | null;
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
     panelRef: RefObject<PanelImperativeHandle | null>;
+    isMobile: boolean;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
 export default function SpreadSettingsPanel({
@@ -94,6 +97,9 @@ export default function SpreadSettingsPanel({
     selectedCardIndex,
     setSelectedCardIndex,
     panelRef,
+    isMobile,
+    open = false,
+    onOpenChange,
 }: SpreadSettingsPanelProps) {
     const spreadSettingsPanelRef = panelRef
     const [hideSettings, setHideSettings] = useState(false)
@@ -143,39 +149,43 @@ export default function SpreadSettingsPanel({
           </Card>
         }
 
-        <>
-          <ResizablePanel
-            id="spread-settings-panel"
-            collapsible
-            defaultSize="20%"
-            minSize={240}
-            maxSize="40%"
-            panelRef={spreadSettingsPanelRef}
-            onResize={handleResize}
-          >
-            <SpreadSettingsContent
-              cards={cards}
-              addCard={addCard}
-              remove={remove}
-              move={move}
-              selectedCardIndex={selectedCardIndex}
-              setSelectedCardIndex={setSelectedCardIndex}
-              headerActions={
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.collapse()}>
-                        <PanelLeftIcon />
-                      </Button>
-                    }
-                  />
-                  <TooltipContent>Hide Panel</TooltipContent>
-                </Tooltip>
-              }
-            />
-          </ResizablePanel>
-          <ResizableHandle withHandle className={hideSettings ? "hidden" : ""} />
-        </>
+        <ResponsivePanel
+          isMobile={isMobile}
+          panelId="spread-settings-panel"
+          collapsible
+          defaultSize="20%"
+          minSize={240}
+          maxSize="40%"
+          panelRef={spreadSettingsPanelRef}
+          onPanelResize={handleResize}
+          handlePosition="after"
+          hideHandle={hideSettings}
+          side="left"
+          sheetTitle="Spread Settings"
+          open={open}
+          onOpenChange={onOpenChange}
+        >
+          <SpreadSettingsContent
+            cards={cards}
+            addCard={addCard}
+            remove={remove}
+            move={move}
+            selectedCardIndex={selectedCardIndex}
+            setSelectedCardIndex={setSelectedCardIndex}
+            headerActions={
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.collapse()}>
+                      <PanelLeftIcon />
+                    </Button>
+                  }
+                />
+                <TooltipContent>Hide Panel</TooltipContent>
+              </Tooltip>
+            }
+          />
+        </ResponsivePanel>
       </>
     )
   }

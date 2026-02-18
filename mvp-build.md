@@ -265,6 +265,20 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/17 — Step 1.2.5 — Responsive Panel Component** | Model: Claude Sonnet 4.6
+
+Summary
+- Created `components/app/responsive-panel.tsx`: `ResponsivePanel` component; calls `useIsMobile()` internally; on mobile renders `<Sheet open side sheetTitle>`; on desktop renders `<ResizablePanel>` + `<ResizableHandle>` with configurable `handlePosition` ("before" | "after") and `hideHandle`; all sheet/handle/panel props optional for future versatility
+- Updated `spread-settings-panel.tsx`: added `open` and `onOpenChange` props to `SpreadSettingsPanelProps`; replaced `<ResizablePanel id="spread-settings-panel">` + `<ResizableHandle>` block with `<ResponsivePanel panelId="spread-settings-panel" handlePosition="after" side="left" sheetTitle="Spread Settings">`; removed `ResizablePanel`/`ResizableHandle` direct imports
+- Updated `card-settings-panel.tsx`: added `open` and `onOpenChange` props to `CardSettingsPanelProps`; replaced `<ResizableHandle>` + `<ResizablePanel id="card-settings-panel">` block with `<ResponsivePanel panelId="card-settings-panel" handlePosition="before" side="right" sheetTitle="Card Settings">`; removed `ResizablePanel`/`ResizableHandle` direct imports
+- Updated `panel-wrapper.tsx` mobile branch: replaced two explicit `<Sheet>/<SheetContent>/<SpreadSettingsContent>` and `<Sheet>/<SheetContent>/<CardSettingsContent>` blocks with `<SpreadSettingsPanel open={spreadSheetOpen} onOpenChange={setSpreadSheetOpen} ...>` and `<CardSettingsPanel open={selectedCardIndex !== null} onOpenChange={...} ...>`; removed unused imports (`SpreadSettingsContent`, `CardSettingsContent`, `Sheet`, `SheetContent`, `SheetTitle`, `Cancel01Icon`); passed `open`/`onOpenChange` to panel components in desktop branch as well (no-ops since `ResponsivePanel` detects desktop internally)
+- All 72 tests pass; no lint errors
+
+Future considerations/recommendations/warnings
+- `ResponsivePanel` returns a `<Sheet>` portal on mobile — it can be rendered anywhere in the tree (inside or outside a `ResizablePanelGroup`) without affecting the group's layout
+- The floating collapsed-state card widget in `SpreadSettingsPanel` is desktop-specific UX that lives outside `ResponsivePanel`; if new panel components need similar collapsed widgets they should follow the same pattern
+- `isMobile` conditional remains in `panel-wrapper.tsx` for structural layout differences (canvas full-width vs `<ResizablePanel>` inside group, floating toolbar); this is intentional and correct
+
 **02/17 — Step 1.2.4 — Field Component Abstractions** | Model: Claude Sonnet 4.6
 
 Summary
@@ -373,6 +387,14 @@ Future considerations/recommendations/warnings
 	3. They should all have the Shadcn <Field> component as the parent.
 	4. They should be able to be controlled or registered depending on which props are passed to it.
 2. Slot these new components into the spread settings and card settings components
+
+### ~~1.2.5_Responsive Panel Component~~
+1. Create a component called responsive-panel within the components/app directory
+	1. This component should abstract the shared logic that conditionally renders panels or sheets, depending on the value of the useIsMobile boolean hook.
+	2. This component should be able to be used in the new-spread/panel-wrapper component and/or the spread-settings and card-settings components to replace the duplicated logic that conditionally renders panels or sheets.
+	3. This component should be versitile enough to accomodate future use (rather than just being able to replace the current code)
+	4. This component should accept the content of the panel/sheet as its child.
+2. Use this component to replace the existing duplicated logic.
 
 ## ~~1.3_New Spread~~
 *Full steps archived in mvp-build-archive.md.*
