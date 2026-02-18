@@ -337,7 +337,7 @@ export default function CardSettingsPanel({
           setSelectedCardIndex={setSelectedCardIndex}
           remove={remove}
           cardCount={cardCount}
-          headerActions={
+          headerActions={!isMobile &&
             <Button
               variant="ghost"
               size="icon-sm"

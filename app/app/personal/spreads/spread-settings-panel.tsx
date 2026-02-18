@@ -172,7 +172,7 @@ export default function SpreadSettingsPanel({
             move={move}
             selectedCardIndex={selectedCardIndex}
             setSelectedCardIndex={setSelectedCardIndex}
-            headerActions={
+            headerActions={!isMobile &&
               <Tooltip>
                 <TooltipTrigger
                   render={
