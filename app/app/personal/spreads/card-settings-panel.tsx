@@ -115,6 +115,7 @@ export function CardSettingsContent({
                   id="card-allowReverse"
                   checked={field.value ?? true}
                   onCheckedChange={field.onChange}
+                  description="Should this card position allow for reverse meanings?"
                   error={fieldState.error}
                 />
               )}

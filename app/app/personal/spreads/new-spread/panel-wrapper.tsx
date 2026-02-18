@@ -187,6 +187,7 @@ export default function PanelWrapper({
 
     const handleDiscard = useCallback(() => {
         if (!form.formState.isDirty) {
+            localStorage.removeItem(draftKey)
             router.push("/app/personal/spreads");
             return;
         }
