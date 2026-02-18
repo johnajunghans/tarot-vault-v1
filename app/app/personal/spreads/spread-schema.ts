@@ -16,6 +16,3 @@ export const cardSchema = z.object({
     description: z.string().max(1000).optional(),
     positions: z.array(cardSchema)
   });
-  
-export type cardData = z.infer<typeof cardSchema>
-export type spreadData = z.infer<typeof spreadSchema>

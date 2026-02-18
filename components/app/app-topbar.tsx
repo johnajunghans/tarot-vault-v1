@@ -127,7 +127,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarPr
               <span>New</span>
               <ArrowDown01Icon />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-auto">
+            <DropdownMenuContent align="end" sideOffset={8} className="w-auto">
               <DropdownMenuItem className="justify-between gap-8">
                 <span>Reading</span>
                 <LibraryIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
