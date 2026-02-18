@@ -7,16 +7,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel, FieldSeparator, FieldSet } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { FieldGroup, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { Cancel01Icon, Delete02Icon } from "hugeicons-react";
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
 import { Controller, useFormContext, UseFieldArrayRemove } from "react-hook-form";
 import { CardForm } from "@/types/spreads";
 import { usePanelRef } from "react-resizable-panels";
+import TextField from "@/components/form/text-field";
+import TextareaField from "@/components/form/textarea-field";
+import SwitchField from "@/components/form/switch-field";
+import NumberField from "@/components/form/number-field";
 
 const GRID_SIZE = 15;
 
@@ -63,8 +64,6 @@ export function CardSettingsContent({
       setDeleteIndex(null);
     }, [deleteIndex, selectedCardIndex, setSelectedCardIndex, remove]);
 
-    const cardErrors = selectedCardIndex !== null ? form.formState.errors.positions?.[selectedCardIndex] : undefined;
-
     const cardDetailsPanel = selectedCard && selectedCardIndex !== null && (
       <form key={selectedCardIndex}>
         <FieldSet>
@@ -74,23 +73,17 @@ export function CardSettingsContent({
               name={`positions.${selectedCardIndex}.name`}
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="card-name">Name</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id="card-name"
-                      type="text"
-                      autoFocus
-                      maxLength={50}
-                      placeholder="e.g. Past, Present, Future"
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      onBlur={field.onBlur}
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </FieldContent>
-                </Field>
+                <TextField
+                  label="Name"
+                  id="card-name"
+                  autoFocus
+                  maxLength={50}
+                  placeholder="e.g. Past, Present, Future"
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                  error={fieldState.error}
+                />
               )}
             />
 
@@ -99,45 +92,33 @@ export function CardSettingsContent({
               name={`positions.${selectedCardIndex}.description`}
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="card-description">Description</FieldLabel>
-                  <FieldContent>
-                    <Textarea
-                      id="card-description"
-                      maxLength={500}
-                      placeholder="What this position represents..."
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      onBlur={field.onBlur}
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </FieldContent>
-                </Field>
+                <TextareaField
+                  label="Description"
+                  id="card-description"
+                  maxLength={500}
+                  placeholder="What this position represents..."
+                  value={field.value ?? ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                  error={fieldState.error}
+                />
               )}
             />
 
             {/* Allow Reverse Orientation */}
-            <Field orientation="horizontal">
-              <FieldLabel htmlFor="card-allowReverse" className="flex-1">
-                Allow Reverse
-              </FieldLabel>
-              <FieldContent>
-                <Controller
-                  name={`positions.${selectedCardIndex}.allowReverse`}
-                  control={form.control}
-                  render={({ field }) => (
-                    <Switch
-                      id="card-allowReverse"
-                      checked={field.value ?? true}
-                      onCheckedChange={field.onChange}
-                      aria-invalid={!!cardErrors?.allowReverse}
-                    />
-                  )}
+            <Controller
+              name={`positions.${selectedCardIndex}.allowReverse`}
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <SwitchField
+                  label="Allow Reverse"
+                  id="card-allowReverse"
+                  checked={field.value ?? true}
+                  onCheckedChange={field.onChange}
+                  error={fieldState.error}
                 />
-                <FieldError errors={cardErrors?.allowReverse ? [cardErrors.allowReverse] : []} />
-              </FieldContent>
-            </Field>
+              )}
+            />
           </FieldSet>
 
           <FieldSeparator />
@@ -149,66 +130,34 @@ export function CardSettingsContent({
                 name={`positions.${selectedCardIndex}.x`}
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>X-Offset</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        {...field}
-                        id={field.name}
-                        type="number"
-                        step={15}
-                        min={0}
-                        aria-invalid={fieldState.invalid}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val)) {
-                            field.onChange(val);
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val)) {
-                            field.onChange(snapToGrid(val));
-                          }
-                          field.onBlur();
-                        }}
-                      />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </FieldContent>
-                  </Field>
+                  <NumberField
+                    label="X-Offset"
+                    id={field.name}
+                    value={field.value}
+                    onChangeValue={field.onChange}
+                    onBlurTransform={snapToGrid}
+                    onBlur={field.onBlur}
+                    step={15}
+                    min={0}
+                    error={fieldState.error}
+                  />
                 )}
               />
               <Controller
                 name={`positions.${selectedCardIndex}.y`}
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Y-Offset</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        {...field}
-                        id={field.name}
-                        type="number"
-                        step={15}
-                        min={0}
-                        aria-invalid={fieldState.invalid}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val)) {
-                            field.onChange(val);
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val)) {
-                            field.onChange(snapToGrid(val));
-                          }
-                          field.onBlur();
-                        }}
-                      />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </FieldContent>
-                  </Field>
+                  <NumberField
+                    label="Y-Offset"
+                    id={field.name}
+                    value={field.value}
+                    onChangeValue={field.onChange}
+                    onBlurTransform={snapToGrid}
+                    onBlur={field.onBlur}
+                    step={15}
+                    min={0}
+                    error={fieldState.error}
+                  />
                 )}
               />
             </FieldGroup>
@@ -219,54 +168,34 @@ export function CardSettingsContent({
                 name={`positions.${selectedCardIndex}.r`}
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Rotation</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        {...field}
-                        id={field.name}
-                        type="number"
-                        step={45}
-                        min={0}
-                        max={315}
-                        aria-invalid={fieldState.invalid}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val)) {
-                            field.onChange(val);
-                          }
-                        }}
-                      />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </FieldContent>
-                  </Field>
+                  <NumberField
+                    label="Rotation"
+                    id={field.name}
+                    value={field.value}
+                    onChangeValue={field.onChange}
+                    onBlur={field.onBlur}
+                    step={45}
+                    min={0}
+                    max={315}
+                    error={fieldState.error}
+                  />
                 )}
               />
               <Controller
                 name={`positions.${selectedCardIndex}.z`}
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Z-Index</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        {...field}
-                        id={field.name}
-                        type="number"
-                        step={1}
-                        min={0}
-                        max={100}
-                        aria-invalid={fieldState.invalid}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val)) {
-                            field.onChange(val);
-                          }
-                        }}
-                      />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </FieldContent>
-                  </Field>
+                  <NumberField
+                    label="Z-Index"
+                    id={field.name}
+                    value={field.value}
+                    onChangeValue={field.onChange}
+                    onBlur={field.onBlur}
+                    step={1}
+                    min={0}
+                    max={100}
+                    error={fieldState.error}
+                  />
                 )}
               />
             </FieldGroup>

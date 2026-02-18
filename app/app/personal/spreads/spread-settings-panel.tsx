@@ -1,15 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Field, FieldContent, FieldError, FieldLabel, FieldSeparator, FieldSet } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { FieldSeparator, FieldSet } from "@/components/ui/field";
 import { PanelLeftIcon, PlusSignIcon } from "hugeicons-react";
 import { Dispatch, type RefObject, SetStateAction, useState } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 import { UseFieldArrayMove, UseFieldArrayRemove, useFormContext } from "react-hook-form";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import CardOverview from "./card-overview";
+import TextField from "@/components/form/text-field";
+import TextareaField from "@/components/form/textarea-field";
 
 // ------------ Shared Content Component ------------ //
 
@@ -44,42 +44,22 @@ export function SpreadSettingsContent({
         </div>
         <form>
           <FieldSet>
-          {/* Name Field */}
-          <Field>
-            <FieldLabel htmlFor="spread-name">Name</FieldLabel>
-            <FieldContent>
-              <Input
-                id="spread-name"
-                type="text"
-                placeholder="Enter spread name"
-                autoFocus
-                {...form.register("name")}
-                aria-invalid={!!form.formState.errors.name}
-              />
-              <FieldError errors={form.formState.errors.name ? [form.formState.errors.name] : []} />
-            </FieldContent>
-          </Field>
-
-          {/* Description Field */}
-          <Field>
-            <FieldLabel htmlFor="spread-description">Description</FieldLabel>
-            <FieldContent>
-              <Textarea
-                id="spread-description"
-                placeholder="Enter spread description (optional)"
-                {...form.register("description")}
-                aria-invalid={!!form.formState.errors.description}
-              />
-              <FieldError
-                errors={
-                  form.formState.errors.description
-                    ? [form.formState.errors.description]
-                    : []
-                }
-              />
-            </FieldContent>
-          </Field>
-          <FieldSeparator />
+            <TextField
+              label="Name"
+              id="spread-name"
+              placeholder="Enter spread name"
+              autoFocus
+              error={form.formState.errors.name}
+              {...form.register("name")}
+            />
+            <TextareaField
+              label="Description"
+              id="spread-description"
+              placeholder="Enter spread description (optional)"
+              error={form.formState.errors.description}
+              {...form.register("description")}
+            />
+            <FieldSeparator />
           </FieldSet>
         </form>
         <CardOverview

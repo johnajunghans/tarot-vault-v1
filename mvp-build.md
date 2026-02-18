@@ -265,6 +265,21 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/17 — Step 1.2.4 — Field Component Abstractions** | Model: Claude Sonnet 4.6
+
+Summary
+- Created `components/form/text-field.tsx`: `<Field>` + `<Input>` wrapper; `error?: { message?: string }` prop; extends `InputHTMLAttributes` so both `{...form.register()}` spreads and explicit `value`/`onChange`/`onBlur` props work
+- Created `components/form/textarea-field.tsx`: same API but wraps `<Textarea>` and extends `TextareaHTMLAttributes`
+- Rewrote `components/form/switch-field.tsx` stub: horizontal `<Field>` + `<Switch>`; controlled via `checked`/`onCheckedChange`
+- Created `components/form/number-field.tsx`: `<Field>` + number `<Input>`; accepts `value: number`, `onChangeValue`, optional `onBlurTransform` (e.g. `snapToGrid`), and `onBlur`; handles `parseInt` conversion internally
+- Updated `spread-settings-panel.tsx`: replaced inline `<Field>/<Input>` and `<Field>/<Textarea>` blocks with `<TextField>` and `<TextareaField>`; removed now-unused `Field`, `FieldContent`, `FieldError`, `FieldLabel`, `Input`, `Textarea` imports
+- Updated `card-settings-panel.tsx`: replaced all 7 Controller render-prop field blocks (`name`, `description`, `allowReverse`, `x`, `y`, `r`, `z`) with the new components; removed `cardErrors` variable and unused imports
+- All 72 tests pass; no lint errors
+
+Future considerations/recommendations/warnings
+- `error` prop is typed as `{ message?: string }` (not react-hook-form's `FieldError`) to accommodate `Merge<FieldError, FieldErrorsImpl>` from nested form structures; this is intentional and correct
+- `NumberField` only handles integer parsing via `parseInt`; if float values are needed in future fields, a `parseFloat` variant or a `parseMode` prop would be needed
+
 **02/17 — Step 1.4.2 — Favoriting Spreads** | Model: Claude Sonnet 4.6
 
 Summary
@@ -349,6 +364,15 @@ Future considerations/recommendations/warnings
 - **1.2.1** — Setup: update layout title; landing page (auth, redirect to /app, /app → /app/personal); install shadcn components from 0.2.1.1.2. ~~Complete~~
 - **1.2.2** — App-sidebar: header links to /app; content (Personal, Readings, Spreads, Interpretations, tooltips/collapsed fix); footer (UserButton, Settings). ~~Complete~~
 - **1.2.3** — App-topbar: sidebar toggle, breadcrumbs (no "app", ChevronRight), placeholder center title, New dropdown (Reading, Spread, Interpretation). ~~Complete~~
+
+### ~~1.2.4_Field Component Abstraction~~
+1. Create abstracted components for the react-hook-form based inputs that are found in both spreads/spread-settings-panel.tsx and spreads/card-settings-panel.tsx.
+	1. These should be placed in the components/form directory
+		1. There already is a switch-field.tsx file which should be completed (or rewritten)
+	2. These components should be able to be slotted directly into the spread-settings and card-settings components.
+	3. They should all have the Shadcn <Field> component as the parent.
+	4. They should be able to be controlled or registered depending on which props are passed to it.
+2. Slot these new components into the spread settings and card settings components
 
 ## ~~1.3_New Spread~~
 *Full steps archived in mvp-build-archive.md.*
