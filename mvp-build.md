@@ -265,6 +265,22 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/18 — Step 1.4.3 — Edit Spreads** | Model: Claude Opus 4.6
+
+Summary
+- Updated `components/app/app-topbar.tsx`: added optional `breadcrumbs` prop to `AppTopbarProps`; when provided, overrides auto-generated breadcrumbs; existing callers unaffected
+- Updated `app/app/personal/spreads/new-spread/page.tsx`: added `searchParams` support to parse `?draft=<timestamp>` query param; passes `draftTimestamp` to `PanelWrapper`
+- Updated `app/app/personal/spreads/new-spread/panel-wrapper.tsx`: added `draftTimestamp` prop; `draftDate` ref now uses provided timestamp or `Date.now()`; added one-time `useEffect` to load draft from localStorage and `form.reset()` with data (strips `position` field for `CardDB` → `CardForm` conversion)
+- Created `app/app/personal/spreads/[id]/page.tsx`: server component reads `params.id` and layout cookie; passes `spreadId`, `defaultLayout`, `groupId` to `EditPanelWrapper`
+- Created `app/app/personal/spreads/[id]/edit-panel-wrapper.tsx`: fetches spread via `useQuery(getById)`; populates form with `form.reset()` guarded by `hasReset` ref to prevent Convex real-time updates from resetting mid-edit; uses `update` mutation; `form.reset(data)` after save to clear dirty state; custom breadcrumbs "Personal > Spreads > Edit Spread"; loading spinner and "not found" states; Cancel/Save Edits buttons with discard dialog
+- Updated `app/app/personal/spreads/spread-card.tsx`: added `useRouter` and `handleCardClick` — drafts navigate to `/new-spread?draft=<date>`, saved spreads navigate to `/spreads/<id>?mode=edit`; added `e.stopPropagation()` to draft delete button
+- All 72 tests pass; no new lint errors
+
+Future considerations/recommendations/warnings
+- `EditPanelWrapper` intentionally duplicates layout JSX from `PanelWrapper` to keep both components simple and independent; if layout logic grows complex, consider extracting a shared layout component
+- The `hasReset` ref pattern prevents Convex real-time subscription updates from overwriting user edits; if collaborative editing is added later, this pattern will need rethinking
+- Draft loading strips the `position` field (1-indexed card order) since the form uses array index; `position` is re-added at save time
+
 **02/17 — Step 1.2.5 — Responsive Panel Component** | Model: Claude Sonnet 4.6
 
 Summary
@@ -433,3 +449,19 @@ Future considerations/recommendations/warnings
 3. This star icon should toggle the favorite boolean in the db. 
 4. When a spread is favorited (i.e. favorite = true for that spread), then the fill of the star icon should be var(--gold).
 5. Include a function in the spreads table function which grabs the user's favorited spreads. This will be used later.
+
+### 1.4.3_Edit Spreads
+1. Create a dynamic nextjs route within the spreads route so that users can edit existing spreads that they have already created. 
+	1. This route should be accessed by clicking on a certain spread within the spreads/page.tsx file.
+		1. IMPORTANT: clicking on DRAFTS should route to the new spread page, loading the draft data into that page for continued editing until the user is ready to save to the db
+	2. The url of the route should look like: /app/personal/spreads/[spread _id]?mode=edit
+		1. The use of the mode=edit param will be used later
+	3. The breadcrumbs in the app-topbar at this route should look like: Personal > Spreads > Edit Spread
+	4. The title in the app topbar should look the same that within the new-spreads page (name of spread along with number of cards), however, there should be no draft badge.
+	5. The righthand button group should have two buttons:
+		1. Primary button on the right called "Save Edits" which saves any edits made (this should be disabled if no changes are made)
+		2. Ghost button on the left which reads "Cancel"
+			1. This button should route straight back to spreads page if no edits are made
+			2. If edits have been made, this button should open a dialog confirming that the user would like to discard all edits that they've made.
+	6. This route should REUSE the canvas, spread-settings-panel, and card-settings-panel components (all located with the spreads directory)
+		1. Thus, the same components are used in this route to edit and create new spreads

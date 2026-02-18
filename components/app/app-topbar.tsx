@@ -39,10 +39,11 @@ function formatSegment(segment: string) {
 interface AppTopbarProps {
   centerTitle?: ReactNode
   rightButtonGroup?: ReactNode
+  breadcrumbs?: { href: string; label: string; isLast: boolean }[]
 }
 
 
-export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarProps) {
+export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }: AppTopbarProps) {
   const pathname = usePathname()
   const { toggleSidebar, open, openMobile, isMobile } = useSidebar()
   const isOpen = isMobile ? openMobile : open
@@ -52,7 +53,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarPr
   const appIndex = rawSegments.indexOf("app")
   const segments = appIndex === -1 ? rawSegments : rawSegments.slice(appIndex + 1)
 
-  const breadcrumbs = segments.map((segment, index) => {
+  const autoBreadcrumbs = segments.map((segment, index) => {
     const href = `/app/${segments.slice(0, index + 1).join("/")}`
     return {
       href,
@@ -60,6 +61,8 @@ export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarPr
       isLast: index === segments.length - 1,
     }
   })
+
+  const resolvedBreadcrumbs = breadcrumbs ?? autoBreadcrumbs
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-border/60 bg-background/80 backdrop-blur-sm px-2 lg:px-4 py-3">
@@ -88,7 +91,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup }: AppTopbarPr
           </div> :
           <Breadcrumb>
             <BreadcrumbList>
-              {breadcrumbs.map((crumb) => (
+              {resolvedBreadcrumbs.map((crumb) => (
                 <Fragment key={crumb.href}>
                   <BreadcrumbItem>
                     {crumb.isLast ? (

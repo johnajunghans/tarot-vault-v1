@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Delete02Icon, StarIcon } from "hugeicons-react"
 import { Dispatch, SetStateAction, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
@@ -54,8 +55,17 @@ export default function SpreadCard({
     id,
     favorite,
 }: SpreadCardProps) {
+    const router = useRouter()
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const toggleFavorite = useMutation(api.tables.spreads.toggleFavorite)
+
+    function handleCardClick() {
+        if (isDraft) {
+            router.push(`/app/personal/spreads/new-spread?draft=${date}`)
+        } else if (id) {
+            router.push(`/app/personal/spreads/${id}?mode=edit`)
+        }
+    }
 
     function handleDeleteDraft(draftDate: number) {
         localStorage.removeItem(`spread-draft-${draftDate}`)
@@ -65,7 +75,7 @@ export default function SpreadCard({
 
     return (
         <>
-        <Card className="shadow-none hover:shadow-sm -translate-y-0 hover:-translate-y-1 duration-150 cursor-pointer">
+        <Card className="shadow-none hover:shadow-sm -translate-y-0 hover:-translate-y-1 duration-150 cursor-pointer" onClick={handleCardClick}>
             <CardHeader>
                 <CardTitle>{name}</CardTitle>
                 {isDraft && (
@@ -82,7 +92,7 @@ export default function SpreadCard({
                     {`${cards.length}-Card`}
                 </span>
                 {isDraft && (
-                    <Button variant="destructive" size="icon" onClick={() => setShowDeleteDialog(true)}>
+                    <Button variant="destructive" size="icon" onClick={(e) => { e.stopPropagation(); setShowDeleteDialog(true); }}>
                         <Delete02Icon />
                     </Button>
                 )}
