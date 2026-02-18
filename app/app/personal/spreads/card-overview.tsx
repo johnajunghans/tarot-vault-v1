@@ -161,6 +161,10 @@ export default function CardOverview({
 
   return (
     <div className="flex flex-col gap-1">
+      <div className="flex justify-between items-center px-2">
+        <span className="text-base text-foreground">Cards</span>
+        <span className="text-xs italic text-foreground-muted">Drag to reorder</span>
+      </div>
       <div
         ref={containerRef}
         className="relative flex flex-col"
