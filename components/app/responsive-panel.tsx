@@ -14,7 +14,7 @@ interface ResponsivePanelProps {
     // Sheet props (mobile)
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
-    side?: "left" | "right" | "top" | "bottom";
+    side?: "left" | "right";
     sheetTitle?: string;
 
     // Panel props (desktop)
@@ -60,13 +60,9 @@ export function ResponsivePanel({
         );
     }
 
-    const handle = (
-        <ResizableHandle withHandle className={hideHandle ? "hidden" : ""} />
-    );
-
     return (
         <>
-            {handlePosition === "before" && handle}
+            {!hideHandle && handlePosition === "before" && <ResizableHandle withHandle />}
             <ResizablePanel
                 id={panelId}
                 collapsible={collapsible}
@@ -78,7 +74,7 @@ export function ResponsivePanel({
             >
                 {children}
             </ResizablePanel>
-            {handlePosition === "after" && handle}
+            {!hideHandle && handlePosition === "after" && <ResizableHandle withHandle />}
         </>
     );
 }

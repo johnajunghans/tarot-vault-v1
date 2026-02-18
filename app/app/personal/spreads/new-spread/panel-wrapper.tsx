@@ -304,8 +304,6 @@ export default function PanelWrapper({
                     {/* Left Panel — Settings */}
                     <SpreadSettingsPanel
                         isMobile={isMobile}
-                        open={spreadSheetOpen}
-                        onOpenChange={setSpreadSheetOpen}
                         addCard={addCard}
                         remove={remove}
                         move={move}
@@ -329,10 +327,6 @@ export default function PanelWrapper({
                     {/* Right Panel — Card Details */}
                     <CardSettingsPanel
                         isMobile={isMobile}
-                        open={selectedCardIndex !== null}
-                        onOpenChange={(open) => {
-                            if (!open) setSelectedCardIndex(null);
-                        }}
                         cards={cards}
                         selectedCardIndex={selectedCardIndex}
                         setSelectedCardIndex={setSelectedCardIndex}
