@@ -29,7 +29,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Cancel01Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
+import { Cancel01Icon, Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
 
@@ -183,6 +183,26 @@ export default function EditPanelWrapper({
         }, onInvalid)();
     }, [form, updateSpread, spreadId, isMobile]);
 
+    // ------------ DELETE SPREAD LOGIC ------------ //
+
+    const removeSpread = useMutation(api.tables.spreads.remove);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleConfirmDelete = useCallback(async () => {
+        setIsDeleting(true);
+        try {
+            await removeSpread({ _id: spreadId });
+            toast.success("Spread deleted");
+            router.push("/app/personal/spreads");
+        } catch (error) {
+            toast.error(
+                `Failed to delete spread: ${error instanceof Error ? error.message : "Unknown error"}`
+            );
+            setIsDeleting(false);
+        }
+    }, [removeSpread, spreadId, router]);
+
     // ------------ CANCEL / DISCARD LOGIC ------------ //
 
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
@@ -243,6 +263,9 @@ export default function EditPanelWrapper({
                 <>
                     <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleCancel}>
                         {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Cancel</span>}
+                    </Button>
+                    <Button type="button" variant="destructive" size={isMobile ? "icon" : "default"} onClick={() => setShowDeleteDialog(true)}>
+                        {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Delete</span>}
                     </Button>
                     <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
                         {isSaving && <Spinner />}
@@ -377,6 +400,27 @@ export default function EditPanelWrapper({
                     </Button>
                     <Button variant="destructive" onClick={handleConfirmDiscard}>
                         Discard
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        {/* Delete Spread Dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Delete spread?</DialogTitle>
+                    <DialogDescription>
+                        This spread will be permanently deleted. This cannot be undone.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="sm:justify-end">
+                    <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+                        Cancel
+                    </Button>
+                    <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+                        {isDeleting && <Spinner />}
+                        Delete
                     </Button>
                 </DialogFooter>
             </DialogContent>
