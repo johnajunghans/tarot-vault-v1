@@ -3,15 +3,65 @@ import { FieldSeparator, FieldSet } from "@/components/ui/field";
 import { PanelLeftIcon, PlusSignIcon } from "hugeicons-react";
 import { Dispatch, type RefObject, SetStateAction, useState } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
-import { UseFieldArrayMove, UseFieldArrayRemove, useFormContext } from "react-hook-form";
+import { UseFieldArrayMove, UseFieldArrayRemove, useFormContext, useWatch } from "react-hook-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import CardOverview from "./card-overview";
+import CardOverview, { CardOverviewReadOnly } from "./card-overview";
+import { SpreadForm } from "@/types/spreads";
 import TextField from "@/components/form/text-field";
 import TextareaField from "@/components/form/textarea-field";
 import { ResponsivePanel } from "@/components/app/responsive-panel";
 
-// ------------ Shared Content Component ------------ //
+// ------------ Read-Only Content Component ------------ //
+
+interface SpreadDetailsContentProps {
+    cards: Record<"id", string>[];
+    selectedCardIndex: number | null;
+    setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
+    headerActions?: React.ReactNode;
+}
+
+export function SpreadDetailsContent({
+    cards,
+    selectedCardIndex,
+    setSelectedCardIndex,
+    headerActions,
+}: SpreadDetailsContentProps) {
+    const { control } = useFormContext<SpreadForm>();
+    const name = useWatch({ control, name: "name" });
+    const description = useWatch({ control, name: "description" });
+
+    return (
+      <div className="flex h-full flex-col gap-4 p-4 overflow-y-auto">
+        <div className="flex w-full justify-between items-center gap-8">
+          <h3 className="text-md font-semibold">Spread Details</h3>
+          <div className="flex items-center gap-1">
+            {headerActions}
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <div>
+            <span className="text-xs text-muted-foreground">Name</span>
+            <p className="text-sm">{name || "Untitled"}</p>
+          </div>
+          {description && (
+            <div>
+              <span className="text-xs text-muted-foreground">Description</span>
+              <p className="text-sm whitespace-pre-wrap">{description}</p>
+            </div>
+          )}
+        </div>
+        <FieldSeparator />
+        <CardOverviewReadOnly
+          cardCount={cards.length}
+          selectedCardIndex={selectedCardIndex}
+          setSelectedCardIndex={setSelectedCardIndex}
+        />
+      </div>
+    )
+}
+
+// ------------ Editable Content Component ------------ //
 
 interface SpreadSettingsContentProps {
     cards: Record<"id", string>[];
@@ -78,13 +128,14 @@ export function SpreadSettingsContent({
 
 interface SpreadSettingsPanelProps {
     cards: Record<"id", string>[];
-    addCard: () => void;
-    remove: UseFieldArrayRemove;
-    move: UseFieldArrayMove;
+    addCard?: () => void;
+    remove?: UseFieldArrayRemove;
+    move?: UseFieldArrayMove;
     selectedCardIndex: number | null;
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
     panelRef: RefObject<PanelImperativeHandle | null>;
     isMobile: boolean;
+    isViewMode?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
 }
@@ -98,6 +149,7 @@ export default function SpreadSettingsPanel({
     setSelectedCardIndex,
     panelRef,
     isMobile,
+    isViewMode = false,
     open = false,
     onOpenChange,
 }: SpreadSettingsPanelProps) {
@@ -110,29 +162,46 @@ export default function SpreadSettingsPanel({
       }
     }
 
+    const panelTitle = isViewMode ? "Spread Details" : "Spread Settings";
+
+    const collapseHeaderAction = !isMobile && (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.collapse()}>
+              <PanelLeftIcon />
+            </Button>
+          }
+        />
+        <TooltipContent>Hide Panel</TooltipContent>
+      </Tooltip>
+    );
+
     return (
       <>
         {hideSettings &&
           <Card className="absolute bottom-5 left-3 py-2 z-10 min-w-[150px] max-w-[350px] shadow-md bg-background">
             <CardContent>
               <div className="flex w-full justify-between items-center gap-8">
-                <h3 className="text-md font-semibold">Spread Settings</h3>
+                <h3 className="text-md font-semibold">{panelTitle}</h3>
                 <div className="flex items-center gap-1">
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={addCard}
-                          disabled={cards.length >= 78}
-                        >
-                          <PlusSignIcon />
-                        </Button>
-                      }
-                    />
-                    <TooltipContent>New Card</TooltipContent>
-                  </Tooltip>
+                  {!isViewMode && addCard && (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={addCard}
+                            disabled={cards.length >= 78}
+                          >
+                            <PlusSignIcon />
+                          </Button>
+                        }
+                      />
+                      <TooltipContent>New Card</TooltipContent>
+                    </Tooltip>
+                  )}
                   <Tooltip>
                     <TooltipTrigger
                       render={
@@ -161,30 +230,28 @@ export default function SpreadSettingsPanel({
           handlePosition="after"
           hideHandle={hideSettings}
           side="left"
-          sheetTitle="Spread Settings"
+          sheetTitle={panelTitle}
           open={open}
           onOpenChange={onOpenChange}
         >
-          <SpreadSettingsContent
-            cards={cards}
-            addCard={addCard}
-            remove={remove}
-            move={move}
-            selectedCardIndex={selectedCardIndex}
-            setSelectedCardIndex={setSelectedCardIndex}
-            headerActions={!isMobile &&
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.collapse()}>
-                      <PanelLeftIcon />
-                    </Button>
-                  }
-                />
-                <TooltipContent>Hide Panel</TooltipContent>
-              </Tooltip>
-            }
-          />
+          {isViewMode ? (
+            <SpreadDetailsContent
+              cards={cards}
+              selectedCardIndex={selectedCardIndex}
+              setSelectedCardIndex={setSelectedCardIndex}
+              headerActions={collapseHeaderAction}
+            />
+          ) : (
+            <SpreadSettingsContent
+              cards={cards}
+              addCard={addCard!}
+              remove={remove!}
+              move={move!}
+              selectedCardIndex={selectedCardIndex}
+              setSelectedCardIndex={setSelectedCardIndex}
+              headerActions={collapseHeaderAction}
+            />
+          )}
         </ResponsivePanel>
       </>
     )

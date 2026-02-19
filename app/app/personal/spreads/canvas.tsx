@@ -13,12 +13,14 @@ interface SpreadCanvasProps {
   cards: CanvasCard[];
   selectedCardIndex: number | null;
   onCardSelect: (index: number | null) => void;
+  isViewMode?: boolean;
 }
 
 export default function SpreadCanvas({
   cards,
   selectedCardIndex,
   onCardSelect,
+  isViewMode = false,
 }: SpreadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -120,7 +122,7 @@ export default function SpreadCanvas({
 
   // === Alignment guides ===
   const guides = useMemo(() => {
-    if (!dragging) return [];
+    if (isViewMode || !dragging) return [];
 
     // Suppress guide lines during group movement
     if (
@@ -175,7 +177,7 @@ export default function SpreadCanvas({
       seen.add(key);
       return true;
     });
-  }, [dragging, positions, groupSelectedIndices]);
+  }, [isViewMode, dragging, positions, groupSelectedIndices]);
 
   // Ref to store the dragged card's start position (for group drag delta)
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
@@ -430,28 +432,30 @@ export default function SpreadCanvas({
         height={svgHeight}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Grid pattern */}
-        <defs>
-          <pattern
-            id="canvas-grid"
-            width={GRID_SIZE}
-            height={GRID_SIZE}
-            patternUnits="userSpaceOnUse"
-          >
-            <path
-              d={`M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`}
-              fill="none"
-              stroke="var(--border)"
-              strokeOpacity={0.6}
-              strokeWidth={0.5}
-            />
-          </pattern>
-        </defs>
+        {/* Grid pattern (edit mode only) */}
+        {!isViewMode && (
+          <defs>
+            <pattern
+              id="canvas-grid"
+              width={GRID_SIZE}
+              height={GRID_SIZE}
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d={`M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`}
+                fill="none"
+                stroke="var(--border)"
+                strokeOpacity={0.6}
+                strokeWidth={0.5}
+              />
+            </pattern>
+          </defs>
+        )}
         <rect
           width={svgWidth}
           height={svgHeight}
-          fill="url(#canvas-grid)"
-          onMouseDown={handleBackgroundMouseDown}
+          fill={isViewMode ? "transparent" : "url(#canvas-grid)"}
+          onMouseDown={isViewMode ? () => onCardSelect(null) : handleBackgroundMouseDown}
         />
 
         {/* Alignment guide lines */}
@@ -496,8 +500,9 @@ export default function SpreadCanvas({
               card={card}
               index={index}
               selected={index === selectedCardIndex}
-              groupSelected={groupSelectedIndices.has(index)}
-              isDraggingInGroup={isDraggingInGroup}
+              groupSelected={isViewMode ? false : groupSelectedIndices.has(index)}
+              isDraggingInGroup={isViewMode ? false : isDraggingInGroup}
+              isViewMode={isViewMode}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               onDrag={handleDrag}

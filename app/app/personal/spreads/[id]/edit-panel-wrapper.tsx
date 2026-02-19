@@ -29,7 +29,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Cancel01Icon, Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
+import { Cancel01Icon, Delete02Icon, PencilEdit02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
 
@@ -37,7 +37,14 @@ interface EditPanelWrapperProps {
     spreadId: Id<"spreads">
     defaultLayout: Layout | undefined
     groupId: string
+    mode: "view" | "edit"
 }
+
+const VIEW_BREADCRUMBS = [
+    { href: "/app/personal", label: "Personal", isLast: false },
+    { href: "/app/personal/spreads", label: "Spreads", isLast: false },
+    { href: "#", label: "View Spread", isLast: true },
+]
 
 const EDIT_BREADCRUMBS = [
     { href: "/app/personal", label: "Personal", isLast: false },
@@ -49,7 +56,9 @@ export default function EditPanelWrapper({
     spreadId,
     defaultLayout,
     groupId,
+    mode,
 }: EditPanelWrapperProps) {
+    const isViewMode = mode === "view";
     const router = useRouter();
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const isMobile = useIsMobile()
@@ -207,26 +216,30 @@ export default function EditPanelWrapper({
 
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
+    const viewUrl = `/app/personal/spreads/${spreadId}?mode=view`;
+
     const handleCancel = useCallback(() => {
         if (!form.formState.isDirty) {
-            router.push("/app/personal/spreads");
+            router.push(viewUrl);
             return;
         }
         setShowDiscardDialog(true);
-    }, [form.formState.isDirty, router]);
+    }, [form.formState.isDirty, router, viewUrl]);
 
     const handleConfirmDiscard = useCallback(() => {
         setShowDiscardDialog(false);
-        router.push("/app/personal/spreads");
-    }, [router]);
+        router.push(viewUrl);
+    }, [router, viewUrl]);
 
 
     // ------------ LOADING / NOT FOUND ------------ //
 
+    const breadcrumbs = isViewMode ? VIEW_BREADCRUMBS : EDIT_BREADCRUMBS;
+
     if (spread === undefined) {
         return (
             <>
-                <AppTopbar breadcrumbs={EDIT_BREADCRUMBS} />
+                <AppTopbar breadcrumbs={breadcrumbs} />
                 <div className="h-app-content flex items-center justify-center">
                     <Spinner className="size-6" />
                 </div>
@@ -237,7 +250,7 @@ export default function EditPanelWrapper({
     if (spread === null) {
         return (
             <>
-                <AppTopbar breadcrumbs={EDIT_BREADCRUMBS} />
+                <AppTopbar breadcrumbs={breadcrumbs} />
                 <div className="h-app-content flex items-center justify-center">
                     <p className="text-muted-foreground">Spread not found.</p>
                 </div>
@@ -245,11 +258,60 @@ export default function EditPanelWrapper({
         );
     }
 
+    // ------------ TOPBAR BUTTON GROUPS ------------ //
+
+    const viewModeButtons = (
+        <>
+            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={() => router.push("/app/personal/spreads")}>
+                {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Close</span>}
+            </Button>
+            <Button type="button" variant="default" size={isMobile ? "icon" : "default"} onClick={() => router.push(`/app/personal/spreads/${spreadId}?mode=edit`)}>
+                {isMobile ? <PencilEdit02Icon /> : <span className="text-xs lg:text-sm">Edit Spread</span>}
+            </Button>
+        </>
+    );
+
+    const editModeButtons = (
+        <>
+            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleCancel}>
+                {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Cancel</span>}
+            </Button>
+            <Button type="button" variant="destructive" size={isMobile ? "icon" : "default"} onClick={() => setShowDeleteDialog(true)}>
+                {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Delete</span>}
+            </Button>
+            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
+                {isSaving && <Spinner />}
+                <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Edits"}</span>
+            </Button>
+        </>
+    );
+
+    // ------------ SHARED PANEL PROPS ------------ //
+
+    const spreadPanelProps = {
+        isMobile,
+        isViewMode,
+        cards,
+        selectedCardIndex,
+        setSelectedCardIndex,
+        panelRef: spreadSettingsPanelRef,
+        ...(isViewMode ? {} : { addCard, remove, move }),
+    };
+
+    const cardPanelProps = {
+        isMobile,
+        isViewMode,
+        cards,
+        selectedCardIndex,
+        setSelectedCardIndex,
+        ...(isViewMode ? {} : { remove, cardCount: cards.length }),
+    };
+
     return (
         <>
         {/* App Topbar */}
         <AppTopbar
-            breadcrumbs={EDIT_BREADCRUMBS}
+            breadcrumbs={breadcrumbs}
             centerTitle={
                 <>
                     <span className="font-bold text-foreground text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]">{spreadTitle}</span>
@@ -259,20 +321,7 @@ export default function EditPanelWrapper({
                     </>}
                 </>
             }
-            rightButtonGroup={
-                <>
-                    <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleCancel}>
-                        {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Cancel</span>}
-                    </Button>
-                    <Button type="button" variant="destructive" size={isMobile ? "icon" : "default"} onClick={() => setShowDeleteDialog(true)}>
-                        {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Delete</span>}
-                    </Button>
-                    <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
-                        {isSaving && <Spinner />}
-                        <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Edits"}</span>
-                    </Button>
-                </>
-            }
+            rightButtonGroup={isViewMode ? viewModeButtons : editModeButtons}
         />
 
         {/* Main Content */}
@@ -291,14 +340,16 @@ export default function EditPanelWrapper({
                                     >
                                         <Settings02Icon />
                                     </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={addCard}
-                                        disabled={cards.length >= 78}
-                                    >
-                                        <PlusSignIcon />
-                                    </Button>
+                                    {!isViewMode && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            onClick={addCard}
+                                            disabled={cards.length >= 78}
+                                        >
+                                            <PlusSignIcon />
+                                        </Button>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -308,34 +359,23 @@ export default function EditPanelWrapper({
                             cards={cards}
                             selectedCardIndex={selectedCardIndex}
                             onCardSelect={setSelectedCardIndex}
+                            isViewMode={isViewMode}
                         />
 
                         {/* Spread Settings (Sheet on mobile via ResponsivePanel) */}
                         <SpreadSettingsPanel
-                            isMobile={isMobile}
+                            {...spreadPanelProps}
                             open={spreadSheetOpen}
                             onOpenChange={setSpreadSheetOpen}
-                            cards={cards}
-                            addCard={addCard}
-                            remove={remove}
-                            move={move}
-                            selectedCardIndex={selectedCardIndex}
-                            setSelectedCardIndex={setSelectedCardIndex}
-                            panelRef={spreadSettingsPanelRef}
                         />
 
                         {/* Card Settings (Sheet on mobile via ResponsivePanel) */}
                         <CardSettingsPanel
-                            isMobile={isMobile}
+                            {...cardPanelProps}
                             open={selectedCardIndex !== null}
                             onOpenChange={(open) => {
                                 if (!open) setSelectedCardIndex(null);
                             }}
-                            cards={cards}
-                            selectedCardIndex={selectedCardIndex}
-                            setSelectedCardIndex={setSelectedCardIndex}
-                            remove={remove}
-                            cardCount={cards.length}
                         />
                     </>
                 ) : (
@@ -347,84 +387,72 @@ export default function EditPanelWrapper({
                             document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
                         }}
                     >
-                    {/* Left Panel — Settings */}
-                    <SpreadSettingsPanel
-                        isMobile={isMobile}
-                        addCard={addCard}
-                        remove={remove}
-                        move={move}
-                        cards={cards}
-                        selectedCardIndex={selectedCardIndex}
-                        setSelectedCardIndex={setSelectedCardIndex}
-                        panelRef={spreadSettingsPanelRef}
-                    />
+                    {/* Left Panel — Settings/Details */}
+                    <SpreadSettingsPanel {...spreadPanelProps} />
 
                     {/* Center Panel — Canvas */}
-                    <ResizablePanel
-                        id="spread-canvas-panel"
-                    >
+                    <ResizablePanel id="spread-canvas-panel">
                         <SpreadCanvas
-                        cards={cards}
-                        selectedCardIndex={selectedCardIndex}
-                        onCardSelect={setSelectedCardIndex}
+                            cards={cards}
+                            selectedCardIndex={selectedCardIndex}
+                            onCardSelect={setSelectedCardIndex}
+                            isViewMode={isViewMode}
                         />
                     </ResizablePanel>
 
-                    {/* Right Panel — Card Details */}
-                    <CardSettingsPanel
-                        isMobile={isMobile}
-                        cards={cards}
-                        selectedCardIndex={selectedCardIndex}
-                        setSelectedCardIndex={setSelectedCardIndex}
-                        remove={remove}
-                        cardCount={cards.length}
-                    />
+                    {/* Right Panel — Card Settings/Details */}
+                    <CardSettingsPanel {...cardPanelProps} />
 
                     </ResizablePanelGroup>
                 )}
             </FormProvider>
         </div>
 
-        {/* Discard Changes Dialog */}
-        <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Discard changes?</DialogTitle>
-                    <DialogDescription>
-                        You have unsaved changes. Are you sure you want to leave? Your edits will be lost.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="sm:justify-between">
-                    <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
-                        Cancel
-                    </Button>
-                    <Button variant="destructive" onClick={handleConfirmDiscard}>
-                        Discard
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        {/* Dialogs (edit mode only) */}
+        {!isViewMode && (
+            <>
+                {/* Discard Changes Dialog */}
+                <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Discard changes?</DialogTitle>
+                            <DialogDescription>
+                                You have unsaved changes. Are you sure you want to leave? Your edits will be lost.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="sm:justify-between">
+                            <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={handleConfirmDiscard}>
+                                Discard
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
-        {/* Delete Spread Dialog */}
-        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Delete spread?</DialogTitle>
-                    <DialogDescription>
-                        This spread will be permanently deleted. This cannot be undone.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="sm:justify-end">
-                    <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
-                        Cancel
-                    </Button>
-                    <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
-                        {isDeleting && <Spinner />}
-                        Delete
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                {/* Delete Spread Dialog */}
+                <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete spread?</DialogTitle>
+                            <DialogDescription>
+                                This spread will be permanently deleted. This cannot be undone.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="sm:justify-end">
+                            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+                                {isDeleting && <Spinner />}
+                                Delete
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </>
+        )}
         </>
     )
 }

@@ -63,7 +63,7 @@ export default function SpreadCard({
         if (isDraft) {
             router.push(`/app/personal/spreads/new-spread?draft=${date}`)
         } else if (id) {
-            router.push(`/app/personal/spreads/${id}?mode=edit`)
+            router.push(`/app/personal/spreads/${id}?mode=view`)
         }
     }
 

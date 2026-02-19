@@ -35,6 +35,7 @@ interface SpreadCardProps {
   selected: boolean;
   groupSelected: boolean;
   isDraggingInGroup: boolean;
+  isViewMode: boolean;
   onDragStart: (index: number, x: number, y: number) => void;
   onDragEnd: (index: number) => void;
   onDrag: (index: number, x: number, y: number) => void;
@@ -50,13 +51,14 @@ function SpreadCard({
   selected,
   groupSelected,
   isDraggingInGroup,
+  isViewMode,
   onDragStart,
   onDragEnd,
   onDrag,
   onClick,
   registerRef,
 }: SpreadCardProps) {
-  const { control, setValue } = useFormContext<{ positions: CardForm[] }>();
+  const { control, setValue, getValues } = useFormContext<{ positions: CardForm[] }>();
   const watched = useWatch({ control, name: `positions.${index}` });
   const [isDraggingState, setIsDraggingState] = useState(false)
 
@@ -73,13 +75,18 @@ function SpreadCard({
       setValue(`positions.${index}.y`, y, { shouldDirty: true });
   }, [setValue])
 
-  // Initialize GSAP Draggable
+  // Initialize GSAP Draggable (edit mode) or just set position (view mode)
   useGSAP(() => {
     const group = groupRef.current;
     if (!group) return;
 
-    // Set initial position from ref (avoids re-init on position changes)
-    gsap.set(group, { x: initialPos.current.x, y: initialPos.current.y });
+    // Read current form position (initialPos may be stale after form.reset from DB)
+    const currentPos = getValues(`positions.${index}`);
+    const startX = currentPos?.x ?? initialPos.current.x;
+    const startY = currentPos?.y ?? initialPos.current.y;
+    gsap.set(group, { x: startX, y: startY });
+
+    if (isViewMode) return;
 
     const [instance] = Draggable.create(group, {
       type: "x,y",
@@ -120,12 +127,13 @@ function SpreadCard({
     return () => {
       instance.kill();
     };
-  }, { dependencies: [index, handleCardTranslation, onDragStart, onDragEnd, onDrag, onClick] });
+  }, { dependencies: [index, isViewMode, handleCardTranslation, onDragStart, onDragEnd, onDrag, onClick] });
 
   // Sync GSAP position from form state when not dragging (e.g. panel input changes)
   useEffect(() => {
-    if (groupRef.current && draggableRef.current && !isDraggingRef.current) {
-      gsap.set(groupRef.current, { x: watched.x, y: watched.y });
+    if (!groupRef.current || isDraggingRef.current) return;
+    gsap.set(groupRef.current, { x: watched.x, y: watched.y });
+    if (draggableRef.current) {
       draggableRef.current.update();
     }
   }, [watched.x, watched.y]);
@@ -157,6 +165,7 @@ function SpreadCard({
   return (
     <g
       ref={groupRef}
+      onClick={isViewMode ? () => onClick(index) : undefined}
       style={{
         cursor: "pointer",
         opacity: isActiveDrag ? 0.7 : 1,
@@ -242,6 +251,7 @@ function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
     prev.selected === next.selected &&
     prev.groupSelected === next.groupSelected &&
     prev.isDraggingInGroup === next.isDraggingInGroup &&
+    prev.isViewMode === next.isViewMode &&
     prev.onDragStart === next.onDragStart &&
     prev.onDragEnd === next.onDragEnd &&
     prev.onDrag === next.onDrag &&

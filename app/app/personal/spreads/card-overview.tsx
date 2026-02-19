@@ -43,6 +43,49 @@ function CardTileName({ index }: { index: number }) {
   );
 }
 
+// ------------ Read-Only Card Overview ------------ //
+
+interface CardOverviewReadOnlyProps {
+  cardCount: number;
+  selectedCardIndex: number | null;
+  setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
+}
+
+export function CardOverviewReadOnly({
+  cardCount,
+  selectedCardIndex,
+  setSelectedCardIndex,
+}: CardOverviewReadOnlyProps) {
+  const indices = Array.from({ length: cardCount }, (_, i) => i);
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex justify-between items-center px-2">
+        <span className="text-base text-foreground">Cards</span>
+        <span className="text-xs italic text-foreground-muted">Click to view</span>
+      </div>
+      <div className="relative flex flex-col" style={{ gap: `${TILE_GAP}px` }}>
+        {indices.map((index) => (
+          <div
+            key={index}
+            onClick={() => setSelectedCardIndex(index)}
+            className={`flex items-center rounded-md border px-2 cursor-pointer select-none ${
+              index === selectedCardIndex
+                ? "border-gold bg-gold/10"
+                : "border-border bg-muted/50 hover:bg-muted"
+            }`}
+            style={{ height: `${TILE_HEIGHT}px` }}
+          >
+            <CardTileName index={index} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ------------ Editable Card Overview ------------ //
+
 export default function CardOverview({
   cardCount,
   selectedCardIndex,

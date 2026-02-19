@@ -265,6 +265,24 @@ Future considerations/recommendations/warnings (Anything at all to consider abou
 ### 0.5.2_Entries
 *Ordered with most recent at the top*
 
+**02/18 — Step 1.4.4 — View Spreads** | Model: Claude Opus 4.6
+
+Summary
+- Updated `app/app/personal/spreads/[id]/page.tsx`: added `searchParams` prop to read `mode` query param; derives `"view" | "edit"` (defaults to `"edit"` for backward compat); passes `mode` to `EditPanelWrapper`
+- Updated `app/app/personal/spreads/[id]/edit-panel-wrapper.tsx`: added `mode` prop and `isViewMode` derived flag; added `VIEW_BREADCRUMBS`; view mode shows "Close" + "Edit Spread" buttons in topbar; edit mode Cancel/Discard now routes to `?mode=view` instead of spreads list; passes `isViewMode` to canvas and both panels; mobile floating toolbar hides "add card" button in view mode; dialogs only render in edit mode
+- Updated `app/app/personal/spreads/canvas.tsx`: added `isViewMode` prop; hides grid `<defs>` and uses transparent background fill in view mode; disables marquee (`onMouseDown` undefined); passes `isViewMode` to `SpreadCard` children; guides `useMemo` early-returns `[]` in view mode
+- Updated `app/app/personal/spreads/card.tsx`: added `isViewMode` prop; skips `Draggable.create()` in view mode (only `gsap.set` for initial position); adds native `onClick` on outer `<g>` for card selection in view mode; position sync effect still works; updated `arePropsEqual` comparator
+- Updated `app/app/personal/spreads/spread-settings-panel.tsx`: added `SpreadDetailsContent` component (read-only name/description text + `CardOverviewReadOnly`); `SpreadSettingsPanel` conditionally renders details vs settings content; collapsed floating card hides "New Card" button in view mode; `addCard`/`remove`/`move` now optional
+- Updated `app/app/personal/spreads/card-settings-panel.tsx`: added `CardDetailsContent` component (read-only name, description, allowReverse, x, y, rotation, z-index); `CardSettingsPanel` conditionally renders details vs settings content; `remove`/`cardCount` now optional
+- Updated `app/app/personal/spreads/card-overview.tsx`: added `CardOverviewReadOnly` export (simple tile list with click-to-select, no GSAP drag, no delete buttons, label reads "Click to view")
+- Updated `app/app/personal/spreads/spread-card.tsx`: changed click navigation from `?mode=edit` to `?mode=view`
+- All 72 tests pass; no new lint errors
+
+Future considerations/recommendations/warnings
+- `EditPanelWrapper` handles both view and edit modes via a `mode` prop rather than a separate component, since both modes share identical data fetching, layout, loading/not-found states, and center title logic
+- `FormProvider` remains active in view mode as a convenient reactive data source (via `useWatch`) — it's just never written to
+- If view mode grows significantly different from edit mode (e.g., different layout), consider splitting into separate wrapper components
+
 **02/18 — Step 1.4.3 — Edit Spreads** | Model: Claude Opus 4.6
 
 Summary
@@ -450,7 +468,7 @@ Future considerations/recommendations/warnings
 4. When a spread is favorited (i.e. favorite = true for that spread), then the fill of the star icon should be var(--gold).
 5. Include a function in the spreads table function which grabs the user's favorited spreads. This will be used later.
 
-### 1.4.3_Edit Spreads
+### ~~1.4.3_Edit Spreads~~
 1. Create a dynamic nextjs route within the spreads route so that users can edit existing spreads that they have already created. 
 	1. This route should be accessed by clicking on a certain spread within the spreads/page.tsx file.
 		1. IMPORTANT: clicking on DRAFTS should route to the new spread page, loading the draft data into that page for continued editing until the user is ready to save to the db
@@ -465,3 +483,32 @@ Future considerations/recommendations/warnings
 			2. If edits have been made, this button should open a dialog confirming that the user would like to discard all edits that they've made.
 	6. This route should REUSE the canvas, spread-settings-panel, and card-settings-panel components (all located with the spreads directory)
 		1. Thus, the same components are used in this route to edit and create new spreads
+
+### 1.4.4_View Spreads
+1. Create functionality to just view (and not edit) spreads
+	1. This should be the same dynamic route as the edit spreads but with mode=view
+	2. The canvas, spread settings panel, and card settings panel components (all located with the spreads directory) should be modified to accomodate for spread viewing.
+		1. The canvas view mode: 
+			1. should prevent dragging 
+			2. not show a grid
+			3. not show the click and drag to select multiple cards
+			4. cards should still be clickable to view their details
+		2. The spread settings panel view mode:
+			1. should be titled "Spread Details"
+			2. should create a separate subcomponent called "SpreadDetailsContent" which should be able to be slotted into the responsive panel during view mode
+				1. should show all the same info in same order and layout but not with inputs, just text
+				2. The cards overview should remove the "drag to reorder" and they should not be draggable and there should be no delete buttons on them
+					1. clicking on cards should still select them for viewing the card details
+		3. The card settings panel view mode:
+			1. should be titled "Card Details"
+			2. should create a separate subcomponent called "CardDetailsContent" which should be able to be slotted into the responsive panel during view mode
+				1. Should show all the same information in the same order and layout but with text rather than input fields
+	3. The app-topbar should: 
+		1. have the same title as the edit mode
+		2. have two buttons in the button group:
+			1. Primary "Edit Spread" button on the right: switch to edit mode
+			2. Ghost "Close" button on the left: route back to spreads page
+		3. have final breadcrumb read "View Spread"
+2. Change spreads page so that clicking on a card intially opens view mode
+3. Change edit mode so that the Cancel button goes back to view mode
+	

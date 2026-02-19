@@ -10,7 +10,7 @@ import {
 import { FieldGroup, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { Cancel01Icon, Delete02Icon } from "hugeicons-react";
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
-import { Controller, useFormContext, UseFieldArrayRemove } from "react-hook-form";
+import { Controller, useFormContext, useWatch, UseFieldArrayRemove } from "react-hook-form";
 import { CardForm } from "@/types/spreads";
 import { usePanelRef } from "react-resizable-panels";
 import TextField from "@/components/form/text-field";
@@ -26,7 +26,75 @@ function snapToGrid(value: number): number {
   return Math.round(value / GRID_SIZE) * GRID_SIZE;
 }
 
-// ------------ Shared Content Component ------------ //
+// ------------ Read-Only Content Component ------------ //
+
+interface CardDetailsContentProps {
+    selectedCardIndex: number | null;
+    headerActions?: React.ReactNode;
+}
+
+function CardDetailsContent({
+    selectedCardIndex,
+    headerActions,
+}: CardDetailsContentProps) {
+    const { control } = useFormContext<{ positions: CardForm[] }>();
+    const card = useWatch({
+      control,
+      name: `positions.${selectedCardIndex ?? 0}`,
+    });
+
+    return (
+      <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+        <div className="flex w-full justify-between items-center gap-4">
+          <h3 className="text-md font-semibold">
+            Card {selectedCardIndex !== null && selectedCardIndex + 1} Details
+          </h3>
+          {headerActions}
+        </div>
+        {card && selectedCardIndex !== null && (
+          <div className="flex flex-col gap-3">
+            <div>
+              <span className="text-xs text-muted-foreground">Name</span>
+              <p className="text-sm">{card.name || "Untitled"}</p>
+            </div>
+            {card.description && (
+              <div>
+                <span className="text-xs text-muted-foreground">Description</span>
+                <p className="text-sm whitespace-pre-wrap">{card.description}</p>
+              </div>
+            )}
+            <div>
+              <span className="text-xs text-muted-foreground">Allow Reverse</span>
+              <p className="text-sm">{card.allowReverse ? "Yes" : "No"}</p>
+            </div>
+            <FieldSeparator />
+            <FieldGroup className="gap-4">
+              <div>
+                <span className="text-xs text-muted-foreground">X-Offset</span>
+                <p className="text-sm">{card.x}</p>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground">Y-Offset</span>
+                <p className="text-sm">{card.y}</p>
+              </div>
+            </FieldGroup>
+            <FieldGroup className="gap-4">
+              <div>
+                <span className="text-xs text-muted-foreground">Rotation</span>
+                <p className="text-sm">{card.r}&deg;</p>
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground">Z-Index</span>
+                <p className="text-sm">{card.z}</p>
+              </div>
+            </FieldGroup>
+          </div>
+        )}
+      </div>
+    );
+}
+
+// ------------ Editable Content Component ------------ //
 
 interface CardSettingsContentProps {
     cards: Record<"id", string>[]
@@ -265,9 +333,10 @@ interface CardSettingsPanelProps {
     cards: Record<"id", string>[]
     selectedCardIndex: number | null,
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
-    remove: UseFieldArrayRemove
-    cardCount: number
+    remove?: UseFieldArrayRemove
+    cardCount?: number
     isMobile: boolean;
+    isViewMode?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
 }
@@ -279,6 +348,7 @@ export default function CardSettingsPanel({
     remove,
     cardCount,
     isMobile,
+    isViewMode = false,
     open = false,
     onOpenChange,
 }: CardSettingsPanelProps) {
@@ -314,6 +384,21 @@ export default function CardSettingsPanel({
       }
     }, [cards, selectedCardIndex]);
 
+    const panelTitle = isViewMode ? "Card Details" : "Card Settings";
+
+    const closeHeaderAction = !isMobile && (
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => {
+          setSelectedCardIndex(null)
+          cardDetailsPanelRef.current?.collapse()
+        }}
+      >
+        <Cancel01Icon />
+      </Button>
+    );
+
     return (
       <ResponsivePanel
         isMobile={isMobile}
@@ -327,29 +412,25 @@ export default function CardSettingsPanel({
         handlePosition="before"
         hideHandle={selectedCardIndex === null}
         side="right"
-        sheetTitle="Card Settings"
+        sheetTitle={panelTitle}
         open={open}
         onOpenChange={onOpenChange}
       >
-        <CardSettingsContent
-          cards={cards}
-          selectedCardIndex={selectedCardIndex}
-          setSelectedCardIndex={setSelectedCardIndex}
-          remove={remove}
-          cardCount={cardCount}
-          headerActions={!isMobile &&
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => {
-                setSelectedCardIndex(null)
-                cardDetailsPanelRef.current?.collapse()
-              }}
-            >
-              <Cancel01Icon />
-            </Button>
-          }
-        />
+        {isViewMode ? (
+          <CardDetailsContent
+            selectedCardIndex={selectedCardIndex}
+            headerActions={closeHeaderAction}
+          />
+        ) : (
+          <CardSettingsContent
+            cards={cards}
+            selectedCardIndex={selectedCardIndex}
+            setSelectedCardIndex={setSelectedCardIndex}
+            remove={remove!}
+            cardCount={cardCount!}
+            headerActions={closeHeaderAction}
+          />
+        )}
       </ResponsivePanel>
     )
   }
