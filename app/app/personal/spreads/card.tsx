@@ -153,12 +153,12 @@ function SpreadCard({
   // Simplified color scheme:
   // - Edit-selected: gold (current styling with glow)
   // - Group-selected: gold (prominent highlight)
-  // - Unselected: muted-foreground (neutral)
-  const cardFill = isEditStyled || isGroupStyled ? "var(--gold)" : "var(--muted-foreground)";
+  // - Unselected: gold-muted
+  const cardFill = isEditStyled || isGroupStyled ? "var(--gold)" : "var(--gold-muted)";
   const cardFillOpacity = 0.3;
-  const cardStroke = isEditStyled || isGroupStyled ? "var(--gold)" : "var(--muted-foreground)";
+  const cardStroke = isEditStyled || isGroupStyled ? "var(--gold)" : "var(--gold-muted)";
   const cardDashArray = undefined; // Always solid stroke
-  const badgeColor = isEditStyled || isGroupStyled ? "var(--gold)" : "var(--muted-foreground)";
+  const badgeColor = isEditStyled || isGroupStyled ? "var(--gold)" : "var(--gold-muted)";
 
   // ------------ RETURN ------------ //
 
