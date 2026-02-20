@@ -45,26 +45,29 @@ npx vitest run -t "test name pattern"            # Run tests matching pattern
 ### Project Structure
 
 ```
-app/                     # Next.js App Router
+app/                    # Next.js App Router
 ├── layout.tsx          # Root layout with Clerk/Convex/Theme providers
 ├── page.tsx            # Landing page (public, redirects authenticated users)
-└── app/                # Protected routes (requires authentication)
-    ├── layout.tsx      # App layout with sidebar and topbar
-    ├── page.tsx        # Dashboard (redirects to /app/personal)
+└── (app)/              # Route Group (protected: all routes within require authentication)
+    ├── layout.tsx      # App group layout with sidebar and topbar
+    ├── page.tsx        # Dashboard (redirects to /personal)
     ├── personal/       # Personal workspace
     │   └── spreads/    # Spreads feature
     │       ├── page.tsx              # List route
     │       ├── _components/          # Shared feature components (canvas, card, panels, schema, etc.)
-    │       ├── new-spread/           # Create route + panel-wrapper
-    │       └── [id]/                 # View/edit route + edit-panel-wrapper
+    │       ├── new/                  # Create route + panel-wrapper
+    │       ├── [id]/                 # View/edit route + edit-panel-wrapper
+    │       ├── utils.ts              # Spread creation/editing helpers and utilities
+    │       └── schema.ts             # Zod schema and runtime validation for spreads
     └── collective/     # Collective workspace (future)
 
 components/
-├── app/                # App-specific components (sidebar, topbar, responsive-panel)
+├── layout/             # App-specific components (sidebar, topbar, responsive-panel)
 ├── form/               # Reusable react-hook-form field components
 ├── ui/                 # Base UI components (shadcn/ui)
-├── ConvexClientProvider.tsx  # Clerk + Convex integration
-└── ThemeProvider.tsx   # Theme provider (next-themes)
+├── providers/          # Context providers
+│   ├── ConvexClientProvider.tsx  # Clerk + Convex integration
+│   └── ThemeProvider.tsx         # Theme provider (next-themes)
 
 types/                  # Shared TypeScript types
 └── spreads.ts          # Spread/card types derived from schema and zod
@@ -73,17 +76,16 @@ convex/                 # Convex backend
 ├── schema.ts           # Database schema definitions
 ├── auth.config.ts      # Clerk authentication configuration
 ├── http.ts             # HTTP routes (webhooks)
-├── tables/             # Organized by database table
-│   ├── users.ts       # User queries/mutations
-│   ├── readings.ts    # Reading queries/mutations
-│   ├── spreads.ts     # Spread queries/mutations
-│   └── interpretations.ts  # Interpretation queries/mutations
+├── users.ts                # User queries/mutations
+├── readings.ts             # Reading queries/mutations
+├── spreads.ts              # Spread queries/mutations
+├── interpretations.ts      # Interpretation queries/mutations
 └── tests/              # Backend tests
     ├── test.setup.ts   # Test utilities
     └── *.test.ts       # Test files
 
 hooks/                  # Custom React hooks
-lib/                    # Utility functions
+lib/                    # Utility functions and important constants (e.g. routes)
 proxy.ts                # Clerk middleware for route protection
 ```
 
