@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
-import AppTopbar from "@/components/app/app-topbar"
-import SpreadCard from "./spread-card"
+import AppTopbar from "@/components/layout/app-topbar"
+import SpreadCard from "./_components/spread-card"
 import { Spinner } from "@/components/ui/spinner"
 import { SpreadDraft } from "@/types/spreads"
 
@@ -39,7 +39,7 @@ function loadDrafts(): SpreadDraft[] {
 }
 
 export default function Spreads() {
-    const spreads = useQuery(api.tables.spreads.list)
+    const spreads = useQuery(api.spreads.list)
     const [drafts, setDrafts] = useState<SpreadDraft[]>([])
 
     useEffect(() => {

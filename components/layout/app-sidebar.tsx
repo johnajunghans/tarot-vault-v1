@@ -25,22 +25,23 @@ import { useRouter, usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { useEffect, useState, ReactNode } from "react"
 import { Skeleton } from "../ui/skeleton"
+import { routes } from "@/lib/routes"
 
-const routes = {
+const sidebarRoutes = {
   personal: [
     {
       name: "Readings",
-      url: "/app/personal/readings",
+      url: routes.personal.readings.root,
       icon: LibraryIcon,
     },
     {
       name: "Spreads",
-      url: "/app/personal/spreads",
+      url: routes.personal.spreads.root,
       icon: Cards01Icon,
     },
     {
       name: "Interpretations",
-      url: "/app/personal/interpretations",
+      url: routes.personal.interpretations.root,
       icon: ConstellationIcon,
     },
   ],
@@ -141,7 +142,7 @@ export default function AppSidebar() {
       <SidebarHeader className="mt-[6px]">
         <button
           type="button"
-          onClick={() => router.push("/app")}
+          onClick={() => router.push("/")}
           className={`flex items-center justify-start gap-2.5 pl-2 text-left group`}
         >
           <div className="w-2 h-2 rotate-45 bg-primary shrink-0 transition-transform duration-200 group-hover:scale-125 group-data-[collapsible=icon]:translate-x-2.5" />
@@ -157,14 +158,14 @@ export default function AppSidebar() {
         <SidebarGroup className="pl-3">
           <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none text-muted-foreground/60 text-[11px] tracking-[0.1em] uppercase">
             <a
-              href="/app/personal"
+              href={routes.personal.root}
               className="hover:text-muted-foreground transition-colors"
             >
               Personal
             </a>
           </SidebarGroupLabel>
           <SidebarMenu>
-            {routes.personal.map((route) => (
+            {sidebarRoutes.personal.map((route) => (
               <SidebarMenuItemComponent
                 key={route.name}
                 tooltip={route.name}

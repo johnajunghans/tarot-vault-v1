@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation"
 import { useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
+import { routes } from "@/lib/routes"
 
 interface SpreadCardProps {
     name: string
@@ -57,13 +58,13 @@ export default function SpreadCard({
 }: SpreadCardProps) {
     const router = useRouter()
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-    const toggleFavorite = useMutation(api.tables.spreads.toggleFavorite)
+    const toggleFavorite = useMutation(api.spreads.toggleFavorite)
 
     function handleCardClick() {
         if (isDraft) {
-            router.push(`/app/personal/spreads/new-spread?draft=${date}`)
+            router.push(routes.personal.spreads.new.draft(date))
         } else if (id) {
-            router.push(`/app/personal/spreads/${id}?mode=view`)
+            router.push(routes.personal.spreads.id(id, "view"))
         }
     }
 

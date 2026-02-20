@@ -17,7 +17,7 @@ import TextField from "@/components/form/text-field";
 import TextareaField from "@/components/form/textarea-field";
 import SwitchField from "@/components/form/switch-field";
 import NumberField from "@/components/form/number-field";
-import { ResponsivePanel } from "@/components/app/responsive-panel";
+import { ResponsivePanel } from "@/components/layout/responsive-panel";
 
 const GRID_SIZE = 15;
 

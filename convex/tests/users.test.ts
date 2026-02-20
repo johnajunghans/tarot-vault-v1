@@ -8,7 +8,7 @@ describe("users", () => {
     it("returns null when not authenticated", async () => {
       const t = convexTest(schema, modules);
 
-      const user = await t.query(api.tables.users.current);
+      const user = await t.query(api.users.current);
       expect(user).toBeNull();
     });
 
@@ -39,7 +39,7 @@ describe("users", () => {
         tokenIdentifier: "https://clerk.test|clerk_user_123",
       });
 
-      const user = await asUser.query(api.tables.users.current);
+      const user = await asUser.query(api.users.current);
       expect(user).not.toBeNull();
       expect(user?._id).toEqual(userId);
       expect(user?.name).toEqual("Test User");
@@ -72,7 +72,7 @@ describe("users", () => {
         primary_email_address_id: "email_1",
       };
 
-      await t.mutation(internal.tables.users.upsertFromClerk, {
+      await t.mutation(internal.users.upsertFromClerk, {
         data: clerkData,
       });
 
@@ -128,7 +128,7 @@ describe("users", () => {
         primary_email_address_id: "email_1",
       };
 
-      await t.mutation(internal.tables.users.upsertFromClerk, {
+      await t.mutation(internal.users.upsertFromClerk, {
         data: clerkData,
       });
 
@@ -164,7 +164,7 @@ describe("users", () => {
       };
 
       await expect(
-        t.mutation(internal.tables.users.upsertFromClerk, { data: clerkData })
+        t.mutation(internal.users.upsertFromClerk, { data: clerkData })
       ).rejects.toThrowError("No primary email found for user");
     });
   });
@@ -190,7 +190,7 @@ describe("users", () => {
         });
       });
 
-      await t.mutation(internal.tables.users.deleteFromClerk, {
+      await t.mutation(internal.users.deleteFromClerk, {
         clerkUserId: "clerk_user_to_delete",
       });
 
@@ -210,7 +210,7 @@ describe("users", () => {
 
       // Should not throw, just logs a warning
       await expect(
-        t.mutation(internal.tables.users.deleteFromClerk, {
+        t.mutation(internal.users.deleteFromClerk, {
           clerkUserId: "non_existent_user",
         })
       ).resolves.toBeNull();

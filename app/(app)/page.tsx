@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
+import { routes } from "@/lib/routes";
 
 export default function App() {
-  redirect("/app/personal");
+  redirect(routes.personal.root);
 }

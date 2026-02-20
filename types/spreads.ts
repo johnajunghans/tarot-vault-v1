@@ -1,4 +1,4 @@
-import { cardSchema, spreadSchema } from "@/app/app/personal/spreads/spread-schema";
+import { cardSchema, spreadSchema } from "@/app/(app)/personal/spreads/schema";
 import { Doc } from "@/convex/_generated/dataModel";
 import { spreadPositionValidator } from "@/convex/schema";
 import { Infer } from "convex/values";

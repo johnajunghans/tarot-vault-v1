@@ -1,4 +1,4 @@
-import { calcSpreadDimensions } from "./spread-functions";
+import { calcSpreadDimensions } from "../utils"
 import { CardDB } from "@/types/spreads";
 import { CARD_HEIGHT, CARD_WIDTH } from "./card";
 

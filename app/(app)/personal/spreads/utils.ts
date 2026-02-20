@@ -1,5 +1,5 @@
 import { CardDB, CardForm, CardTransform } from "@/types/spreads";
-import { CARD_HEIGHT, CARD_WIDTH } from "./card";
+import { CARD_HEIGHT, CARD_WIDTH } from "./_components/card";
 
 export function generateCard(index: number): CardForm {
     const CARDS_PER_ROW = 10;

@@ -1,8 +1,8 @@
 import { v } from "convex/values";
-import { mutation, query } from "../_generated/server";
+import { mutation, query } from "./_generated/server";
 import { getCurrentUserOrThrow } from "./users";
-import { Doc } from "../_generated/dataModel";
-import { interpretationValidator } from "../schema";
+import { Doc } from "./_generated/dataModel";
+import { interpretationValidator } from "./schema";
 
 const interpretationsCreateArgs = interpretationValidator.omit(
   "userId",

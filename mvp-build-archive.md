@@ -4,6 +4,123 @@
 
 *Ordered with most recent at the top*
 
+**02/19/2026 -- Project Structure Refactor -- Claude Sonnet 4.6**
+Summary of actions taken:
+- Created `app/app/personal/spreads/_components/` directory; moved 9 non-route files there: `canvas.tsx`, `card.tsx`, `card-overview.tsx`, `card-settings-panel.tsx`, `spread-settings-panel.tsx`, `spread-card.tsx`, `spread-thumbnail.tsx`, `spread-schema.ts`, `spread-functions.ts`
+- Updated imports in `spreads/page.tsx`, `new-spread/panel-wrapper.tsx`, `[id]/edit-panel-wrapper.tsx`, and `types/spreads.ts` to reference `_components/` paths
+- Stripped stale specification content from `mvp-build.md` (sections 0.1–0.5.1); kept change log and build plan only
+- Updated `CLAUDE.md` project structure tree to reflect `_components/` subdirectory; updated MVP Build Protocol description of `mvp-build.md`
+- Rewrote `.cursor/rules/project-structure.mdc` to reflect current actual project structure
+- All 72 tests pass; no new lint errors
+
+Future considerations:
+- The `_components/` convention (underscore prefix) is a Next.js pattern that prevents directory from being treated as a route segment; use this for any co-located feature components in future route directories
+
+**02/18/2026 -- 1.4.4 View Spreads -- Claude Opus 4.6**
+Summary of actions taken:
+- Updated `app/app/personal/spreads/[id]/page.tsx`: added `searchParams` prop to read `mode` query param; derives `"view" | "edit"` (defaults to `"edit"` for backward compat); passes `mode` to `EditPanelWrapper`
+- Updated `app/app/personal/spreads/[id]/edit-panel-wrapper.tsx`: added `mode` prop and `isViewMode` derived flag; added `VIEW_BREADCRUMBS`; view mode shows "Close" + "Edit Spread" buttons in topbar; edit mode Cancel/Discard now routes to `?mode=view` instead of spreads list; passes `isViewMode` to canvas and both panels; mobile floating toolbar hides "add card" button in view mode; dialogs only render in edit mode
+- Updated `app/app/personal/spreads/_components/canvas.tsx`: added `isViewMode` prop; hides grid `<defs>` and uses transparent background fill in view mode; disables marquee (`onMouseDown` undefined); passes `isViewMode` to `SpreadCard` children; guides `useMemo` early-returns `[]` in view mode
+- Updated `app/app/personal/spreads/_components/card.tsx`: added `isViewMode` prop; skips `Draggable.create()` in view mode (only `gsap.set` for initial position); adds native `onClick` on outer `<g>` for card selection in view mode; position sync effect still works; updated `arePropsEqual` comparator
+- Updated `app/app/personal/spreads/_components/spread-settings-panel.tsx`: added `SpreadDetailsContent` component (read-only name/description text + `CardOverviewReadOnly`); `SpreadSettingsPanel` conditionally renders details vs settings content; collapsed floating card hides "New Card" button in view mode; `addCard`/`remove`/`move` now optional
+- Updated `app/app/personal/spreads/_components/card-settings-panel.tsx`: added `CardDetailsContent` component (read-only name, description, allowReverse, x, y, rotation, z-index); `CardSettingsPanel` conditionally renders details vs settings content; `remove`/`cardCount` now optional
+- Updated `app/app/personal/spreads/_components/card-overview.tsx`: added `CardOverviewReadOnly` export (simple tile list with click-to-select, no GSAP drag, no delete buttons, label reads "Click to view")
+- Updated `app/app/personal/spreads/_components/spread-card.tsx`: changed click navigation from `?mode=edit` to `?mode=view`
+- All 72 tests pass; no new lint errors
+
+Future considerations:
+- `EditPanelWrapper` handles both view and edit modes via a `mode` prop rather than a separate component, since both modes share identical data fetching, layout, loading/not-found states, and center title logic
+- `FormProvider` remains active in view mode as a convenient reactive data source (via `useWatch`) — it's just never written to
+- If view mode grows significantly different from edit mode (e.g., different layout), consider splitting into separate wrapper components
+
+**02/18/2026 -- 1.4.3 Edit Spreads -- Claude Opus 4.6**
+Summary of actions taken:
+- Updated `components/app/app-topbar.tsx`: added optional `breadcrumbs` prop to `AppTopbarProps`; when provided, overrides auto-generated breadcrumbs; existing callers unaffected
+- Updated `app/app/personal/spreads/new-spread/page.tsx`: added `searchParams` support to parse `?draft=<timestamp>` query param; passes `draftTimestamp` to `PanelWrapper`
+- Updated `app/app/personal/spreads/new-spread/panel-wrapper.tsx`: added `draftTimestamp` prop; `draftDate` ref now uses provided timestamp or `Date.now()`; added one-time `useEffect` to load draft from localStorage and `form.reset()` with data (strips `position` field for `CardDB` → `CardForm` conversion)
+- Created `app/app/personal/spreads/[id]/page.tsx`: server component reads `params.id` and layout cookie; passes `spreadId`, `defaultLayout`, `groupId` to `EditPanelWrapper`
+- Created `app/app/personal/spreads/[id]/edit-panel-wrapper.tsx`: fetches spread via `useQuery(getById)`; populates form with `form.reset()` guarded by `hasReset` ref to prevent Convex real-time updates from resetting mid-edit; uses `update` mutation; `form.reset(data)` after save to clear dirty state; custom breadcrumbs "Personal > Spreads > Edit Spread"; loading spinner and "not found" states; Cancel/Save Edits buttons with discard dialog
+- Updated `app/app/personal/spreads/_components/spread-card.tsx`: added `useRouter` and `handleCardClick` — drafts navigate to `/new-spread?draft=<date>`, saved spreads navigate to `/spreads/<id>?mode=edit`; added `e.stopPropagation()` to draft delete button
+- All 72 tests pass; no new lint errors
+
+Future considerations:
+- `EditPanelWrapper` intentionally duplicates layout JSX from `PanelWrapper` to keep both components simple and independent; if layout logic grows complex, consider extracting a shared layout component
+- The `hasReset` ref pattern prevents Convex real-time subscription updates from overwriting user edits; if collaborative editing is added later, this pattern will need rethinking
+- Draft loading strips the `position` field (1-indexed card order) since the form uses array index; `position` is re-added at save time
+
+**02/17/2026 -- 1.2.5 Responsive Panel Component -- Claude Sonnet 4.6**
+Summary of actions taken:
+- Created `components/app/responsive-panel.tsx`: `ResponsivePanel` component; calls `useIsMobile()` internally; on mobile renders `<Sheet open side sheetTitle>`; on desktop renders `<ResizablePanel>` + `<ResizableHandle>` with configurable `handlePosition` ("before" | "after") and `hideHandle`; all sheet/handle/panel props optional for future versatility
+- Updated `spread-settings-panel.tsx`: added `open` and `onOpenChange` props to `SpreadSettingsPanelProps`; replaced `<ResizablePanel id="spread-settings-panel">` + `<ResizableHandle>` block with `<ResponsivePanel panelId="spread-settings-panel" handlePosition="after" side="left" sheetTitle="Spread Settings">`; removed `ResizablePanel`/`ResizableHandle` direct imports
+- Updated `card-settings-panel.tsx`: added `open` and `onOpenChange` props to `CardSettingsPanelProps`; replaced `<ResizableHandle>` + `<ResizablePanel id="card-settings-panel">` block with `<ResponsivePanel panelId="card-settings-panel" handlePosition="before" side="right" sheetTitle="Card Settings">`; removed `ResizablePanel`/`ResizableHandle` direct imports
+- Updated `panel-wrapper.tsx` mobile branch: replaced two explicit `<Sheet>/<SheetContent>/<SpreadSettingsContent>` and `<Sheet>/<SheetContent>/<CardSettingsContent>` blocks with `<SpreadSettingsPanel open={spreadSheetOpen} onOpenChange={setSpreadSheetOpen} ...>` and `<CardSettingsPanel open={selectedCardIndex !== null} onOpenChange={...} ...>`; removed unused imports (`SpreadSettingsContent`, `CardSettingsContent`, `Sheet`, `SheetContent`, `SheetTitle`, `Cancel01Icon`); passed `open`/`onOpenChange` to panel components in desktop branch as well (no-ops since `ResponsivePanel` detects desktop internally)
+- All 72 tests pass; no lint errors
+
+Future considerations:
+- `ResponsivePanel` returns a `<Sheet>` portal on mobile — it can be rendered anywhere in the tree (inside or outside a `ResizablePanelGroup`) without affecting the group's layout
+- The floating collapsed-state card widget in `SpreadSettingsPanel` is desktop-specific UX that lives outside `ResponsivePanel`; if new panel components need similar collapsed widgets they should follow the same pattern
+- `isMobile` conditional remains in `panel-wrapper.tsx` for structural layout differences (canvas full-width vs `<ResizablePanel>` inside group, floating toolbar); this is intentional and correct
+
+**02/17/2026 -- 1.2.4 Field Component Abstractions -- Claude Sonnet 4.6**
+Summary of actions taken:
+- Created `components/form/text-field.tsx`: `<Field>` + `<Input>` wrapper; `error?: { message?: string }` prop; extends `InputHTMLAttributes` so both `{...form.register()}` spreads and explicit `value`/`onChange`/`onBlur` props work
+- Created `components/form/textarea-field.tsx`: same API but wraps `<Textarea>` and extends `TextareaHTMLAttributes`
+- Rewrote `components/form/switch-field.tsx` stub: horizontal `<Field>` + `<Switch>`; controlled via `checked`/`onCheckedChange`
+- Created `components/form/number-field.tsx`: `<Field>` + number `<Input>`; accepts `value: number`, `onChangeValue`, optional `onBlurTransform` (e.g. `snapToGrid`), and `onBlur`; handles `parseInt` conversion internally
+- Updated `spread-settings-panel.tsx`: replaced inline `<Field>/<Input>` and `<Field>/<Textarea>` blocks with `<TextField>` and `<TextareaField>`; removed now-unused `Field`, `FieldContent`, `FieldError`, `FieldLabel`, `Input`, `Textarea` imports
+- Updated `card-settings-panel.tsx`: replaced all 7 Controller render-prop field blocks (`name`, `description`, `allowReverse`, `x`, `y`, `r`, `z`) with the new components; removed `cardErrors` variable and unused imports
+- All 72 tests pass; no lint errors
+
+Future considerations:
+- `error` prop is typed as `{ message?: string }` (not react-hook-form's `FieldError`) to accommodate `Merge<FieldError, FieldErrorsImpl>` from nested form structures; this is intentional and correct
+- `NumberField` only handles integer parsing via `parseInt`; if float values are needed in future fields, a `parseFloat` variant or a `parseMode` prop would be needed
+
+**02/17/2026 -- 1.4.2 Favoriting Spreads -- Claude Sonnet 4.6**
+Summary of actions taken:
+- Added `favorite: v.boolean()` to `spreadValidator` in `convex/schema.ts`; added `by_userId_and_favorite: ["userId", "favorite"]` index to spreads table
+- Omitted `"favorite"` from both `spreadsCreateArgs` and `spreadsUpdateArgs` in `convex/tables/spreads.ts`; `create` mutation now always inserts `favorite: false`
+- Added `toggleFavorite` mutation: verifies ownership, patches `favorite` to `!spread.favorite`
+- Added `listFavorited` query: uses the new index to return all spreads where `favorite === true` for the current user
+- Updated all direct `ctx.db.insert("spreads", ...)` calls across `spreads.test.ts`, `readings.test.ts`, and `interpretations.test.ts` to include `favorite: false`
+- Added 7 new tests: `toggleFavorite` (false→true, true→false, not-found, unauthorized) and `listFavorited` (unauthenticated, empty when none favorited, returns only favorited, excludes other users')
+- Updated `spread-card.tsx`: added `id?: Id<"spreads">` and `favorite?: boolean` props; wired star button to call `toggleFavorite`; star icon now uses `fill={favorite ? "var(--gold)" : "none"}` with `color="var(--gold)"`; tooltip text toggles between "Favorite Spread" / "Unfavorite Spread"
+- Updated `page.tsx`: passes `id={spread._id}` and `favorite={spread.favorite}` to `SpreadCard` for each saved spread
+- All 72 tests pass; no lint errors
+
+Future considerations:
+- `listFavorited` collects all favorited spreads without a limit — if a user favorites many spreads, consider adding pagination in a future step
+- The star button uses `e.stopPropagation()` to prevent card click propagation; once card navigation is wired up (future step), verify this still behaves correctly
+
+**02/17/2026 -- 1.3.10 New Spread Responsive Design -- Claude Opus 4.6**
+Summary of actions taken:
+- Added `truncate max-w-[120px] md:max-w-[200px]` to spread title in panel-wrapper topbar to prevent long titles pushing buttons off-screen
+- Added `min-w-0` to centerTitle flex containers in `app-topbar.tsx` to allow flex children to shrink
+- Extracted `SpreadSettingsContent` and `CardSettingsContent` as reusable content components from their panel wrappers
+- Lifted `addCard` callback from spread-settings-panel up to panel-wrapper for shared use
+- On mobile (`isMobile`), replaced ResizablePanelGroup with: floating toolbar (settings + add card buttons), full-width SpreadCanvas, left Sheet for spread settings, right Sheet for card settings
+- Sheets positioned below topbar with `!top-[57px] !h-[calc(100vh-57px)]` to avoid overlaying topbar
+- `handleSave` onInvalid opens spread settings sheet on mobile instead of expanding panel
+- Desktop layout unchanged (ResizablePanelGroup with collapsible panels)
+- Removed unused `useIsMobile` import from `app-topbar.tsx`
+- All 64 existing tests pass; no new lint errors
+
+Future considerations:
+- Sheet overlay covers full viewport (standard UX); only sheet content is constrained below topbar
+- Topbar height (57px) is hardcoded — if topbar height changes, sheet positioning needs updating
+- Card settings sheet auto-opens when a card is selected and auto-closes on deselect via `selectedCardIndex !== null`
+
+**02/14/2026 -- 1.4.1 Spreads Page -- Claude Opus 4.6**
+Summary of actions taken:
+- Created `spread-card.tsx` — reusable card component with name, date, and optional DRAFT badge using shadcn Card/Badge
+- Updated `page.tsx` — client component that loads saved spreads via `useQuery(api.tables.spreads.list)` and draft spreads from localStorage (`spread-draft-*` keys)
+- Responsive grid layout (`sm:grid-cols-2 lg:grid-cols-3`) with loading spinner, empty state, and conditional Drafts section
+- All 64 existing tests pass (no backend changes)
+
+Future considerations:
+- Click handlers on SpreadCard (navigate to edit/view) deferred to a future step
+- Draft cleanup (deleting stale drafts, resuming drafts) not yet implemented
+- May want to add a "New Spread" button/CTA on the empty state
+
 **02/14/2026 -- 1.3.9 Local Storage Draft Saving -- Claude Opus 4.6**
 Summary of actions taken:
 - Added localStorage draft persistence to `new-spread/panel-wrapper.tsx` using `form.watch(callback)` subscription pattern
@@ -587,6 +704,23 @@ Future considerations/recommendations/warnings:
 				~~3. New Interpretation (Prism)~~
 			~~3. Do not yet create any action for when an option is pressed.~~ 
 
+### ~~1.2.4_Field Component Abstraction~~
+1. Create abstracted components for the react-hook-form based inputs that are found in both spreads/spread-settings-panel.tsx and spreads/card-settings-panel.tsx.
+	1. These should be placed in the components/form directory
+		1. There already is a switch-field.tsx file which should be completed (or rewritten)
+	2. These components should be able to be slotted directly into the spread-settings and card-settings components.
+	3. They should all have the Shadcn <Field> component as the parent.
+	4. They should be able to be controlled or registered depending on which props are passed to it.
+2. Slot these new components into the spread settings and card settings components
+
+### ~~1.2.5_Responsive Panel Component~~
+1. Create a component called responsive-panel within the components/app directory
+	1. This component should abstract the shared logic that conditionally renders panels or sheets, depending on the value of the useIsMobile boolean hook.
+	2. This component should be able to be used in the new-spread/panel-wrapper component and/or the spread-settings and card-settings components to replace the duplicated logic that conditionally renders panels or sheets.
+	3. This component should be versitile enough to accomodate future use (rather than just being able to replace the current code)
+	4. This component should accept the content of the panel/sheet as its child.
+2. Use this component to replace the existing duplicated logic.
+
 ---
 
 ## 1.3_New Spread (archived)
@@ -752,3 +886,76 @@ Future considerations/recommendations/warnings:
 				2. The left button on the right hand side should "save as draft" which will simply not delete the localStorage object but will still route back to spreads page.
 			2. The single button on the left hand side will be "cancel" will will close the modal. 
 	5. If you think that there is a better and more efficient way to implement this logic to save spreads as localStorage please do that instead.
+
+### ~~1.3.10_New Spread Responsive Design~~
+1. For all screen widths, new spread title in topbar should be truncated with ellipses so that it does encroach on surrounding elements. For example, in mobile view, as the user types in their spread title, the corresponding string in the topbar should truncate at a certain width such that the right hand button group is not pushed off to the side.
+2. Both spread settings panel and card settings panel should turn into sheets (shadcn sheet components) at mobile viewports.
+	1. Use the useIsMobile hook to dynamically determine mobile viewports.
+	2. At mobile viewports, the spread settings panel should always be hidden with a button called "spread settings" and a small plus icon button for adding a new card. When the spread settings button is pressed, then the spread settings form should show as a sheet (i.e. it should overlay the canvas rather than displacing it like the panel does).
+	3. Similarly, at mobile viewports, selecting a card (i.e. setSelectedIndex !== null) should open up a sheet rather than the panel.
+	4. Importantly, these two sheets should NOT overlay the topbar (i.e. the whole height the screen). Instead, their height should be the same as the panel that they replace at mobile viewports. So, the only difference between the panel and the sheet is that the sheet will overlay the canvas while the panel displaces the canvas.
+	5. See components/ui/sidebar.tsx for an example of how the useIsMobile hook is used to conditionally render a sheet at mobile viewports. However, again, the height of these spread settings and card settings sheets should NOT be the whole height of the screen but instead should just conver the canvas, NOT the app-topbar.
+
+---
+
+## 1.4_View/Edit Spreads (archived)
+
+### ~~1.4.1_Spreads Page~~
+1. Create a component in /app/personal/spreads to that renders a shadcn card component showing a given spread. Eventually, clicking on the spread will open up the page to view or edit the given spread.
+	1. The component should accept a prop for whether the spread is a draft or not, in which case it should have a badge indicating that it is a draft.
+	2. The component should display the name of the spread along with the date (just MM/DD/YYYY).
+2. The spreads page (/app/personal/spreads/page.tsx) should use the `list` query in the spreads table functions to read the 10 most recently created spreads. These should be displayed using the above card component.
+3. The spreads page should also read local storage and pull all items with a key matching the pattern `spread-draft-${Date.now()}`. The date.now() value in the key can be parsed to give the date of the spread draft.
+	1. If the draft has no name, then "Untitled Spread" can be used.
+	2. These spread drafts should be rendered in a separate section from the spreads taken from the db.
+
+### ~~1.4.2_Favoriting Spreads~~
+1. Add a boolean value to the spreads convex schema called "favorite" which is a boolean. This should be false by default.
+2. This favorite boolean should not be present in the new spread form. Instead, users should be able to favorite the spreads they have saved by clicking the star icon which is currently present in the spread card component.
+3. This star icon should toggle the favorite boolean in the db.
+4. When a spread is favorited (i.e. favorite = true for that spread), then the fill of the star icon should be var(--gold).
+5. Include a function in the spreads table function which grabs the user's favorited spreads. This will be used later.
+
+### ~~1.4.3_Edit Spreads~~
+1. Create a dynamic nextjs route within the spreads route so that users can edit existing spreads that they have already created.
+	1. This route should be accessed by clicking on a certain spread within the spreads/page.tsx file.
+		1. IMPORTANT: clicking on DRAFTS should route to the new spread page, loading the draft data into that page for continued editing until the user is ready to save to the db
+	2. The url of the route should look like: /app/personal/spreads/[spread _id]?mode=edit
+		1. The use of the mode=edit param will be used later
+	3. The breadcrumbs in the app-topbar at this route should look like: Personal > Spreads > Edit Spread
+	4. The title in the app topbar should look the same that within the new-spreads page (name of spread along with number of cards), however, there should be no draft badge.
+	5. The righthand button group should have two buttons:
+		1. Primary button on the right called "Save Edits" which saves any edits made (this should be disabled if no changes are made)
+		2. Ghost button on the left which reads "Cancel"
+			1. This button should route straight back to spreads page if no edits are made
+			2. If edits have been made, this button should open a dialog confirming that the user would like to discard all edits that they've made.
+	6. This route should REUSE the canvas, spread-settings-panel, and card-settings-panel components (all located with the spreads directory)
+		1. Thus, the same components are used in this route to edit and create new spreads
+
+### ~~1.4.4_View Spreads~~
+1. Create functionality to just view (and not edit) spreads
+	1. This should be the same dynamic route as the edit spreads but with mode=view
+	2. The canvas, spread settings panel, and card settings panel components (all located with the spreads directory) should be modified to accomodate for spread viewing.
+		1. The canvas view mode:
+			1. should prevent dragging
+			2. not show a grid
+			3. not show the click and drag to select multiple cards
+			4. cards should still be clickable to view their details
+		2. The spread settings panel view mode:
+			1. should be titled "Spread Details"
+			2. should create a separate subcomponent called "SpreadDetailsContent" which should be able to be slotted into the responsive panel during view mode
+				1. should show all the same info in same order and layout but not with inputs, just text
+				2. The cards overview should remove the "drag to reorder" and they should not be draggable and there should be no delete buttons on them
+					1. clicking on cards should still select them for viewing the card details
+		3. The card settings panel view mode:
+			1. should be titled "Card Details"
+			2. should create a separate subcomponent called "CardDetailsContent" which should be able to be slotted into the responsive panel during view mode
+				1. Should show all the same information in the same order and layout but with text rather than input fields
+	3. The app-topbar should:
+		1. have the same title as the edit mode
+		2. have two buttons in the button group:
+			1. Primary "Edit Spread" button on the right: switch to edit mode
+			2. Ghost "Close" button on the left: route back to spreads page
+		3. have final breadcrumb read "View Spread"
+2. Change spreads page so that clicking on a card intially opens view mode
+3. Change edit mode so that the Cancel button goes back to view mode

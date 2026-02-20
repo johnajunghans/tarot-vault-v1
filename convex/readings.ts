@@ -1,8 +1,8 @@
 import { v } from "convex/values";
-import { mutation, query } from "../_generated/server";
+import { mutation, query } from "./_generated/server";
 import { getCurrentUserOrThrow } from "./users";
-import { Doc } from "../_generated/dataModel";
-import { readingValidator } from "../schema";
+import { Doc } from "./_generated/dataModel";
+import { readingValidator } from "./schema";
 
 const readingsCreateArgs = readingValidator.omit(
   "userId",

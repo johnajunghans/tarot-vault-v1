@@ -2,20 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { spreadSchema } from "../spread-schema";
+import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { routes } from "@/lib/routes";
 import { toast } from "sonner";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import SpreadSettingsPanel from "../spread-settings-panel";
-import SpreadCanvas from "../canvas";
-import CardSettingsPanel from "../card-settings-panel";
+import SpreadSettingsPanel from "../_components/spread-settings-panel";
+import SpreadCanvas from "../_components/canvas";
+import CardSettingsPanel from "../_components/card-settings-panel";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
-import { generateCard } from "../spread-functions";
-import AppTopbar from "@/components/app/app-topbar";
+import { generateCard } from "../utils";
+import AppTopbar from "@/components/layout/app-topbar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
@@ -41,14 +42,14 @@ interface EditPanelWrapperProps {
 }
 
 const VIEW_BREADCRUMBS = [
-    { href: "/app/personal", label: "Personal", isLast: false },
-    { href: "/app/personal/spreads", label: "Spreads", isLast: false },
+    { href: routes.personal.root, label: "Personal", isLast: false },
+    { href: routes.personal.spreads.root, label: "Spreads", isLast: false },
     { href: "#", label: "View Spread", isLast: true },
 ]
 
 const EDIT_BREADCRUMBS = [
-    { href: "/app/personal", label: "Personal", isLast: false },
-    { href: "/app/personal/spreads", label: "Spreads", isLast: false },
+    { href: routes.personal.root, label: "Personal", isLast: false },
+    { href: routes.personal.spreads.root, label: "Spreads", isLast: false },
     { href: "#", label: "Edit Spread", isLast: true },
 ]
 
@@ -65,7 +66,7 @@ export default function EditPanelWrapper({
 
     // ------------ FETCH SPREAD DATA ------------ //
 
-    const spread = useQuery(api.tables.spreads.getById, { _id: spreadId });
+    const spread = useQuery(api.spreads.getById, { _id: spreadId });
 
     // ------------ SPREAD FORM ------------ //
 
@@ -121,7 +122,7 @@ export default function EditPanelWrapper({
 
     // ------------ SAVE SPREAD LOGIC ------------ //
 
-    const updateSpread = useMutation(api.tables.spreads.update);
+    const updateSpread = useMutation(api.spreads.update);
     const [isSaving, setIsSaving] = useState(false);
     const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
 
@@ -181,7 +182,7 @@ export default function EditPanelWrapper({
 
                 form.reset(data);
                 toast.success("Spread updated successfully");
-                router.push('/app/personal/spreads');
+                router.push(routes.personal.spreads.root);
             } catch (error) {
                 toast.error(
                     `Failed to update spread: ${error instanceof Error ? error.message : "Unknown error"}`
@@ -194,7 +195,7 @@ export default function EditPanelWrapper({
 
     // ------------ DELETE SPREAD LOGIC ------------ //
 
-    const removeSpread = useMutation(api.tables.spreads.remove);
+    const removeSpread = useMutation(api.spreads.remove);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -203,7 +204,7 @@ export default function EditPanelWrapper({
         try {
             await removeSpread({ _id: spreadId });
             toast.success("Spread deleted");
-            router.push("/app/personal/spreads");
+            router.push(routes.personal.spreads.root);
         } catch (error) {
             toast.error(
                 `Failed to delete spread: ${error instanceof Error ? error.message : "Unknown error"}`
@@ -216,7 +217,7 @@ export default function EditPanelWrapper({
 
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-    const viewUrl = `/app/personal/spreads/${spreadId}?mode=view`;
+    const viewUrl = routes.personal.spreads.id(spreadId, "view");
 
     const handleCancel = useCallback(() => {
         if (!form.formState.isDirty) {
@@ -262,10 +263,10 @@ export default function EditPanelWrapper({
 
     const viewModeButtons = (
         <>
-            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={() => router.push("/app/personal/spreads")}>
+            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={() => router.push(routes.personal.spreads.root)}>
                 {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Close</span>}
             </Button>
-            <Button type="button" variant="default" size={isMobile ? "icon" : "default"} onClick={() => router.push(`/app/personal/spreads/${spreadId}?mode=edit`)}>
+            <Button type="button" variant="default" size={isMobile ? "icon" : "default"} onClick={() => router.push(routes.personal.spreads.id(spreadId, "edit"))}>
                 {isMobile ? <PencilEdit02Icon /> : <span className="text-xs lg:text-sm">Edit Spread</span>}
             </Button>
         </>

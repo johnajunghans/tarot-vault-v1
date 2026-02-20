@@ -36,7 +36,7 @@ describe("spreads", () => {
     it("throws error when not authenticated", async () => {
       const t = convexTest(schema, modules);
 
-      await expect(t.query(api.tables.spreads.list)).rejects.toThrowError(
+      await expect(t.query(api.spreads.list)).rejects.toThrowError(
         "Can't get current user"
       );
     });
@@ -45,7 +45,7 @@ describe("spreads", () => {
       const t = convexTest(schema, modules);
       const { asUser } = await setupAuthenticatedUser(t);
 
-      const spreads = await asUser.query(api.tables.spreads.list);
+      const spreads = await asUser.query(api.spreads.list);
       expect(spreads).toEqual([]);
     });
 
@@ -84,7 +84,7 @@ describe("spreads", () => {
         });
       });
 
-      const spreads = await asUser.query(api.tables.spreads.list);
+      const spreads = await asUser.query(api.spreads.list);
       expect(spreads).toHaveLength(3);
       expect(spreads[0].name).toBe("Most Recent Spread");
       expect(spreads[1].name).toBe("Middle Spread");
@@ -129,7 +129,7 @@ describe("spreads", () => {
         });
       });
 
-      const spreads = await asUser.query(api.tables.spreads.list);
+      const spreads = await asUser.query(api.spreads.list);
       expect(spreads).toHaveLength(1);
       expect(spreads[0].name).toBe("My Spread");
     });
@@ -156,7 +156,7 @@ describe("spreads", () => {
         });
       });
 
-      const spread = await asUser.query(api.tables.spreads.getById, { _id: spreadId });
+      const spread = await asUser.query(api.spreads.getById, { _id: spreadId });
       expect(spread).not.toBeNull();
       expect(spread?.name).toBe("Celtic Cross");
       expect(spread?.description).toBe("A classic 10-card spread");
@@ -180,7 +180,7 @@ describe("spreads", () => {
         return tempId;
       });
 
-      const spread = await asUser.query(api.tables.spreads.getById, { _id: fakeSpreadId });
+      const spread = await asUser.query(api.spreads.getById, { _id: fakeSpreadId });
       expect(spread).toBeNull();
     });
 
@@ -214,7 +214,7 @@ describe("spreads", () => {
       });
 
       await expect(
-        asUser.query(api.tables.spreads.getById, { _id: spreadId })
+        asUser.query(api.spreads.getById, { _id: spreadId })
       ).rejects.toThrowError("Not authorized to view this spread");
     });
   });
@@ -224,7 +224,7 @@ describe("spreads", () => {
       const t = convexTest(schema, modules);
       const { userId, asUser } = await setupAuthenticatedUser(t);
 
-      const spreadId = await asUser.mutation(api.tables.spreads.create, {
+      const spreadId = await asUser.mutation(api.spreads.create, {
         name: "Three Card Spread",
         description: "Past, Present, Future",
         numberOfCards: 3,
@@ -253,7 +253,7 @@ describe("spreads", () => {
       const t = convexTest(schema, modules);
       const { asUser } = await setupAuthenticatedUser(t);
 
-      const spreadId = await asUser.mutation(api.tables.spreads.create, {
+      const spreadId = await asUser.mutation(api.spreads.create, {
         name: "Simple Spread",
         numberOfCards: 1,
         positions: [
@@ -273,7 +273,7 @@ describe("spreads", () => {
       const { asUser } = await setupAuthenticatedUser(t);
 
       await expect(
-        asUser.mutation(api.tables.spreads.create, {
+        asUser.mutation(api.spreads.create, {
           name: "Invalid Spread",
           numberOfCards: 5, // Mismatch!
           positions: [
@@ -291,7 +291,7 @@ describe("spreads", () => {
       const { asUser } = await setupAuthenticatedUser(t);
 
       await expect(
-        asUser.mutation(api.tables.spreads.create, {
+        asUser.mutation(api.spreads.create, {
           name: "Zero Card Spread",
           numberOfCards: 0,
           positions: [],
@@ -319,7 +319,7 @@ describe("spreads", () => {
         });
       });
 
-      await asUser.mutation(api.tables.spreads.update, {
+      await asUser.mutation(api.spreads.update, {
         _id: spreadId,
         name: "Updated Name",
         description: "Added description",
@@ -348,7 +348,7 @@ describe("spreads", () => {
         });
       });
 
-      await asUser.mutation(api.tables.spreads.update, {
+      await asUser.mutation(api.spreads.update, {
         _id: spreadId,
         numberOfCards: 2,
         positions: [
@@ -383,7 +383,7 @@ describe("spreads", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.spreads.update, {
+        asUser.mutation(api.spreads.update, {
           _id: fakeSpreadId,
           name: "Updated",
         })
@@ -419,7 +419,7 @@ describe("spreads", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.spreads.update, {
+        asUser.mutation(api.spreads.update, {
           _id: spreadId,
           name: "Trying to update",
         })
@@ -445,7 +445,7 @@ describe("spreads", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.spreads.update, {
+        asUser.mutation(api.spreads.update, {
           _id: spreadId,
           numberOfCards: 5, // Mismatch with existing positions
         })
@@ -471,7 +471,7 @@ describe("spreads", () => {
         });
       });
 
-      await asUser.mutation(api.tables.spreads.remove, { _id: spreadId });
+      await asUser.mutation(api.spreads.remove, { _id: spreadId });
 
       const spread = await t.run(async (ctx) => {
         return await ctx.db.get(spreadId);
@@ -498,7 +498,7 @@ describe("spreads", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.spreads.remove, { _id: fakeSpreadId })
+        asUser.mutation(api.spreads.remove, { _id: fakeSpreadId })
       ).rejects.toThrowError("Spread not found");
     });
 
@@ -531,7 +531,7 @@ describe("spreads", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.spreads.remove, { _id: spreadId })
+        asUser.mutation(api.spreads.remove, { _id: spreadId })
       ).rejects.toThrowError("Not authorized to delete this spread");
     });
   });
@@ -552,7 +552,7 @@ describe("spreads", () => {
         });
       });
 
-      await asUser.mutation(api.tables.spreads.toggleFavorite, { _id: spreadId });
+      await asUser.mutation(api.spreads.toggleFavorite, { _id: spreadId });
 
       const spread = await t.run(async (ctx) => ctx.db.get(spreadId));
       expect(spread?.favorite).toBe(true);
@@ -573,7 +573,7 @@ describe("spreads", () => {
         });
       });
 
-      await asUser.mutation(api.tables.spreads.toggleFavorite, { _id: spreadId });
+      await asUser.mutation(api.spreads.toggleFavorite, { _id: spreadId });
 
       const spread = await t.run(async (ctx) => ctx.db.get(spreadId));
       expect(spread?.favorite).toBe(false);
@@ -597,7 +597,7 @@ describe("spreads", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.spreads.toggleFavorite, { _id: fakeSpreadId })
+        asUser.mutation(api.spreads.toggleFavorite, { _id: fakeSpreadId })
       ).rejects.toThrowError("Spread not found");
     });
 
@@ -630,7 +630,7 @@ describe("spreads", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.spreads.toggleFavorite, { _id: spreadId })
+        asUser.mutation(api.spreads.toggleFavorite, { _id: spreadId })
       ).rejects.toThrowError("Not authorized to update this spread");
     });
   });
@@ -640,7 +640,7 @@ describe("spreads", () => {
       const t = convexTest(schema, modules);
 
       await expect(
-        t.query(api.tables.spreads.listFavorited)
+        t.query(api.spreads.listFavorited)
       ).rejects.toThrowError("Can't get current user");
     });
 
@@ -659,7 +659,7 @@ describe("spreads", () => {
         });
       });
 
-      const favorited = await asUser.query(api.tables.spreads.listFavorited);
+      const favorited = await asUser.query(api.spreads.listFavorited);
       expect(favorited).toEqual([]);
     });
 
@@ -686,7 +686,7 @@ describe("spreads", () => {
         });
       });
 
-      const favorited = await asUser.query(api.tables.spreads.listFavorited);
+      const favorited = await asUser.query(api.spreads.listFavorited);
       expect(favorited).toHaveLength(1);
       expect(favorited[0].name).toBe("Favorited Spread");
     });
@@ -719,7 +719,7 @@ describe("spreads", () => {
         });
       });
 
-      const favorited = await asUser.query(api.tables.spreads.listFavorited);
+      const favorited = await asUser.query(api.spreads.listFavorited);
       expect(favorited).toEqual([]);
     });
   });

@@ -2,19 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { spreadSchema } from "../spread-schema";
+import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { routes } from "@/lib/routes";
 import { toast } from "sonner";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import SpreadSettingsPanel from "../spread-settings-panel";
-import SpreadCanvas from "../canvas";
-import CardSettingsPanel from "../card-settings-panel";
+import SpreadSettingsPanel from "../_components/spread-settings-panel";
+import SpreadCanvas from "../_components/canvas";
+import CardSettingsPanel from "../_components/card-settings-panel";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
-import { generateCard } from "../spread-functions";
-import AppTopbar from "@/components/app/app-topbar";
+import { generateCard } from "../utils"
+import AppTopbar from "@/components/layout/app-topbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -124,7 +125,7 @@ export default function PanelWrapper({
 
     // ------------ SAVE SPREAD LOGIC ------------ //
 
-    const createSpread = useMutation(api.tables.spreads.create);
+    const createSpread = useMutation(api.spreads.create);
     const [isSaving, setIsSaving] = useState(false);
     const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
 
@@ -182,7 +183,7 @@ export default function PanelWrapper({
                 });
 
                 localStorage.removeItem(draftKey);
-                router.push("/app/personal/spreads");
+                router.push(routes.personal.spreads.root);
                 toast.success("Spread created successfully");
             } catch (error) {
                 toast.error(
@@ -204,7 +205,7 @@ export default function PanelWrapper({
             // In this case, a draft has been created because changes were made, so the draft should be deleted.
             // However, this should only occur when a spread is brand new (i.e. draftTimestamp === undefined). Otherwise, this would delete a users draft if they went in, made no changes, then left.
             if (!draftTimestamp) localStorage.removeItem(draftKey)
-            router.push("/app/personal/spreads");
+            router.push(routes.personal.spreads.root);
             return;
         }
         setShowDiscardDialog(true);
@@ -212,7 +213,7 @@ export default function PanelWrapper({
 
     const handleSaveAsDraft = useCallback(() => {
         setShowDiscardDialog(false);
-        router.push("/app/personal/spreads");
+        router.push(routes.personal.spreads.root);
     }, [router]);
 
     const handleConfirmDiscard = useCallback(() => {
@@ -221,7 +222,7 @@ export default function PanelWrapper({
         localStorage.removeItem(key);
         form.reset();
         setShowDiscardDialog(false);
-        router.push("/app/personal/spreads");
+        router.push(routes.personal.spreads.root);
     }, [form, router]);
 
 

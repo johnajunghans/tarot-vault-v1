@@ -18,14 +18,14 @@ http.route({
     switch (event.type) {
       case "user.created": // intentional fallthrough
       case "user.updated":
-        await ctx.runMutation(internal.tables.users.upsertFromClerk, {
+        await ctx.runMutation(internal.users.upsertFromClerk, {
           data: event.data,
         });
         break;
 
       case "user.deleted": {
         const clerkUserId = event.data.id!;
-        await ctx.runMutation(internal.tables.users.deleteFromClerk, { 
+        await ctx.runMutation(internal.users.deleteFromClerk, { 
           clerkUserId 
         });
         break;

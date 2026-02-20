@@ -1,6 +1,6 @@
-import AppTopbar from "@/components/app/app-topbar"
+import AppTopbar from "@/components/layout/app-topbar"
 
-export default function Personal() {
+export default function Readings() {
     return (
         <>
             <AppTopbar />

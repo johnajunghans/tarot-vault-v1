@@ -52,13 +52,22 @@ app/                     # Next.js App Router
     ├── layout.tsx      # App layout with sidebar and topbar
     ├── page.tsx        # Dashboard (redirects to /app/personal)
     ├── personal/       # Personal workspace
+    │   └── spreads/    # Spreads feature
+    │       ├── page.tsx              # List route
+    │       ├── _components/          # Shared feature components (canvas, card, panels, schema, etc.)
+    │       ├── new-spread/           # Create route + panel-wrapper
+    │       └── [id]/                 # View/edit route + edit-panel-wrapper
     └── collective/     # Collective workspace (future)
 
 components/
-├── app/                # App-specific components (sidebar, topbar)
+├── app/                # App-specific components (sidebar, topbar, responsive-panel)
+├── form/               # Reusable react-hook-form field components
 ├── ui/                 # Base UI components (shadcn/ui)
 ├── ConvexClientProvider.tsx  # Clerk + Convex integration
 └── ThemeProvider.tsx   # Theme provider (next-themes)
+
+types/                  # Shared TypeScript types
+└── spreads.ts          # Spread/card types derived from schema and zod
 
 convex/                 # Convex backend
 ├── schema.ts           # Database schema definitions
@@ -273,7 +282,7 @@ When you have a step to complete (e.g., "Complete step 1.1.1"):
    - Run tests with `npm run test:once`
    - If all tests pass, proceed to step 3; if not, debug and rerun until passing
    - Recommend any manual user actions (e.g., environment variable updates in Convex dashboard)
-   - Create an entry in the completion log (section 0.5.2 of `mvp-build.md`)
+   - Create an entry in the `# Change Log` section of `mvp-build.md`
 3. **Follow-up**: Await potential follow-up prompts
    - If the user provides additional feedback, repeat step 2 and update the completion log entry
 
@@ -287,6 +296,5 @@ When you have a step to complete (e.g., "Complete step 1.1.1"):
 ### Referencing mvp-build.md
 
 The `mvp-build.md` file contains:
-- **0.5.1**: Example completion log entry format
-- **0.5.2**: Actual completion log (updated as steps are finished)
-- **Sections 1+**: Individual step definitions with requirements and acceptance criteria
+- **`# Change Log`**: Completion log entries, most recent first (updated as steps are finished)
+- **`# Build Plan`**: Individual step definitions with requirements and acceptance criteria

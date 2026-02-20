@@ -58,7 +58,7 @@ describe("readings", () => {
     it("throws error when not authenticated", async () => {
       const t = convexTest(schema, modules);
 
-      await expect(t.query(api.tables.readings.list)).rejects.toThrowError(
+      await expect(t.query(api.readings.list)).rejects.toThrowError(
         "Can't get current user"
       );
     });
@@ -67,7 +67,7 @@ describe("readings", () => {
       const t = convexTest(schema, modules);
       const { asUser } = await setupAuthenticatedUser(t);
 
-      const readings = await asUser.query(api.tables.readings.list);
+      const readings = await asUser.query(api.readings.list);
       expect(readings).toEqual([]);
     });
 
@@ -117,7 +117,7 @@ describe("readings", () => {
         });
       });
 
-      const readings = await asUser.query(api.tables.readings.list);
+      const readings = await asUser.query(api.readings.list);
       expect(readings).toHaveLength(3);
       expect(readings[0].question).toBe("Most recent question");
       expect(readings[1].question).toBe("Middle question");
@@ -175,7 +175,7 @@ describe("readings", () => {
         });
       });
 
-      const readings = await asUser.query(api.tables.readings.list);
+      const readings = await asUser.query(api.readings.list);
       expect(readings).toHaveLength(1);
       expect(readings[0].question).toBe("My question");
     });
@@ -214,7 +214,7 @@ describe("readings", () => {
         });
       });
 
-      const readings = await asUser.query(api.tables.readings.listStarred);
+      const readings = await asUser.query(api.readings.listStarred);
       expect(readings).toHaveLength(1);
       expect(readings[0].question).toBe("Starred reading");
       expect(readings[0].starred).toBe(true);
@@ -227,7 +227,7 @@ describe("readings", () => {
       const { userId, asUser } = await setupAuthenticatedUser(t);
       const spreadId = await createTestSpread(t, userId);
 
-      const readingId = await asUser.mutation(api.tables.readings.create, {
+      const readingId = await asUser.mutation(api.readings.create, {
         question: "What does the future hold?",
         date: Date.now(),
         drawMethod: "digital",
@@ -262,7 +262,7 @@ describe("readings", () => {
       const { userId, asUser } = await setupAuthenticatedUser(t);
       const spreadId = await createTestSpread(t, userId);
 
-      const readingId = await asUser.mutation(api.tables.readings.create, {
+      const readingId = await asUser.mutation(api.readings.create, {
         question: "Question with context",
         date: Date.now(),
         drawMethod: "manual",
@@ -309,7 +309,7 @@ describe("readings", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.readings.create, {
+        asUser.mutation(api.readings.create, {
           question: "Test question",
           date: Date.now(),
           drawMethod: "digital",
@@ -344,7 +344,7 @@ describe("readings", () => {
         });
       });
 
-      await asUser.mutation(api.tables.readings.update, {
+      await asUser.mutation(api.readings.update, {
         _id: readingId,
         question: "Updated question",
         starred: true,
@@ -390,7 +390,7 @@ describe("readings", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.readings.update, {
+        asUser.mutation(api.readings.update, {
           _id: fakeReadingId,
           question: "Updated",
         })
@@ -440,7 +440,7 @@ describe("readings", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.readings.update, {
+        asUser.mutation(api.readings.update, {
           _id: readingId,
           question: "Trying to update",
         })
@@ -469,7 +469,7 @@ describe("readings", () => {
         });
       });
 
-      await asUser.mutation(api.tables.readings.remove, { _id: readingId });
+      await asUser.mutation(api.readings.remove, { _id: readingId });
 
       const reading = await t.run(async (ctx) => {
         return await ctx.db.get(readingId);
@@ -508,7 +508,7 @@ describe("readings", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.readings.remove, { _id: fakeReadingId })
+        asUser.mutation(api.readings.remove, { _id: fakeReadingId })
       ).rejects.toThrowError("Reading not found");
     });
 
@@ -554,7 +554,7 @@ describe("readings", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.readings.remove, { _id: readingId })
+        asUser.mutation(api.readings.remove, { _id: readingId })
       ).rejects.toThrowError("Not authorized to delete this reading");
     });
   });

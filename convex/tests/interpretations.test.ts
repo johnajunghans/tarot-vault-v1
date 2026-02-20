@@ -67,7 +67,7 @@ describe("interpretations", () => {
       const t = convexTest(schema, modules);
 
       await expect(
-        t.query(api.tables.interpretations.list)
+        t.query(api.interpretations.list)
       ).rejects.toThrowError("Can't get current user");
     });
 
@@ -76,7 +76,7 @@ describe("interpretations", () => {
       const { asUser } = await setupAuthenticatedUser(t);
 
       const interpretations = await asUser.query(
-        api.tables.interpretations.list
+        api.interpretations.list
       );
       expect(interpretations).toEqual([]);
     });
@@ -119,7 +119,7 @@ describe("interpretations", () => {
       });
 
       const interpretations = await asUser.query(
-        api.tables.interpretations.list
+        api.interpretations.list
       );
       expect(interpretations).toHaveLength(3);
       expect(interpretations[0].content).toBe("Most recent interpretation");
@@ -187,7 +187,7 @@ describe("interpretations", () => {
       });
 
       const interpretations = await asUser.query(
-        api.tables.interpretations.list
+        api.interpretations.list
       );
       expect(interpretations).toHaveLength(1);
       expect(interpretations[0].content).toBe("My interpretation");
@@ -226,7 +226,7 @@ describe("interpretations", () => {
       });
 
       const interpretations = await asUser.query(
-        api.tables.interpretations.listByReading,
+        api.interpretations.listByReading,
         { readingId: readingId1 }
       );
       expect(interpretations).toHaveLength(1);
@@ -247,7 +247,7 @@ describe("interpretations", () => {
       });
 
       await expect(
-        asUser.query(api.tables.interpretations.listByReading, {
+        asUser.query(api.interpretations.listByReading, {
           readingId: fakeReadingId,
         })
       ).rejects.toThrowError("Reading not found");
@@ -294,7 +294,7 @@ describe("interpretations", () => {
       });
 
       await expect(
-        asUser.query(api.tables.interpretations.listByReading, {
+        asUser.query(api.interpretations.listByReading, {
           readingId: otherReadingId,
         })
       ).rejects.toThrowError(
@@ -334,7 +334,7 @@ describe("interpretations", () => {
       });
 
       const selfInterpretations = await asUser.query(
-        api.tables.interpretations.listBySource,
+        api.interpretations.listBySource,
         { source: "self" }
       );
       expect(selfInterpretations).toHaveLength(1);
@@ -372,7 +372,7 @@ describe("interpretations", () => {
       });
 
       const aiInterpretations = await asUser.query(
-        api.tables.interpretations.listBySource,
+        api.interpretations.listBySource,
         { source: "ai" }
       );
       expect(aiInterpretations).toHaveLength(1);
@@ -388,7 +388,7 @@ describe("interpretations", () => {
       const readingId = await createTestReading(t, userId);
 
       const interpretationId = await asUser.mutation(
-        api.tables.interpretations.create,
+        api.interpretations.create,
         {
           readingId,
           content: "This reading suggests new beginnings...",
@@ -420,7 +420,7 @@ describe("interpretations", () => {
 
       const now = Date.now();
       const interpretationId = await asUser.mutation(
-        api.tables.interpretations.create,
+        api.interpretations.create,
         {
           readingId,
           content: "AI generated interpretation...",
@@ -463,7 +463,7 @@ describe("interpretations", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.interpretations.create, {
+        asUser.mutation(api.interpretations.create, {
           readingId: fakeReadingId,
           content: "Test content",
           source: "self",
@@ -512,7 +512,7 @@ describe("interpretations", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.interpretations.create, {
+        asUser.mutation(api.interpretations.create, {
           readingId: otherReadingId,
           content: "Trying to create",
           source: "self",
@@ -539,7 +539,7 @@ describe("interpretations", () => {
         });
       });
 
-      await asUser.mutation(api.tables.interpretations.update, {
+      await asUser.mutation(api.interpretations.update, {
         _id: interpretationId,
         content: "Updated content",
         focus: "relationships",
@@ -571,7 +571,7 @@ describe("interpretations", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.interpretations.update, {
+        asUser.mutation(api.interpretations.update, {
           _id: fakeInterpretationId,
           content: "Updated",
         })
@@ -626,7 +626,7 @@ describe("interpretations", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.interpretations.update, {
+        asUser.mutation(api.interpretations.update, {
           _id: otherInterpretationId,
           content: "Trying to update",
         })
@@ -650,7 +650,7 @@ describe("interpretations", () => {
         });
       });
 
-      await asUser.mutation(api.tables.interpretations.remove, {
+      await asUser.mutation(api.interpretations.remove, {
         _id: interpretationId,
       });
 
@@ -679,7 +679,7 @@ describe("interpretations", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.interpretations.remove, {
+        asUser.mutation(api.interpretations.remove, {
           _id: fakeInterpretationId,
         })
       ).rejects.toThrowError("Interpretation not found");
@@ -733,7 +733,7 @@ describe("interpretations", () => {
       });
 
       await expect(
-        asUser.mutation(api.tables.interpretations.remove, {
+        asUser.mutation(api.interpretations.remove, {
           _id: otherInterpretationId,
         })
       ).rejects.toThrowError("Not authorized to delete this interpretation");

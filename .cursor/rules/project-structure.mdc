@@ -14,126 +14,142 @@ Tarot Vault is a full-stack tarot reading application built with Next.js, Convex
 ### Core
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
-- **React**: 19.2.4
+- **React**: 19
 
 ### Backend
 - **Database**: Convex (real-time database with server functions)
 - **Authentication**: Clerk
-- **Hosting**: Vercel (planned)
+- **Hosting**: Vercel
 
 ### Frontend
 - **UI Library**: shadcn/ui (base-nova style)
 - **Styling**: Tailwind CSS 4
 - **Icons**: hugeicons-react
-- **Fonts**: Philosopher (main), Geist Mono (code)
+- **Animation/Drag**: GSAP + Draggable plugin
 
 ### Development
 - **Package Manager**: npm
+- **Testing**: Vitest with convex-test
 - **Linting**: ESLint with Convex plugin
-- **Formatting**: Prettier
 
 ## Project Structure
 
 ```
 /
-├── app/                    # Next.js App Router pages
-│   ├── layout.tsx         # Root layout with Clerk & Convex providers
-│   ├── page.tsx           # Landing page (auth required)
-│   ├── app/               # Main app routes
-│   │   ├── layout.tsx     # App layout with sidebar
-│   │   ├── page.tsx       # App home
-│   │   └── personal/      # Personal workspace routes
-│   │       └── page.tsx
-│   └── server/            # Server-side rendering examples
-│       └── page.tsx
+├── app/                         # Next.js App Router pages
+│   ├── layout.tsx               # Root layout with Clerk/Convex/Theme providers
+│   ├── page.tsx                 # Landing page (public, redirects authenticated users)
+│   └── app/                     # Protected routes (requires auth via proxy.ts)
+│       ├── layout.tsx           # App layout with sidebar and topbar
+│       ├── page.tsx             # Redirects to /app/personal
+│       └── personal/            # Personal workspace
+│           └── spreads/         # Spreads feature
+│               ├── page.tsx                    # List route
+│               ├── _components/                # Shared feature components
+│               │   ├── canvas.tsx              # SVG drag canvas
+│               │   ├── card.tsx                # GSAP draggable card
+│               │   ├── card-overview.tsx       # Sortable card list
+│               │   ├── card-settings-panel.tsx # Card details panel/sheet
+│               │   ├── spread-settings-panel.tsx # Spread settings panel/sheet
+│               │   ├── spread-card.tsx         # Spread list card component
+│               │   ├── spread-thumbnail.tsx    # SVG spread preview
+│               │   ├── spread-schema.ts        # Zod validation schema
+│               │   └── spread-functions.ts     # Shared utility functions
+│               ├── new-spread/
+│               │   ├── page.tsx                # Create route
+│               │   └── panel-wrapper.tsx       # Create UI with form/canvas/panels
+│               └── [id]/
+│                   ├── page.tsx                # View/edit route
+│                   └── edit-panel-wrapper.tsx  # View/edit UI
 ├── components/
-│   ├── app/               # App-specific components
-│   │   └── app-sidebar.tsx  # Main navigation sidebar
-│   ├── ui/                # shadcn/ui components
-│   │   ├── button.tsx
-│   │   ├── input.tsx
-│   │   ├── sidebar.tsx
-│   │   └── ...
-│   └── ConvexClientProvider.tsx  # Convex + Clerk integration
-├── convex/                # Convex backend
-│   ├── _generated/        # Auto-generated types and API
-│   ├── auth.config.ts     # Clerk JWT configuration
-│   ├── schema.ts          # Database schema definitions
-│   ├── myFunctions.ts     # Example functions (to be replaced)
-│   └── README.md
-├── hooks/                 # React hooks
+│   ├── app/                     # App-specific components
+│   │   ├── app-sidebar.tsx      # Main navigation sidebar
+│   │   ├── app-topbar.tsx       # Top navigation bar with breadcrumbs
+│   │   └── responsive-panel.tsx # Mobile/desktop panel abstraction
+│   ├── form/                    # react-hook-form field components
+│   │   ├── text-field.tsx
+│   │   ├── textarea-field.tsx
+│   │   ├── switch-field.tsx
+│   │   └── number-field.tsx
+│   ├── providers/               # Context providers
+│   │   └── ThemeProvider.tsx
+│   ├── ui/                      # shadcn/ui components
+│   └── ConvexClientProvider.tsx # Convex + Clerk integration
+├── convex/                      # Convex backend
+│   ├── _generated/              # Auto-generated types and API
+│   ├── auth.config.ts           # Clerk JWT configuration
+│   ├── schema.ts                # Database schema definitions
+│   ├── http.ts                  # HTTP routes (Clerk webhooks)
+│   ├── tables/                  # Organized by database table
+│   │   ├── users.ts
+│   │   ├── readings.ts
+│   │   ├── spreads.ts
+│   │   └── interpretations.ts
+│   └── tests/                   # Backend tests (Vitest + convex-test)
+│       ├── test.setup.ts
+│       └── *.test.ts
+├── hooks/                       # Custom React hooks
 │   └── use-mobile.ts
-├── lib/                   # Utilities
-│   └── utils.ts           # cn() helper for Tailwind
-├── public/                # Static assets
-│   └── convex.svg
-├── .cursor/rules/         # Cursor AI rules
-│   ├── convex_rules.mdc
-│   └── mvp-build-protocl.mdc
-├── mvp-build.md          # MVP specifications and build plan
-├── components.json       # shadcn/ui configuration
-├── package.json
+├── lib/                         # Utilities
+│   └── utils.ts
+├── types/                       # Shared TypeScript types
+│   └── spreads.ts               # Spread/card types derived from schema and zod
+├── proxy.ts                     # Clerk middleware (protects /app/*)
+├── mvp-build.md                 # Change log and build plan
+├── components.json              # shadcn/ui configuration
 └── tsconfig.json
 ```
 
-## Database Schema (Planned)
+## Database Schema
 
 ### Tables
 
 #### users
-- `_id`: users._id
-- `authId`: string (Clerk ID)
+- `_id`, `_creationTime` (system)
+- `authId`: string (Clerk user ID)
 - `tokenIdentifier`: string
 - `createdAt`, `updatedAt`, `lastSignedIn`: string
 - `name`, `email`: string
 - `settings`: object (theme, preferences, notifications)
+- Index: `by_authId`
 
 #### readings
-- `_id`: readings._id
+- `_id`, `_creationTime` (system)
 - `userId`: users._id
 - `question`: string
-- `date`: string
-- `drawMethod`: "manual" | "digital"
 - `spread`: { id: spreads._id, version: number }
-- `useReverseMeanings`: boolean
-- `results`: { signifier?: Card, cards: Card[] }
 - `starred`: boolean
-- Optional: `title`, `context`, `image`, `parent`, `notes`, `interpretations`
+- `updatedAt`: number
+- Optional: `title`, `context`, `parent`, `drawMethod`, `useReverseMeanings`, `results`
+- Indexes: `by_userId_and_updatedAt`, `by_userId_and_starred`
 
 #### interpretations
-- `_id`: interpretations._id
+- `_id`, `_creationTime` (system)
 - `userId`: users._id
 - `readingId`: readings._id
 - `content`: string
 - `source`: "self" | "ai"
-- `aiMetadata`: object (tier, model, costs)
+- `updatedAt`: number
+- Optional: `aiMetadata` (model, tokens, cost)
+- Indexes: `by_userId`, `by_readingId`, `by_userId_and_source`
 
 #### spreads
-- `_id`: spreads._id
+- `_id`, `_creationTime` (system)
 - `userId`: users._id
 - `name`: string
 - `numberOfCards`: number (1-78)
-- `positions`: array of { name, description, transform }
-
-### Custom Types
-
-**Card Object**:
-```typescript
-{
-  id: number,        // 0-77
-  position?: number, // 1-78
-  reversed: boolean,
-  notes: string
-}
-```
+- `favorite`: boolean
+- `updatedAt`: number
+- `positions`: array of `{ position, name, description?, allowReverse?, x, y, r, z }`
+- Optional: `description`
+- Indexes: `by_userId_and_updatedAt`, `by_userId_and_favorite`
 
 ## Key Conventions
 
 ### Routing
-- Landing page: `/` (requires auth)
-- App routes: `/app/*`
+- Public: `/` (landing page)
+- Protected: `/app/*` (middleware in `proxy.ts`)
 - Personal workspace: `/app/personal/*`
-- Server examples: `/server/*`
 
 ### Path Aliases
 - `@/components` → `./components`
@@ -143,38 +159,34 @@ Tarot Vault is a full-stack tarot reading application built with Next.js, Convex
 
 ### Convex Integration
 - Use `api` from `convex/_generated/api` for public functions
-- Use `internal` for internal functions
-- Follow Convex function syntax with args/returns validators
+- Use `internal` for internal-only functions
+- All functions require `args` and `returns` validators
+- All handlers call `getCurrentUserOrThrow(ctx)` for auth
 - See `.cursor/rules/convex_rules.mdc` for detailed guidelines
 
 ### Authentication
-- Clerk provides auth with `<ClerkProvider>` in root layout
-- Convex integrates via `ConvexProviderWithClerk`
-- Use `<Authenticated>` and `<Unauthenticated>` components
-- JWT issuer domain configured in `convex/auth.config.ts`
+- Clerk handles sign-in/sign-up and JWT generation
+- `proxy.ts` middleware protects `/app/*` routes
+- Convex validates JWT via `CLERK_JWT_ISSUER_DOMAIN`
+- Clerk webhooks sync user data to Convex `users` table
 
-### Styling
-- Tailwind CSS 4 with custom configuration
-- shadcn/ui base-nova style with stone base color
-- CSS variables enabled for theming
+### Feature Component Organization
+- Non-route files in route directories use `_components/` subdirectory (underscore prevents Next.js from treating it as a route segment)
+- See `spreads/_components/` for the canonical example
 
 ### Scripts
-- `npm run dev`: Start both frontend (Next.js) and backend (Convex)
+- `npm run dev`: Start frontend + backend in parallel
 - `npm run dev:frontend`: Next.js dev server only
 - `npm run dev:backend`: Convex dev server only
 - `npm run build`: Production build
 - `npm run lint`: ESLint check
+- `npm run test:once`: Single test run (72 tests)
 
 ## Important Files
 
-- `mvp-build.md`: Complete MVP specifications and build plan
+- `CLAUDE.md`: Primary AI agent instructions and architecture reference
+- `mvp-build.md`: Change log and build plan steps
 - `.cursor/rules/convex_rules.mdc`: Convex coding guidelines
+- `.cursor/rules/convex-testing.mdc`: Convex test patterns
+- `convex/schema.ts`: Source of truth for database schema
 - `components.json`: shadcn/ui configuration
-- `convex/schema.ts`: Database schema (currently placeholder)
-
-## Resources
-
-- [Convex Docs](https://docs.convex.dev/)
-- [Next.js App Router](https://nextjs.org/docs/app)
-- [Clerk + Convex Setup](https://docs.convex.dev/auth/clerk)
-- [shadcn/ui](https://ui.shadcn.com/)

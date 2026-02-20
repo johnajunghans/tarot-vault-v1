@@ -10,6 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { routes } from "@/lib/routes"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -54,7 +55,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
   const segments = appIndex === -1 ? rawSegments : rawSegments.slice(appIndex + 1)
 
   const autoBreadcrumbs = segments.map((segment, index) => {
-    const href = `/app/${segments.slice(0, index + 1).join("/")}`
+    const href = `/${segments.slice(0, index + 1).join("/")}`
     return {
       href,
       label: formatSegment(decodeURIComponent(segment)),
@@ -137,7 +138,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="justify-between gap-8"
-                onClick={() => router.push("/app/personal/spreads/new-spread")}
+                onClick={() => router.push(routes.personal.spreads.new.root)}
               >
                 <span>Spread</span>
                 <Cards01Icon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />

@@ -1,6 +1,6 @@
 import { v, Validator } from "convex/values";
-import { internalMutation, query, QueryCtx } from "../_generated/server";
-import { userValidator } from "../schema";
+import { internalMutation, query, QueryCtx } from "./_generated/server";
+import { userValidator } from "./schema";
 
 type ClerkEmailAddress = {
   id: string;
