@@ -21,5 +21,5 @@ export default async function NewSpreadPage({ searchParams }: NewSpreadPageProps
     ? Number(resolvedSearchParams.draft)
     : undefined
 
-  return <PanelWrapper defaultLayout={defaultLayout} groupId={groupId} draftTimestamp={draftTimestamp} />
+  return <PanelWrapper defaultLayout={defaultLayout} groupId={groupId} loadedDraftDate={draftTimestamp} />
 }

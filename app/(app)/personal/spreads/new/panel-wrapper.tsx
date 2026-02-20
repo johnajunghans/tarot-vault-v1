@@ -30,20 +30,20 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
+import { Cancel01Icon, Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
     groupId: string
-    draftTimestamp?: number
+    loadedDraftDate?: number
 }
 
 export default function PanelWrapper({
     defaultLayout,
     groupId,
-    draftTimestamp,
+    loadedDraftDate,
 }: PanelWrapperProps) {
     const router = useRouter();
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
@@ -67,14 +67,14 @@ export default function PanelWrapper({
 
     // ------------ SPREAD DRAFT LOGIC ------------ //
 
-    const draftDate = useRef(draftTimestamp ?? Date.now());
+    const draftDate = useRef(loadedDraftDate ?? Date.now());
     const draftKey = draftDate.current ? `spread-draft-${draftDate.current}` : ""
     const isDiscardingRef = useRef(false);
 
     // Load draft from localStorage when navigating with ?draft= param
     useEffect(() => {
-        if (!draftTimestamp) return;
-        const raw = localStorage.getItem(`spread-draft-${draftTimestamp}`);
+        if (!loadedDraftDate) return;
+        const raw = localStorage.getItem(`spread-draft-${loadedDraftDate}`);
         if (!raw) return;
         try {
             const draft = JSON.parse(raw) as SpreadForm & { date?: number; numberOfCards?: number };
@@ -199,17 +199,21 @@ export default function PanelWrapper({
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
     const handleDiscard = useCallback(() => {
-        if (!form.formState.isDirty) {
+        if (!form.formState.isDirty && !loadedDraftDate) {
             // Remove stored draft ONLY if brand new with no net changes made.
-            // This handles the edge case of a user making changes to the form, then reverting those changes back and discarding which does not trigger a modal. 
+            // This handles the edge case of a user making changes to the form, then reverting those changes back and discarding which does not trigger a modal.
             // In this case, a draft has been created because changes were made, so the draft should be deleted.
             // However, this should only occur when a spread is brand new (i.e. draftTimestamp === undefined). Otherwise, this would delete a users draft if they went in, made no changes, then left.
-            if (!draftTimestamp) localStorage.removeItem(draftKey)
+            localStorage.removeItem(draftKey)
             router.push(routes.personal.spreads.root);
             return;
         }
         setShowDiscardDialog(true);
     }, [form.formState.isDirty, router]);
+
+    const handleClose = useCallback(() => {
+        router.push(routes.personal.spreads.root);
+    }, [router]);
 
     const handleSaveAsDraft = useCallback(() => {
         setShowDiscardDialog(false);
@@ -242,13 +246,30 @@ export default function PanelWrapper({
             }
             rightButtonGroup={
                 <>
-                    <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleDiscard}>
-                        {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Discard</span> }
-                    </Button>
-                    <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
-                        {isSaving && <Spinner />}
-                        <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Spread"}</span>
-                    </Button>
+                    {loadedDraftDate ? (
+                        <>
+                            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleClose}>
+                                {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Close</span> }
+                            </Button>
+                            <Button type="button" variant="destructive" size={isMobile ? "icon" : "default"} onClick={handleDiscard}>
+                                {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Discard</span> }
+                            </Button>
+                            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
+                                {isSaving && <Spinner />}
+                                <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Spread"}</span>
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleDiscard}>
+                                {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Discard</span> }
+                            </Button>
+                            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
+                                {isSaving && <Spinner />}
+                                <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Spread"}</span>
+                            </Button>
+                        </>
+                    )}
                 </>
             }
         />
