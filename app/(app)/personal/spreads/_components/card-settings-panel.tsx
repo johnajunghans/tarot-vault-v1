@@ -408,7 +408,7 @@ export default function CardSettingsPanel({
         collapsible
         defaultSize="20%"
         minSize={240}
-        maxSize="40%"
+        maxSize={480}
         handlePosition="before"
         hideHandle={selectedCardIndex === null}
         side="right"

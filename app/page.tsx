@@ -11,6 +11,7 @@ import {
   ConstellationIcon,
   ArrowRight01Icon,
 } from "hugeicons-react";
+import { routes } from "@/lib/routes";
 
 export default function Home() {
   return (
@@ -41,7 +42,7 @@ function LoadingScreen() {
 function RedirectToApp() {
   const router = useRouter();
   useEffect(() => {
-    router.replace("/app");
+    router.replace(routes.personal.root);
   }, [router]);
   return null;
 }

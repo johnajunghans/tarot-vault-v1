@@ -224,7 +224,7 @@ export default function SpreadSettingsPanel({
           collapsible
           defaultSize="20%"
           minSize={240}
-          maxSize="40%"
+          maxSize={480}
           panelRef={spreadSettingsPanelRef}
           onPanelResize={handleResize}
           handlePosition="after"

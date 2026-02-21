@@ -20,9 +20,9 @@ interface ResponsivePanelProps {
     // Panel props (desktop)
     panelId: string;
     collapsible?: boolean;
-    defaultSize?: string;
-    minSize?: number;
-    maxSize?: string;
+    defaultSize?: number | string;
+    minSize?: number | string;
+    maxSize?: number | string;
     panelRef?: RefObject<PanelImperativeHandle | null>;
     onPanelResize?: () => void;
 
