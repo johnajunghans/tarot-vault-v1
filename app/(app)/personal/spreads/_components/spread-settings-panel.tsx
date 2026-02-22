@@ -32,22 +32,22 @@ export function SpreadDetailsContent({
     const description = useWatch({ control, name: "description" });
 
     return (
-      <div className="flex h-full flex-col gap-4 p-4 overflow-y-auto">
+      <div className="flex h-full flex-col gap-5 p-4 overflow-y-auto">
         <div className="flex w-full justify-between items-center gap-8">
-          <h3 className="text-md font-semibold">Spread Details</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">Spread Details</h3>
           <div className="flex items-center gap-1">
             {headerActions}
           </div>
         </div>
         <div className="flex flex-col gap-3">
           <div>
-            <span className="text-xs text-muted-foreground">Name</span>
-            <p className="text-sm">{name || "Untitled"}</p>
+            <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-medium">Name</span>
+            <p className="text-sm mt-0.5">{name || "Untitled"}</p>
           </div>
           {description && (
             <div>
-              <span className="text-xs text-muted-foreground">Description</span>
-              <p className="text-sm whitespace-pre-wrap">{description}</p>
+              <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-medium">Description</span>
+              <p className="text-sm whitespace-pre-wrap mt-0.5">{description}</p>
             </div>
           )}
         </div>
@@ -85,9 +85,9 @@ export function SpreadSettingsContent({
     const form = useFormContext()
 
     return (
-      <div className="flex h-full flex-col gap-4 p-4 overflow-y-auto">
+      <div className="flex h-full flex-col gap-5 p-4 overflow-y-auto">
         <div className="flex w-full justify-between items-center gap-8">
-          <h3 className="text-md font-semibold">Spread Settings</h3>
+          <h3 className="font-display text-base font-bold tracking-tight">Spread Settings</h3>
           <div className="flex items-center gap-1">
             {headerActions}
           </div>
@@ -97,7 +97,7 @@ export function SpreadSettingsContent({
             <TextField
               label="Name"
               id="spread-name"
-              placeholder="Enter spread name"
+              placeholder="e.g. Celtic Cross, Daily Draw..."
               autoFocus
               error={form.formState.errors.name}
               {...form.register("name")}
@@ -105,7 +105,7 @@ export function SpreadSettingsContent({
             <TextareaField
               label="Description"
               id="spread-description"
-              placeholder="Enter spread description (optional)"
+              placeholder="What is this spread for? (optional)"
               error={form.formState.errors.description}
               {...form.register("description")}
             />
@@ -180,10 +180,10 @@ export default function SpreadSettingsPanel({
     return (
       <>
         {hideSettings &&
-          <Card className="absolute bottom-5 left-3 py-2 z-10 min-w-[150px] max-w-[350px] shadow-md bg-background">
+          <Card className="absolute bottom-5 left-3 py-2 z-10 min-w-[150px] max-w-[350px] shadow-md bg-background/90 backdrop-blur-sm border-border/50">
             <CardContent>
               <div className="flex w-full justify-between items-center gap-8">
-                <h3 className="text-md font-semibold">{panelTitle}</h3>
+                <h3 className="font-display text-sm font-bold tracking-tight">{panelTitle}</h3>
                 <div className="flex items-center gap-1">
                   {!isViewMode && addCard && (
                     <Tooltip>
@@ -199,7 +199,7 @@ export default function SpreadSettingsPanel({
                           </Button>
                         }
                       />
-                      <TooltipContent>New Card</TooltipContent>
+                      <TooltipContent>Add Position</TooltipContent>
                     </Tooltip>
                   )}
                   <Tooltip>

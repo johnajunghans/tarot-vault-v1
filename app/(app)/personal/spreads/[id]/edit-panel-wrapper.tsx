@@ -15,7 +15,7 @@ import SpreadSettingsPanel from "../_components/spread-settings-panel";
 import SpreadCanvas from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
-import { generateCard } from "../utils";
+import { generateCard, generateCardAt } from "../utils";
 import AppTopbar from "@/components/layout/app-topbar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -108,13 +108,20 @@ export default function EditPanelWrapper({
         setSelectedCardIndex(cards.length);
     }, [cards.length, append, selectedCardIndex, setSelectedCardIndex]);
 
+    const addCardAt = useCallback((x: number, y: number) => {
+        if (cards.length >= 78) return;
+        const newCard = generateCardAt(x, y);
+        append(newCard);
+        setSelectedCardIndex(cards.length);
+    }, [cards.length, append, setSelectedCardIndex]);
+
     // ------------ APP TOPBAR LOGIC ------------ //
 
     const watchedName = form.watch("name");
     const watchedPositions = form.watch("positions");
 
     const spreadTitle = watchedName || "Untitled Spread";
-    const cardCount = `${watchedPositions?.length ?? 0}-Card`;
+    const cardCount = `${watchedPositions?.length ?? 0} ${(watchedPositions?.length ?? 0) !== 1 ? "positions" : "position"}`;
 
     // ------------ MOBILE SHEET STATE ------------ //
 
@@ -129,7 +136,7 @@ export default function EditPanelWrapper({
     const handleSave = useCallback(() => {
         const onInvalid = (errors: FieldErrors<SpreadForm>) => {
             if (errors.name) {
-                toast.error("Spread name is required", {
+                toast.error("Give your spread a name", {
                     description: errors.name.message,
                 });
             }
@@ -139,12 +146,11 @@ export default function EditPanelWrapper({
                 });
             }
             if (errors.positions) {
-                toast.error("Card errors", {
-                    description: "One or more cards have invalid fields.",
+                toast.error("Position issues", {
+                    description: "One or more positions need attention.",
                 });
             }
 
-            // Open spread settings (sheet on mobile, panel on desktop)
             if (errors.name || errors.description) {
                 if (isMobile) {
                     setSpreadSheetOpen(true);
@@ -181,7 +187,7 @@ export default function EditPanelWrapper({
                 });
 
                 form.reset(data);
-                toast.success("Spread updated successfully");
+                toast.success("Spread updated!");
                 router.push(routes.personal.spreads.root);
             } catch (error) {
                 toast.error(
@@ -252,8 +258,11 @@ export default function EditPanelWrapper({
         return (
             <>
                 <AppTopbar breadcrumbs={breadcrumbs} />
-                <div className="h-app-content flex items-center justify-center">
-                    <p className="text-muted-foreground">Spread not found.</p>
+                <div className="h-app-content flex flex-col items-center justify-center gap-3">
+                    <p className="text-muted-foreground font-display text-lg">Spread not found</p>
+                    <Button variant="outline" onClick={() => router.push(routes.personal.spreads.root)}>
+                        Back to spreads
+                    </Button>
                 </div>
             </>
         );
@@ -266,7 +275,7 @@ export default function EditPanelWrapper({
             <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={() => router.push(routes.personal.spreads.root)}>
                 {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Close</span>}
             </Button>
-            <Button type="button" variant="default" size={isMobile ? "icon" : "default"} onClick={() => router.push(routes.personal.spreads.id(spreadId, "edit"))}>
+            <Button type="button" variant="default" size={isMobile ? "icon" : "default"} onClick={() => router.push(routes.personal.spreads.id(spreadId, "edit"))} className="bg-gold hover:bg-gold/90 text-background font-semibold">
                 {isMobile ? <PencilEdit02Icon /> : <span className="text-xs lg:text-sm">Edit Spread</span>}
             </Button>
         </>
@@ -277,12 +286,12 @@ export default function EditPanelWrapper({
             <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleCancel}>
                 {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Cancel</span>}
             </Button>
-            <Button type="button" variant="destructive" size={isMobile ? "icon" : "default"} onClick={() => setShowDeleteDialog(true)}>
+            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} className="text-muted-foreground hover:text-destructive" onClick={() => setShowDeleteDialog(true)}>
                 {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Delete</span>}
             </Button>
-            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
+            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave} className="bg-gold hover:bg-gold/90 text-background font-semibold">
                 {isSaving && <Spinner />}
-                <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Edits"}</span>
+                <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Changes"}</span>
             </Button>
         </>
     );
@@ -315,10 +324,10 @@ export default function EditPanelWrapper({
             breadcrumbs={breadcrumbs}
             centerTitle={
                 <>
-                    <span className="font-bold text-foreground text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]">{spreadTitle}</span>
+                    <span className="font-display font-bold text-foreground text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]">{spreadTitle}</span>
                     {!isMobile && <>
                         <Separator orientation="vertical" />
-                        <span className="text-muted-foreground text-sm lg:text-base text-nowrap">{cardCount}</span>
+                        <span className="text-muted-foreground text-xs lg:text-sm text-nowrap">{cardCount}</span>
                     </>}
                 </>
             }
@@ -331,7 +340,7 @@ export default function EditPanelWrapper({
                 {isMobile ? (
                     <>
                         {/* Floating Toolbar */}
-                        <Card className="absolute bottom-3 left-3 py-2 z-10 shadow-md bg-background">
+                        <Card className="absolute bottom-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50">
                             <CardContent>
                                 <div className="flex items-center gap-1">
                                     <Button
@@ -360,17 +369,18 @@ export default function EditPanelWrapper({
                             cards={cards}
                             selectedCardIndex={selectedCardIndex}
                             onCardSelect={setSelectedCardIndex}
+                            onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
                             isViewMode={isViewMode}
                         />
 
-                        {/* Spread Settings (Sheet on mobile via ResponsivePanel) */}
+                        {/* Spread Settings */}
                         <SpreadSettingsPanel
                             {...spreadPanelProps}
                             open={spreadSheetOpen}
                             onOpenChange={setSpreadSheetOpen}
                         />
 
-                        {/* Card Settings (Sheet on mobile via ResponsivePanel) */}
+                        {/* Card Settings */}
                         <CardSettingsPanel
                             {...cardPanelProps}
                             open={selectedCardIndex !== null}
@@ -388,20 +398,18 @@ export default function EditPanelWrapper({
                             document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
                         }}
                     >
-                    {/* Left Panel — Settings/Details */}
                     <SpreadSettingsPanel {...spreadPanelProps} />
 
-                    {/* Center Panel — Canvas */}
                     <ResizablePanel id="spread-canvas-panel">
                         <SpreadCanvas
                             cards={cards}
                             selectedCardIndex={selectedCardIndex}
                             onCardSelect={setSelectedCardIndex}
+                            onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
                             isViewMode={isViewMode}
                         />
                     </ResizablePanel>
 
-                    {/* Right Panel — Card Settings/Details */}
                     <CardSettingsPanel {...cardPanelProps} />
 
                     </ResizablePanelGroup>
@@ -412,18 +420,17 @@ export default function EditPanelWrapper({
         {/* Dialogs (edit mode only) */}
         {!isViewMode && (
             <>
-                {/* Discard Changes Dialog */}
                 <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Discard changes?</DialogTitle>
+                            <DialogTitle className="font-display">Discard changes?</DialogTitle>
                             <DialogDescription>
-                                You have unsaved changes. Are you sure you want to leave? Your edits will be lost.
+                                Your edits haven&apos;t been saved. Are you sure you want to leave?
                             </DialogDescription>
                         </DialogHeader>
                         <DialogFooter className="sm:justify-between">
                             <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
-                                Cancel
+                                Keep editing
                             </Button>
                             <Button variant="destructive" onClick={handleConfirmDiscard}>
                                 Discard
@@ -432,18 +439,17 @@ export default function EditPanelWrapper({
                     </DialogContent>
                 </Dialog>
 
-                {/* Delete Spread Dialog */}
                 <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Delete spread?</DialogTitle>
+                            <DialogTitle className="font-display">Delete this spread?</DialogTitle>
                             <DialogDescription>
-                                This spread will be permanently deleted. This cannot be undone.
+                                This spread and all its positions will be permanently deleted. This cannot be undone.
                             </DialogDescription>
                         </DialogHeader>
                         <DialogFooter className="sm:justify-end">
                             <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
-                                Cancel
+                                Keep it
                             </Button>
                             <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
                                 {isDeleting && <Spinner />}

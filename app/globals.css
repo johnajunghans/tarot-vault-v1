@@ -7,7 +7,8 @@
   /* SHADCN COLORS */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-philosopher);
+  --font-sans: var(--font-nunito);
+  --font-display: var(--font-philosopher);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -43,6 +44,8 @@
   --color-gold: var(--gold);
   --color-gold-muted: var(--gold-muted);
   --color-amethyst: var(--amethyst);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
 
   /* BORDER RADIUS */
   --radius-sm: calc(var(--radius) - 4px);
@@ -59,7 +62,6 @@
 
 /* ─── Light: warm parchment ─── */
 :root {
-  /* Colors */
   --radius: 0.625rem;
   --background: #faf7f0;
   --foreground: #1a1610;
@@ -82,6 +84,8 @@
   --gold: #b8941e;
   --gold-muted: #8b6914;
   --amethyst: #8b6fc0;
+  --surface: #f5f2ea;
+  --surface-hover: #ede8dc;
   --chart-1: #b8941e;
   --chart-2: #6b8f71;
   --chart-3: #8b6c5c;
@@ -95,22 +99,23 @@
   --sidebar-accent-foreground: #1a1610;
   --sidebar-border: #e0d9c8;
   --sidebar-ring: #8b6914;
-  --scrollbar: #8b6914bf;
+  --scrollbar: #8b691440;
+  --canvas-bg: #e8e2d4;
+  --canvas-weave: #d4cdb8;
 
-  /* Other */
   --app-content-height: calc(100vh - 57px);
 }
 
 /* ─── Dark: candlelit charcoal ─── */
 .dark {
-  --background: #0a0908;
+  --background: #0c0a08;
   --foreground: #e6dfd0;
-  --card: #141210;
+  --card: #161412;
   --card-foreground: #e6dfd0;
-  --popover: #141210;
+  --popover: #161412;
   --popover-foreground: #e6dfd0;
   --primary: #c4a35a;
-  --primary-foreground: #0a0908;
+  --primary-foreground: #0c0a08;
   --secondary: #1e1c18;
   --secondary-foreground: #e6dfd0;
   --muted: #1e1c18;
@@ -124,6 +129,8 @@
   --gold: #c4a35a;
   --gold-muted: #9a7d30;
   --amethyst: #a78bdb;
+  --surface: #131110;
+  --surface-hover: #1a1814;
   --chart-1: #c4a35a;
   --chart-2: #6b8f71;
   --chart-3: #8b6c5c;
@@ -137,7 +144,9 @@
   --sidebar-accent-foreground: #e6dfd0;
   --sidebar-border: #2a2622;
   --sidebar-ring: #c4a35a;
-  --scrollbar: #9a7d30bf;
+  --scrollbar: #9a7d3040;
+  --canvas-bg: #0f0d0a;
+  --canvas-weave: #1a1612;
 }
 
 @layer base {
@@ -147,9 +156,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-philosopher), serif;
+  }
 }
 
-/* ─── Smooth scroll (respects motion preference) ─── */
+/* ─── Smooth scroll ─── */
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
@@ -160,7 +172,7 @@
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(28px);
   }
   to {
     opacity: 1;
@@ -169,31 +181,55 @@
 }
 
 @keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-scale {
   from {
     opacity: 0;
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
 @keyframes rotate-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes pulse-glow {
-  0%,
-  100% {
-    opacity: 0.4;
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes card-deal {
+  from {
+    opacity: 0;
+    transform: translateY(40px) rotateX(15deg);
   }
-  50% {
-    opacity: 0.7;
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
   }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 .animate-fade-up {
@@ -204,6 +240,10 @@
   animation: fade-in 1.2s ease-out forwards;
 }
 
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .animate-rotate-slow {
   animation: rotate-slow 180s linear infinite;
 }
@@ -212,36 +252,95 @@
   animation: pulse-glow 5s ease-in-out infinite;
 }
 
-/* Reduced motion: disable animations gracefully */
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-card-deal {
+  animation: card-deal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 3s ease-in-out infinite;
+}
+
+/* Stagger delays */
+.delay-75 { animation-delay: 75ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-1000 { animation-delay: 1000ms; }
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-fade-in,
+  .animate-fade-in-scale,
   .animate-rotate-slow,
-  .animate-pulse-glow {
+  .animate-pulse-glow,
+  .animate-shimmer,
+  .animate-float,
+  .animate-card-deal,
+  .animate-gentle-pulse {
     animation: none !important;
     opacity: 1 !important;
   }
 }
 
+/* ─── Grain texture overlay ─── */
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  z-index: 1;
+}
 
+.dark .grain::before {
+  opacity: 0.05;
+}
 
-/* Standard implementation (Firefox, Modern Chrome/Edge) */
+/* ─── Glass morphism surface ─── */
+.glass {
+  background: color-mix(in srgb, var(--background) 80%, transparent);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+/* ─── Gold gradient text ─── */
+.text-gold-gradient {
+  background: linear-gradient(135deg, var(--gold) 0%, #d4b44a 50%, var(--gold-muted) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Scrollbar ─── */
 * {
-  scrollbar-color: var(--scrollbar) transparent; /* thumb | track */
+  scrollbar-color: var(--scrollbar) transparent;
   scrollbar-width: thin;
 }
 
-/* WebKit implementation (Chrome, Safari, older Edge) */
 ::-webkit-scrollbar {
-  width: 8px;              /* Width of the vertical scrollbar */
-  height: 8px;             /* Height of the horizontal scrollbar */
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;  /* Removes the background/track */
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--scrollbar);
-  border-radius: 10px;      /* Rounds the thumb */
+  border-radius: 10px;
 }

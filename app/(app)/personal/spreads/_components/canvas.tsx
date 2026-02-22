@@ -13,6 +13,7 @@ interface SpreadCanvasProps {
   cards: CanvasCard[];
   selectedCardIndex: number | null;
   onCardSelect: (index: number | null) => void;
+  onCanvasDoubleClick?: (x: number, y: number) => void;
   isViewMode?: boolean;
 }
 
@@ -20,6 +21,7 @@ export default function SpreadCanvas({
   cards,
   selectedCardIndex,
   onCardSelect,
+  onCanvasDoubleClick,
   isViewMode = false,
 }: SpreadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,7 +29,6 @@ export default function SpreadCanvas({
   const { control, setValue } = useFormContext<{ positions: CardForm[] }>();
   const positions = useWatch({ control, name: "positions" });
 
-  // Responsive SVG sizing
   const [svgWidth, setSvgWidth] = useState(CANVAS_SIZE);
   const [svgHeight, setSvgHeight] = useState(CANVAS_SIZE);
 
@@ -46,22 +47,18 @@ export default function SpreadCanvas({
     return () => observer.disconnect();
   }, []);
 
-  // Ref for accessing current positions in stable callbacks (avoids stale closures)
   const positionsRef = useRef(positions);
   positionsRef.current = positions;
 
-  // Track which card is being dragged and its live position
   const [dragging, setDragging] = useState<{
     index: number;
     x: number;
     y: number;
   } | null>(null);
 
-  // Group selection state
   const [groupSelectedIndices, setGroupSelectedIndices] = useState<Set<number>>(new Set());
   const groupSelectedRef = useRef<Set<number>>(new Set());
 
-  // Marquee state
   const [marquee, setMarquee] = useState<{
     startX: number;
     startY: number;
@@ -71,24 +68,18 @@ export default function SpreadCanvas({
   const isMarqueeActive = useRef(false);
   const marqueeStart = useRef({ x: 0, y: 0 });
 
-  // Card element registry for group drag
   const cardGroupRefs = useRef<Map<number, SVGGElement>>(new Map());
-
-  // Group drag origins (start positions for delta calculation)
   const groupDragOrigins = useRef<Map<number, { x: number; y: number }>>(new Map());
 
-  // Spacebar panning refs (no re-renders needed)
   const isSpaceHeld = useRef(false);
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollX: 0, scrollY: 0 });
 
-  // Helper: update group selection (state + ref together)
   const updateGroupSelection = useCallback((next: Set<number>) => {
     groupSelectedRef.current = next;
     setGroupSelectedIndices(next);
   }, []);
 
-  // Helper: convert client mouse coords to SVG coords
   const clientToSVG = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current;
     if (!svg) return { x: clientX, y: clientY };
@@ -101,7 +92,6 @@ export default function SpreadCanvas({
     };
   }, []);
 
-  // Register card ref callback (passed to each SpreadCard)
   const registerCardRef = useCallback((index: number, el: SVGGElement | null) => {
     if (el) {
       cardGroupRefs.current.set(index, el);
@@ -110,8 +100,6 @@ export default function SpreadCanvas({
     }
   }, []);
 
-  // Sort cards by zIndex for correct SVG render order (higher zIndex renders on top).
-  // Preserve original index so callbacks and selection use the right card.
   const sortedCards = useMemo(
     () =>
       cards
@@ -124,7 +112,6 @@ export default function SpreadCanvas({
   const guides = useMemo(() => {
     if (isViewMode || !dragging) return [];
 
-    // Suppress guide lines during group movement
     if (
       groupSelectedIndices.size > 1 &&
       groupSelectedIndices.has(dragging.index)
@@ -150,7 +137,6 @@ export default function SpreadCanvas({
         bottom: pos.y + CARD_HEIGHT,
       };
 
-      // Vertical guides (matching left/right edges)
       for (const de of [draggedEdges.left, draggedEdges.right]) {
         for (const oe of [otherEdges.left, otherEdges.right]) {
           if (de === oe) {
@@ -159,7 +145,6 @@ export default function SpreadCanvas({
         }
       }
 
-      // Horizontal guides (matching top/bottom edges)
       for (const de of [draggedEdges.top, draggedEdges.bottom]) {
         for (const oe of [otherEdges.top, otherEdges.bottom]) {
           if (de === oe) {
@@ -169,7 +154,6 @@ export default function SpreadCanvas({
       }
     });
 
-    // Deduplicate
     const seen = new Set<string>();
     return lines.filter((l) => {
       const key = `${l.axis}-${l.pos}`;
@@ -179,10 +163,7 @@ export default function SpreadCanvas({
     });
   }, [isViewMode, dragging, positions, groupSelectedIndices]);
 
-  // Ref to store the dragged card's start position (for group drag delta)
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
-
-  // Ref to mirror latest dragging state for use in handleDragEnd (avoids stale closure)
   const draggingRef = useRef<{ index: number; x: number; y: number } | null>(null);
 
   // === Card drag callbacks ===
@@ -191,18 +172,15 @@ export default function SpreadCanvas({
       setDragging({ index, x, y });
       draggingRef.current = { index, x, y };
 
-      // Use form-state position as the drag origin so the delta is measured
-      // from the card's true rest position (GSAP may have already shifted the card slightly by the time onDragStart fires).
       const formPos = positionsRef.current[index];
       dragStartPos.current = formPos
         ? { x: formPos.x, y: formPos.y }
         : { x, y };
 
-      // If dragged card is group-selected, record origins for all group members
       if (groupSelectedRef.current.has(index)) {
         const origins = new Map<number, { x: number; y: number }>();
         for (const i of groupSelectedRef.current) {
-          if (i === index) continue; // dragged card handled by its own Draggable
+          if (i === index) continue;
           const pos = positionsRef.current[i];
           if (pos) {
             origins.set(i, { x: pos.x, y: pos.y });
@@ -218,7 +196,6 @@ export default function SpreadCanvas({
     setDragging({ index, x, y });
     draggingRef.current = { index, x, y };
 
-    // Group drag: apply delta to siblings
     if (groupDragOrigins.current.size > 0 && dragStartPos.current) {
       const dx = x - dragStartPos.current.x;
       const dy = y - dragStartPos.current.y;
@@ -227,7 +204,6 @@ export default function SpreadCanvas({
         const el = cardGroupRefs.current.get(i);
         if (!el) continue;
 
-        // Snap and clamp the sibling position
         const rawX = origin.x + dx;
         const rawY = origin.y + dy;
         const snappedX = Math.round(rawX / GRID_SIZE) * GRID_SIZE;
@@ -235,14 +211,12 @@ export default function SpreadCanvas({
         const clampedX = Math.max(BOUNDS.minX, Math.min(BOUNDS.maxX, snappedX));
         const clampedY = Math.max(BOUNDS.minY, Math.min(BOUNDS.maxY, snappedY));
 
-        // Move sibling visually without updating form (avoids per-pixel re-renders)
         el.transform.baseVal.getItem(0).setTranslate(clampedX, clampedY);
       }
     }
   }, []);
 
   const handleDragEnd = useCallback(() => {
-    // Commit sibling positions to form state
     if (groupDragOrigins.current.size > 0 && dragStartPos.current) {
       const current = draggingRef.current;
       if (current) {
@@ -289,17 +263,14 @@ export default function SpreadCanvas({
       const dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist < 5) {
-        // Tiny drag = click on empty canvas → deselect all
         updateGroupSelection(new Set());
         onCardSelect(null);
       } else {
-        // Compute AABB of marquee
         const left = Math.min(marqueeStart.current.x, endPt.x);
         const right = Math.max(marqueeStart.current.x, endPt.x);
         const top = Math.min(marqueeStart.current.y, endPt.y);
         const bottom = Math.max(marqueeStart.current.y, endPt.y);
 
-        // Find cards that intersect the marquee
         const selected = new Set<number>();
         positions.forEach((pos, i) => {
           const cardLeft = pos.x;
@@ -307,7 +278,6 @@ export default function SpreadCanvas({
           const cardTop = pos.y;
           const cardBottom = pos.y + CARD_HEIGHT;
 
-          // AABB intersection test
           if (
             cardRight > left &&
             cardLeft < right &&
@@ -395,10 +365,9 @@ export default function SpreadCanvas({
     };
   }, []);
 
-  // Background mousedown: start marquee (if not panning)
   const handleBackgroundMouseDown = useCallback(
     (e: React.MouseEvent<SVGRectElement>) => {
-      if (isSpaceHeld.current) return; // panning takes priority
+      if (isSpaceHeld.current) return;
       const pt = clientToSVG(e.clientX, e.clientY);
       isMarqueeActive.current = true;
       marqueeStart.current = { x: pt.x, y: pt.y };
@@ -407,13 +376,26 @@ export default function SpreadCanvas({
     [clientToSVG]
   );
 
-  // Wrap onCardSelect to also clear group selection when clicking a card
+  const handleBackgroundDoubleClick = useCallback(
+    (e: React.MouseEvent<SVGRectElement>) => {
+      if (isViewMode || !onCanvasDoubleClick) return;
+      const pt = clientToSVG(e.clientX, e.clientY);
+      const snappedX = Math.round(pt.x / GRID_SIZE) * GRID_SIZE;
+      const snappedY = Math.round(pt.y / GRID_SIZE) * GRID_SIZE;
+      const clampedX = Math.max(BOUNDS.minX, Math.min(BOUNDS.maxX, snappedX - CARD_WIDTH / 2));
+      const clampedY = Math.max(BOUNDS.minY, Math.min(BOUNDS.maxY, snappedY - CARD_HEIGHT / 2));
+      const finalX = Math.round(clampedX / GRID_SIZE) * GRID_SIZE;
+      const finalY = Math.round(clampedY / GRID_SIZE) * GRID_SIZE;
+      onCanvasDoubleClick(finalX, finalY);
+    },
+    [isViewMode, onCanvasDoubleClick, clientToSVG]
+  );
+
   const handleCardClick = useCallback((index: number) => {
     updateGroupSelection(new Set());
     onCardSelect(index);
   }, [onCardSelect, updateGroupSelection]);
 
-  // Compute marquee rect for rendering
   const marqueeRect = useMemo(() => {
     if (!marquee) return null;
     return {
@@ -424,70 +406,137 @@ export default function SpreadCanvas({
     };
   }, [marquee]);
 
+  const isDragging = dragging !== null;
+  const showEmptyPrompt = !isViewMode && cards.length === 0;
+
   return (
-    <div ref={containerRef} className="h-full w-full overflow-auto">
+    <div ref={containerRef} className="h-full w-full overflow-auto bg-[var(--canvas-bg)]">
       <svg
         ref={svgRef}
         width={svgWidth}
         height={svgHeight}
         xmlns="http://www.w3.org/2000/svg"
+        className="select-none"
       >
-        {/* Grid pattern (edit mode only) */}
-        {!isViewMode && (
-          <defs>
-            <pattern
-              id="canvas-grid"
-              width={GRID_SIZE}
-              height={GRID_SIZE}
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d={`M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`}
-                fill="none"
-                stroke="var(--border)"
-                strokeOpacity={0.6}
-                strokeWidth={0.5}
-              />
-            </pattern>
-          </defs>
-        )}
+        <defs>
+          {/* Cloth-like fabric texture */}
+          <pattern id="cloth-texture" width="8" height="8" patternUnits="userSpaceOnUse">
+            <rect width="8" height="8" fill="var(--canvas-bg)" />
+            <rect x="0" y="0" width="4" height="4" fill="var(--canvas-weave)" fillOpacity="0.3" />
+            <rect x="4" y="4" width="4" height="4" fill="var(--canvas-weave)" fillOpacity="0.3" />
+          </pattern>
+
+          {/* Subtle dot grid only visible during drag */}
+          <pattern id="drag-grid" width={GRID_SIZE * 2} height={GRID_SIZE * 2} patternUnits="userSpaceOnUse">
+            <circle cx={GRID_SIZE} cy={GRID_SIZE} r={0.6} fill="var(--gold)" fillOpacity={0.25} />
+          </pattern>
+
+          {/* Center vignette radial gradient */}
+          <radialGradient id="canvas-vignette" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.03" />
+            <stop offset="70%" stopColor="var(--gold)" stopOpacity="0.01" />
+            <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* Layer 1: Cloth texture base */}
         <rect
           width={svgWidth}
           height={svgHeight}
-          fill={isViewMode ? "transparent" : "url(#canvas-grid)"}
-          onMouseDown={isViewMode ? () => onCardSelect(null) : handleBackgroundMouseDown}
+          fill="url(#cloth-texture)"
         />
+
+        {/* Layer 2: Ambient center warmth */}
+        <rect
+          width={svgWidth}
+          height={svgHeight}
+          fill="url(#canvas-vignette)"
+        />
+
+        {/* Layer 3: Grid dots (only visible while dragging) */}
+        {isDragging && !isViewMode && (
+          <rect
+            width={svgWidth}
+            height={svgHeight}
+            fill="url(#drag-grid)"
+            style={{
+              opacity: 1,
+              transition: "opacity 200ms ease",
+            }}
+            pointerEvents="none"
+          />
+        )}
+
+        {/* Layer 4: Interaction target (transparent, catches all mouse events) */}
+        <rect
+          width={svgWidth}
+          height={svgHeight}
+          fill="transparent"
+          onMouseDown={isViewMode ? () => onCardSelect(null) : handleBackgroundMouseDown}
+          onDoubleClick={handleBackgroundDoubleClick}
+        />
+
+        {/* Empty canvas prompt */}
+        {showEmptyPrompt && (
+          <g pointerEvents="none">
+            {/* Ghost card outline */}
+            <rect
+              x={svgWidth / 2 - CARD_WIDTH / 2}
+              y={svgHeight / 2 - CARD_HEIGHT / 2 - 20}
+              width={CARD_WIDTH}
+              height={CARD_HEIGHT}
+              rx={8}
+              fill="none"
+              stroke="var(--gold)"
+              strokeWidth={1}
+              strokeOpacity={0.15}
+              strokeDasharray="6 4"
+              className="animate-gentle-pulse"
+            />
+            {/* Prompt text */}
+            <text
+              x={svgWidth / 2}
+              y={svgHeight / 2 + CARD_HEIGHT / 2 + 8}
+              textAnchor="middle"
+              fontSize={13}
+              fill="var(--muted-foreground)"
+              fillOpacity={0.4}
+              fontFamily="var(--font-nunito), sans-serif"
+            >
+              Double-click to place your first position
+            </text>
+          </g>
+        )}
 
         {/* Alignment guide lines */}
         {guides.map((guide) =>
           guide.axis === "v" ? (
             <line
               key={`v-${guide.pos}`}
-              x1={guide.pos}
-              y1={0}
-              x2={guide.pos}
-              y2={svgHeight}
+              x1={guide.pos} y1={0}
+              x2={guide.pos} y2={svgHeight}
               stroke="var(--gold)"
-              strokeOpacity={0.5}
-              strokeWidth={1}
+              strokeOpacity={0.35}
+              strokeWidth={0.75}
+              strokeDasharray="4 4"
+              pointerEvents="none"
             />
           ) : (
             <line
               key={`h-${guide.pos}`}
-              x1={0}
-              y1={guide.pos}
-              x2={svgWidth}
-              y2={guide.pos}
+              x1={0} y1={guide.pos}
+              x2={svgWidth} y2={guide.pos}
               stroke="var(--gold)"
-              strokeOpacity={0.5}
-              strokeWidth={1}
+              strokeOpacity={0.35}
+              strokeWidth={0.75}
+              strokeDasharray="4 4"
+              pointerEvents="none"
             />
           )
         )}
 
-        {/* Draggable cards — sorted by zIndex for correct layering */}
+        {/* Cards — sorted by zIndex for correct layering */}
         {sortedCards.map(({ card, index }) => {
-          // Check if this card is part of a group currently being dragged
           const isDraggingInGroup =
             dragging !== null &&
             groupSelectedIndices.size > 1 &&
@@ -520,10 +569,11 @@ export default function SpreadCanvas({
             width={marqueeRect.width}
             height={marqueeRect.height}
             fill="var(--gold)"
-            fillOpacity={0.1}
+            fillOpacity={0.08}
             stroke="var(--gold)"
-            strokeOpacity={0.4}
+            strokeOpacity={0.3}
             strokeWidth={1}
+            strokeDasharray="4 3"
             pointerEvents="none"
           />
         )}

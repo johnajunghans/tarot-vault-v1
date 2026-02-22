@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Philosopher, Geist_Mono } from "next/font/google";
+import { Philosopher, Nunito } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -9,6 +10,12 @@ import { Toaster } from "@/components/ui/sonner";
 const philosopher = Philosopher({
   weight: ["400", "700"],
   variable: "--font-philosopher",
+  subsets: ["latin"],
+});
+
+const nunito = Nunito({
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-nunito",
   subsets: ["latin"],
 });
 
@@ -34,12 +41,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${philosopher.variable} ${philosopher.className} ${geistMono.variable} antialiased`}
+        className={`${philosopher.variable} ${nunito.variable} ${nunito.className} ${geistMono.variable} antialiased`}
       >
         <ClerkProvider dynamic>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >

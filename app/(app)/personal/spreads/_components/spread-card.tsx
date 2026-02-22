@@ -39,14 +39,6 @@ interface SpreadCardProps {
     favorite?: boolean
 }
 
-// function formatDate(date: number): string {
-//     const dateStr = new Date(date)
-//     const month = String(dateStr.getMonth() + 1).padStart(2, "0")
-//     const day = String(dateStr.getDate()).padStart(2, "0")
-//     const year = dateStr.getFullYear()
-//     return `${month}/${day}/${year}`
-// }
-
 export default function SpreadCard({
     name,
     date,
@@ -76,25 +68,35 @@ export default function SpreadCard({
 
     return (
         <>
-        <Card className="shadow-none hover:shadow-sm -translate-y-0 hover:-translate-y-1 duration-150 cursor-pointer" onClick={handleCardClick}>
-            <CardHeader>
-                <CardTitle>{name}</CardTitle>
+        <Card
+            className="group shadow-none hover:shadow-md border-border/50 hover:border-gold/20 transition-all duration-300 cursor-pointer overflow-hidden"
+            onClick={handleCardClick}
+        >
+            <CardHeader className="pb-2">
+                <CardTitle className="font-display text-base tracking-tight">{name}</CardTitle>
                 {isDraft && (
                     <CardAction>
-                        <Badge variant="secondary">DRAFT</Badge>
+                        <Badge variant="secondary" className="text-[10px] font-medium">DRAFT</Badge>
                     </CardAction>
                 )}
             </CardHeader>
-            <CardContent className="flex justify-center">
-                <SpreadThumbnail cards={cards} width={150} height={150} />
+            <CardContent className="flex justify-center py-4">
+                <div className="transition-transform duration-300 group-hover:scale-105">
+                    <SpreadThumbnail cards={cards} width={140} height={140} />
+                </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
-                <span className="text-sm text-muted-foreground">
-                    {`${cards.length}-Card`}
+            <CardFooter className="flex justify-between items-center pt-2">
+                <span className="text-xs text-muted-foreground/70 font-medium">
+                    {cards.length} {cards.length === 1 ? "card" : "cards"}
                 </span>
                 {isDraft && (
-                    <Button variant="destructive" size="icon" onClick={(e) => { e.stopPropagation(); setShowDeleteDialog(true); }}>
-                        <Delete02Icon />
+                    <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setShowDeleteDialog(true); }}
+                    >
+                        <Delete02Icon className="w-4 h-4" />
                     </Button>
                 )}
                 {!isDraft && id !== undefined && (
@@ -103,20 +105,21 @@ export default function SpreadCard({
                             render={
                                 <Button
                                     variant="ghost"
-                                    size="icon-lg"
+                                    size="icon-sm"
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         toggleFavorite({ _id: id })
                                     }}
                                 >
                                     <StarIcon
+                                        className="w-4 h-4"
                                         color="var(--gold)"
                                         fill={favorite ? "var(--gold)" : "none"}
                                     />
                                 </Button>
                             }
                         />
-                        <TooltipContent>{favorite ? "Unfavorite Spread" : "Favorite Spread"}</TooltipContent>
+                        <TooltipContent>{favorite ? "Unfavorite" : "Favorite"}</TooltipContent>
                     </Tooltip>
                 )}
             </CardFooter>
@@ -125,7 +128,7 @@ export default function SpreadCard({
         <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Delete draft?</DialogTitle>
+                    <DialogTitle className="font-display">Delete draft?</DialogTitle>
                     <DialogDescription>
                         This draft will be permanently removed. This cannot be undone.
                     </DialogDescription>

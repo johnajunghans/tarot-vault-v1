@@ -21,7 +21,6 @@ import { ResponsivePanel } from "@/components/layout/responsive-panel";
 
 const GRID_SIZE = 15;
 
-// Snap value to nearest multiple of grid size
 function snapToGrid(value: number): number {
   return Math.round(value / GRID_SIZE) * GRID_SIZE;
 }
@@ -44,50 +43,51 @@ function CardDetailsContent({
     });
 
     return (
-      <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+      <div className="flex h-full flex-col gap-5 overflow-y-auto p-4">
         <div className="flex w-full justify-between items-center gap-4">
-          <h3 className="text-md font-semibold">
-            Card {selectedCardIndex !== null && selectedCardIndex + 1} Details
+          <h3 className="font-display text-base font-bold tracking-tight">
+            Position {selectedCardIndex !== null && selectedCardIndex + 1}
           </h3>
           {headerActions}
         </div>
         {card && selectedCardIndex !== null && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <div>
-              <span className="text-xs text-muted-foreground">Name</span>
-              <p className="text-sm">{card.name || "Untitled"}</p>
+              <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-medium">Name</span>
+              <p className="text-sm mt-0.5">{card.name || "Untitled"}</p>
             </div>
             {card.description && (
               <div>
-                <span className="text-xs text-muted-foreground">Description</span>
-                <p className="text-sm whitespace-pre-wrap">{card.description}</p>
+                <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-medium">Meaning</span>
+                <p className="text-sm whitespace-pre-wrap mt-0.5">{card.description}</p>
               </div>
             )}
             <div>
-              <span className="text-xs text-muted-foreground">Allow Reverse</span>
-              <p className="text-sm">{card.allowReverse ? "Yes" : "No"}</p>
+              <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-medium">Reversals</span>
+              <p className="text-sm mt-0.5">{card.allowReverse ? "Allowed" : "Not allowed"}</p>
             </div>
             <FieldSeparator />
-            <FieldGroup className="gap-4">
-              <div>
-                <span className="text-xs text-muted-foreground">X-Offset</span>
-                <p className="text-sm">{card.x}</p>
+            <div>
+              <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-medium mb-2 block">Placement</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-surface p-2.5">
+                  <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">Horizontal</span>
+                  <p className="text-sm font-medium">{card.x}px</p>
+                </div>
+                <div className="rounded-lg bg-surface p-2.5">
+                  <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">Vertical</span>
+                  <p className="text-sm font-medium">{card.y}px</p>
+                </div>
+                <div className="rounded-lg bg-surface p-2.5">
+                  <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">Rotation</span>
+                  <p className="text-sm font-medium">{card.r}&deg;</p>
+                </div>
+                <div className="rounded-lg bg-surface p-2.5">
+                  <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">Layer</span>
+                  <p className="text-sm font-medium">{card.z}</p>
+                </div>
               </div>
-              <div>
-                <span className="text-xs text-muted-foreground">Y-Offset</span>
-                <p className="text-sm">{card.y}</p>
-              </div>
-            </FieldGroup>
-            <FieldGroup className="gap-4">
-              <div>
-                <span className="text-xs text-muted-foreground">Rotation</span>
-                <p className="text-sm">{card.r}&deg;</p>
-              </div>
-              <div>
-                <span className="text-xs text-muted-foreground">Z-Index</span>
-                <p className="text-sm">{card.z}</p>
-              </div>
-            </FieldGroup>
+            </div>
           </div>
         )}
       </div>
@@ -142,7 +142,7 @@ export function CardSettingsContent({
               control={form.control}
               render={({ field, fieldState }) => (
                 <TextField
-                  label="Name"
+                  label="Position Name"
                   id="card-name"
                   autoFocus
                   maxLength={50}
@@ -161,10 +161,10 @@ export function CardSettingsContent({
               control={form.control}
               render={({ field, fieldState }) => (
                 <TextareaField
-                  label="Description"
+                  label="Meaning"
                   id="card-description"
                   maxLength={500}
-                  placeholder="What this position represents..."
+                  placeholder="What does this position represent in the reading?"
                   value={field.value ?? ""}
                   onChange={(e) => field.onChange(e.target.value)}
                   onBlur={field.onBlur}
@@ -179,11 +179,11 @@ export function CardSettingsContent({
               control={form.control}
               render={({ field, fieldState }) => (
                 <SwitchField
-                  label="Allow Reverse"
+                  label="Allow Reversals"
                   id="card-allowReverse"
                   checked={field.value ?? true}
                   onCheckedChange={field.onChange}
-                  description="Should this card position allow for reverse meanings?"
+                  description="Can this position hold reversed cards?"
                   error={fieldState.error}
                 />
               )}
@@ -192,97 +192,98 @@ export function CardSettingsContent({
 
           <FieldSeparator />
 
-          <FieldSet>
-            {/* X-Offset / Y-Offset */}
-            <FieldGroup className="gap-2">
-              <Controller
-                name={`positions.${selectedCardIndex}.x`}
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <NumberField
-                    label="X-Offset"
-                    id={field.name}
-                    value={field.value}
-                    onChangeValue={field.onChange}
-                    onBlurTransform={snapToGrid}
-                    onBlur={field.onBlur}
-                    step={15}
-                    min={0}
-                    error={fieldState.error}
-                  />
-                )}
-              />
-              <Controller
-                name={`positions.${selectedCardIndex}.y`}
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <NumberField
-                    label="Y-Offset"
-                    id={field.name}
-                    value={field.value}
-                    onChangeValue={field.onChange}
-                    onBlurTransform={snapToGrid}
-                    onBlur={field.onBlur}
-                    step={15}
-                    min={0}
-                    error={fieldState.error}
-                  />
-                )}
-              />
-            </FieldGroup>
+          <div>
+            <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-medium mb-3 block">Placement</span>
+            <FieldSet>
+              <FieldGroup className="gap-2">
+                <Controller
+                  name={`positions.${selectedCardIndex}.x`}
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <NumberField
+                      label="Horizontal"
+                      id={field.name}
+                      value={field.value}
+                      onChangeValue={field.onChange}
+                      onBlurTransform={snapToGrid}
+                      onBlur={field.onBlur}
+                      step={15}
+                      min={0}
+                      error={fieldState.error}
+                    />
+                  )}
+                />
+                <Controller
+                  name={`positions.${selectedCardIndex}.y`}
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <NumberField
+                      label="Vertical"
+                      id={field.name}
+                      value={field.value}
+                      onChangeValue={field.onChange}
+                      onBlurTransform={snapToGrid}
+                      onBlur={field.onBlur}
+                      step={15}
+                      min={0}
+                      error={fieldState.error}
+                    />
+                  )}
+                />
+              </FieldGroup>
 
-            {/* Rotation / Z-Index */}
-            <FieldGroup className="gap-2">
-              <Controller
-                name={`positions.${selectedCardIndex}.r`}
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <NumberField
-                    label="Rotation"
-                    id={field.name}
-                    value={field.value}
-                    onChangeValue={field.onChange}
-                    onBlur={field.onBlur}
-                    step={45}
-                    min={0}
-                    max={315}
-                    error={fieldState.error}
-                  />
-                )}
-              />
-              <Controller
-                name={`positions.${selectedCardIndex}.z`}
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <NumberField
-                    label="Z-Index"
-                    id={field.name}
-                    value={field.value}
-                    onChangeValue={field.onChange}
-                    onBlur={field.onBlur}
-                    step={1}
-                    min={0}
-                    max={100}
-                    error={fieldState.error}
-                  />
-                )}
-              />
-            </FieldGroup>
-          </FieldSet>
+              <FieldGroup className="gap-2">
+                <Controller
+                  name={`positions.${selectedCardIndex}.r`}
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <NumberField
+                      label="Rotation"
+                      id={field.name}
+                      value={field.value}
+                      onChangeValue={field.onChange}
+                      onBlur={field.onBlur}
+                      step={45}
+                      min={0}
+                      max={315}
+                      error={fieldState.error}
+                    />
+                  )}
+                />
+                <Controller
+                  name={`positions.${selectedCardIndex}.z`}
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <NumberField
+                      label="Layer"
+                      id={field.name}
+                      value={field.value}
+                      onChangeValue={field.onChange}
+                      onBlur={field.onBlur}
+                      step={1}
+                      min={0}
+                      max={100}
+                      error={fieldState.error}
+                    />
+                  )}
+                />
+              </FieldGroup>
+            </FieldSet>
+          </div>
 
           <FieldSeparator />
 
           <Button
             type="button"
-            variant="outline"
-            className="w-full"
+            variant="ghost"
+            className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/5"
             disabled={cardCount <= 1}
             onClick={() => {
               if (selectedCardIndex !== null) setDeleteIndex(selectedCardIndex);
             }}
           >
-            <Delete02Icon />
-            Remove Card
+            <Delete02Icon className="w-4 h-4" />
+            Remove Position
           </Button>
         </FieldSet>
       </form>
@@ -290,10 +291,10 @@ export function CardSettingsContent({
 
     return (
       <>
-        <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+        <div className="flex h-full flex-col gap-5 overflow-y-auto p-4">
           <div className="flex w-full justify-between items-center gap-4">
-            <h3 className="text-md font-semibold">
-              Card {selectedCardIndex !== null && selectedCardIndex + 1} Settings
+            <h3 className="font-display text-base font-bold tracking-tight">
+              Position {selectedCardIndex !== null && selectedCardIndex + 1}
             </h3>
             {headerActions}
           </div>
@@ -308,14 +309,14 @@ export function CardSettingsContent({
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Remove Card {deleteIndex !== null ? deleteIndex + 1 : ""}?</DialogTitle>
+              <DialogTitle className="font-display">Remove Position {deleteIndex !== null ? deleteIndex + 1 : ""}?</DialogTitle>
               <DialogDescription>
-                This action cannot be undone.
+                This position will be removed from the spread. This cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteIndex(null)}>
-                Cancel
+                Keep it
               </Button>
               <Button variant="destructive" onClick={handleDeleteConfirm}>
                 Remove
@@ -360,7 +361,6 @@ export default function CardSettingsPanel({
       }
     }
 
-    // Expand when a card is selected, collapse when none.
     useEffect(() => {
       const id = requestAnimationFrame(() => {
         const panel = cardDetailsPanelRef.current
@@ -374,7 +374,6 @@ export default function CardSettingsPanel({
       return () => cancelAnimationFrame(id)
     }, [selectedCardIndex])
 
-    // Deselect card if it no longer exists
     useEffect(() => {
       if (
         selectedCardIndex !== null &&
@@ -384,7 +383,7 @@ export default function CardSettingsPanel({
       }
     }, [cards, selectedCardIndex]);
 
-    const panelTitle = isViewMode ? "Card Details" : "Card Settings";
+    const panelTitle = isViewMode ? "Position Details" : "Position Settings";
 
     const closeHeaderAction = !isMobile && (
       <Button

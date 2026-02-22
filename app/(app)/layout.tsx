@@ -6,7 +6,7 @@ export default function AppLayout({
     children
 }: { children: ReactNode }) {
     return (
-        <SidebarProvider defaultOpen={false}>
+        <SidebarProvider defaultOpen={true}>
             <AppSidebar />
             <SidebarInset>
                 { children }

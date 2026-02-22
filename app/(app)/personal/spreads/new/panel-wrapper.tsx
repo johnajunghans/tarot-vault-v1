@@ -14,7 +14,7 @@ import SpreadSettingsPanel from "../_components/spread-settings-panel";
 import SpreadCanvas from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
-import { generateCard } from "../utils"
+import { generateCard, generateCardAt } from "../utils"
 import AppTopbar from "@/components/layout/app-topbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +56,7 @@ export default function PanelWrapper({
         defaultValues: {
         name: "",
         description: "",
-        positions: [generateCard(0)]
+        positions: []
         }
     });
 
@@ -71,7 +71,6 @@ export default function PanelWrapper({
     const draftKey = draftDate.current ? `spread-draft-${draftDate.current}` : ""
     const isDiscardingRef = useRef(false);
 
-    // Load draft from localStorage when navigating with ?draft= param
     useEffect(() => {
         if (!loadedDraftDate) return;
         const raw = localStorage.getItem(`spread-draft-${loadedDraftDate}`);
@@ -111,13 +110,20 @@ export default function PanelWrapper({
         setSelectedCardIndex(cards.length);
     }, [cards.length, append, selectedCardIndex, setSelectedCardIndex]);
 
+    const addCardAt = useCallback((x: number, y: number) => {
+        if (cards.length >= 78) return;
+        const newCard = generateCardAt(x, y);
+        append(newCard);
+        setSelectedCardIndex(cards.length);
+    }, [cards.length, append, setSelectedCardIndex]);
+
     // ------------ APP TOPBAR LOGIC ------------ //
 
     const watchedName = form.watch("name");
     const watchedPositions = form.watch("positions");
 
     const spreadTitle = watchedName || "New Spread";
-    const cardCount = `${watchedPositions?.length ?? 0}-Card`;
+    const cardCount = `${watchedPositions?.length ?? 0} card${(watchedPositions?.length ?? 0) !== 1 ? "s" : ""}`;
 
     // ------------ MOBILE SHEET STATE ------------ //
 
@@ -132,7 +138,7 @@ export default function PanelWrapper({
     const handleSave = useCallback(() => {
         const onInvalid = (errors: FieldErrors<SpreadForm>) => {
             if (errors.name) {
-                toast.error("Spread name is required", {
+                toast.error("Give your spread a name", {
                     description: errors.name.message,
                 });
             }
@@ -142,12 +148,11 @@ export default function PanelWrapper({
                 });
             }
             if (errors.positions) {
-                toast.error("Card errors", {
-                    description: "One or more cards have invalid fields.",
+                toast.error("Card issues", {
+                    description: "One or more cards need attention.",
                 });
             }
 
-            // Open spread settings (sheet on mobile, panel on desktop)
             if (errors.name || errors.description) {
                 if (isMobile) {
                     setSpreadSheetOpen(true);
@@ -184,7 +189,7 @@ export default function PanelWrapper({
 
                 localStorage.removeItem(draftKey);
                 router.push(routes.personal.spreads.root);
-                toast.success("Spread created successfully");
+                toast.success("Spread created!");
             } catch (error) {
                 toast.error(
                     `Failed to create spread: ${error instanceof Error ? error.message : "Unknown error"}`
@@ -200,10 +205,6 @@ export default function PanelWrapper({
 
     const handleDiscard = useCallback(() => {
         if (!form.formState.isDirty && !loadedDraftDate) {
-            // Remove stored draft ONLY if brand new with no net changes made.
-            // This handles the edge case of a user making changes to the form, then reverting those changes back and discarding which does not trigger a modal.
-            // In this case, a draft has been created because changes were made, so the draft should be deleted.
-            // However, this should only occur when a spread is brand new (i.e. draftTimestamp === undefined). Otherwise, this would delete a users draft if they went in, made no changes, then left.
             localStorage.removeItem(draftKey)
             router.push(routes.personal.spreads.root);
             return;
@@ -236,12 +237,12 @@ export default function PanelWrapper({
         <AppTopbar
             centerTitle={
                 <>
-                    <span className="font-bold text-foreground text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]">{spreadTitle}</span>
+                    <span className="font-display font-bold text-foreground text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]">{spreadTitle}</span>
                     {!isMobile && <>
                         <Separator orientation="vertical" />
-                        <span className="text-muted-foreground text-sm lg:text-base text-nowrap">{cardCount}</span>
+                        <span className="text-muted-foreground text-xs lg:text-sm text-nowrap">{cardCount}</span>
                     </>}
-                    <Badge variant="secondary">DRAFT</Badge>
+                    <Badge variant="secondary" className="text-[10px] font-medium">DRAFT</Badge>
                 </>
             }
             rightButtonGroup={
@@ -254,7 +255,7 @@ export default function PanelWrapper({
                             <Button type="button" variant="destructive" size={isMobile ? "icon" : "default"} onClick={handleDiscard}>
                                 {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Discard</span> }
                             </Button>
-                            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
+                            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave} className="bg-gold hover:bg-gold/90 text-background font-semibold">
                                 {isSaving && <Spinner />}
                                 <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Spread"}</span>
                             </Button>
@@ -264,7 +265,7 @@ export default function PanelWrapper({
                             <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleDiscard}>
                                 {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Discard</span> }
                             </Button>
-                            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave}>
+                            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave} className="bg-gold hover:bg-gold/90 text-background font-semibold">
                                 {isSaving && <Spinner />}
                                 <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Spread"}</span>
                             </Button>
@@ -280,7 +281,7 @@ export default function PanelWrapper({
                 {isMobile ? (
                     <>
                         {/* Floating Toolbar */}
-                        <Card className="absolute bottom-3 left-3 py-2 z-10 shadow-md bg-background">
+                        <Card className="absolute bottom-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50">
                             <CardContent>
                                 <div className="flex items-center gap-1">
                                     <Button
@@ -307,6 +308,7 @@ export default function PanelWrapper({
                             cards={cards}
                             selectedCardIndex={selectedCardIndex}
                             onCardSelect={setSelectedCardIndex}
+                            onCanvasDoubleClick={addCardAt}
                         />
 
                         {/* Spread Settings (Sheet on mobile via ResponsivePanel) */}
@@ -366,6 +368,7 @@ export default function PanelWrapper({
                         cards={cards}
                         selectedCardIndex={selectedCardIndex}
                         onCardSelect={setSelectedCardIndex}
+                        onCanvasDoubleClick={addCardAt}
                         />
                     </ResizablePanel>
 
@@ -384,22 +387,22 @@ export default function PanelWrapper({
             </FormProvider>
         </div>
 
-        {/* Delete Spread Dialog */}
+        {/* Discard Spread Dialog */}
         <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Discard spread?</DialogTitle>
+                    <DialogTitle className="font-display">Discard this spread?</DialogTitle>
                     <DialogDescription>
-                        You have unsaved changes. Would you like to save this spread as a draft for later, or discard it entirely?
+                        You have unsaved changes. Save as a draft to continue later, or discard entirely.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="sm:justify-between">
                     <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
-                        Cancel
+                        Keep editing
                     </Button>
                     <div className="flex flex-col-reverse gap-2 sm:flex-row">
                         <Button variant="secondary" onClick={handleSaveAsDraft}>
-                            Save as Draft
+                            Save as draft
                         </Button>
                         <Button variant="destructive" onClick={handleConfirmDiscard}>
                             Discard

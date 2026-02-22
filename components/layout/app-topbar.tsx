@@ -26,7 +26,7 @@ import {
   PanelLeftOpenIcon,
   ArrowRight01Icon,
   ConstellationIcon,
-  ArrowDown01Icon,
+  PlusSignIcon,
   Menu01Icon,
 } from "hugeicons-react"
 
@@ -66,18 +66,18 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
   const resolvedBreadcrumbs = breadcrumbs ?? autoBreadcrumbs
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-border/60 bg-background/80 backdrop-blur-sm px-2 lg:px-4 py-3">
+    <header className="flex items-center justify-between gap-4 border-b border-border/40 bg-background px-3 lg:px-4 py-3">
       {/* Left Section */}
-      <div className="flex items-center gap-1 lg:gap-3">
+      <div className="flex items-center gap-1.5 lg:gap-3 min-w-0">
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
           onClick={toggleSidebar}
           aria-label="Toggle sidebar"
-          className="shadow-none text-muted-foreground hover:text-foreground"
+          className="shadow-none text-muted-foreground hover:text-foreground shrink-0"
         >
-          {isMobile ? <Menu01Icon /> :
+          {isMobile ? <Menu01Icon strokeWidth={1.5} /> :
             isOpen ? (
               <PanelLeftOpenIcon strokeWidth={1.5} />
             ) : (
@@ -121,15 +121,15 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
       </div>}
 
       {/* Right Section */}
-      <div className="flex items-center gap-1 lg:gap-2">
+      <div className="flex items-center gap-1 lg:gap-2 shrink-0">
         {rightButtonGroup ?? (
           <DropdownMenu>
             <DropdownMenuTrigger
               type="button"
-              className={buttonVariants({ variant: "default" })}
+              className={buttonVariants({ variant: "default", size: "sm" })}
             >
+              <PlusSignIcon strokeWidth={2} className="w-4 h-4" />
               <span>New</span>
-              <ArrowDown01Icon />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={8} className="w-auto">
               <DropdownMenuItem className="justify-between gap-8">

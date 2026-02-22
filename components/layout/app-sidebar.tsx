@@ -23,7 +23,7 @@ import {
 import { UserButton, useUser } from "@clerk/clerk-react"
 import { useRouter, usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { useEffect, useState, ReactNode } from "react"
+import { useEffect, useState } from "react"
 import { Skeleton } from "../ui/skeleton"
 import { routes } from "@/lib/routes"
 
@@ -70,7 +70,7 @@ function SidebarMenuItemComponent({
         onClick={onClick}
         isActive={isActive}
       >
-        <Icon strokeWidth={1} />
+        <Icon strokeWidth={1.25} />
         <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
           {label}
         </span>
@@ -105,7 +105,7 @@ function ThemeToggleMenuItem({
           <Skeleton className="w-5 h-5 rounded-full" />
         )}
         <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
-          Theme
+          {mounted ? (isLightTheme ? "Light" : "Dark") : "Theme"}
         </span>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -143,10 +143,10 @@ export default function AppSidebar() {
         <button
           type="button"
           onClick={() => router.push("/")}
-          className={`flex items-center justify-start gap-2.5 pl-2 text-left group`}
+          className="flex items-center justify-start gap-2.5 pl-2 text-left group"
         >
-          <div className="w-2 h-2 rotate-45 bg-primary shrink-0 transition-transform duration-200 group-hover:scale-125 group-data-[collapsible=icon]:translate-x-2.5" />
-          <span className="text-nowrap group-data-[collapsible=icon]:scale-0 group-data-[collapsible=icon]:pointer-events-none transition-scale duration-150 font-bold tracking-tight">
+          <div className="w-2 h-2 rotate-45 bg-gold shrink-0 transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_8px_var(--gold)] group-data-[collapsible=icon]:translate-x-2.5" />
+          <span className="text-nowrap group-data-[collapsible=icon]:scale-0 group-data-[collapsible=icon]:pointer-events-none transition-scale duration-150 font-display font-bold tracking-tight">
             Tarot Vault
           </span>
         </button>
@@ -156,7 +156,7 @@ export default function AppSidebar() {
       <SidebarContent className="overflow-hidden">
         {/* Personal workspace */}
         <SidebarGroup className="pl-3">
-          <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none text-muted-foreground/60 text-[11px] tracking-[0.1em] uppercase">
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none text-muted-foreground/50 text-[10px] tracking-[0.15em] uppercase font-semibold">
             <a
               href={routes.personal.root}
               className="hover:text-muted-foreground transition-colors"
@@ -180,12 +180,12 @@ export default function AppSidebar() {
 
         {/* Collective (future) */}
         <SidebarGroup className="pl-3">
-          <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none text-muted-foreground/40 text-[11px] tracking-[0.1em] uppercase">
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none text-muted-foreground/30 text-[10px] tracking-[0.15em] uppercase font-semibold">
             Collective
           </SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <span className="group-data-[collapsible=icon]:opacity-0 opacity-50 pl-3 transition-opacity duration-150 text-xs italic text-muted-foreground">
+              <span className="group-data-[collapsible=icon]:opacity-0 opacity-40 pl-3 transition-opacity duration-150 text-xs italic text-muted-foreground">
                 Coming soon
               </span>
             </SidebarMenuItem>
