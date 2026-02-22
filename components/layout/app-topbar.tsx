@@ -10,6 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { cn } from "@/lib/utils"
 import { routes } from "@/lib/routes"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
@@ -126,10 +127,10 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
           <DropdownMenu>
             <DropdownMenuTrigger
               type="button"
-              className={buttonVariants({ variant: "default", size: "sm" })}
+              className={cn(buttonVariants({ variant: "default", size: "default" }))}
             >
               <PlusSignIcon strokeWidth={2} className="w-4 h-4" />
-              <span>New</span>
+              <span className="text-base font-normal">New</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={8} className="w-auto">
               <DropdownMenuItem className="justify-between gap-8">

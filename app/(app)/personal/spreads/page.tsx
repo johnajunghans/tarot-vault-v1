@@ -107,21 +107,21 @@ export default function Spreads() {
                 ) : (
                     <div className="p-4 md:p-6 space-y-8">
                         {/* Quick create bar */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
                             <div className="flex items-center gap-3">
                                 <Cards01Icon strokeWidth={1.25} className="w-5 h-5 text-gold" />
                                 <h1 className="font-display text-xl font-bold tracking-tight">
                                     Your Spreads
                                 </h1>
                             </div>
-                            <Button
+                            {/* <Button
+                                variant="primaryOutline"
                                 size="sm"
                                 onClick={() => router.push(routes.personal.spreads.new.root)}
-                                className="bg-gold hover:bg-gold/90 text-background font-semibold rounded-lg"
                             >
                                 <PlusSignIcon className="w-3.5 h-3.5 mr-1" strokeWidth={2} />
                                 New Spread
-                            </Button>
+                            </Button> */}
                         </div>
 
                         {/* Drafts Section */}
