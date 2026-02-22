@@ -21,11 +21,13 @@ import {
   useSidebar,
 } from "../ui/sidebar"
 import { UserButton, useUser } from "@clerk/clerk-react"
-import { useRouter, usePathname } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { useEffect, useState, ReactNode } from "react"
+import { useEffect } from "react"
 import { Skeleton } from "../ui/skeleton"
 import { routes } from "@/lib/routes"
+import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
+import { useHydrated } from "@/hooks/use-hydrated"
 
 const sidebarRoutes = {
   personal: [
@@ -115,14 +117,19 @@ function ThemeToggleMenuItem({
 export default function AppSidebar() {
   const { open } = useSidebar()
   const { isLoaded } = useUser()
-  const router = useRouter()
+  const router = useViewTransitionRouter()
   const pathname = usePathname()
   const { theme, resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const isHydrated = useHydrated()
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    router.prefetch("/")
+    router.prefetch(routes.personal.root)
+
+    for (const route of sidebarRoutes.personal) {
+      router.prefetch(route.url)
+    }
+  }, [router])
 
   const activeTheme = resolvedTheme ?? theme
   const isLightTheme = activeTheme === "light"
@@ -160,6 +167,11 @@ export default function AppSidebar() {
             <a
               href={routes.personal.root}
               className="hover:text-muted-foreground transition-colors"
+              onClick={(event) => {
+                event.preventDefault()
+                router.push(routes.personal.root)
+              }}
+              onMouseEnter={() => router.prefetch(routes.personal.root)}
             >
               Personal
             </a>
@@ -202,7 +214,7 @@ export default function AppSidebar() {
             label="Settings"
           />
           <ThemeToggleMenuItem
-            mounted={mounted}
+            mounted={isHydrated}
             isLightTheme={isLightTheme}
             toggleTheme={toggleTheme}
           />

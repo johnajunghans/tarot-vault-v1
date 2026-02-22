@@ -177,6 +177,24 @@
   }
 }
 
+@keyframes route-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes route-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes rotate-slow {
   from {
     transform: rotate(0deg);
@@ -210,6 +228,27 @@
 
 .animate-pulse-glow {
   animation: pulse-glow 5s ease-in-out infinite;
+}
+
+/* ─── Route view transitions ─── */
+::view-transition-group(root),
+::view-transition-group(*) {
+  animation-duration: 200ms;
+  animation-timing-function: linear;
+}
+
+::view-transition-old(root),
+::view-transition-old(*) {
+  animation-name: route-fade-out;
+  animation-duration: 200ms;
+  animation-timing-function: linear;
+}
+
+::view-transition-new(root),
+::view-transition-new(*) {
+  animation-name: route-fade-in;
+  animation-duration: 200ms;
+  animation-timing-function: linear;
 }
 
 /* Reduced motion: disable animations gracefully */
