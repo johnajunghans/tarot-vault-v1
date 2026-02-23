@@ -46,6 +46,8 @@
   --color-amethyst: var(--amethyst);
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
+  --color-stone: var(--stone);
+  --color-stone-light: var(--stone-light);
 
   /* BORDER RADIUS */
   --radius-sm: calc(var(--radius) - 4px);
@@ -60,95 +62,101 @@
   --height-app-content: var(--app-content-height)
 }
 
-/* ─── Light: warm parchment ─── */
+/* ─── Light: near-surface sandstone ─── */
 :root {
   --radius: 0.625rem;
-  --background: #faf7f0;
-  --foreground: #1a1610;
-  --card: #ffffff;
-  --card-foreground: #1a1610;
-  --popover: #ffffff;
-  --popover-foreground: #1a1610;
-  --primary: #8b6914;
-  --primary-foreground: #faf7f0;
-  --secondary: #f0ebe0;
-  --secondary-foreground: #1a1610;
-  --muted: #f0ebe0;
-  --muted-foreground: #6b6358;
-  --accent: #f0ebe0;
-  --accent-foreground: #1a1610;
+  --background: #f0ece4;
+  --foreground: #1c1a18;
+  --card: #f7f4ed;
+  --card-foreground: #1c1a18;
+  --popover: #f7f4ed;
+  --popover-foreground: #1c1a18;
+  --primary: #7a5c10;
+  --primary-foreground: #f0ece4;
+  --secondary: #e6e0d4;
+  --secondary-foreground: #1c1a18;
+  --muted: #e6e0d4;
+  --muted-foreground: #6b6560;
+  --accent: #e6e0d4;
+  --accent-foreground: #1c1a18;
   --destructive: #c53030;
-  --border: #e0d9c8;
-  --input: #e0d9c8;
-  --ring: #8b6914;
-  --gold: #b8941e;
-  --gold-muted: #8b6914;
-  --amethyst: #8b6fc0;
-  --surface: #f5f2ea;
-  --surface-hover: #ede8dc;
-  --chart-1: #b8941e;
+  --border: #d0c8b6;
+  --input: #d0c8b6;
+  --ring: #7a5c10;
+  --gold: #a58520;
+  --gold-muted: #7a5c10;
+  --amethyst: #7b5fb0;
+  --stone: #e0d8ca;
+  --stone-light: #ebe4d6;
+  --surface: #eae5da;
+  --surface-hover: #e0dace;
+  --chart-1: #a58520;
   --chart-2: #6b8f71;
   --chart-3: #8b6c5c;
   --chart-4: #4a6fa5;
   --chart-5: #a0522d;
-  --sidebar: #f5f2ea;
-  --sidebar-foreground: #1a1610;
-  --sidebar-primary: #8b6914;
-  --sidebar-primary-foreground: #faf7f0;
-  --sidebar-accent: #ede8dc;
-  --sidebar-accent-foreground: #1a1610;
-  --sidebar-border: #e0d9c8;
-  --sidebar-ring: #8b6914;
-  --scrollbar: #8b691440;
-  --canvas-bg: #e8e2d4;
-  --canvas-weave: #d4cdb8;
+  --sidebar: #e8e3d8;
+  --sidebar-foreground: #1c1a18;
+  --sidebar-primary: #7a5c10;
+  --sidebar-primary-foreground: #f0ece4;
+  --sidebar-accent: #ddd7ca;
+  --sidebar-accent-foreground: #1c1a18;
+  --sidebar-border: #d0c8b6;
+  --sidebar-ring: #7a5c10;
+  --scrollbar: #7a5c1040;
+  --canvas-bg: #ddd7ca;
+  --canvas-stone: #cdc5b4;
+  --canvas-vein: #a58520;
 
   --app-content-height: calc(100vh - 57px);
   --theme-transition-duration: 240ms;
   --theme-transition-easing: ease;
 }
 
-/* ─── Dark: candlelit charcoal ─── */
+/* ─── Dark: deep underground cavern ─── */
 .dark {
-  --background: #0c0a08;
-  --foreground: #e6dfd0;
-  --card: #161412;
-  --card-foreground: #e6dfd0;
-  --popover: #161412;
-  --popover-foreground: #e6dfd0;
-  --primary: #c4a35a;
-  --primary-foreground: #0c0a08;
-  --secondary: #1e1c18;
-  --secondary-foreground: #e6dfd0;
-  --muted: #1e1c18;
-  --muted-foreground: #8a8478;
-  --accent: #1e1a14;
-  --accent-foreground: #e6dfd0;
-  --destructive: #e53e3e;
-  --border: #2a2622;
-  --input: #2a2622;
-  --ring: #c4a35a;
-  --gold: #c4a35a;
-  --gold-muted: #9a7d30;
-  --amethyst: #a78bdb;
-  --surface: #131110;
-  --surface-hover: #1a1814;
-  --chart-1: #c4a35a;
+  --background: #0a0a0c;
+  --foreground: #d4cfc6;
+  --card: #121214;
+  --card-foreground: #d4cfc6;
+  --popover: #121214;
+  --popover-foreground: #d4cfc6;
+  --primary: #c9a84c;
+  --primary-foreground: #0a0a0c;
+  --secondary: #1a1a1e;
+  --secondary-foreground: #d4cfc6;
+  --muted: #1a1a1e;
+  --muted-foreground: #7a7872;
+  --accent: #16161a;
+  --accent-foreground: #d4cfc6;
+  --destructive: #c44040;
+  --border: #28282e;
+  --input: #28282e;
+  --ring: #c9a84c;
+  --gold: #c9a84c;
+  --gold-muted: #8a7030;
+  --amethyst: #9b7ec8;
+  --stone: #1e1e22;
+  --stone-light: #2a2a30;
+  --surface: #0f0f12;
+  --surface-hover: #18181c;
+  --chart-1: #c9a84c;
   --chart-2: #6b8f71;
   --chart-3: #8b6c5c;
   --chart-4: #4a6fa5;
   --chart-5: #a0522d;
-  --sidebar: #0e0d0b;
-  --sidebar-foreground: #e6dfd0;
-  --sidebar-primary: #c4a35a;
-  --sidebar-primary-foreground: #0e0d0b;
-  --sidebar-accent: #1a1814;
-  --sidebar-accent-foreground: #e6dfd0;
-  --sidebar-border: #2a2622;
-  --sidebar-ring: #c4a35a;
-  --scrollbar: #9a7d3040;
-  --canvas-bg: #0f0d0a;
-  --canvas-weave: #1a1612;
+  --sidebar: #0c0c0f;
+  --sidebar-foreground: #d4cfc6;
+  --sidebar-primary: #c9a84c;
+  --sidebar-primary-foreground: #0c0c0f;
+  --sidebar-accent: #18181c;
+  --sidebar-accent-foreground: #d4cfc6;
+  --sidebar-border: #28282e;
+  --sidebar-ring: #c9a84c;
+  --scrollbar: #8a703040;
+  --canvas-bg: #0d0d10;
+  --canvas-stone: #1a1a1f;
+  --canvas-vein: #c9a84c;
 }
 
 body.theme-transitioning,
@@ -212,21 +220,13 @@ body.theme-transitioning * {
 }
 
 @keyframes route-fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 @keyframes route-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes rotate-slow {
@@ -244,25 +244,14 @@ body.theme-transitioning * {
   100% { background-position: 200% 0; }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes card-deal {
-  from {
-    opacity: 0;
-    transform: translateY(40px) rotateX(15deg);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) rotateX(0);
-  }
-}
-
 @keyframes gentle-pulse {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
+}
+
+@keyframes vein-shimmer {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.3; }
 }
 
 .animate-fade-up {
@@ -311,16 +300,12 @@ body.theme-transitioning * {
   animation: shimmer 3s ease-in-out infinite;
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-card-deal {
-  animation: card-deal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
 .animate-gentle-pulse {
   animation: gentle-pulse 3s ease-in-out infinite;
+}
+
+.animate-vein-shimmer {
+  animation: vein-shimmer 6s ease-in-out infinite;
 }
 
 /* Stagger delays */
@@ -339,9 +324,8 @@ body.theme-transitioning * {
   .animate-rotate-slow,
   .animate-pulse-glow,
   .animate-shimmer,
-  .animate-float,
-  .animate-card-deal,
-  .animate-gentle-pulse {
+  .animate-gentle-pulse,
+  .animate-vein-shimmer {
     animation: none !important;
     opacity: 1 !important;
   }
@@ -352,33 +336,58 @@ body.theme-transitioning * {
   }
 }
 
-/* ─── Grain texture overlay ─── */
-.grain::before {
+/* ─── Stone texture overlay ─── */
+.stone-surface::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='stone'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23stone)'/%3E%3C/svg%3E");
   background-repeat: repeat;
-  background-size: 256px 256px;
+  background-size: 512px 512px;
   z-index: 1;
 }
 
-.dark .grain::before {
-  opacity: 0.05;
+.dark .stone-surface::before {
+  opacity: 0.08;
+}
+
+/* ─── Gold vein border accent ─── */
+.vein-border-b {
+  position: relative;
+}
+
+.vein-border-b::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 8%;
+  right: 25%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold) 15%,
+    var(--gold) 35%,
+    transparent 50%,
+    var(--gold) 65%,
+    transparent 100%
+  );
+  opacity: 0.2;
+  pointer-events: none;
 }
 
 /* ─── Glass morphism surface ─── */
 .glass {
-  background: color-mix(in srgb, var(--background) 80%, transparent);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  background: color-mix(in srgb, var(--background) 85%, transparent);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
 }
 
 /* ─── Gold gradient text ─── */
 .text-gold-gradient {
-  background: linear-gradient(135deg, var(--gold) 0%, #d4b44a 50%, var(--gold-muted) 100%);
+  background: linear-gradient(135deg, var(--gold) 0%, #d4b44a 40%, var(--gold-muted) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

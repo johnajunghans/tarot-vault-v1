@@ -69,7 +69,7 @@ export default function SpreadCard({
     return (
         <>
         <Card
-            className="group shadow-none hover:shadow-md border-border/50 hover:border-gold/20 transition-all duration-300 cursor-pointer overflow-hidden"
+            className="group shadow-none hover:shadow-[0_2px_12px_-4px_var(--gold-muted)] border-border/50 hover:border-gold/30 transition-all duration-300 cursor-pointer overflow-hidden"
             onClick={handleCardClick}
         >
             <CardHeader className="pb-2">

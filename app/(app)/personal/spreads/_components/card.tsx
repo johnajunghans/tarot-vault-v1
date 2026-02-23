@@ -104,9 +104,9 @@ function TarotCardBack({ selected, groupSelected }: { selected: boolean; groupSe
       <line x1={cx} y1={14} x2={cx} y2={CARD_HEIGHT - 14} stroke={borderColor} strokeWidth={0.4} strokeOpacity={accentOpacity * 0.6} />
       <line x1={14} y1={cy} x2={CARD_WIDTH - 14} y2={cy} stroke={borderColor} strokeWidth={0.4} strokeOpacity={accentOpacity * 0.6} />
 
-      {/* Diagonal lines */}
-      <line x1={14} y1={14} x2={CARD_WIDTH - 14} y2={CARD_HEIGHT - 14} stroke={borderColor} strokeWidth={0.3} strokeOpacity={accentOpacity * 0.4} />
-      <line x1={CARD_WIDTH - 14} y1={14} x2={14} y2={CARD_HEIGHT - 14} stroke={borderColor} strokeWidth={0.3} strokeOpacity={accentOpacity * 0.4} />
+      {/* Diagonal lines (stone fractures) */}
+      <line x1={14} y1={14} x2={CARD_WIDTH - 14} y2={CARD_HEIGHT - 14} stroke={borderColor} strokeWidth={0.3} strokeOpacity={accentOpacity * 0.5} />
+      <line x1={CARD_WIDTH - 14} y1={14} x2={14} y2={CARD_HEIGHT - 14} stroke={borderColor} strokeWidth={0.3} strokeOpacity={accentOpacity * 0.5} />
 
       {/* Corner ornaments - small diamonds */}
       {[
@@ -124,20 +124,13 @@ function TarotCardBack({ selected, groupSelected }: { selected: boolean; groupSe
         />
       ))}
 
-      {/* Concentric arcs at top and bottom center */}
-      <path
-        d={`M ${cx - 18} ${18} A 18 18 0 0 1 ${cx + 18} ${18}`}
-        fill="none"
-        stroke={borderColor}
+      {/* Gold vein across card face */}
+      <line
+        x1={12} y1={20}
+        x2={CARD_WIDTH - 18} y2={CARD_HEIGHT - 30}
+        stroke="var(--gold)"
         strokeWidth={0.4}
-        strokeOpacity={accentOpacity * 0.7}
-      />
-      <path
-        d={`M ${cx - 18} ${CARD_HEIGHT - 18} A 18 18 0 0 0 ${cx + 18} ${CARD_HEIGHT - 18}`}
-        fill="none"
-        stroke={borderColor}
-        strokeWidth={0.4}
-        strokeOpacity={accentOpacity * 0.7}
+        strokeOpacity={accentOpacity * 0.5}
       />
     </>
   );

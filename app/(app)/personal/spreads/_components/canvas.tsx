@@ -38,11 +38,8 @@ export default function SpreadCanvas({
 
   const themeBasedStyles = useMemo(
     () => ({
-      containerBg:
-        resolvedTheme === "dark"
-          ? "bg-[url(https://www.transparenttextures.com/patterns/45-degree-fabric-light.png)]"
-          : "bg-[url(https://www.transparenttextures.com/patterns/45-degree-fabric-dark.png)]",
-      clothTextureFillOpacity: resolvedTheme === "dark" ? "0.8" : "0.6",
+      containerBg: "bg-[var(--canvas-bg)]",
+      stoneTextureFillOpacity: resolvedTheme === "dark" ? "0.8" : "0.6",
       dragGridFill: resolvedTheme === "dark" ? "var(--gold)" : "var(--foreground)",
       dragGridFillOpacity: resolvedTheme === "dark" ? "0.3" : "0.7",
       ghostCardStrokeOpacity: resolvedTheme === "dark" ? "0.4" : "0.8",
@@ -448,11 +445,16 @@ export default function SpreadCanvas({
         className="select-none"
       >
         <defs>
-          {/* Cloth-like fabric texture */}
-          <pattern id="cloth-texture" width="8" height="8" patternUnits="userSpaceOnUse">
-            <rect width="8" height="8" fill="var(--canvas-bg)" fillOpacity={themeBasedStyles.clothTextureFillOpacity} />
-            {/* <rect x="0" y="0" width="4" height="4" fill="var(--canvas-weave)" fillOpacity="0.3" />
-            <rect x="4" y="4" width="4" height="4" fill="var(--canvas-weave)" fillOpacity="0.3" /> */}
+          {/* Stone texture pattern */}
+          <pattern id="stone-texture" width="120" height="120" patternUnits="userSpaceOnUse">
+            <rect width="120" height="120" fill="var(--canvas-bg)" fillOpacity={themeBasedStyles.stoneTextureFillOpacity} />
+            {/* Stone grain lines */}
+            <line x1="0" y1="30" x2="120" y2="35" stroke="var(--canvas-stone)" strokeWidth="0.5" strokeOpacity="0.3" />
+            <line x1="0" y1="70" x2="80" y2="72" stroke="var(--canvas-stone)" strokeWidth="0.3" strokeOpacity="0.2" />
+            <line x1="40" y1="0" x2="42" y2="120" stroke="var(--canvas-stone)" strokeWidth="0.3" strokeOpacity="0.15" />
+            <line x1="90" y1="0" x2="95" y2="90" stroke="var(--canvas-stone)" strokeWidth="0.4" strokeOpacity="0.2" />
+            {/* Faint gold vein fragment */}
+            <line x1="60" y1="50" x2="85" y2="48" stroke="var(--canvas-vein)" strokeWidth="0.5" strokeOpacity="0.12" />
           </pattern>
 
           {/* Subtle dot grid only visible during drag */}
@@ -460,19 +462,18 @@ export default function SpreadCanvas({
             <circle cx={GRID_SIZE} cy={GRID_SIZE} r={0.6} fill={themeBasedStyles.dragGridFill} fillOpacity={themeBasedStyles.dragGridFillOpacity} />
           </pattern>
 
-          {/* Center vignette radial gradient */}
-          <radialGradient id="canvas-vignette" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.03" />
-            <stop offset="70%" stopColor="var(--gold)" stopOpacity="0.01" />
+          {/* Atmospheric vignette — faint light from above */}
+          <radialGradient id="canvas-vignette" cx="50%" cy="40%" r="55%">
+            <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.02" />
             <stop offset="100%" stopColor="transparent" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        {/* Layer 1: Cloth texture base */}
+        {/* Layer 1: Stone texture base */}
         <rect
           width={svgWidth}
           height={svgHeight}
-          fill="url(#cloth-texture)"
+          fill="url(#stone-texture)"
         />
 
         {/* Layer 2: Ambient center warmth */}

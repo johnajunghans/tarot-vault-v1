@@ -27,7 +27,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Tarot Vault",
   description:
-    "A digital sanctuary for the cultivation of insight through tarot.",
+    "A tarot app. You do readings. It keeps track of them.",
   icons: {
     icon: "/diamond.svg",
   },

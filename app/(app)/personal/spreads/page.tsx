@@ -46,37 +46,21 @@ function EmptyState() {
     const router = useRouter()
 
     return (
-        <div className="flex flex-col items-center justify-center py-24 px-4 animate-fade-in-scale opacity-0">
-            <div className="relative mb-8">
-                <div className="flex items-end gap-2">
-                    {["-6", "0", "6"].map((rotation, i) => (
-                        <div
-                            key={i}
-                            className="w-16 h-24 rounded-lg border border-gold/20 bg-gradient-to-b from-gold/8 to-gold/3"
-                            style={{
-                                transform: `rotate(${rotation}deg)`,
-                                animationDelay: `${i * 0.15}s`,
-                            }}
-                        >
-                            <div className="absolute inset-1.5 rounded border border-gold/10" />
-                        </div>
-                    ))}
-                </div>
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-20 h-3 bg-gold/5 rounded-full blur-md" />
-            </div>
-            <h3 className="font-display text-xl font-bold mb-2 tracking-tight">
-                No spreads yet
+        <div className="flex flex-col items-center justify-center py-32 px-4 animate-fade-in-scale opacity-0">
+            <div className="w-6 h-6 rotate-45 border border-gold/40 mb-8" />
+            <h3 className="font-display text-xl font-bold mb-3 tracking-tight">
+                Nothing here yet
             </h3>
-            <p className="text-muted-foreground text-center max-w-sm mb-8 leading-relaxed">
-                Design your first card layout — arrange positions for a Celtic Cross,
-                a simple three-card pull, or something entirely your own.
+            <p className="text-muted-foreground text-center max-w-xs mb-8 text-sm leading-relaxed">
+                Create a spread to arrange your card positions.
             </p>
             <Button
+                variant="outline"
                 onClick={() => router.push(routes.personal.spreads.new.root)}
-                className="bg-gold hover:bg-gold/90 text-background font-semibold rounded-lg shadow-lg shadow-gold/10 transition-all duration-300 hover:shadow-xl hover:shadow-gold/20"
+                className="border-gold/50 text-gold hover:bg-gold/10 hover:border-gold"
             >
                 <PlusSignIcon className="w-4 h-4 mr-1.5" strokeWidth={2} />
-                Create your first spread
+                New spread
             </Button>
         </div>
     )

@@ -20,7 +20,7 @@ import {
 } from "../../../components/ui/sidebar"
 import { UserButton, useUser } from "@clerk/clerk-react"
 import { usePathname } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useEffect } from "react"
 import { Skeleton } from "../../../components/ui/skeleton"
 import { routes } from "@/lib/routes"
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
@@ -108,7 +108,7 @@ export default function AppSidebar() {
           onClick={() => router.push("/")}
           className="flex items-center justify-start gap-2.5 pl-2 text-left group"
         >
-          <div className="w-2 h-2 rotate-45 bg-gold shrink-0 transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_8px_var(--gold)] group-data-[collapsible=icon]:translate-x-2.5" />
+          <div className="w-2 h-2 rotate-45 bg-gold shrink-0 shadow-[0_0_4px_var(--gold-muted)] transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_8px_var(--gold)] group-data-[collapsible=icon]:translate-x-2.5" />
           <span className="text-nowrap group-data-[collapsible=icon]:scale-0 group-data-[collapsible=icon]:pointer-events-none transition-scale duration-150 font-display font-bold tracking-tight">
             Tarot Vault
           </span>
@@ -154,7 +154,7 @@ export default function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <span className="group-data-[collapsible=icon]:opacity-0 opacity-40 pl-3 transition-opacity duration-150 text-xs italic text-muted-foreground">
-                Coming soon
+                Still digging
               </span>
             </SidebarMenuItem>
           </SidebarMenu>

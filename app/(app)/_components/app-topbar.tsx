@@ -72,7 +72,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
   const resolvedBreadcrumbs = breadcrumbs ?? autoBreadcrumbs
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-border/40 bg-background px-3 lg:px-4 py-3">
+    <header className="flex items-center justify-between gap-4 border-b border-border/40 vein-border-b bg-background px-3 lg:px-4 py-3">
       {/* Left Section */}
       <div className="flex items-center gap-1.5 lg:gap-3 min-w-0">
         <Button
@@ -139,7 +139,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
           <DropdownMenu>
             <DropdownMenuTrigger
               type="button"
-              className={cn(buttonVariants({ variant: "default", size: "default" }))}
+              className={cn(buttonVariants({ variant: "outline", size: "default" }), "border-gold/50 text-gold hover:bg-gold/10 hover:border-gold")}
             >
               <PlusSignIcon strokeWidth={2} className="w-4 h-4" />
               <span className="text-base font-normal">New</span>
