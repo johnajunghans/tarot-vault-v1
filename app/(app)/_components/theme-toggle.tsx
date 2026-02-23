@@ -1,8 +1,8 @@
 import { useTheme } from "next-themes"
 import { useEffect, useRef, useState } from "react"
-import { SidebarMenuButton, SidebarMenuItem } from "../ui/sidebar"
+import { SidebarMenuButton, SidebarMenuItem } from "../../../components/ui/sidebar"
 import { Moon01Icon, Sun02Icon } from "hugeicons-react"
-import { Skeleton } from "../ui/skeleton"
+import { Skeleton } from "../../../components/ui/skeleton"
 
 export default function ThemeToggle({
     mounted

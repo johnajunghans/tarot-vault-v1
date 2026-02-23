@@ -4,9 +4,7 @@ import {
   Cards01Icon,
   ConstellationIcon,
   LibraryIcon,
-  Moon01Icon,
   Settings01Icon,
-  Sun02Icon,
 } from "hugeicons-react"
 import {
   Sidebar,
@@ -19,12 +17,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "../ui/sidebar"
+} from "../../../components/ui/sidebar"
 import { UserButton, useUser } from "@clerk/clerk-react"
 import { usePathname } from "next/navigation"
-import { useTheme } from "next-themes"
 import { useEffect, useRef, useState } from "react"
-import { Skeleton } from "../ui/skeleton"
+import { Skeleton } from "../../../components/ui/skeleton"
 import { routes } from "@/lib/routes"
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
 import { useHydrated } from "@/hooks/use-hydrated"

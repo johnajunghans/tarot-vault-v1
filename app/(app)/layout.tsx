@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/app-sidebar"
+import AppSidebar from "@/app/(app)/_components/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ReactNode, ViewTransition } from "react"
 

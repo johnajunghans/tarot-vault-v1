@@ -1,4 +1,4 @@
-import AppTopbar from "@/components/layout/app-topbar"
+import AppTopbar from "@/app/(app)/_components/app-topbar"
 
 export default function Readings() {
     return (

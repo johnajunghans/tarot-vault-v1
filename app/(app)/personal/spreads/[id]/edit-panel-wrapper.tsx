@@ -15,7 +15,7 @@ import SpreadCanvas from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { generateCard, generateCardAt } from "../utils";
-import AppTopbar from "@/components/layout/app-topbar";
+import AppTopbar from "@/app/(app)/_components/app-topbar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";

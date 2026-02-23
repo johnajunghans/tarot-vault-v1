@@ -10,7 +10,7 @@ import CardOverview, { CardOverviewReadOnly } from "./card-overview";
 import { SpreadForm } from "@/types/spreads";
 import TextField from "@/components/form/text-field";
 import TextareaField from "@/components/form/textarea-field";
-import { ResponsivePanel } from "@/components/layout/responsive-panel";
+import { ResponsivePanel } from "@/app/(app)/_components/responsive-panel";
 
 // ------------ Read-Only Content Component ------------ //
 
