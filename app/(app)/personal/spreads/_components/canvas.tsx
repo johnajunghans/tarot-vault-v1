@@ -511,7 +511,7 @@ export default function SpreadCanvas({
             {/* Ghost card outline */}
             <rect
               x={svgWidth / 2 - CARD_WIDTH / 2}
-              y={svgHeight / 2 - CARD_HEIGHT / 2 - 20}
+              y={15}
               width={CARD_WIDTH}
               height={CARD_HEIGHT}
               rx={8}
@@ -525,7 +525,7 @@ export default function SpreadCanvas({
             {/* Prompt text */}
             <text
               x={svgWidth / 2}
-              y={svgHeight / 2 + CARD_HEIGHT / 2 + 8}
+              y={CARD_HEIGHT + 40}
               textAnchor="middle"
               fontSize={13}
               fill="var(--muted-foreground)"

@@ -277,7 +277,6 @@ export function CardSettingsContent({
             type="button"
             variant="ghost"
             className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/5"
-            disabled={cardCount <= 1}
             onClick={() => {
               if (selectedCardIndex !== null) setDeleteIndex(selectedCardIndex);
             }}
