@@ -27,6 +27,7 @@ import { routes } from "@/lib/routes"
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
 import { useHydrated } from "@/hooks/use-hydrated"
 import ThemeToggle from "./theme-toggle"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const sidebarRoutes = {
   personal: [
@@ -99,7 +100,7 @@ export default function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="icon" variant="inset" className="bg-transparent">
       {/* Header — brand */}
       <SidebarHeader className="mt-[6px]">
         <button
@@ -120,7 +121,7 @@ export default function AppSidebar() {
       </SidebarHeader>
 
       {/* Content — navigation */}
-      <SidebarContent className="overflow-hidden">
+      <SidebarContent className="overflow-hidden bg-transparent">
         {/* Personal workspace */}
         <SidebarGroup className="pl-3">
           <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none text-muted-foreground/50 text-[10px] tracking-[0.15em] uppercase font-semibold">
@@ -187,8 +188,10 @@ function ClerkUserButton() {
   const { isLoaded } = useUser()
   const { open } = useSidebar()
   const [showName, setShowName] = useState(open)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
+    console.log(open)
     if (!open) {
       setTimeout(() => setShowName(false), 200)
     } else {
@@ -200,7 +203,7 @@ function ClerkUserButton() {
     <div className="translate-x-[10px]">
       {isLoaded ? (
         <UserButton
-          showName={showName}
+          showName={isMobile || showName}
           appearance={{
             elements: {
               userButtonBox: {
@@ -209,7 +212,7 @@ function ClerkUserButton() {
 
               },
               userButtonOuterIdentifier: {
-                scale: open ? "1" : "0",
+                scale: isMobile ? "1" : (open ? "1" : "0"),
                 transitionDuration: "150ms",
                 textWrap: "nowrap",
                 color: "var(--foreground)",

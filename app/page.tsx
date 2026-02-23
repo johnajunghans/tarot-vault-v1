@@ -1,7 +1,5 @@
-import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { SignInButton } from "@clerk/nextjs";
 import HeroCard from "./_components/hero-card";
-import RedirectToApp from "./_components/auth-container";
 import AuthContainer from "./_components/auth-container";
 
 export default function Home() {
