@@ -52,7 +52,7 @@ interface SidebarMenuItemProps {
   onClick?: () => void
   tooltip: string
   isActive?: boolean
-  icon: React.ComponentType<{ strokeWidth: number }>
+  icon: React.ComponentType<{ strokeWidth: number, color: string }>
   label: string
 }
 
@@ -71,7 +71,7 @@ function SidebarMenuItemComponent({
         onClick={onClick}
         isActive={isActive}
       >
-        <Icon strokeWidth={1.25} />
+        <Icon strokeWidth={1.25} color={isActive ? "var(--gold)" : "var(--foreground)"} />
         <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
           {label}
         </span>
@@ -138,7 +138,7 @@ export default function AppSidebar() {
               Personal
             </a>
           </SidebarGroupLabel>
-          <SidebarMenu>
+          <SidebarMenu className="gap-1.5">
             {sidebarRoutes.personal.map((route) => (
               <SidebarMenuItemComponent
                 key={route.name}
