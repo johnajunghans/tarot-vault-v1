@@ -123,15 +123,6 @@ function TarotCardBack({ selected, groupSelected }: { selected: boolean; groupSe
           stroke="none"
         />
       ))}
-
-      {/* Gold vein across card face */}
-      <line
-        x1={12} y1={20}
-        x2={CARD_WIDTH - 18} y2={CARD_HEIGHT - 30}
-        stroke="var(--gold)"
-        strokeWidth={0.4}
-        strokeOpacity={accentOpacity * 0.5}
-      />
     </>
   );
 }

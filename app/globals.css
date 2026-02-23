@@ -325,7 +325,9 @@ body.theme-transitioning * {
   .animate-pulse-glow,
   .animate-shimmer,
   .animate-gentle-pulse,
-  .animate-vein-shimmer {
+  .animate-vein-shimmer,
+  .animate-hint-bounce,
+  .hero-card-glow {
     animation: none !important;
     opacity: 1 !important;
   }
@@ -391,6 +393,73 @@ body.theme-transitioning * {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ─── Hero card responsive sizing ─── */
+/* Maintains 2:3 aspect ratio, fills ~75% of viewport height on desktop,
+   scales down on mobile. Width is derived from height × (2/3). */
+.hero-card-size {
+  --_card-h: min(75vh, 90vw * 1.5);
+  height: var(--_card-h);
+  width: calc(var(--_card-h) / 1.5);
+}
+
+@media (max-width: 767px) {
+  .hero-card-size {
+    --_card-h: min(70vh, 88vw * 1.5);
+    height: var(--_card-h);
+    width: calc(var(--_card-h) / 1.5);
+  }
+}
+
+/* ─── Hero card lift + glow ─── */
+/* On hover: left edge lifts up with gold glow, hinting the card is flippable.
+   Transitions smoothly in and out. Glow pulses while hovered. */
+.hero-card-container {
+  perspective: 1200px;
+}
+
+.hero-card-tilt {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-card-container:hover .hero-card-tilt:not(.hero-card-tilt--flat) {
+  transform: rotateY(3deg);
+}
+
+.hero-card-glow {
+  box-shadow: none;
+  transition: box-shadow 0.5s ease;
+}
+
+.hero-card-container:hover .hero-card-glow {
+  box-shadow:
+    -6px 0 24px -4px color-mix(in srgb, var(--gold) 25%, transparent),
+    0 0 40px -8px color-mix(in srgb, var(--gold) 10%, transparent);
+  animation: card-glow-pulse 4s ease-in-out infinite;
+}
+
+@keyframes card-glow-pulse {
+  0%, 100% {
+    box-shadow:
+      -6px 0 24px -4px color-mix(in srgb, var(--gold) 20%, transparent),
+      0 0 40px -8px color-mix(in srgb, var(--gold) 8%, transparent);
+  }
+  50% {
+    box-shadow:
+      -8px 0 32px -4px color-mix(in srgb, var(--gold) 35%, transparent),
+      0 0 48px -8px color-mix(in srgb, var(--gold) 15%, transparent);
+  }
+}
+
+/* ─── Hint bounce ─── */
+@keyframes hint-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-hint-bounce {
+  animation: hint-bounce 1.5s ease-in-out infinite;
 }
 
 /* ─── Scrollbar ─── */
