@@ -384,7 +384,7 @@ export default function PanelWrapper({
         <ConfirmDialog
             open={showDiscardDialog}
             onOpenChange={setShowDiscardDialog}
-            title="Discard this spread?"
+            // title="Hold yer horses, partner."
             description="You have unsaved changes. Save as a draft to continue later, or discard entirely."
             cancelLabel="Keep editing"
             secondaryLabel="Save as draft"

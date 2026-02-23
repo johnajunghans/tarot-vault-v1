@@ -10,12 +10,14 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
+import { HorseSaddleIcon, SurpriseIcon } from "hugeicons-react"
 import type React from "react"
+import { ReactNode } from "react"
 
 export interface ConfirmDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    title: React.ReactNode
+    title?: React.ReactNode
     description: React.ReactNode
     cancelLabel?: string
     confirmLabel: string
@@ -26,6 +28,17 @@ export interface ConfirmDialogProps {
     onSecondary?: () => void
     secondaryVariant?: "secondary" | "outline"
 }
+
+const zanyTitles: { content: string, icon: ReactNode | undefined }[] = [
+    {
+        content: "Woah there, buddy ol' pal!",
+        icon: <SurpriseIcon className="w-4 h-4" />
+    },
+    {
+        content: "Hold yer horses, partner.",
+        icon: <HorseSaddleIcon className="w-4 h-4" />
+    }
+]
 
 export default function ConfirmDialog({
     open,
@@ -53,11 +66,28 @@ export default function ConfirmDialog({
         }
     }
 
+    const Title = () => {
+        if (title) return title
+
+        const randomIndex = Math.floor(Math.random() * zanyTitles.length)
+        const randomZanyTitle = zanyTitles[randomIndex]
+
+        return (
+            <div className="flex items-center gap-2">
+                { randomZanyTitle.icon }
+                <span>{randomZanyTitle.content}</span>
+            </div>
+           
+        )
+    }
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle className="font-display">{title}</DialogTitle>
+                    <DialogTitle className="font-display">
+                        <Title />
+                    </DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
                 <DialogFooter
