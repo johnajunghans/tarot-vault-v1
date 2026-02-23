@@ -10,7 +10,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
-import { HorseSaddleIcon, SurpriseIcon } from "hugeicons-react"
+import { HorseSaddleIcon, PineTreeIcon, SurpriseIcon, Tree01Icon } from "hugeicons-react"
 import type React from "react"
 import { ReactNode } from "react"
 
@@ -37,6 +37,10 @@ const zanyTitles: { content: string, icon: ReactNode | undefined }[] = [
     {
         content: "Hold yer horses, partner.",
         icon: <HorseSaddleIcon className="w-4 h-4" />
+    },
+    {
+        content: "Jiminy Christmas!",
+        icon: <PineTreeIcon className="w-4 h-4" />
     }
 ]
 
