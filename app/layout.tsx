@@ -41,7 +41,6 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
         >
           <ConvexClientProvider>{children}</ConvexClientProvider>
         </ThemeProvider>

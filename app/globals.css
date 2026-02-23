@@ -99,6 +99,8 @@
 
   /* Other */
   --app-content-height: calc(100vh - 57px);
+  --theme-transition-duration: 240ms;
+  --theme-transition-easing: ease;
 }
 
 /* ─── Dark: candlelit charcoal ─── */
@@ -138,6 +140,19 @@
   --sidebar-border: #2a2622;
   --sidebar-ring: #c4a35a;
   --scrollbar: #9a7d30bf;
+}
+
+body.theme-transitioning,
+body.theme-transitioning * {
+  transition-property:
+    background-color,
+    border-color,
+    outline-color,
+    text-decoration-color,
+    fill,
+    stroke;
+  transition-duration: var(--theme-transition-duration);
+  transition-timing-function: var(--theme-transition-easing);
 }
 
 @layer base {
@@ -259,6 +274,11 @@
   .animate-pulse-glow {
     animation: none !important;
     opacity: 1 !important;
+  }
+
+  body.theme-transitioning,
+  body.theme-transitioning * {
+    transition: none !important;
   }
 }
 

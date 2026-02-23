@@ -23,11 +23,12 @@ import {
 import { UserButton, useUser } from "@clerk/clerk-react"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Skeleton } from "../ui/skeleton"
 import { routes } from "@/lib/routes"
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
 import { useHydrated } from "@/hooks/use-hydrated"
+import ThemeToggle from "./theme-toggle"
 
 const sidebarRoutes = {
   personal: [
@@ -81,45 +82,11 @@ function SidebarMenuItemComponent({
   )
 }
 
-function ThemeToggleMenuItem({
-  mounted,
-  isLightTheme,
-  toggleTheme,
-}: {
-  mounted: boolean
-  isLightTheme: boolean
-  toggleTheme: () => void
-}) {
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        type="button"
-        tooltip="Toggle theme"
-        onClick={toggleTheme}
-      >
-        {mounted ? (
-          isLightTheme ? (
-            <Sun02Icon strokeWidth={1.25} />
-          ) : (
-            <Moon01Icon strokeWidth={1.25} />
-          )
-        ) : (
-          <Skeleton className="w-5 h-5 rounded-full" />
-        )}
-        <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
-          Theme
-        </span>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  )
-}
-
 export default function AppSidebar() {
   const { open } = useSidebar()
   const { isLoaded } = useUser()
   const router = useViewTransitionRouter()
   const pathname = usePathname()
-  const { theme, resolvedTheme, setTheme } = useTheme()
   const isHydrated = useHydrated()
 
   useEffect(() => {
@@ -129,15 +96,7 @@ export default function AppSidebar() {
     for (const route of sidebarRoutes.personal) {
       router.prefetch(route.url)
     }
-  }, [router])
-
-  const activeTheme = resolvedTheme ?? theme
-  const isLightTheme = activeTheme === "light"
-
-  function toggleTheme() {
-    const nextTheme = isLightTheme ? "dark" : "light"
-    setTheme(nextTheme)
-  }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function isActive(url: string) {
     return pathname === url || pathname.startsWith(url + "/")
@@ -213,10 +172,8 @@ export default function AppSidebar() {
             icon={Settings01Icon}
             label="Settings"
           />
-          <ThemeToggleMenuItem
+          <ThemeToggle
             mounted={isHydrated}
-            isLightTheme={isLightTheme}
-            toggleTheme={toggleTheme}
           />
         </SidebarMenu>
         <div className="translate-x-[10px]">
