@@ -8,7 +8,7 @@ export default function AppLayout({
     return (
         <SidebarProvider defaultOpen={false}>
             <AppSidebar />
-            <SidebarInset>
+            <SidebarInset className="border border-border !ml-0">
                 <ViewTransition>
                     { children }
                 </ViewTransition>

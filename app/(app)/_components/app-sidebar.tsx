@@ -3,6 +3,7 @@
 import {
   Cards01Icon,
   ConstellationIcon,
+  Diamond01Icon,
   LibraryIcon,
   Settings01Icon,
 } from "hugeicons-react"
@@ -100,15 +101,20 @@ export default function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="inset">
       {/* Header — brand */}
       <SidebarHeader className="mt-[6px]">
         <button
           type="button"
           onClick={() => router.push("/")}
-          className="flex items-center justify-start gap-2.5 pl-2 text-left group"
+          className={`flex items-center justify-start gap-2.5 pl-0 text-left group`}
         >
-          <div className="w-2 h-2 rotate-45 bg-gold shrink-0 shadow-[0_0_4px_var(--gold-muted)] transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_8px_var(--gold)] group-data-[collapsible=icon]:translate-x-2.5" />
+          <Diamond01Icon
+            color="var(--gold)"
+            fill="var(--gold)"
+            className="shrink-0 drop-shadow-[0_0_4px_var(--gold-muted)] transition-all duration-300 group-hover:scale-125 group-hover:drop-shadow-[0_0_8px_var(--gold)] group-data-[collapsible=icon]:translate-x-2.5 rotate-0"
+            style={{ borderRadius: 4 }}
+          />
           <span className="text-nowrap group-data-[collapsible=icon]:scale-0 group-data-[collapsible=icon]:pointer-events-none transition-scale duration-150 font-display font-bold tracking-tight">
             Tarot Vault
           </span>
@@ -154,7 +160,7 @@ export default function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <span className="group-data-[collapsible=icon]:opacity-0 opacity-40 pl-3 transition-opacity duration-150 text-xs italic text-muted-foreground">
-                Still digging
+                Coming soon...
               </span>
             </SidebarMenuItem>
           </SidebarMenu>

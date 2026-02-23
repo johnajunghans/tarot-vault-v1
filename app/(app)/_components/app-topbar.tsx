@@ -10,27 +10,17 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { cn } from "@/lib/utils"
 import { routes } from "@/lib/routes"
-import { Button, buttonVariants } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Button} from "@/components/ui/button"
 import { useSidebar } from "@/components/ui/sidebar"
 import {
-  Cards01Icon,
-  LibraryIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   ArrowRight01Icon,
-  ConstellationIcon,
-  PlusSignIcon,
   Menu01Icon,
 } from "hugeicons-react"
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
+import NewXButton from "./new-x-button"
 
 function formatSegment(segment: string) {
   return segment
@@ -72,7 +62,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
   const resolvedBreadcrumbs = breadcrumbs ?? autoBreadcrumbs
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-border/40 vein-border-b bg-background px-3 lg:px-4 py-3">
+    <header className="flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-3">
       {/* Left Section */}
       <div className="flex items-center gap-1.5 lg:gap-3 min-w-0">
         <Button
@@ -136,32 +126,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
       {/* Right Section */}
       <div className="flex items-center gap-1 lg:gap-2 shrink-0">
         {rightButtonGroup ?? (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              type="button"
-              className={cn(buttonVariants({ variant: "outline", size: "default" }), "border-gold/50 text-gold hover:bg-gold/10 hover:border-gold")}
-            >
-              <PlusSignIcon strokeWidth={2} className="w-4 h-4" />
-              <span className="text-base font-normal">New</span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={8} className="w-auto">
-              <DropdownMenuItem className="justify-between gap-8">
-                <span>Reading</span>
-                <LibraryIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="justify-between gap-8"
-                onClick={() => router.push(routes.personal.spreads.new.root)}
-              >
-                <span>Spread</span>
-                <Cards01Icon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
-              </DropdownMenuItem>
-              <DropdownMenuItem className="justify-between gap-8">
-                <span>Interpretation</span>
-                <ConstellationIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NewXButton />
         )}
       </div>
     </header>

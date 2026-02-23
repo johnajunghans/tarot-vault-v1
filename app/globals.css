@@ -108,7 +108,7 @@
   --canvas-stone: #cdc5b4;
   --canvas-vein: #a58520;
 
-  --app-content-height: calc(100vh - 57px);
+  --app-content-height: calc(100vh - 73px);
   --theme-transition-duration: 240ms;
   --theme-transition-easing: ease;
 }

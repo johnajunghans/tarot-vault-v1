@@ -69,7 +69,6 @@ function EmptyState() {
 export default function Spreads() {
     const spreads = useQuery(api.spreads.list)
     const [drafts, setDrafts] = useState<SpreadDraft[]>([])
-    const router = useRouter()
 
     useEffect(() => {
         setDrafts(loadDrafts())
@@ -80,7 +79,16 @@ export default function Spreads() {
 
     return (
         <>
-            <AppTopbar />
+            <AppTopbar 
+                centerTitle={
+                    <div className="flex items-center gap-3">
+                        <Cards01Icon strokeWidth={1.25} className="w-5 h-5 text-gold" />
+                        <h1 className="font-display text-xl font-bold tracking-tight">
+                            Your Spreads
+                        </h1>
+                    </div>
+                }
+            />
             <div className="h-app-content overflow-y-auto">
                 {isLoading ? (
                     <div className="flex items-center justify-center py-24">
@@ -91,22 +99,17 @@ export default function Spreads() {
                 ) : (
                     <div className="p-4 md:p-6 space-y-8">
                         {/* Quick create bar */}
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-3">
-                                <Cards01Icon strokeWidth={1.25} className="w-5 h-5 text-gold" />
-                                <h1 className="font-display text-xl font-bold tracking-tight">
-                                    Your Spreads
-                                </h1>
-                            </div>
-                            {/* <Button
+                        {/* <div className="flex items-center gap-4">
+                            
+                            <Button
                                 variant="primaryOutline"
                                 size="sm"
                                 onClick={() => router.push(routes.personal.spreads.new.root)}
                             >
                                 <PlusSignIcon className="w-3.5 h-3.5 mr-1" strokeWidth={2} />
                                 New Spread
-                            </Button> */}
-                        </div>
+                            </Button>
+                        </div> */}
 
                         {/* Drafts Section */}
                         {drafts.length > 0 && (
