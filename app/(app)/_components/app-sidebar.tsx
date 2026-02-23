@@ -21,7 +21,7 @@ import {
 } from "../../../components/ui/sidebar"
 import { UserButton, useUser } from "@clerk/clerk-react"
 import { usePathname } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Skeleton } from "../../../components/ui/skeleton"
 import { routes } from "@/lib/routes"
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
@@ -81,8 +81,6 @@ function SidebarMenuItemComponent({
 }
 
 export default function AppSidebar() {
-  const { open } = useSidebar()
-  const { isLoaded } = useUser()
   const router = useViewTransitionRouter()
   const pathname = usePathname()
   const isHydrated = useHydrated()
@@ -179,30 +177,50 @@ export default function AppSidebar() {
             mounted={isHydrated}
           />
         </SidebarMenu>
-        <div className="translate-x-[10px]">
-          {isLoaded ? (
-            <UserButton
-              showName
-              appearance={{
-                elements: {
-                  userButtonBox: {
-                    flexDirection: "row-reverse",
-                    gap: "2px",
-                  },
-                  userButtonOuterIdentifier: {
-                    scale: open ? "1" : "0",
-                    transitionDuration: "150ms",
-                    textWrap: "nowrap",
-                    color: "var(--foreground)",
-                  },
-                },
-              }}
-            />
-          ) : (
-            <Skeleton className="w-7 h-7 rounded-full" />
-          )}
-        </div>
+        <ClerkUserButton />
       </SidebarFooter>
     </Sidebar>
+  )
+}
+
+function ClerkUserButton() {
+  const { isLoaded } = useUser()
+  const { open } = useSidebar()
+  const [showName, setShowName] = useState(open)
+
+  useEffect(() => {
+    if (!open) {
+      setTimeout(() => setShowName(false), 200)
+    } else {
+      setShowName(true)
+    }
+  }, [open])
+
+  return (
+    <div className="translate-x-[10px]">
+      {isLoaded ? (
+        <UserButton
+          showName={showName}
+          appearance={{
+            elements: {
+              userButtonBox: {
+                flexDirection: "row-reverse",
+                gap: "2px"
+
+              },
+              userButtonOuterIdentifier: {
+                scale: open ? "1" : "0",
+                transitionDuration: "150ms",
+                textWrap: "nowrap",
+                color: "var(--foreground)",
+                zIndex: "-1"
+              }
+            },
+          }}
+        />
+      ) : (
+        <Skeleton className="w-7 h-7 rounded-full" />
+      )}
+    </div>
   )
 }

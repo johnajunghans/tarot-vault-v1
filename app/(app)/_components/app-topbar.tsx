@@ -62,7 +62,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
   const resolvedBreadcrumbs = breadcrumbs ?? autoBreadcrumbs
 
   return (
-    <header className="flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-3">
+    <header className="flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-3 shadow-sm">
       {/* Left Section */}
       <div className="flex items-center gap-1.5 lg:gap-3 min-w-0">
         <Button
