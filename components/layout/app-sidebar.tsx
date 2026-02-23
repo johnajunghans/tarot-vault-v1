@@ -21,11 +21,14 @@ import {
   useSidebar,
 } from "../ui/sidebar"
 import { UserButton, useUser } from "@clerk/clerk-react"
-import { useRouter, usePathname } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Skeleton } from "../ui/skeleton"
 import { routes } from "@/lib/routes"
+import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
+import { useHydrated } from "@/hooks/use-hydrated"
+import ThemeToggle from "./theme-toggle"
 
 const sidebarRoutes = {
   personal: [
@@ -79,58 +82,21 @@ function SidebarMenuItemComponent({
   )
 }
 
-function ThemeToggleMenuItem({
-  mounted,
-  isLightTheme,
-  toggleTheme,
-}: {
-  mounted: boolean
-  isLightTheme: boolean
-  toggleTheme: () => void
-}) {
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        type="button"
-        tooltip="Toggle theme"
-        onClick={toggleTheme}
-      >
-        {mounted ? (
-          isLightTheme ? (
-            <Sun02Icon strokeWidth={1.25} />
-          ) : (
-            <Moon01Icon strokeWidth={1.25} />
-          )
-        ) : (
-          <Skeleton className="w-5 h-5 rounded-full" />
-        )}
-        <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
-          {mounted ? (isLightTheme ? "Light" : "Dark") : "Theme"}
-        </span>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  )
-}
-
 export default function AppSidebar() {
   const { open } = useSidebar()
   const { isLoaded } = useUser()
-  const router = useRouter()
+  const router = useViewTransitionRouter()
   const pathname = usePathname()
-  const { theme, resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const isHydrated = useHydrated()
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    router.prefetch("/")
+    router.prefetch(routes.personal.root)
 
-  const activeTheme = resolvedTheme ?? theme
-  const isLightTheme = activeTheme === "light"
-
-  function toggleTheme() {
-    const nextTheme = isLightTheme ? "dark" : "light"
-    setTheme(nextTheme)
-  }
+    for (const route of sidebarRoutes.personal) {
+      router.prefetch(route.url)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function isActive(url: string) {
     return pathname === url || pathname.startsWith(url + "/")
@@ -160,6 +126,11 @@ export default function AppSidebar() {
             <a
               href={routes.personal.root}
               className="hover:text-muted-foreground transition-colors"
+              onClick={(event) => {
+                event.preventDefault()
+                router.push(routes.personal.root)
+              }}
+              onMouseEnter={() => router.prefetch(routes.personal.root)}
             >
               Personal
             </a>
@@ -201,10 +172,8 @@ export default function AppSidebar() {
             icon={Settings01Icon}
             label="Settings"
           />
-          <ThemeToggleMenuItem
-            mounted={mounted}
-            isLightTheme={isLightTheme}
-            toggleTheme={toggleTheme}
+          <ThemeToggle
+            mounted={isHydrated}
           />
         </SidebarMenu>
         <div className="translate-x-[10px]">

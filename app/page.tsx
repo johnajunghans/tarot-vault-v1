@@ -4,7 +4,6 @@ import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   LibraryIcon,
   Cards01Icon,
@@ -12,6 +11,7 @@ import {
   ArrowRight01Icon,
 } from "hugeicons-react";
 import { routes } from "@/lib/routes";
+import { useViewTransitionRouter } from "@/hooks/use-view-transition-router";
 
 export default function Home() {
   return (
@@ -42,7 +42,7 @@ function LoadingScreen() {
 }
 
 function RedirectToApp() {
-  const router = useRouter();
+  const router = useViewTransitionRouter();
   useEffect(() => {
     router.replace(routes.personal.root);
   }, [router]);

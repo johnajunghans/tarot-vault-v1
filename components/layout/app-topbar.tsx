@@ -1,7 +1,7 @@
 "use client"
 
-import { Fragment, type ReactNode } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { Fragment, useEffect, type ReactNode } from "react"
+import { usePathname } from "next/navigation"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -30,6 +30,7 @@ import {
   PlusSignIcon,
   Menu01Icon,
 } from "hugeicons-react"
+import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
 
 function formatSegment(segment: string) {
   return segment
@@ -49,7 +50,11 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
   const pathname = usePathname()
   const { toggleSidebar, open, openMobile, isMobile } = useSidebar()
   const isOpen = isMobile ? openMobile : open
-  const router = useRouter()
+  const router = useViewTransitionRouter()
+
+  useEffect(() => {
+    router.prefetch(routes.personal.spreads.new.root)
+  }, [router])
 
   const rawSegments = pathname.split("/").filter(Boolean)
   const appIndex = rawSegments.indexOf("app")
@@ -99,7 +104,14 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
                     {crumb.isLast ? (
                       <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                     ) : (
-                      <BreadcrumbLink href={crumb.href}>
+                      <BreadcrumbLink
+                        href={crumb.href}
+                        onClick={(event) => {
+                          event.preventDefault()
+                          router.push(crumb.href)
+                        }}
+                        onMouseEnter={() => router.prefetch(crumb.href)}
+                      >
                         {crumb.label}
                       </BreadcrumbLink>
                     )}

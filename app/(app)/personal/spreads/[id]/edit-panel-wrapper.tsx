@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,6 +32,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Cancel01Icon, Delete02Icon, PencilEdit02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
+import { useViewTransitionRouter } from "@/hooks/use-view-transition-router";
 
 interface EditPanelWrapperProps {
     spreadId: Id<"spreads">
@@ -60,7 +60,7 @@ export default function EditPanelWrapper({
     mode,
 }: EditPanelWrapperProps) {
     const isViewMode = mode === "view";
-    const router = useRouter();
+    const router = useViewTransitionRouter();
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const isMobile = useIsMobile()
 
@@ -197,7 +197,7 @@ export default function EditPanelWrapper({
                 setIsSaving(false);
             }
         }, onInvalid)();
-    }, [form, updateSpread, spreadId, isMobile]);
+    }, [form, updateSpread, spreadId, isMobile, router]);
 
     // ------------ DELETE SPREAD LOGIC ------------ //
 

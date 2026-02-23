@@ -23,11 +23,11 @@ import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Delete02Icon, StarIcon } from "hugeicons-react"
 import { Dispatch, SetStateAction, useState } from "react"
-import { useRouter } from "next/navigation"
 import { useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import { routes } from "@/lib/routes"
+import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
 
 interface SpreadCardProps {
     name: string
@@ -48,7 +48,7 @@ export default function SpreadCard({
     id,
     favorite,
 }: SpreadCardProps) {
-    const router = useRouter()
+    const router = useViewTransitionRouter()
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const toggleFavorite = useMutation(api.spreads.toggleFavorite)
 

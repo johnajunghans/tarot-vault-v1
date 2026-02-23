@@ -1,6 +1,6 @@
 import AppSidebar from "@/components/layout/app-sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ReactNode } from "react"
+import { ReactNode, ViewTransition } from "react"
 
 export default function AppLayout({
     children
@@ -9,7 +9,9 @@ export default function AppLayout({
         <SidebarProvider defaultOpen={false}>
             <AppSidebar />
             <SidebarInset>
-                { children }
+                <ViewTransition>
+                    { children }
+                </ViewTransition>
             </SidebarInset>
         </SidebarProvider>
     )

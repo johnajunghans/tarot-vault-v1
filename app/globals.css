@@ -104,6 +104,8 @@
   --canvas-weave: #d4cdb8;
 
   --app-content-height: calc(100vh - 57px);
+  --theme-transition-duration: 240ms;
+  --theme-transition-easing: ease;
 }
 
 /* ─── Dark: candlelit charcoal ─── */
@@ -147,6 +149,19 @@
   --scrollbar: #9a7d3040;
   --canvas-bg: #0f0d0a;
   --canvas-weave: #1a1612;
+}
+
+body.theme-transitioning,
+body.theme-transitioning * {
+  transition-property:
+    background-color,
+    border-color,
+    outline-color,
+    text-decoration-color,
+    fill,
+    stroke;
+  transition-duration: var(--theme-transition-duration);
+  transition-timing-function: var(--theme-transition-easing);
 }
 
 @layer base {
@@ -193,6 +208,24 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes route-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes route-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -252,6 +285,27 @@
   animation: pulse-glow 5s ease-in-out infinite;
 }
 
+/* ─── Route view transitions ─── */
+::view-transition-group(root),
+::view-transition-group(*) {
+  animation-duration: 200ms;
+  animation-timing-function: linear;
+}
+
+::view-transition-old(root),
+::view-transition-old(*) {
+  animation-name: route-fade-out;
+  animation-duration: 200ms;
+  animation-timing-function: linear;
+}
+
+::view-transition-new(root),
+::view-transition-new(*) {
+  animation-name: route-fade-in;
+  animation-duration: 200ms;
+  animation-timing-function: linear;
+}
+
 .animate-shimmer {
   background-size: 200% 100%;
   animation: shimmer 3s ease-in-out infinite;
@@ -290,6 +344,11 @@
   .animate-gentle-pulse {
     animation: none !important;
     opacity: 1 !important;
+  }
+
+  body.theme-transitioning,
+  body.theme-transitioning * {
+    transition: none !important;
   }
 }
 
