@@ -201,7 +201,7 @@ export default function HeroCard() {
                       textRevealed >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
                     }`}
                   >
-                    within your <span className="text-gold-gradient">mind</span>
+                    in your <span className="text-gold-gradient">mind</span>
                   </p>
                 </div>
               </div>
@@ -215,7 +215,7 @@ export default function HeroCard() {
                 transform: "rotateY(180deg)",
               }}
             >
-              <div className="flex flex-col gap-8 h-full p-[8%]">
+              <div className="flex flex-col h-full p-[8%]">
                 {/* Hero statement */}
                 <div className="mb-[5%]">
                   <div className="flex items-center gap-2 mb-3">
@@ -231,7 +231,7 @@ export default function HeroCard() {
                 </div>
 
                 {/* Features */}
-                <div className="flex-1 space-y-[6%]">
+                <div className="flex-1 flex flex-col justify-center space-y-[6%]">
                   {[
                     {
                       title: "Design spreads",

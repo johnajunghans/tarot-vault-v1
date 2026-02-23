@@ -1,6 +1,7 @@
 import { Id } from "@/convex/_generated/dataModel";
 
 export const routes = {
+    root: "/",
     personal: {
         root: '/personal',
         readings: {
