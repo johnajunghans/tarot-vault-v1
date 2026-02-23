@@ -4,6 +4,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SpreadCard, { CARD_WIDTH, CARD_HEIGHT, type CanvasCard } from "./card";
 import { CardForm } from "@/types/spreads";
+import { useTheme } from "next-themes";
 
 const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
@@ -17,6 +18,7 @@ interface SpreadCanvasProps {
   isViewMode?: boolean;
 }
 
+/** SVG canvas for arranging spread positions. Supports drag, marquee select, spacebar pan, alignment guides, and grid snapping. */
 export default function SpreadCanvas({
   cards,
   selectedCardIndex,
@@ -32,6 +34,23 @@ export default function SpreadCanvas({
   const [svgWidth, setSvgWidth] = useState(CANVAS_SIZE);
   const [svgHeight, setSvgHeight] = useState(CANVAS_SIZE);
 
+  const { resolvedTheme } = useTheme();
+
+  const themeBasedStyles = useMemo(
+    () => ({
+      containerBg:
+        resolvedTheme === "dark"
+          ? "bg-[url(https://www.transparenttextures.com/patterns/45-degree-fabric-light.png)]"
+          : "bg-[url(https://www.transparenttextures.com/patterns/45-degree-fabric-dark.png)]",
+      clothTextureFillOpacity: resolvedTheme === "dark" ? "0.8" : "0.6",
+      dragGridFill: resolvedTheme === "dark" ? "var(--gold)" : "var(--foreground)",
+      dragGridFillOpacity: resolvedTheme === "dark" ? "0.3" : "0.7",
+      ghostCardStrokeOpacity: resolvedTheme === "dark" ? "0.4" : "0.8",
+    }),
+    [resolvedTheme]
+  );
+
+  /** Keep SVG at least CANVAS_SIZE; grow with container for responsive layout. */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -75,11 +94,13 @@ export default function SpreadCanvas({
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollX: 0, scrollY: 0 });
 
+  /** Sync group selection state and ref so callbacks see current value. */
   const updateGroupSelection = useCallback((next: Set<number>) => {
     groupSelectedRef.current = next;
     setGroupSelectedIndices(next);
   }, []);
 
+  /** Map viewport (client) coords to SVG coords using getScreenCTM inverse. */
   const clientToSVG = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current;
     if (!svg) return { x: clientX, y: clientY };
@@ -92,6 +113,7 @@ export default function SpreadCanvas({
     };
   }, []);
 
+  /** Register/unregister card group DOM refs for group-drag transforms. */
   const registerCardRef = useCallback((index: number, el: SVGGElement | null) => {
     if (el) {
       cardGroupRefs.current.set(index, el);
@@ -100,6 +122,7 @@ export default function SpreadCanvas({
     }
   }, []);
 
+  /** Cards ordered by z-index for correct stacking. */
   const sortedCards = useMemo(
     () =>
       cards
@@ -108,7 +131,7 @@ export default function SpreadCanvas({
     [cards]
   );
 
-  // === Alignment guides ===
+  /** Vertical/horizontal alignment lines when a single card’s edge matches another. Hidden in view mode or during group drag. */
   const guides = useMemo(() => {
     if (isViewMode || !dragging) return [];
 
@@ -166,7 +189,7 @@ export default function SpreadCanvas({
   const dragStartPos = useRef<{ x: number; y: number } | null>(null);
   const draggingRef = useRef<{ index: number; x: number; y: number } | null>(null);
 
-  // === Card drag callbacks ===
+  /** Start drag: set dragging state, store origin for delta, and capture group origins if dragging a selected group. */
   const handleDragStart = useCallback(
     (index: number, x: number, y: number) => {
       setDragging({ index, x, y });
@@ -192,6 +215,7 @@ export default function SpreadCanvas({
     []
   );
 
+  /** During drag: update position; if group-dragging, apply delta to all group cards with grid snap and bounds clamp. */
   const handleDrag = useCallback((index: number, x: number, y: number) => {
     setDragging({ index, x, y });
     draggingRef.current = { index, x, y };
@@ -216,6 +240,7 @@ export default function SpreadCanvas({
     }
   }, []);
 
+  /** End drag: persist group positions to form via setValue, then clear drag state. */
   const handleDragEnd = useCallback(() => {
     if (groupDragOrigins.current.size > 0 && dragStartPos.current) {
       const current = draggingRef.current;
@@ -243,7 +268,7 @@ export default function SpreadCanvas({
     setDragging(null);
   }, [setValue]);
 
-  // === Marquee effect ===
+  /** Marquee: track mouse move for rect; on mouseup, select cards intersecting rect or clear selection if drag < 5px. */
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isMarqueeActive.current) return;
@@ -303,7 +328,7 @@ export default function SpreadCanvas({
     };
   }, [clientToSVG, positions, updateGroupSelection, onCardSelect]);
 
-  // === Spacebar panning ===
+  /** Spacebar pan: hold Space + drag to scroll the canvas container. Ignore Space when focus is in input/textarea/select. */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -365,6 +390,7 @@ export default function SpreadCanvas({
     };
   }, []);
 
+  /** Start marquee selection on background click (unless Space is held for pan). */
   const handleBackgroundMouseDown = useCallback(
     (e: React.MouseEvent<SVGRectElement>) => {
       if (isSpaceHeld.current) return;
@@ -376,6 +402,7 @@ export default function SpreadCanvas({
     [clientToSVG]
   );
 
+  /** Add a new position at double-click coords: snap to grid, clamp to bounds, center card on click. */
   const handleBackgroundDoubleClick = useCallback(
     (e: React.MouseEvent<SVGRectElement>) => {
       if (isViewMode || !onCanvasDoubleClick) return;
@@ -391,11 +418,13 @@ export default function SpreadCanvas({
     [isViewMode, onCanvasDoubleClick, clientToSVG]
   );
 
+  /** Single card click: clear group selection and select this card. */
   const handleCardClick = useCallback((index: number) => {
     updateGroupSelection(new Set());
     onCardSelect(index);
   }, [onCardSelect, updateGroupSelection]);
 
+  /** Bounding rect for marquee overlay from start/current coords. */
   const marqueeRect = useMemo(() => {
     if (!marquee) return null;
     return {
@@ -410,7 +439,7 @@ export default function SpreadCanvas({
   const showEmptyPrompt = !isViewMode && cards.length === 0;
 
   return (
-    <div ref={containerRef} className="h-full w-full overflow-auto bg-[var(--canvas-bg)]">
+    <div ref={containerRef} className={`h-full w-full overflow-auto ${themeBasedStyles.containerBg}`}>
       <svg
         ref={svgRef}
         width={svgWidth}
@@ -421,14 +450,14 @@ export default function SpreadCanvas({
         <defs>
           {/* Cloth-like fabric texture */}
           <pattern id="cloth-texture" width="8" height="8" patternUnits="userSpaceOnUse">
-            <rect width="8" height="8" fill="var(--canvas-bg)" />
-            <rect x="0" y="0" width="4" height="4" fill="var(--canvas-weave)" fillOpacity="0.3" />
-            <rect x="4" y="4" width="4" height="4" fill="var(--canvas-weave)" fillOpacity="0.3" />
+            <rect width="8" height="8" fill="var(--canvas-bg)" fillOpacity={themeBasedStyles.clothTextureFillOpacity} />
+            {/* <rect x="0" y="0" width="4" height="4" fill="var(--canvas-weave)" fillOpacity="0.3" />
+            <rect x="4" y="4" width="4" height="4" fill="var(--canvas-weave)" fillOpacity="0.3" /> */}
           </pattern>
 
           {/* Subtle dot grid only visible during drag */}
           <pattern id="drag-grid" width={GRID_SIZE * 2} height={GRID_SIZE * 2} patternUnits="userSpaceOnUse">
-            <circle cx={GRID_SIZE} cy={GRID_SIZE} r={0.6} fill="var(--gold)" fillOpacity={0.25} />
+            <circle cx={GRID_SIZE} cy={GRID_SIZE} r={0.6} fill={themeBasedStyles.dragGridFill} fillOpacity={themeBasedStyles.dragGridFillOpacity} />
           </pattern>
 
           {/* Center vignette radial gradient */}
@@ -489,7 +518,7 @@ export default function SpreadCanvas({
               fill="none"
               stroke="var(--gold)"
               strokeWidth={1}
-              strokeOpacity={0.15}
+              strokeOpacity={themeBasedStyles.ghostCardStrokeOpacity}
               strokeDasharray="6 4"
               className="animate-gentle-pulse"
             />
@@ -500,7 +529,7 @@ export default function SpreadCanvas({
               textAnchor="middle"
               fontSize={13}
               fill="var(--muted-foreground)"
-              fillOpacity={0.4}
+              fillOpacity={0.6}
               fontFamily="var(--font-nunito), sans-serif"
             >
               Double-click to place your first position
