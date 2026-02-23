@@ -6,14 +6,7 @@ import { UseFieldArrayMove, UseFieldArrayRemove } from "react-hook-form";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { Delete02Icon, PlusSignIcon } from "hugeicons-react";
 import { CardForm } from "@/types/spreads";
 
@@ -225,7 +218,6 @@ export default function CardOverview({
                   e.stopPropagation();
                   setDeleteIndex(index);
                 }}
-                disabled={cardCount <= 1}
               >
                 <Delete02Icon />
               </Button>
@@ -247,29 +239,17 @@ export default function CardOverview({
       </button>
 
       {/* Delete confirmation dialog */}
-      <Dialog
+      <ConfirmDialog
         open={deleteIndex !== null}
         onOpenChange={(open) => {
           if (!open) setDeleteIndex(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="font-display">Remove Position {deleteIndex !== null ? deleteIndex + 1 : ""}?</DialogTitle>
-            <DialogDescription>
-              This position will be removed from the spread. This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteIndex(null)}>
-              Keep it
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Remove
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        title={deleteIndex !== null ? `Remove Position ${deleteIndex + 1}?` : ""}
+        description="This position will be removed from the spread. This cannot be undone."
+        cancelLabel="Keep it"
+        confirmLabel="Remove"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

@@ -9,14 +9,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
+import ConfirmDialog from "../../../../_components/confirm-dialog"
 import SpreadThumbnail from "./spread-thumbnail"
 import { CardDB, SpreadDraft } from "@/types/spreads"
 import { Button } from "@/components/ui/button"
@@ -125,24 +118,15 @@ export default function SpreadCard({
             </CardFooter>
         </Card>
 
-        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle className="font-display">Delete draft?</DialogTitle>
-                    <DialogDescription>
-                        This draft will be permanently removed. This cannot be undone.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="sm:justify-end">
-                    <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-                        Cancel
-                    </Button>
-                    <Button variant="destructive" onClick={() => handleDeleteDraft(date)}>
-                        Delete
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <ConfirmDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+            title="Delete draft?"
+            description="This draft will be permanently removed. This cannot be undone."
+            cancelLabel="Cancel"
+            confirmLabel="Delete"
+            onConfirm={() => handleDeleteDraft(date)}
+        />
         </>
     )
 }

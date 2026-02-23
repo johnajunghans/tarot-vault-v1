@@ -20,14 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { FieldErrors } from "react-hook-form";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Cancel01Icon, Delete02Icon, PencilEdit02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -420,44 +413,25 @@ export default function EditPanelWrapper({
         {/* Dialogs (edit mode only) */}
         {!isViewMode && (
             <>
-                <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle className="font-display">Discard changes?</DialogTitle>
-                            <DialogDescription>
-                                Your edits haven&apos;t been saved. Are you sure you want to leave?
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter className="sm:justify-between">
-                            <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
-                                Keep editing
-                            </Button>
-                            <Button variant="destructive" onClick={handleConfirmDiscard}>
-                                Discard
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-
-                <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle className="font-display">Delete this spread?</DialogTitle>
-                            <DialogDescription>
-                                This spread and all its positions will be permanently deleted. This cannot be undone.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter className="sm:justify-end">
-                            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
-                                Keep it
-                            </Button>
-                            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
-                                {isDeleting && <Spinner />}
-                                Delete
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                <ConfirmDialog
+                    open={showDiscardDialog}
+                    onOpenChange={setShowDiscardDialog}
+                    title="Discard changes?"
+                    description="Your edits haven't been saved. Are you sure you want to leave?"
+                    cancelLabel="Keep editing"
+                    confirmLabel="Discard"
+                    onConfirm={handleConfirmDiscard}
+                />
+                <ConfirmDialog
+                    open={showDeleteDialog}
+                    onOpenChange={setShowDeleteDialog}
+                    title="Delete this spread?"
+                    description="This spread and all its positions will be permanently deleted. This cannot be undone."
+                    cancelLabel="Keep it"
+                    confirmLabel="Delete"
+                    onConfirm={handleConfirmDelete}
+                    isConfirming={isDeleting}
+                />
             </>
         )}
         </>

@@ -20,14 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { FieldErrors } from "react-hook-form";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Cancel01Icon, Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -388,29 +381,17 @@ export default function PanelWrapper({
         </div>
 
         {/* Discard Spread Dialog */}
-        <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle className="font-display">Discard this spread?</DialogTitle>
-                    <DialogDescription>
-                        You have unsaved changes. Save as a draft to continue later, or discard entirely.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="sm:justify-between">
-                    <Button variant="outline" onClick={() => setShowDiscardDialog(false)}>
-                        Keep editing
-                    </Button>
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                        <Button variant="secondary" onClick={handleSaveAsDraft}>
-                            Save as draft
-                        </Button>
-                        <Button variant="destructive" onClick={handleConfirmDiscard}>
-                            Discard
-                        </Button>
-                    </div>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <ConfirmDialog
+            open={showDiscardDialog}
+            onOpenChange={setShowDiscardDialog}
+            title="Discard this spread?"
+            description="You have unsaved changes. Save as a draft to continue later, or discard entirely."
+            cancelLabel="Keep editing"
+            secondaryLabel="Save as draft"
+            onSecondary={handleSaveAsDraft}
+            confirmLabel="Discard"
+            onConfirm={handleConfirmDiscard}
+        />
         </>
     )
 }
