@@ -100,7 +100,7 @@ export default function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon" variant="inset" className="bg-transparent">
+    <Sidebar collapsible="icon" className="bg-transparent">
       {/* Header — brand */}
       <SidebarHeader className="mt-[6px]">
         <button

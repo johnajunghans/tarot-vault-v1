@@ -76,12 +76,12 @@
   --secondary: #e6e0d4;
   --secondary-foreground: #1c1a18;
   --muted: #e6e0d4;
-  --muted-foreground: #6b6560;
+  --muted-foreground: #585350;
   --accent: #e6e0d4;
   --accent-foreground: #1c1a18;
   --destructive: #c53030;
-  --border: #d0c8b6;
-  --input: #d0c8b6;
+  --border: #c2b9a4;
+  --input: #c2b9a4;
   --ring: #7a5c10;
   --gold: #a58520;
   --gold-muted: #7a5c10;
@@ -95,27 +95,27 @@
   --chart-3: #8b6c5c;
   --chart-4: #4a6fa5;
   --chart-5: #a0522d;
-  --sidebar: #e8e3d8;
+  --sidebar: #e4dfd2;
   --sidebar-foreground: #1c1a18;
   --sidebar-primary: #7a5c10;
   --sidebar-primary-foreground: #f0ece4;
-  --sidebar-accent: #ddd7ca;
+  --sidebar-accent: #dad4c5;
   --sidebar-accent-foreground: #1c1a18;
-  --sidebar-border: #d0c8b6;
+  --sidebar-border: #bfb6a2;
   --sidebar-ring: #7a5c10;
   --scrollbar: #7a5c1040;
-  --canvas-bg: #ddd7ca;
-  --canvas-stone: #cdc5b4;
+  --canvas-bg: #f7f3eb;
+  --canvas-stone: #ece7dc;
   --canvas-vein: #a58520;
 
-  --app-content-height: calc(100vh - 73px);
+  --app-content-height: calc(100vh - 57px);
   --theme-transition-duration: 240ms;
   --theme-transition-easing: ease;
 }
 
 /* ─── Dark: deep underground cavern ─── */
 .dark {
-  --background: #0a0a0c;
+  --background: #0f0f12;
   --foreground: #d4cfc6;
   --card: #121214;
   --card-foreground: #d4cfc6;
@@ -126,7 +126,7 @@
   --secondary: #1a1a1e;
   --secondary-foreground: #d4cfc6;
   --muted: #1a1a1e;
-  --muted-foreground: #7a7872;
+  --muted-foreground: #908e86;
   --accent: #16161a;
   --accent-foreground: #d4cfc6;
   --destructive: #c44040;
@@ -145,17 +145,17 @@
   --chart-3: #8b6c5c;
   --chart-4: #4a6fa5;
   --chart-5: #a0522d;
-  --sidebar: #0c0c0f;
+  --sidebar: #06060a;
   --sidebar-foreground: #d4cfc6;
   --sidebar-primary: #c9a84c;
-  --sidebar-primary-foreground: #0c0c0f;
-  --sidebar-accent: #18181c;
+  --sidebar-primary-foreground: #06060a;
+  --sidebar-accent: #111118;
   --sidebar-accent-foreground: #d4cfc6;
   --sidebar-border: #28282e;
   --sidebar-ring: #c9a84c;
   --scrollbar: #8a703040;
-  --canvas-bg: #0d0d10;
-  --canvas-stone: #1a1a1f;
+  --canvas-bg: #141419;
+  --canvas-stone: #1e1e24;
   --canvas-vein: #c9a84c;
 }
 

@@ -432,7 +432,7 @@ export default function SpreadCanvas({
     };
   }, [marquee]);
 
-  const isDragging = dragging !== null;
+  // const isDragging = dragging !== null;
   const showEmptyPrompt = !isViewMode && cards.length === 0;
 
   return (
@@ -447,7 +447,7 @@ export default function SpreadCanvas({
         <defs>
           {/* Stone texture pattern */}
           <pattern id="stone-texture" width="120" height="120" patternUnits="userSpaceOnUse">
-            <rect width="120" height="120" fill="var(--canvas-bg)" fillOpacity={themeBasedStyles.stoneTextureFillOpacity} />
+            {/* <rect width="120" height="120" fill="var(--canvas-bg)" fillOpacity={themeBasedStyles.stoneTextureFillOpacity} /> */}
             {/* Stone grain lines */}
             {/* <line x1="0" y1="30" x2="120" y2="35" stroke="var(--canvas-stone)" strokeWidth="0.5" strokeOpacity="0.3" />
             <line x1="0" y1="70" x2="80" y2="72" stroke="var(--canvas-stone)" strokeWidth="0.3" strokeOpacity="0.2" />
@@ -484,7 +484,9 @@ export default function SpreadCanvas({
         />
 
         {/* Layer 3: Grid dots (only visible while dragging) */}
-        {isDragging && !isViewMode && (
+        {
+          // isDragging && 
+          !isViewMode && (
           <rect
             width={svgWidth}
             height={svgHeight}
