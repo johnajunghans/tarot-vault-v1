@@ -395,21 +395,23 @@ export default function CardSettingsPanel({
         open={open}
         onOpenChange={onOpenChange}
       >
-        {isViewMode ? (
-          <CardDetailsContent
-            selectedCardIndex={selectedCardIndex}
-            headerActions={closeHeaderAction}
-          />
-        ) : (
-          <CardSettingsContent
-            cards={cards}
-            selectedCardIndex={selectedCardIndex}
-            setSelectedCardIndex={setSelectedCardIndex}
-            remove={remove!}
-            cardCount={cardCount!}
-            headerActions={closeHeaderAction}
-          />
-        )}
+        <div className={isMobile ? "h-full" : "h-full bg-background/85 backdrop-blur-xs"}>
+          {isViewMode ? (
+            <CardDetailsContent
+              selectedCardIndex={selectedCardIndex}
+              headerActions={closeHeaderAction}
+            />
+          ) : (
+            <CardSettingsContent
+              cards={cards}
+              selectedCardIndex={selectedCardIndex}
+              setSelectedCardIndex={setSelectedCardIndex}
+              remove={remove!}
+              cardCount={cardCount!}
+              headerActions={closeHeaderAction}
+            />
+          )}
+        </div>
       </ResponsivePanel>
     )
   }

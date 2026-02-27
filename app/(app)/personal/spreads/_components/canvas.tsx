@@ -2,7 +2,7 @@
 
 import { useFormContext, useWatch } from "react-hook-form";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import SpreadCard, { CARD_WIDTH, CARD_HEIGHT, type CanvasCard } from "./card";
+import SpreadCard, { CARD_WIDTH, CARD_HEIGHT, type CanvasCard } from "./canvas-card";
 import { CardForm } from "@/types/spreads";
 import { useTheme } from "next-themes";
 

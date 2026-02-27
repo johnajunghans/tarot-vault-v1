@@ -1,6 +1,6 @@
 import { calcSpreadDimensions } from "../utils"
 import { CardDB } from "@/types/spreads";
-import { CARD_HEIGHT, CARD_WIDTH } from "./card";
+import { CARD_HEIGHT, CARD_WIDTH } from "./canvas-card";
 
 interface SpreadThumbnailProps {
     width: number;

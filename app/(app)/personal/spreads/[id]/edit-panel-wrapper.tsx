@@ -383,6 +383,17 @@ export default function EditPanelWrapper({
                         />
                     </>
                 ) : (
+                    <>
+                    {/* Layer 1: Canvas fills entire area */}
+                    <SpreadCanvas
+                        cards={cards}
+                        selectedCardIndex={selectedCardIndex}
+                        onCardSelect={setSelectedCardIndex}
+                        onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
+                        isViewMode={isViewMode}
+                    />
+
+                    {/* Layer 2: Panel group overlaid on canvas */}
                     <ResizablePanelGroup
                         id={groupId}
                         orientation="horizontal"
@@ -390,22 +401,20 @@ export default function EditPanelWrapper({
                         onLayoutChanged={(layout) => {
                             document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
                         }}
+                        className="absolute inset-0"
                     >
                     <SpreadSettingsPanel {...spreadPanelProps} />
 
-                    <ResizablePanel id="spread-canvas-panel">
-                        <SpreadCanvas
-                            cards={cards}
-                            selectedCardIndex={selectedCardIndex}
-                            onCardSelect={setSelectedCardIndex}
-                            onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
-                            isViewMode={isViewMode}
-                        />
-                    </ResizablePanel>
+                    {/* Center Spacer — transparent, passes events to canvas */}
+                    <ResizablePanel
+                        id="spread-canvas-spacer"
+                        style={{ pointerEvents: "none" }}
+                    />
 
                     <CardSettingsPanel {...cardPanelProps} />
 
                     </ResizablePanelGroup>
+                    </>
                 )}
             </FormProvider>
         </div>

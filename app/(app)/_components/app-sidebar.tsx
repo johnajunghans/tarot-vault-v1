@@ -22,7 +22,7 @@ import {
 } from "../../../components/ui/sidebar"
 import { UserButton, useUser } from "@clerk/clerk-react"
 import { usePathname } from "next/navigation"
-import { ReactNode, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { Skeleton } from "../../../components/ui/skeleton"
 import { routes } from "@/lib/routes"
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"

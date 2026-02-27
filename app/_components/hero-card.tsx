@@ -19,7 +19,7 @@
 
 import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton } from "@clerk/clerk-react";
-import { ArrowRight01Icon, Diamond01Icon, TaskAdd01Icon } from "hugeicons-react";
+import { TaskAdd01Icon } from "hugeicons-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const SVG_W = 320;

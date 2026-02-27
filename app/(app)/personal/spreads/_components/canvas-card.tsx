@@ -26,7 +26,7 @@ export interface CanvasCard {
   z: number;
 }
 
-interface SpreadCardProps {
+interface CanvasCardProps {
   card: CanvasCard;
   index: number;
   selected: boolean;
@@ -127,7 +127,7 @@ function TarotCardBack({ selected, groupSelected }: { selected: boolean; groupSe
   );
 }
 
-function SpreadCard({
+function CanvasCard({
   card,
   index,
   selected,
@@ -139,7 +139,7 @@ function SpreadCard({
   onDrag,
   onClick,
   registerRef,
-}: SpreadCardProps) {
+}: CanvasCardProps) {
   const { control, setValue, getValues } = useFormContext<{ positions: CardForm[] }>();
   const watched = useWatch({ control, name: `positions.${index}` });
   const [isDraggingState, setIsDraggingState] = useState(false)
@@ -303,7 +303,7 @@ function SpreadCard({
   );
 }
 
-function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
+function arePropsEqual(prev: CanvasCardProps, next: CanvasCardProps): boolean {
   return (
     prev.card.name === next.card.name &&
     prev.card.description === next.card.description &&
@@ -325,4 +325,4 @@ function arePropsEqual(prev: SpreadCardProps, next: SpreadCardProps): boolean {
   );
 }
 
-export default memo(SpreadCard, arePropsEqual);
+export default memo(CanvasCard, arePropsEqual);

@@ -333,6 +333,16 @@ export default function PanelWrapper({
                         />
                     </>
                 ) : (
+                    <>
+                    {/* Layer 1: Canvas fills entire area */}
+                    <SpreadCanvas
+                        cards={cards}
+                        selectedCardIndex={selectedCardIndex}
+                        onCardSelect={setSelectedCardIndex}
+                        onCanvasDoubleClick={addCardAt}
+                    />
+
+                    {/* Layer 2: Panel group overlaid on canvas */}
                     <ResizablePanelGroup
                         id={groupId}
                         orientation="horizontal"
@@ -340,6 +350,7 @@ export default function PanelWrapper({
                         onLayoutChanged={(layout) => {
                             document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
                         }}
+                        className="absolute inset-0 pointer-events-none"
                     >
                     {/* Left Panel — Settings */}
                     <SpreadSettingsPanel
@@ -353,17 +364,11 @@ export default function PanelWrapper({
                         panelRef={spreadSettingsPanelRef}
                     />
 
-                    {/* Center Panel — Canvas */}
+                    {/* Center Spacer — transparent, passes events to canvas */}
                     <ResizablePanel
-                        id="spread-canvas-panel"
-                    >
-                        <SpreadCanvas
-                        cards={cards}
-                        selectedCardIndex={selectedCardIndex}
-                        onCardSelect={setSelectedCardIndex}
-                        onCanvasDoubleClick={addCardAt}
-                        />
-                    </ResizablePanel>
+                        id="spread-canvas-spacer"
+                        style={{ pointerEvents: "none" }}
+                    />
 
                     {/* Right Panel — Card Details */}
                     <CardSettingsPanel
@@ -376,6 +381,7 @@ export default function PanelWrapper({
                     />
 
                     </ResizablePanelGroup>
+                    </>
                 )}
             </FormProvider>
         </div>

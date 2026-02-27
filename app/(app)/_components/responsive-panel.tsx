@@ -71,6 +71,7 @@ export function ResponsivePanel({
                 maxSize={maxSize}
                 panelRef={panelRef}
                 onResize={onPanelResize}
+                className="pointer-events-auto"
             >
                 {children}
             </ResizablePanel>
