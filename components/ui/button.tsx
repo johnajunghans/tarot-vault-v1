@@ -16,10 +16,11 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
         outline: "border-border bg-background hover:bg-muted hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
-        ghost: "hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground",
+        ghost: "hover:bg-muted hover:text-foreground dark:hover:bg-muted aria-expanded:bg-muted aria-expanded:text-foreground",
         destructive: "bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30",
         link: "text-primary underline-offset-4 hover:underline",
-        primaryOutline: "bg-gold/30 border border-solid border-gold/60 hover:bg-gold/40 hover:border-gold/80"
+        primaryOutline: "bg-gold/30 border border-solid border-gold/60 hover:bg-gold/40 hover:border-gold/80",
+        text: "text-muted-foreground/50 hover:text-foreground/80 transition-colors duration-300 cursor-pointer"
       },
       size: {
         default: "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",

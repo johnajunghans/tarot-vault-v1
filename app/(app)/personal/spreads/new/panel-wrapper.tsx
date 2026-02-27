@@ -274,7 +274,7 @@ export default function PanelWrapper({
                 {isMobile ? (
                     <>
                         {/* Floating Toolbar */}
-                        <Card className="absolute bottom-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50">
+                        <Card className="absolute top-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50">
                             <CardContent>
                                 <div className="flex items-center gap-1">
                                     <Button

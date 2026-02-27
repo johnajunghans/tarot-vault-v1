@@ -89,7 +89,7 @@ export default function Spreads() {
                     </div>
                 }
             />
-            <div className="h-app-content overflow-y-auto">
+            <div className="overflow-y-auto">
                 {isLoading ? (
                     <div className="flex items-center justify-center py-24">
                         <Spinner />

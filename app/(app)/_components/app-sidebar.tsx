@@ -3,10 +3,11 @@
 import {
   Cards01Icon,
   ConstellationIcon,
-  Diamond01Icon,
+  Layout01Icon,
   LibraryIcon,
-  Settings01Icon,
-} from "hugeicons-react"
+  Settings01Icon
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react"
 import {
   Sidebar,
   SidebarContent,
@@ -21,13 +22,14 @@ import {
 } from "../../../components/ui/sidebar"
 import { UserButton, useUser } from "@clerk/clerk-react"
 import { usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
+import { ReactNode, useEffect, useState } from "react"
 import { Skeleton } from "../../../components/ui/skeleton"
 import { routes } from "@/lib/routes"
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
 import { useHydrated } from "@/hooks/use-hydrated"
 import ThemeToggle from "./theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { Diamond01Icon } from "hugeicons-react"
 
 const sidebarRoutes = {
   personal: [
@@ -53,7 +55,7 @@ interface SidebarMenuItemProps {
   onClick?: () => void
   tooltip: string
   isActive?: boolean
-  icon: React.ComponentType<{ strokeWidth: number, color: string }>
+  icon: IconSvgElement
   label: string
 }
 
@@ -61,7 +63,7 @@ function SidebarMenuItemComponent({
   onClick,
   tooltip,
   isActive,
-  icon: Icon,
+  icon,
   label,
 }: SidebarMenuItemProps) {
   return (
@@ -72,7 +74,8 @@ function SidebarMenuItemComponent({
         onClick={onClick}
         isActive={isActive}
       >
-        <Icon strokeWidth={1.25} color={isActive ? "var(--gold)" : "var(--foreground)"} />
+        {/* <Icon strokeWidth={2} color={isActive ? "var(--gold)" : "var(--foreground)"} /> */}
+        <HugeiconsIcon icon={icon} color={isActive ? "var(--gold)" : "var(--foreground)"} />
         <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
           {label}
         </span>
@@ -173,6 +176,12 @@ export default function AppSidebar() {
             tooltip="Settings"
             icon={Settings01Icon}
             label="Settings"
+          />
+          <SidebarMenuItemComponent 
+            tooltip="Layout"
+            icon={Layout01Icon}
+            label="Layout"
+            // onClick={() => }
           />
           <ThemeToggle
             mounted={isHydrated}

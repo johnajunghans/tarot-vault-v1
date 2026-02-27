@@ -15,7 +15,7 @@ export default function NewXButton() {
         <DropdownMenu>
             <DropdownMenuTrigger
                 type="button"
-                className={cn(buttonVariants({ variant: "default", size: "default" }))}
+                className={cn(buttonVariants({ variant: "default", size: "default" }), "")}
             >
                 <PlusSignIcon strokeWidth={2} className="w-4 h-4" />
                 <span className="text-base font-normal">New</span>

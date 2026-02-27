@@ -180,7 +180,7 @@ export default function SpreadSettingsPanel({
     return (
       <>
         {hideSettings &&
-          <Card className="absolute bottom-5 left-3 py-2 z-10 min-w-[150px] max-w-[350px] shadow-md bg-background/90 backdrop-blur-sm border-border/50">
+          <Card className="absolute top-3 left-3 py-2 z-10 min-w-[150px] max-w-[350px] shadow-md bg-background/90 backdrop-blur-sm border-border/50">
             <CardContent>
               <div className="flex w-full justify-between items-center gap-8">
                 <h3 className="font-display text-sm font-bold tracking-tight">{panelTitle}</h3>

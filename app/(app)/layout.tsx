@@ -8,7 +8,7 @@ export default function AppLayout({
     return (
         <SidebarProvider defaultOpen={false}>
             <AppSidebar />
-            <SidebarInset className="z-10">
+            <SidebarInset className="z-10 h-screen relative">
                 <ViewTransition>
                     { children }
                 </ViewTransition>

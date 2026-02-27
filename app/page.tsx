@@ -1,6 +1,8 @@
 import { SignInButton } from "@clerk/nextjs";
 import HeroCard from "./_components/hero-card";
 import AuthContainer from "./_components/auth-container";
+import { Diamond01Icon } from "hugeicons-react";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -12,19 +14,19 @@ export default function Home() {
 
 function LandingPage() {
   return (
-    <div className="h-screen bg-background text-foreground overflow-hidden relative stone-surface flex flex-col">
+    <div className="h-screen bg-background text-foreground overflow-hidden relative flex flex-col">
       {/* ── Ghost header ── */}
       <header className="relative z-10 flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-2 h-2 rotate-45 bg-gold" aria-hidden="true" />
-          <span className="font-display font-bold tracking-tight text-lg text-foreground/70">
+          <Diamond01Icon size={24} color="var(--gold)" fill="var(--gold)" />
+          <span className="font-display font-bold tracking-tight text-xl text-foreground/70">
             Tarot Vault
           </span>
         </div>
         <SignInButton mode="modal">
-          <button className="text-sm text-muted-foreground/50 hover:text-foreground/80 transition-colors duration-300 cursor-pointer">
+          <Button variant="text" className="text-lg">
             Sign in
-          </button>
+          </Button>
         </SignInButton>
       </header>
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Philosopher, Nunito } from "next/font/google";
-import { Geist_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -19,8 +19,8 @@ const nunito = Nunito({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
 });
 
@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${philosopher.variable} ${nunito.variable} ${nunito.className} ${geistMono.variable} antialiased`}
+        className={`${philosopher.variable} ${nunito.variable} ${nunito.className} ${jetbrainsMono.variable} antialiased`}
       >
         <ClerkProvider dynamic>
         <ThemeProvider

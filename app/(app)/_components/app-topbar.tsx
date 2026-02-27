@@ -61,8 +61,11 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
 
   const resolvedBreadcrumbs = breadcrumbs ?? autoBreadcrumbs
 
+  const floatingHeaderStyles = "absolute top-0 w-full backdrop-blur-xs bg-background/70"
+  const isFloatingHeader = false
+
   return (
-    <header className="flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-3 border-b border-border/60 overflow-hidden">
+    <header className={`flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-4 border-b border-border/60 overflow-hidden max-h-[57px] ${isFloatingHeader && floatingHeaderStyles}`}>
       {/* Left Section */}
       <div className="flex items-center gap-1.5 lg:gap-3 min-w-0">
         <Button

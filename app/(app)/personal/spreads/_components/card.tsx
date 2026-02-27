@@ -277,9 +277,9 @@ function SpreadCard({
             x={15} y={19}
             textAnchor="middle"
             fontSize={10}
-            fontWeight="bold"
             fill="var(--background)"
             style={{ pointerEvents: "none", userSelect: "none" }}
+            className="font-medium font-mono"
           >
             {index + 1}
           </text>

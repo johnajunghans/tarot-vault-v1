@@ -19,7 +19,7 @@
 
 import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton } from "@clerk/clerk-react";
-import { ArrowRight01Icon, TaskAdd01Icon } from "hugeicons-react";
+import { ArrowRight01Icon, Diamond01Icon, TaskAdd01Icon } from "hugeicons-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const SVG_W = 320;
@@ -95,6 +95,7 @@ export default function HeroCard() {
                 viewBox={`0 0 ${SVG_W} ${SVG_H}`}
                 className="w-full h-full drop-shadow-[0_8px_32px_rgba(0,0,0,0.25)]"
                 xmlns="http://www.w3.org/2000/svg"
+                overflow="visible"
               >
                 {/* Card body */}
                 <rect
@@ -103,7 +104,7 @@ export default function HeroCard() {
                   rx={16}
                   fill="var(--card)"
                   stroke="var(--gold)"
-                  strokeWidth={1.5}
+                  strokeWidth={1}
                   strokeOpacity={0.5}
                 />
 
@@ -218,13 +219,16 @@ export default function HeroCard() {
               <div className="flex flex-col h-full p-[8%]">
                 {/* Hero statement */}
                 <div className="mb-[5%]">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 rotate-45 bg-gold" />
-                    <span className="font-display font-bold tracking-tight text-[clamp(0.75rem,1.5vw,1rem)] text-foreground/80">
+                  {/* <div className="flex items-center gap-2 mb-3">
+                    <Diamond01Icon size={24} color="var(--gold)" fill="var(--gold)" />
+                    <span className="
+                      font-display font-bold tracking-tight 
+                      text-[clamp(0.75rem,1.5vw,1rem)] text-foreground/80"
+                    >
                       Tarot Vault
                     </span>
-                  </div>
-                  <p className="font-display font-bold text-[clamp(1rem,2.2vw,1.6rem)] leading-snug tracking-tight">
+                  </div> */}
+                  <p className="font-display text-[clamp(1rem,2.2vw,1.6rem)] leading-snug tracking-tight">
                     Your digital vault for the cultivation of insight through{" "}
                     <span className="text-gold-gradient">Tarot</span>.
                   </p>

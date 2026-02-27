@@ -1,19 +1,19 @@
 "use client";
 
-import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from "react";
+import { Dispatch, forwardRef, SetStateAction, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { UseFieldArrayMove, UseFieldArrayRemove } from "react-hook-form";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
-import { Delete02Icon, PlusSignIcon } from "hugeicons-react";
+import { Delete02Icon, DragDropVerticalIcon, PlusSignIcon } from "hugeicons-react";
 import { CardForm } from "@/types/spreads";
 
 gsap.registerPlugin(Draggable);
 
 const TILE_HEIGHT = 38;
-const TILE_GAP = 4;
+const TILE_GAP = 5;
 const SLOT_SIZE = TILE_HEIGHT + TILE_GAP;
 
 interface CardOverviewProps {
@@ -26,16 +26,50 @@ interface CardOverviewProps {
   maxCards?: number;
 }
 
-function CardTileName({ index }: { index: number }) {
+function CardTileName({ index, isHovering = false }: { index: number; isHovering?: boolean }) {
   const { control } = useFormContext<{ positions: CardForm[] }>();
   const name = useWatch({ control, name: `positions.${index}.name` });
+  const doubleDigitIndex = index >= 9
+
   return (
-    <span className="truncate text-sm">
-      <span className="text-muted-foreground/50 font-medium mr-1.5">{index + 1}.</span>
+    <div className={`relative truncate text-sm mx-1 ${doubleDigitIndex ? "pl-6" : "pl-4"}`}>
+      <DragDropVerticalIcon size={20} color="var(--muted-foreground)" strokeWidth={2.5} className={`absolute ${doubleDigitIndex ? "-left-0.5" : "-left-1.5"} ${isHovering ? "scale-100" : "scale-0"} duration-150`} />  
+      <span className={`absolute left-0 text-muted-foreground/80 font-medium font-mono mr-1.5 ${isHovering ? "scale-0" : "scale-100"} duration-150`}>{index + 1}</span>
       {name || <span className="text-muted-foreground/40 italic">Untitled</span>}
-    </span>
+    </div>
   );
 }
+
+interface CardTileProps {
+  index: number;
+  isSelected: boolean;
+  variant?: "readonly" | "editable";
+  onClick?: () => void;
+  rightSlot?: React.ReactNode;
+}
+
+const CardTile = forwardRef<HTMLDivElement, CardTileProps>(
+  ({ index, isSelected, variant = "editable", onClick, rightSlot }, ref) => {
+    const [isHovering, setIsHovering] = useState(false)
+
+    return (
+      <div
+        ref={ref}
+        onClick={onClick}
+        className={`flex items-center justify-between rounded-lg border px-3 cursor-pointer transition-all duration-200 !overflow-visible ${
+          isSelected ? "border-gold/80 bg-gold/10 shadow-md !-translate-y-0.5" : "border-border/80 bg-surface/50 hover:bg-surface hover:border-border !-translate-y-0"
+        }`}
+        style={{ height: `${TILE_HEIGHT}px` }}
+        onMouseOver={() => setIsHovering(true)} 
+        onMouseOut={() => setIsHovering(false)}
+      >
+        <CardTileName index={index} isHovering={variant === "editable" ? isHovering : false} />
+        {rightSlot && <div className="flex items-center shrink-0">{rightSlot}</div>}
+      </div>
+    );
+  }
+);
+CardTile.displayName = "CardTile";
 
 // ------------ Read-Only Card Overview ------------ //
 
@@ -53,25 +87,20 @@ export function CardOverviewReadOnly({
   const indices = Array.from({ length: cardCount }, (_, i) => i);
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5 group">
       <div className="flex justify-between items-center px-1">
         <span className="font-display text-sm font-bold tracking-tight">Positions</span>
-        <span className="text-[10px] text-muted-foreground/40 italic">Click to view</span>
+        <span className="text-[10px] text-muted-foreground/40 italic opacity-0 group-hover:opacity-100 duration-300">Click to view</span>
       </div>
       <div className="relative flex flex-col" style={{ gap: `${TILE_GAP}px` }}>
         {indices.map((index) => (
-          <div
+          <CardTile
             key={index}
+            index={index}
+            isSelected={index === selectedCardIndex}
+            variant="readonly"
             onClick={() => setSelectedCardIndex(index)}
-            className={`flex items-center rounded-lg border px-3 cursor-pointer select-none transition-all duration-200 ${
-              index === selectedCardIndex
-                ? "border-gold/40 bg-gold/8 shadow-sm"
-                : "border-border/50 bg-surface/50 hover:bg-surface hover:border-border"
-            }`}
-            style={{ height: `${TILE_HEIGHT}px` }}
-          >
-            <CardTileName index={index} />
-          </div>
+          />
         ))}
       </div>
     </div>
@@ -93,6 +122,7 @@ export default function CardOverview({
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const draggablesRef = useRef<Draggable[]>([]);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const [moveVersion, setMoveVersion] = useState(0);
 
   const indices = Array.from({ length: cardCount }, (_, i) => i);
 
@@ -100,6 +130,21 @@ export default function CardOverview({
     draggablesRef.current.forEach((d) => d.kill());
     draggablesRef.current = [];
   }, []);
+
+  // Runs synchronously after React commits (before browser paint) so tiles are
+  // reset to their natural positions at the same time the content updates —
+  // preventing the animated "revert" that made drops look like they failed.
+  useLayoutEffect(() => {
+    if (moveVersion === 0) return;
+    const tiles = tileRefs.current.slice(0, cardCount).filter(Boolean) as HTMLDivElement[];
+    tiles.forEach((t) => {
+      t.style.transition = "none";
+      gsap.set(t, { y: 0, zIndex: "", scale: 1 });
+    });
+    requestAnimationFrame(() => {
+      tiles.forEach((t) => { t.style.transition = ""; });
+    });
+  }, [moveVersion, cardCount]);
 
   useEffect(() => {
     cleanupDraggables();
@@ -119,6 +164,9 @@ export default function CardOverview({
         activeCursor: "grabbing",
         zIndexBoost: true,
         onDragStart() {
+          // Disable CSS transition so the tile follows the cursor instantly
+          // instead of lagging by the transition duration on every transform update.
+          tile.style.transition = "none";
           gsap.set(tile, { zIndex: 50, scale: 1.02 });
         },
         onDrag() {
@@ -144,11 +192,9 @@ export default function CardOverview({
           const currentSlot = Math.round(dragY / SLOT_SIZE) + fromSlot;
           const toSlot = Math.max(0, Math.min(tiles.length - 1, currentSlot));
 
-          tiles.forEach((t) => {
-            gsap.set(t, { y: 0, zIndex: "", scale: 1 });
-          });
-
           if (fromSlot !== toSlot) {
+            // Don't reset transforms here. useLayoutEffect will reset them after
+            // React commits the move so the reset is invisible (happens before paint).
             setSelectedCardIndex((prev) => {
               if (prev === null) return null;
               if (prev === fromSlot) return toSlot;
@@ -157,6 +203,16 @@ export default function CardOverview({
               return prev;
             });
             move(fromSlot, toSlot);
+            setMoveVersion((v) => v + 1);
+          } else {
+            // No positional change — reset everything instantly without CSS transitions.
+            tiles.forEach((t) => {
+              t.style.transition = "none";
+              gsap.set(t, { y: 0, zIndex: "", scale: 1 });
+            });
+            requestAnimationFrame(() => {
+              tiles.forEach((t) => { t.style.transition = ""; });
+            });
           }
         },
         onClick() {
@@ -169,7 +225,7 @@ export default function CardOverview({
     draggablesRef.current = newDraggables;
 
     return cleanupDraggables;
-  }, [cardCount, move, setSelectedCardIndex, cleanupDraggables]);
+  }, [cardCount, move, setSelectedCardIndex, cleanupDraggables, moveVersion]);
 
   const handleDeleteConfirm = useCallback(() => {
     if (deleteIndex === null) return;
@@ -187,10 +243,10 @@ export default function CardOverview({
   }, [deleteIndex, selectedCardIndex, setSelectedCardIndex, remove]);
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5 mb-24 group">
       <div className="flex justify-between items-center px-1">
         <span className="font-display text-sm font-bold tracking-tight">Positions</span>
-        <span className="text-[10px] text-muted-foreground/40 italic">Drag to reorder</span>
+        <span className="text-[10px] text-muted-foreground/40 italic opacity-0 group-hover:opacity-100 duration-300">Drag to reorder</span>
       </div>
       <div
         ref={containerRef}
@@ -198,18 +254,12 @@ export default function CardOverview({
         style={{ gap: `${TILE_GAP}px` }}
       >
         {indices.map((index) => (
-          <div
+          <CardTile
             key={index}
             ref={(el) => { tileRefs.current[index] = el; }}
-            className={`flex items-center justify-between rounded-lg border px-3 cursor-pointer select-none transition-all duration-200 ${
-              index === selectedCardIndex
-                ? "border-gold/40 bg-gold/8 shadow-sm"
-                : "border-border/50 bg-surface/50 hover:bg-surface hover:border-border"
-            }`}
-            style={{ height: `${TILE_HEIGHT}px` }}
-          >
-            <CardTileName index={index} />
-            <div className="flex items-center shrink-0">
+            index={index}
+            isSelected={index === selectedCardIndex}
+            rightSlot={
               <Button
                 variant="ghost"
                 size="icon-xs"
@@ -221,8 +271,8 @@ export default function CardOverview({
               >
                 <Delete02Icon />
               </Button>
-            </div>
-          </div>
+            }
+          />
         ))}
       </div>
 
