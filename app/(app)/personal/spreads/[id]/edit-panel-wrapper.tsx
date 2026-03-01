@@ -3,7 +3,7 @@
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -26,6 +26,7 @@ import { Cancel01Icon, Delete02Icon, PencilEdit02Icon, PlusSignIcon, Settings02I
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router";
+import { useSetLayoutActions, type ActionDescriptor } from "@/components/providers/layout-actions-provider";
 
 interface EditPanelWrapperProps {
     spreadId: Id<"spreads">
@@ -232,6 +233,55 @@ export default function EditPanelWrapper({
     }, [router, viewUrl]);
 
 
+    // ------------ SIDEBAR LAYOUT ACTIONS ------------ //
+
+    const setActions = useSetLayoutActions();
+    const isDirty = form.formState.isDirty;
+
+    const actions = useMemo<ActionDescriptor[] | null>(() => {
+        if (!spread) return null;
+
+        if (isViewMode) {
+            return [
+                {
+                    type: "edit",
+                    label: "Edit Spread",
+                    onClick: () => router.push(routes.personal.spreads.id(spreadId, "edit")),
+                },
+                {
+                    type: "close",
+                    label: "Close",
+                    onClick: () => router.push(routes.personal.spreads.root),
+                },
+            ];
+        }
+
+        return [
+            {
+                type: "save",
+                label: "Save Changes",
+                onClick: handleSave,
+                disabled: isSaving || !isDirty,
+                loading: isSaving,
+            },
+            {
+                type: "delete",
+                label: "Delete",
+                onClick: () => setShowDeleteDialog(true),
+            },
+            {
+                type: "cancel",
+                label: "Cancel",
+                onClick: handleCancel,
+            },
+        ];
+    }, [spread, isViewMode, handleCancel, handleSave, isSaving, isDirty, spreadId, router]);
+
+    useEffect(() => {
+        setActions(actions);
+        return () => setActions(null);
+    }, [actions, setActions]);
+
     // ------------ LOADING / NOT FOUND ------------ //
 
     const breadcrumbs = isViewMode ? VIEW_BREADCRUMBS : EDIT_BREADCRUMBS;
@@ -333,7 +383,7 @@ export default function EditPanelWrapper({
                 {isMobile ? (
                     <>
                         {/* Floating Toolbar */}
-                        <Card className="absolute bottom-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50">
+                        <Card className="absolute bottom-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50 pointer-events-auto">
                             <CardContent>
                                 <div className="flex items-center gap-1">
                                     <Button
@@ -401,7 +451,7 @@ export default function EditPanelWrapper({
                         onLayoutChanged={(layout) => {
                             document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
                         }}
-                        className="absolute inset-0"
+                        className="absolute inset-0 pointer-events-none"
                     >
                     <SpreadSettingsPanel {...spreadPanelProps} />
 

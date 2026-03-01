@@ -506,6 +506,7 @@ function SidebarMenuButton({
   size = "default",
   tooltip,
   className,
+  disabled,
   ...props
 }: useRender.ComponentProps<"button"> &
   React.ComponentProps<"button"> & {
@@ -518,6 +519,11 @@ function SidebarMenuButton({
     props: mergeProps<"button">(
       {
         className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+        disabled,
+        // Base UI's TooltipTrigger consumes `disabled` internally and does not forward it
+        // as a native HTML attribute to the button. We explicitly set aria-disabled so it
+        // survives TooltipTrigger's destructuring and the CVA's aria-disabled: variants apply.
+        "aria-disabled": disabled || undefined,
       },
       props
     ),

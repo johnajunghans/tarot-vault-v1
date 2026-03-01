@@ -6,20 +6,29 @@ import { useViewTransitionRouter } from "@/hooks/use-view-transition-router";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { Cards01Icon, ConstellationIcon, LibraryIcon, PlusSignIcon } from "hugeicons-react";
+import { ReactNode } from "react";
 
-export default function NewXButton() {
+interface NewXButtonProps {
+    compact?: boolean; // mainly for use in sidebar when topbarVisible is false
+}
+
+interface NewXDropdownProps {
+    children: ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+} 
+
+export function NewXDropdown({ 
+    children,
+    open,
+    onOpenChange 
+}: NewXDropdownProps) {
 
     const router = useViewTransitionRouter()
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                type="button"
-                className={cn(buttonVariants({ variant: "default", size: "default" }), "")}
-            >
-                <PlusSignIcon strokeWidth={2} className="w-4 h-4" />
-                <span className="text-base font-normal">New</span>
-            </DropdownMenuTrigger>
+        <DropdownMenu open={open} onOpenChange={onOpenChange}> 
+            { children }  
             <DropdownMenuContent align="end" sideOffset={8} className="w-auto">
                 <DropdownMenuItem className="justify-between gap-8">
                     <span>Reading</span>
@@ -38,5 +47,21 @@ export default function NewXButton() {
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
+    )
+}
+
+export default function NewXButton({
+    compact = false
+}: NewXButtonProps) {
+    return (
+        <NewXDropdown>
+            <DropdownMenuTrigger
+                type="button"
+                className={cn(buttonVariants({ variant: "default", size: compact ? "icon" : "default" }), "")}
+            >
+                <PlusSignIcon strokeWidth={2} className="w-4 h-4" />
+                {!compact && <span className="text-base font-normal">New</span>}
+            </DropdownMenuTrigger>
+        </NewXDropdown>
     )
 }

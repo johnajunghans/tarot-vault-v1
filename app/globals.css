@@ -192,6 +192,12 @@ body.theme-transitioning * {
   }
 }
 
+/* ─── Layout: no topbar ─── */
+[data-topbar="hidden"] {
+  --app-content-height: 100vh;
+  --app-content-height-inset: 100vh;
+}
+
 /* ─── Animations ─── */
 @keyframes fade-up {
   from {

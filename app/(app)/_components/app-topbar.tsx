@@ -21,6 +21,8 @@ import {
 } from "hugeicons-react"
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
 import NewXButton from "./new-x-button"
+import { useLayoutMode } from "@/components/providers/layout-mode-provider"
+import { SidebarToggle } from "./app-sidebar"
 
 function formatSegment(segment: string) {
   return segment
@@ -41,6 +43,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
   const { toggleSidebar, open, openMobile, isMobile } = useSidebar()
   const isOpen = isMobile ? openMobile : open
   const router = useViewTransitionRouter()
+  const { topbarVisible } = useLayoutMode()
 
   useEffect(() => {
     router.prefetch(routes.personal.spreads.new.root)
@@ -61,77 +64,68 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
 
   const resolvedBreadcrumbs = breadcrumbs ?? autoBreadcrumbs
 
-  const floatingHeaderStyles = "absolute top-0 w-full backdrop-blur-xs bg-background/70"
-  const isFloatingHeader = false
+  // On mobile, topbar is always visible regardless of layout mode
+  const isVisible = isMobile || topbarVisible
 
   return (
-    <header className={`flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-4 border-b border-border/60 overflow-hidden max-h-[57px] ${isFloatingHeader && floatingHeaderStyles}`}>
-      {/* Left Section */}
-      <div className="flex items-center gap-1.5 lg:gap-3 min-w-0">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={toggleSidebar}
-          aria-label="Toggle sidebar"
-          className="shadow-none text-muted-foreground hover:text-foreground shrink-0"
-        >
-          {isMobile ? <Menu01Icon strokeWidth={1.5} /> :
-            isOpen ? (
-              <PanelLeftOpenIcon strokeWidth={1.5} />
-            ) : (
-              <PanelLeftCloseIcon strokeWidth={1.5} />
-            )
-          }
-        </Button>
+    <div
+      className={`transition-[max-height,opacity] duration-200 ease-in-out overflow-hidden ${
+        isVisible ? "max-h-[57px] opacity-100" : "max-h-0 opacity-0"
+      }`}
+    >
+      <header className="flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-4 border-b border-border/60 overflow-hidden max-h-[57px]">
+        {/* Left Section */}
+        <div className="flex items-center gap-1.5 lg:gap-3 min-w-0">
+          <SidebarToggle />
 
-        { isMobile ?
-          <div className="flex min-h-8 min-w-0 flex-1 items-center justify-center gap-3">
-            {centerTitle}
-          </div> :
-          <Breadcrumb>
-            <BreadcrumbList>
-              {resolvedBreadcrumbs.map((crumb) => (
-                <Fragment key={crumb.href}>
-                  <BreadcrumbItem>
-                    {crumb.isLast ? (
-                      <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink
-                        href={crumb.href}
-                        onClick={(event) => {
-                          event.preventDefault()
-                          router.push(crumb.href)
-                        }}
-                        onMouseEnter={() => router.prefetch(crumb.href)}
-                      >
-                        {crumb.label}
-                      </BreadcrumbLink>
+          { isMobile ?
+            <div className="flex min-h-8 min-w-0 flex-1 items-center justify-center gap-3">
+              {centerTitle}
+            </div> :
+            <Breadcrumb>
+              <BreadcrumbList>
+                {resolvedBreadcrumbs.map((crumb) => (
+                  <Fragment key={crumb.href}>
+                    <BreadcrumbItem>
+                      {crumb.isLast ? (
+                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink
+                          href={crumb.href}
+                          onClick={(event) => {
+                            event.preventDefault()
+                            router.push(crumb.href)
+                          }}
+                          onMouseEnter={() => router.prefetch(crumb.href)}
+                        >
+                          {crumb.label}
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                    {!crumb.isLast && (
+                      <BreadcrumbSeparator>
+                        <ArrowRight01Icon strokeWidth={2} />
+                      </BreadcrumbSeparator>
                     )}
-                  </BreadcrumbItem>
-                  {!crumb.isLast && (
-                    <BreadcrumbSeparator>
-                      <ArrowRight01Icon strokeWidth={2} />
-                    </BreadcrumbSeparator>
-                  )}
-                </Fragment>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
-        }
-      </div>
+                  </Fragment>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+          }
+        </div>
 
-      {/* Center Section */}
-      {!isMobile && <div className="flex min-h-8 min-w-0 flex-1 items-center justify-center gap-1.5 lg:gap-3">
-        {centerTitle}
-      </div>}
+        {/* Center Section */}
+        {!isMobile && <div className="flex min-h-8 min-w-0 flex-1 items-center justify-center gap-1.5 lg:gap-3">
+          {centerTitle}
+        </div>}
 
-      {/* Right Section */}
-      <div className="flex items-center gap-1 lg:gap-2 shrink-0">
-        {rightButtonGroup ?? (
-          <NewXButton />
-        )}
-      </div>
-    </header>
+        {/* Right Section */}
+        <div className="flex items-center gap-1 lg:gap-2 shrink-0">
+          {rightButtonGroup ?? (
+            <NewXButton />
+          )}
+        </div>
+      </header>
+    </div>
   )
 }

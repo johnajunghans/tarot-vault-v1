@@ -3,7 +3,7 @@
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { routes } from "@/lib/routes";
@@ -26,6 +26,7 @@ import { Cancel01Icon, Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeic
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
 import { useViewTransitionRouter } from "@/hooks/use-view-transition-router";
+import { useSetLayoutActions, type ActionDescriptor } from "@/components/providers/layout-actions-provider";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -223,6 +224,41 @@ export default function PanelWrapper({
         router.push(routes.personal.spreads.root);
     }, [form, router]);
 
+
+    // ------------ SIDEBAR LAYOUT ACTIONS ------------ //
+
+    const setActions = useSetLayoutActions();
+    const isDirty = form.formState.isDirty;
+
+    const actions = useMemo<ActionDescriptor[]>(() => {
+        const items: ActionDescriptor[] = [
+            {
+                type: "save",
+                label: "Save Spread",
+                onClick: handleSave,
+                disabled: isSaving || !isDirty,
+                loading: isSaving,
+            },
+            {
+                type: "discard",
+                label: "Discard",
+                onClick: handleDiscard,
+            },
+        ];
+        if (loadedDraftDate) {
+            items.push({
+                type: "close",
+                label: "Close",
+                onClick: handleClose,
+            });
+        }
+        return items;
+    }, [loadedDraftDate, handleClose, handleDiscard, handleSave, isSaving, isDirty]);
+
+    useEffect(() => {
+        setActions(actions);
+        return () => setActions(null);
+    }, [actions, setActions]);
 
     return (
         <>
