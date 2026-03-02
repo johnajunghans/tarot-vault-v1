@@ -4,9 +4,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  useSidebar,
 } from "@/components/ui/sidebar"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 import {
@@ -49,35 +47,21 @@ interface SidebarActionButtonProps {
 }
 
 export function SidebarActionButton({ action, className }: SidebarActionButtonProps) {
-  const { state, isMobile } = useSidebar()
-  const isCollapsed = state === "collapsed"
 
-  // Avoid SidebarMenuButton's `tooltip` prop — it renders the button as a Base
-  // UI TooltipTrigger via useRender, which merges TooltipTrigger's event
-  // handlers with the button's onClick and breaks Next.js experimental view
-  // transitions. Instead, wrap in a separate TooltipTrigger element so the
-  // button's click fires independently (same pattern as DefaultNewActions where
-  // navigation happens on DropdownMenuItem, not on the trigger itself).
   return (
     <SidebarMenuItem>
-      <Tooltip>
-        <TooltipTrigger render={<div />}>
-          <SidebarMenuButton
-            onClick={action.onClick}
-            disabled={action.disabled || action.loading}
-            className={cn(ACTION_VARIANTS[action.type], className, "disabled:opacity-50")}
-          >
-            {action.loading
-              ? <Spinner className="shrink-0" />
-              : <HugeiconsIcon icon={ACTION_ICONS[action.type]} strokeWidth={action.type === "save" || action.type === "edit" ? 2 : 1.5} />
-            }
-            <span className="group-data-[collapsible=icon]:scale-0 duration-150">{action.label}</span>
-          </SidebarMenuButton>
-        </TooltipTrigger>
-        <TooltipContent side="right" align="center" hidden={!isCollapsed || isMobile}>
-          {action.label}
-        </TooltipContent>
-      </Tooltip>
+      <SidebarMenuButton
+        tooltip={action.label}
+        onClick={action.onClick}
+        disabled={action.disabled || action.loading}
+        className={cn(ACTION_VARIANTS[action.type], className, "disabled:opacity-50")}
+      >
+        {action.loading
+          ? <Spinner className="shrink-0" />
+          : <HugeiconsIcon icon={ACTION_ICONS[action.type]} strokeWidth={action.type === "save" || action.type === "edit" ? 2 : 1.5} />
+        }
+        <span className="group-data-[collapsible=icon]:scale-0 duration-150">{action.label}</span>
+      </SidebarMenuButton>
     </SidebarMenuItem>
   )
 }
