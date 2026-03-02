@@ -20,7 +20,7 @@ import { useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import { routes } from "@/lib/routes"
-import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
+import { useRouter } from "next/navigation"
 
 interface SpreadCardProps {
     name: string
@@ -41,7 +41,7 @@ export default function SpreadCard({
     id,
     favorite,
 }: SpreadCardProps) {
-    const router = useViewTransitionRouter()
+    const router = useRouter()
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const toggleFavorite = useMutation(api.spreads.toggleFavorite)
 

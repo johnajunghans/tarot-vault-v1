@@ -1,7 +1,7 @@
 "use client"
 
 import { Fragment, useEffect, type ReactNode } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,7 +19,6 @@ import {
   ArrowRight01Icon,
   Menu01Icon,
 } from "hugeicons-react"
-import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
 import NewXButton from "./new-x-button"
 import { useLayoutMode } from "@/components/providers/layout-mode-provider"
 import { SidebarToggle } from "./app-sidebar"
@@ -42,7 +41,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
   const pathname = usePathname()
   const { toggleSidebar, open, openMobile, isMobile } = useSidebar()
   const isOpen = isMobile ? openMobile : open
-  const router = useViewTransitionRouter()
+  const router = useRouter()
   const { topbarVisible } = useLayoutMode()
 
   useEffect(() => {
@@ -69,7 +68,7 @@ export default function AppTopbar({ centerTitle, rightButtonGroup, breadcrumbs }
 
   return (
     <div
-      className={`transition-[max-height,opacity] duration-200 ease-in-out overflow-hidden ${
+      className={`transition-[max-height,opacity] duration-200 ease-in-out ${
         isVisible ? "max-h-[57px] opacity-100" : "max-h-0 opacity-0"
       }`}
     >

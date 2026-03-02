@@ -24,11 +24,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { UserButton, useUser } from "@clerk/clerk-react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Skeleton } from "../../../components/ui/skeleton"
 import { routes } from "@/lib/routes"
-import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
 import { useHydrated } from "@/hooks/use-hydrated"
 import ThemeToggle from "./theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -121,7 +120,7 @@ export function SidebarToggle({ className }: { className?: string }) {
 }
 
 export default function AppSidebar() {
-  const router = useViewTransitionRouter()
+  const router = useRouter()
   const pathname = usePathname()
   const isHydrated = useHydrated()
   const isMobile = useIsMobile()
@@ -158,22 +157,23 @@ export default function AppSidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center justify-start gap-2.5 pl-0 text-left group/brand">
             {/* Diamond icon — swaps to panel open icon on sidebar hover when collapsed + no topbar */}
-            <div className="shrink-0 relative group-data-[collapsible=icon]:translate-x-2.5">
+            <div className="shrink-0 relative group-data-[collapsible=icon]:translate-x-2.5 duration-150">
               <Diamond01Icon
                 color="var(--gold)"
                 fill="var(--gold)"
                 className={`drop-shadow-[0_0_4px_var(--gold-muted)] transition-all duration-300 group-hover/brand:scale-125 group-hover/brand:drop-shadow-[0_0_8px_var(--gold)] ${
-                  showSidebarToggle && !open && sidebarHovered ? "opacity-0 scale-75" : ""
+                  // showSidebarToggle && !open && sidebarHovered ? "opacity-0 scale-75" : ""
+                  ""
                 }`}
                 style={{ borderRadius: 4 }}
               />
-              {showSidebarToggle && !open && (
+              {/* {showSidebarToggle && !open && (
                 <SidebarToggle 
                   className={`absolute inset-0 -translate-x-[1px] transition-all duration-300 hover:bg-sidebar-accent ${
                       sidebarHovered ? "scale-100" : "scale-0"
                     }`} 
                 />
-              )}
+              )} */}
             </div>
             <span className="text-nowrap group-data-[collapsible=icon]:scale-0 group-data-[collapsible=icon]:pointer-events-none transition-scale duration-150 font-display font-bold tracking-tight">
               Tarot Vault

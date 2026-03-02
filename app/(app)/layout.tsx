@@ -13,17 +13,17 @@ export default async function AppLayout({
     const defaultTopbarVisible = layoutMode !== "no-topbar"
 
     return (
-        <SidebarProvider defaultOpen={false}>
-            <LayoutModeProvider defaultTopbarVisible={defaultTopbarVisible}>
-                <LayoutActionsProvider>
-                    <ViewTransition>
+        <ViewTransition>
+            <SidebarProvider defaultOpen={false}>
+                <LayoutModeProvider defaultTopbarVisible={defaultTopbarVisible}>
+                    <LayoutActionsProvider>
                         <AppSidebar />
                         <SidebarInset className="z-10 h-screen relative">
                             { children }
                         </SidebarInset>
-                    </ViewTransition>
-                </LayoutActionsProvider>
-            </LayoutModeProvider>
-        </SidebarProvider>
+                    </LayoutActionsProvider>
+                </LayoutModeProvider>
+            </SidebarProvider>
+        </ViewTransition>
     )
 }

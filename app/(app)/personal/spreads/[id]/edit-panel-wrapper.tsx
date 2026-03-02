@@ -25,7 +25,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Cancel01Icon, Delete02Icon, PencilEdit02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
-import { useViewTransitionRouter } from "@/hooks/use-view-transition-router";
+import { useRouter } from "next/navigation";
 import { useSetLayoutActions, type ActionDescriptor } from "@/components/providers/layout-actions-provider";
 
 interface EditPanelWrapperProps {
@@ -54,7 +54,7 @@ export default function EditPanelWrapper({
     mode,
 }: EditPanelWrapperProps) {
     const isViewMode = mode === "view";
-    const router = useViewTransitionRouter();
+    const router = useRouter();
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const isMobile = useIsMobile()
 

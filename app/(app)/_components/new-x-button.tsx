@@ -2,7 +2,7 @@
 
 import { buttonVariants } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useViewTransitionRouter } from "@/hooks/use-view-transition-router";
+import { useRouter } from "next/navigation";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { Cards01Icon, ConstellationIcon, LibraryIcon, PlusSignIcon } from "hugeicons-react";
@@ -24,7 +24,7 @@ export function NewXDropdown({
     onOpenChange 
 }: NewXDropdownProps) {
 
-    const router = useViewTransitionRouter()
+    const router = useRouter()
 
     return (
         <DropdownMenu open={open} onOpenChange={onOpenChange}> 

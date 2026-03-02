@@ -1,14 +1,14 @@
 "use client"
 
 import AppTopbar from "@/app/(app)/_components/app-topbar"
-import { useViewTransitionRouter } from "@/hooks/use-view-transition-router"
+import { useRouter } from "next/navigation"
 import { routes } from "@/lib/routes"
 import { useUser } from "@clerk/clerk-react"
 
 export default function Personal() {
 
     const user = useUser()
-    const router = useViewTransitionRouter()
+    const router = useRouter()
 
     if (!user.isSignedIn) {
         router.push(routes.root)
