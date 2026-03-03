@@ -6,7 +6,10 @@ import {
   Layout01Icon,
   LayoutLeftIcon,
   LibraryIcon,
-  Settings01Icon
+  Settings01Icon,
+  Menu01Icon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react"
 import {
@@ -28,10 +31,9 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Skeleton } from "../../../components/ui/skeleton"
 import { routes } from "@/lib/routes"
-import { useHydrated } from "@/hooks/use-hydrated"
 import ThemeToggle from "./theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Cards01Icon as Cards01ReactIcon, ConstellationIcon as ConstellationReactIcon, Diamond01Icon, LibraryIcon as LibraryReactIcon, Menu01Icon, PanelLeftCloseIcon, PanelLeftOpenIcon } from "hugeicons-react"
+import { Diamond01Icon } from "hugeicons-react"
 import { useLayoutMode } from "@/components/providers/layout-mode-provider"
 import { useLayoutActions } from "@/components/providers/layout-actions-provider"
 import { SidebarActions } from "./sidebar-action-item"
@@ -84,9 +86,9 @@ function SidebarMenuItemComponent({
         tooltip={tooltip}
         onClick={onClick}
         isActive={isActive}
+        className={`${isActive ? "!bg-gold/15 text-foreground" : "hover:bg-gold/15 text-foreground-muted hover:text-foreground"}`}
       >
-        {/* <Icon strokeWidth={2} color={isActive ? "var(--gold)" : "var(--foreground)"} /> */}
-        <HugeiconsIcon icon={icon} color={isActive ? "var(--gold)" : "var(--foreground)"} />
+        <HugeiconsIcon icon={icon} strokeWidth={1.5} />
         <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
           {label}
         </span>
@@ -99,6 +101,8 @@ export function SidebarToggle({ className }: { className?: string }) {
   const isMobile = useIsMobile()
   const { open, toggleSidebar } = useSidebar()
 
+  const icon = isMobile ? Menu01Icon : open ? PanelLeftOpenIcon : PanelLeftCloseIcon
+
   return (
     <Button
       type="button"
@@ -108,13 +112,7 @@ export function SidebarToggle({ className }: { className?: string }) {
       aria-label="Toggle sidebar"
       className={cn("text-muted-foreground hover:text-foreground shrink-0", className)}
     >
-      {isMobile ? <Menu01Icon strokeWidth={1.5} /> :
-        open ? (
-          <PanelLeftOpenIcon strokeWidth={1.5} />
-        ) : (
-          <PanelLeftCloseIcon strokeWidth={1.5} />
-        )
-      }
+      <HugeiconsIcon icon={icon} strokeWidth={1.5} />
     </Button>
   )
 }
@@ -122,7 +120,6 @@ export function SidebarToggle({ className }: { className?: string }) {
 export default function AppSidebar() {
   const router = useRouter()
   const pathname = usePathname()
-  const isHydrated = useHydrated()
   const isMobile = useIsMobile()
   const { open } = useSidebar()
   const { topbarVisible, toggleTopbar } = useLayoutMode()
@@ -153,7 +150,7 @@ export default function AppSidebar() {
       onMouseLeave={() => !topbarVisible && setSidebarHovered(false)}
     >
       {/* Header — brand */}
-      <SidebarHeader className="mt-[6px]">
+      <SidebarHeader className="h-[57px] justify-center border-b border-border/80">
         <div className="flex items-center justify-between">
           <div className="flex items-center justify-start gap-2.5 pl-0 text-left group/brand">
             {/* Diamond icon — swaps to panel open icon on sidebar hover when collapsed + no topbar */}
@@ -162,18 +159,18 @@ export default function AppSidebar() {
                 color="var(--gold)"
                 fill="var(--gold)"
                 className={`drop-shadow-[0_0_4px_var(--gold-muted)] transition-all duration-300 group-hover/brand:scale-125 group-hover/brand:drop-shadow-[0_0_8px_var(--gold)] ${
-                  // showSidebarToggle && !open && sidebarHovered ? "opacity-0 scale-75" : ""
-                  ""
+                  showSidebarToggle && !open && sidebarHovered ? "opacity-0 scale-75" : ""
+                  
                 }`}
                 style={{ borderRadius: 4 }}
               />
-              {/* {showSidebarToggle && !open && (
+              {showSidebarToggle && !open && (
                 <SidebarToggle 
                   className={`absolute inset-0 -translate-x-[1px] transition-all duration-300 hover:bg-sidebar-accent ${
                       sidebarHovered ? "scale-100" : "scale-0"
                     }`} 
                 />
-              )} */}
+              )}
             </div>
             <span className="text-nowrap group-data-[collapsible=icon]:scale-0 group-data-[collapsible=icon]:pointer-events-none transition-scale duration-150 font-display font-bold tracking-tight">
               Tarot Vault
@@ -269,9 +266,7 @@ export default function AppSidebar() {
               // isActive={!topbarVisible}
             />
           )}
-          <ThemeToggle
-            mounted={isHydrated}
-          />
+          <ThemeToggle />
         </SidebarMenu>
         <ClerkUserButton />
       </SidebarFooter>

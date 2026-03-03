@@ -4,15 +4,14 @@ import { SidebarMenuButton, SidebarMenuItem } from "../../../components/ui/sideb
 import { Moon01Icon, Sun02Icon } from "hugeicons-react"
 import { Skeleton } from "../../../components/ui/skeleton"
 
-export default function ThemeToggle({
-    mounted
-  }: {
-    mounted: boolean
-  }) {
+export default function ThemeToggle() {
     const { theme, resolvedTheme, setTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
     const [isThemeTooltipEnabled, setIsThemeTooltipEnabled] = useState(true)
     const themeTransitionTimeoutRef = useRef<number | null>(null)
   
+    useEffect(() => { setMounted(true) }, [])
+
     const activeTheme = resolvedTheme ?? theme
     const isLightTheme = activeTheme === "light"
   
@@ -73,7 +72,7 @@ export default function ThemeToggle({
             <Skeleton className="w-5 h-5 rounded-full" />
           )}
           <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
-            Theme
+            {mounted ? (resolvedTheme === "light" ? "Light" : "Dark") : null}
           </span>
         </SidebarMenuButton>
       </SidebarMenuItem>
