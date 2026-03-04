@@ -27,6 +27,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { UserButton, useUser } from "@clerk/clerk-react"
+import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Skeleton } from "../../../components/ui/skeleton"
@@ -39,9 +40,8 @@ import { useLayoutActions } from "@/components/providers/layout-actions-provider
 import { SidebarActions } from "./sidebar-action-item"
 import { NewXDropdown } from "./new-x-button"
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PlusSignIcon } from "hugeicons-react"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const sidebarRoutes = {
@@ -65,6 +65,7 @@ const sidebarRoutes = {
 }
 
 interface SidebarMenuItemProps {
+  href?: string
   onClick?: () => void
   tooltip: string
   isActive?: boolean
@@ -73,6 +74,7 @@ interface SidebarMenuItemProps {
 }
 
 function SidebarMenuItemComponent({
+  href,
   onClick,
   tooltip,
   isActive,
@@ -82,8 +84,10 @@ function SidebarMenuItemComponent({
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        type="button"
-        tooltip={tooltip}
+        type={href ? undefined : "button"}
+        render={href ? <Link href={href} /> : undefined}
+        tooltip={!isActive ? tooltip : undefined}
+        suppressTooltipOnPress={!!href}
         onClick={onClick}
         isActive={isActive}
         className={`${isActive ? "!bg-gold/15 text-foreground" : "hover:bg-gold/15 text-foreground-muted hover:text-foreground"}`}
@@ -189,24 +193,20 @@ export default function AppSidebar() {
         {/* Personal workspace */}
         <SidebarGroup className="pl-3">
           <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none text-muted-foreground/50 text-[10px] tracking-[0.15em] uppercase font-semibold">
-            <a
+            <Link
               href={routes.personal.root}
               className="hover:text-muted-foreground transition-colors"
-              onClick={(event) => {
-                event.preventDefault()
-                router.push(routes.personal.root)
-              }}
               onMouseEnter={() => router.prefetch(routes.personal.root)}
             >
               Personal
-            </a>
+            </Link>
           </SidebarGroupLabel>
           <SidebarMenu className="gap-1.5">
             {sidebarRoutes.personal.map((route) => (
               <SidebarMenuItemComponent
                 key={route.name}
                 tooltip={route.name}
-                onClick={() => router.push(route.url)}
+                href={route.url}
                 isActive={isActive(route.url)}
                 icon={route.icon}
                 label={route.name}
@@ -282,25 +282,19 @@ function DefaultNewActions() {
     <NewXDropdown>
       <SidebarMenu className="gap-1">
         <SidebarMenuItem>
-          {/*
-           * Chained render props (all Base UI useRender-compatible):
-           *   SidebarMenuButton → renders as TooltipTrigger → renders as DropdownMenuTrigger
-           * Result: one DOM button with sidebar layout, tooltip, and dropdown trigger — no nesting.
-           * We handle tooltip manually (not via SidebarMenuButton's `tooltip` prop) because
-           * that prop replaces `render` internally, which would cut the chain.
-           */}
-          <Tooltip>
-            <SidebarMenuButton
-              render={<TooltipTrigger render={<DropdownMenuTrigger />} />}
-              className="hover:bg-gold/10 [&_svg]:text-gold"
-            >
-              <PlusSignIcon size={24} strokeWidth={2} />
-              <span className="group-data-[collapsible=icon]:scale-0 duration-150">Create</span>
-            </SidebarMenuButton>
-            <TooltipContent side="right" align="center" hidden={state !== "collapsed" || isMobile}>
-              Create
-            </TooltipContent>
-          </Tooltip>
+          <SidebarMenuButton
+            render={<DropdownMenuTrigger />}
+            tooltip={{
+              children: "Create",
+              side: "right",
+              align: "center",
+              hidden: state !== "collapsed" || isMobile,
+            }}
+            className="hover:bg-gold/10 [&_svg]:text-gold"
+          >
+            <PlusSignIcon size={24} strokeWidth={2} />
+            <span className="group-data-[collapsible=icon]:scale-0 duration-150">Create</span>
+          </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
     </NewXDropdown>

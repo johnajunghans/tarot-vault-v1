@@ -282,21 +282,13 @@ body.theme-transitioning * {
 }
 
 /* ─── Route view transitions ─── */
-::view-transition-group(root),
-::view-transition-group(*) {
-  animation-duration: 200ms;
-  animation-timing-function: linear;
-}
-
-::view-transition-old(root),
-::view-transition-old(*) {
+::view-transition-old(.cross-fade) {
   animation-name: route-fade-out;
   animation-duration: 200ms;
   animation-timing-function: linear;
 }
 
-::view-transition-new(root),
-::view-transition-new(*) {
+::view-transition-new(.cross-fade) {
   animation-name: route-fade-in;
   animation-duration: 200ms;
   animation-timing-function: linear;

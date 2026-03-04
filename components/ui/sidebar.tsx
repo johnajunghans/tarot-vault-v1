@@ -505,6 +505,7 @@ function SidebarMenuButton({
   variant = "default",
   size = "default",
   tooltip,
+  suppressTooltipOnPress = false,
   className,
   disabled,
   ...props
@@ -512,8 +513,47 @@ function SidebarMenuButton({
   React.ComponentProps<"button"> & {
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    suppressTooltipOnPress?: boolean
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const { isMobile, state } = useSidebar()
+  const [tooltipOpen, setTooltipOpen] = React.useState(false)
+  const canShowTooltip = state === "collapsed" && !isMobile
+
+  function openTooltip() {
+    if (canShowTooltip) setTooltipOpen(true)
+  }
+
+  function closeTooltip() {
+    setTooltipOpen(false)
+  }
+
+  function handlePressForTooltip(
+    event: React.PointerEvent<HTMLElement> | React.MouseEvent<HTMLElement>
+  ) {
+    setTooltipOpen(false)
+    ;(event as { preventBaseUIHandler?: () => void }).preventBaseUIHandler?.()
+  }
+
+  let composedRender = render
+  if (tooltip) {
+    if (suppressTooltipOnPress) {
+      composedRender = (
+        <TooltipTrigger
+          render={render}
+          disabled
+          onMouseEnter={openTooltip}
+          onMouseLeave={closeTooltip}
+          onFocus={openTooltip}
+          onBlur={closeTooltip}
+          onPointerDown={handlePressForTooltip}
+          onClick={handlePressForTooltip}
+        />
+      )
+    } else {
+      composedRender = TooltipTrigger
+    }
+  }
+
   const comp = useRender({
     defaultTagName: "button",
     props: mergeProps<"button">(
@@ -527,7 +567,7 @@ function SidebarMenuButton({
       },
       props
     ),
-    render: !tooltip ? render : TooltipTrigger,
+    render: composedRender,
     state: {
       slot: "sidebar-menu-button",
       sidebar: "menu-button",
@@ -547,12 +587,15 @@ function SidebarMenuButton({
   }
 
   return (
-    <Tooltip>
+    <Tooltip
+      open={suppressTooltipOnPress ? canShowTooltip && tooltipOpen : undefined}
+      onOpenChange={suppressTooltipOnPress ? setTooltipOpen : undefined}
+    >
       {comp}
       <TooltipContent
         side="right"
         align="center"
-        hidden={state !== "collapsed" || isMobile}
+        hidden={!canShowTooltip}
         {...tooltip}
       />
     </Tooltip>

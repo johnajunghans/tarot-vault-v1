@@ -6,6 +6,7 @@ import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const philosopher = Philosopher({
   weight: ["400", "700"],
@@ -49,7 +50,11 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem
         >
-          <ConvexClientProvider>{children}</ConvexClientProvider>
+          <ConvexClientProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </ConvexClientProvider>
         </ThemeProvider>
         </ClerkProvider>
         <Toaster />

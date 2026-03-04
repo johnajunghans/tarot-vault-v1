@@ -20,7 +20,7 @@ export default async function AppLayout({
             <LayoutModeProvider defaultTopbarVisible={defaultTopbarVisible}>
                 <LayoutActionsProvider>
                     <AppSidebar />
-                    <ViewTransition>
+                    <ViewTransition default="cross-fade">
                     <SidebarInset className="z-10 h-screen relative">
                         { children }
                     </SidebarInset>
