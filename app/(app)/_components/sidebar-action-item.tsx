@@ -4,6 +4,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
@@ -12,10 +13,13 @@ import {
   Delete02Icon,
   FloppyDiskIcon,
   MultiplicationSignIcon,
-  PencilEdit02Icon
+  PencilEdit02Icon,
+  PlusSignIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react"
 import type { ActionDescriptor, ActionType } from "@/types/layout"
+import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { NewXDropdown } from "./new-x-button"
 
 // ─── Type → icon map ──────────────────────────────────────────────────────────
 
@@ -79,5 +83,33 @@ export function SidebarActions({ actions }: SidebarActionsProps) {
         <SidebarActionButton key={action.type} action={action} />
       ))}
     </SidebarMenu>
+  )
+}
+
+// ─── Default "create" action (shown when no contextual actions exist) ──────────
+
+export function DefaultSidebarActions() {
+  const { state, isMobile } = useSidebar()
+
+  return (
+    <NewXDropdown>
+      <SidebarMenu className="gap-1">
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            render={<DropdownMenuTrigger />}
+            tooltip={{
+              children: "Create",
+              side: "right",
+              align: "center",
+              hidden: state !== "collapsed" || isMobile,
+            }}
+            className="hover:bg-gold/10 [&_svg]:text-gold"
+          >
+            <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
+            <span className="group-data-[collapsible=icon]:scale-0 duration-150">Create</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </NewXDropdown>
   )
 }

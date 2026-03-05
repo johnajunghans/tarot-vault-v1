@@ -3,13 +3,14 @@
 import {
   Cards01Icon,
   ConstellationIcon,
+  Diamond01Icon,
   Layout01Icon,
   LayoutLeftIcon,
   LibraryIcon,
-  Settings01Icon,
   Menu01Icon,
   PanelLeftCloseIcon,
-  PanelLeftOpenIcon
+  PanelLeftOpenIcon,
+  Settings01Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react"
 import {
@@ -30,16 +31,12 @@ import { UserButton, useUser } from "@clerk/clerk-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Skeleton } from "../../../components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import { routes } from "@/lib/routes"
 import ThemeToggle from "./theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Diamond01Icon } from "hugeicons-react"
 import { useLayoutMode, useLayoutContent } from "@/components/providers/layout-provider"
-import { SidebarActions } from "./sidebar-action-item"
-import { NewXDropdown } from "./new-x-button"
-import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { PlusSignIcon } from "hugeicons-react"
+import { SidebarActions, DefaultSidebarActions } from "./sidebar-action-item"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -63,33 +60,28 @@ const sidebarRoutes = {
   ],
 }
 
-interface SidebarMenuItemProps {
-  href?: string
-  onClick?: () => void
+// ─── Nav item (link) ──────────────────────────────────────────────────────────
+
+interface SidebarNavItemProps {
+  href: string
   tooltip: string
   isActive?: boolean
   icon: IconSvgElement
   label: string
 }
 
-function SidebarMenuItemComponent({
-  href,
-  onClick,
-  tooltip,
-  isActive,
-  icon,
-  label,
-}: SidebarMenuItemProps) {
+function SidebarNavItem({ href, tooltip, isActive, icon, label }: SidebarNavItemProps) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        type={href ? undefined : "button"}
-        render={href ? <Link href={href} /> : undefined}
+        render={<Link href={href} />}
         tooltip={!isActive ? tooltip : undefined}
-        suppressTooltipOnPress={!!href}
-        onClick={onClick}
+        suppressTooltipOnPress
         isActive={isActive}
-        className={`${isActive ? "!bg-gold/15 text-foreground" : "hover:bg-gold/15 text-foreground-muted hover:text-foreground"}`}
+        className={isActive
+          ? "!bg-gold/15 text-foreground"
+          : "hover:bg-gold/15 text-foreground-muted hover:text-foreground"
+        }
       >
         <HugeiconsIcon icon={icon} strokeWidth={1.5} />
         <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
@@ -99,6 +91,65 @@ function SidebarMenuItemComponent({
     </SidebarMenuItem>
   )
 }
+
+// ─── Button item (action) ─────────────────────────────────────────────────────
+
+interface SidebarButtonItemProps {
+  onClick?: () => void
+  tooltip: string
+  icon: IconSvgElement
+  label: string
+  className?: string
+}
+
+function SidebarButtonItem({ onClick, tooltip, icon, label, className }: SidebarButtonItemProps) {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        type="button"
+        tooltip={tooltip}
+        onClick={onClick}
+        className={cn("hover:bg-gold/15 text-foreground-muted hover:text-foreground", className)}
+      >
+        <HugeiconsIcon icon={icon} strokeWidth={1.5} />
+        <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
+          {label}
+        </span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  )
+}
+
+// ─── Layout toggle item (animated icon swap) ──────────────────────────────────
+
+function LayoutToggleItem() {
+  const { topbarVisible, toggleTopbar } = useLayoutMode()
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        type="button"
+        tooltip="Toggle layout"
+        onClick={toggleTopbar}
+        className="hover:bg-gold/15 text-foreground-muted hover:text-foreground"
+      >
+        <div className="relative size-6 shrink-0">
+          <span className={`absolute inset-0 flex items-center justify-center transition-transform duration-200 ease-in-out ${topbarVisible ? "scale-100" : "scale-0"}`}>
+            <HugeiconsIcon icon={Layout01Icon} strokeWidth={1.5} />
+          </span>
+          <span className={`absolute inset-0 flex items-center justify-center transition-transform duration-200 ease-in-out ${topbarVisible ? "scale-0" : "scale-100"}`}>
+            <HugeiconsIcon icon={LayoutLeftIcon} strokeWidth={1.5} />
+          </span>
+        </div>
+        <span className="group-data-[collapsible=icon]:scale-0 transition-scale duration-150">
+          {topbarVisible ? "Default" : "Headless"}
+        </span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  )
+}
+
+// ─── Sidebar toggle button ────────────────────────────────────────────────────
 
 export function SidebarToggle({ className }: { className?: string }) {
   const isMobile = useIsMobile()
@@ -120,12 +171,14 @@ export function SidebarToggle({ className }: { className?: string }) {
   )
 }
 
+// ─── App Sidebar ──────────────────────────────────────────────────────────────
+
 export default function AppSidebar() {
   const router = useRouter()
   const pathname = usePathname()
   const isMobile = useIsMobile()
   const { open } = useSidebar()
-  const { topbarVisible, toggleTopbar } = useLayoutMode()
+  const { topbarVisible } = useLayoutMode()
   const { actions } = useLayoutContent()
 
   const [sidebarHovered, setSidebarHovered] = useState(false)
@@ -158,20 +211,20 @@ export default function AppSidebar() {
           <div className="flex items-center justify-start gap-2.5 pl-0 text-left group/brand">
             {/* Diamond icon — swaps to panel open icon on sidebar hover when collapsed + no topbar */}
             <div className="shrink-0 relative group-data-[collapsible=icon]:translate-x-2.5 duration-150">
-              <Diamond01Icon
+              <HugeiconsIcon
+                icon={Diamond01Icon}
                 color="var(--gold)"
                 fill="var(--gold)"
                 className={`drop-shadow-[0_0_4px_var(--gold-muted)] transition-all duration-300 group-hover/brand:scale-125 group-hover/brand:drop-shadow-[0_0_8px_var(--gold)] ${
                   showSidebarToggle && !open && sidebarHovered ? "opacity-0 scale-75" : ""
-                  
                 }`}
                 style={{ borderRadius: 4 }}
               />
               {showSidebarToggle && !open && (
-                <SidebarToggle 
+                <SidebarToggle
                   className={`absolute inset-0 -translate-x-[1px] transition-all duration-300 hover:bg-sidebar-accent ${
-                      sidebarHovered ? "scale-100" : "scale-0"
-                    }`} 
+                    sidebarHovered ? "scale-100" : "scale-0"
+                  }`}
                 />
               )}
             </div>
@@ -202,7 +255,7 @@ export default function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarMenu className="gap-1.5">
             {sidebarRoutes.personal.map((route) => (
-              <SidebarMenuItemComponent
+              <SidebarNavItem
                 key={route.name}
                 tooltip={route.name}
                 href={route.url}
@@ -228,22 +281,22 @@ export default function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup> */}
 
-        {/* Action buttons — shown when topbar is hidden, centered vertically */}
+        {/* Action buttons — shown when topbar is hidden */}
         {!topbarVisible && !isMobile && (
           <>
-          <SidebarSeparator className="ml-0" />
-          <SidebarGroup className="pl-3">
-            <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none text-muted-foreground/50 text-[10px] tracking-[0.15em] uppercase font-semibold">
-              Actions
-            </SidebarGroupLabel>
-            <div className="animate-fade-in-scale">
-              {actions ? (
-                <SidebarActions actions={actions} />
-              ) : (
-                <DefaultNewActions />
-              )}
-            </div>
-          </SidebarGroup>
+            <SidebarSeparator className="ml-0" />
+            <SidebarGroup className="pl-3">
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none text-muted-foreground/50 text-[10px] tracking-[0.15em] uppercase font-semibold">
+                Actions
+              </SidebarGroupLabel>
+              <div className="animate-fade-in-scale">
+                {actions ? (
+                  <SidebarActions actions={actions} />
+                ) : (
+                  <DefaultSidebarActions />
+                )}
+              </div>
+            </SidebarGroup>
           </>
         )}
       </SidebarContent>
@@ -251,20 +304,12 @@ export default function AppSidebar() {
       {/* Footer — utilities & user */}
       <SidebarFooter>
         <SidebarMenu className="translate-x-1">
-          <SidebarMenuItemComponent
+          <SidebarButtonItem
             tooltip="Settings"
             icon={Settings01Icon}
             label="Settings"
           />
-          {!isMobile && (
-            <SidebarMenuItemComponent
-              tooltip="Toggle layout"
-              icon={topbarVisible ? Layout01Icon : LayoutLeftIcon}
-              label={topbarVisible ? "Default" : "Headless"}
-              onClick={toggleTopbar}
-              // isActive={!topbarVisible}
-            />
-          )}
+          {!isMobile && <LayoutToggleItem />}
           <ThemeToggle />
         </SidebarMenu>
         <ClerkUserButton />
@@ -274,31 +319,7 @@ export default function AppSidebar() {
   )
 }
 
-function DefaultNewActions() {
-  const { state, isMobile } = useSidebar()
-
-  return (
-    <NewXDropdown>
-      <SidebarMenu className="gap-1">
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            render={<DropdownMenuTrigger />}
-            tooltip={{
-              children: "Create",
-              side: "right",
-              align: "center",
-              hidden: state !== "collapsed" || isMobile,
-            }}
-            className="hover:bg-gold/10 [&_svg]:text-gold"
-          >
-            <PlusSignIcon size={24} strokeWidth={2} />
-            <span className="group-data-[collapsible=icon]:scale-0 duration-150">Create</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </NewXDropdown>
-  )
-}
+// ─── Clerk user button ────────────────────────────────────────────────────────
 
 function ClerkUserButton() {
   const { isLoaded } = useUser()
@@ -307,7 +328,6 @@ function ClerkUserButton() {
   const isMobile = useIsMobile()
 
   useEffect(() => {
-    console.log(open)
     if (!open) {
       setTimeout(() => setShowName(false), 200)
     } else {
@@ -324,16 +344,15 @@ function ClerkUserButton() {
             elements: {
               userButtonBox: {
                 flexDirection: "row-reverse",
-                gap: "2px"
-
+                gap: "2px",
               },
               userButtonOuterIdentifier: {
                 scale: isMobile ? "1" : (open ? "1" : "0"),
                 transitionDuration: "150ms",
                 textWrap: "nowrap",
                 color: "var(--foreground)",
-                zIndex: "-1"
-              }
+                zIndex: "-1",
+              },
             },
           }}
         />
