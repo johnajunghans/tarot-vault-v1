@@ -26,7 +26,7 @@ export default function AppTopbar() {
   return (
     <div
       className={`transition-[max-height,opacity] duration-200 ease-in-out ${
-        isVisible ? "max-h-[57px] opacity-100" : "max-h-0 opacity-0"
+        isVisible ? "max-h-[57px] opacity-100 pointer-events-auto" : "max-h-0 opacity-0 pointer-events-none"
       }`}
     >
       <header className="flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-4 border-b border-border/60 overflow-hidden max-h-[57px]">

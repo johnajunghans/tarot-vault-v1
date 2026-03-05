@@ -97,6 +97,7 @@ export function DefaultSidebarActions() {
         <SidebarMenuItem>
           <SidebarMenuButton
             render={<DropdownMenuTrigger />}
+            suppressTooltipOnPress
             tooltip={{
               children: "Create",
               side: "right",
