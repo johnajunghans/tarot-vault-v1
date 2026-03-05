@@ -1,11 +1,11 @@
 import AppSidebar from "@/app/(app)/_components/app-sidebar"
+import AppTopbar from "@/app/(app)/_components/app-topbar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { LayoutModeProvider } from "@/components/providers/layout-mode-provider"
-import { LayoutActionsProvider } from "@/components/providers/layout-actions-provider"
+import { LayoutProvider } from "@/components/providers/layout-provider"
 import { cookies } from "next/headers"
-import { 
-    ReactNode, 
-    ViewTransition 
+import {
+    ReactNode,
+    ViewTransition
 } from "react"
 
 export default async function AppLayout({
@@ -17,16 +17,15 @@ export default async function AppLayout({
 
     return (
         <SidebarProvider defaultOpen={false}>
-            <LayoutModeProvider defaultTopbarVisible={defaultTopbarVisible}>
-                <LayoutActionsProvider>
-                    <AppSidebar />
+            <LayoutProvider defaultTopbarVisible={defaultTopbarVisible}>
+                <AppSidebar />
+                <SidebarInset className="z-10 h-screen relative">
+                    <AppTopbar />
                     <ViewTransition default="cross-fade">
-                    <SidebarInset className="z-10 h-screen relative">
                         { children }
-                    </SidebarInset>
                     </ViewTransition>
-                </LayoutActionsProvider>
-            </LayoutModeProvider>
+                </SidebarInset>
+            </LayoutProvider>
         </SidebarProvider>
     )
 }

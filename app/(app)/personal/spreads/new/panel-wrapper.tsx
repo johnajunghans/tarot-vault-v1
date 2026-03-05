@@ -14,19 +14,16 @@ import SpreadCanvas from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { generateCard, generateCardAt } from "../utils"
-import AppTopbar from "@/app/(app)/_components/app-topbar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Spinner } from "@/components/ui/spinner";
 import { FieldErrors } from "react-hook-form";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Cancel01Icon, Delete02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
+import { PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
 import { useRouter } from "next/navigation";
-import { useSetLayoutActions, type ActionDescriptor } from "@/components/providers/layout-actions-provider";
+import { useLayoutDispatch } from "@/components/providers/layout-provider";
+import type { ActionDescriptor } from "@/types/layout";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -115,9 +112,6 @@ export default function PanelWrapper({
 
     const watchedName = form.watch("name");
     const watchedPositions = form.watch("positions");
-
-    const spreadTitle = watchedName || "New Spread";
-    const cardCount = `${watchedPositions?.length ?? 0} card${(watchedPositions?.length ?? 0) !== 1 ? "s" : ""}`;
 
     // ------------ MOBILE SHEET STATE ------------ //
 
@@ -225,11 +219,23 @@ export default function PanelWrapper({
     }, [form, router]);
 
 
-    // ------------ SIDEBAR LAYOUT ACTIONS ------------ //
+    // ------------ LAYOUT DISPATCH ------------ //
 
-    const setActions = useSetLayoutActions();
+    const { setActions, setTitle, reset } = useLayoutDispatch();
     const isDirty = form.formState.isDirty;
 
+    // Title effect
+    useEffect(() => {
+        setTitle({
+            variant: "spread",
+            name: watchedName || "New Spread",
+            count: watchedPositions?.length ?? 0,
+            countUnit: "card",
+            badge: "DRAFT",
+        })
+    }, [watchedName, watchedPositions?.length, setTitle])
+
+    // Actions effect
     const actions = useMemo<ActionDescriptor[]>(() => {
         const items: ActionDescriptor[] = [
             {
@@ -257,53 +263,15 @@ export default function PanelWrapper({
 
     useEffect(() => {
         setActions(actions);
-        return () => setActions(null);
     }, [actions, setActions]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => reset()
+    }, [reset])
 
     return (
         <>
-        {/* App Topbar */}
-        <AppTopbar
-            centerTitle={
-                <>
-                    <span className="font-display font-bold text-foreground text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]">{spreadTitle}</span>
-                    {!isMobile && <>
-                        <Separator orientation="vertical" />
-                        <span className="text-muted-foreground text-xs lg:text-sm text-nowrap">{cardCount}</span>
-                    </>}
-                    <Badge variant="secondary" className="text-[10px] font-medium">DRAFT</Badge>
-                </>
-            }
-            rightButtonGroup={
-                <>
-                    {loadedDraftDate ? (
-                        <>
-                            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleClose}>
-                                {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Close</span> }
-                            </Button>
-                            <Button type="button" variant="destructive" size={isMobile ? "icon" : "default"} onClick={handleDiscard}>
-                                {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Discard</span> }
-                            </Button>
-                            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave} className="bg-gold hover:bg-gold/90 text-background font-semibold">
-                                {isSaving && <Spinner />}
-                                <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Spread"}</span>
-                            </Button>
-                        </>
-                    ) : (
-                        <>
-                            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleDiscard}>
-                                {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Discard</span> }
-                            </Button>
-                            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave} className="bg-gold hover:bg-gold/90 text-background font-semibold">
-                                {isSaving && <Spinner />}
-                                <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Spread"}</span>
-                            </Button>
-                        </>
-                    )}
-                </>
-            }
-        />
-
         {/* Main Content */}
         <div className="h-app-content relative">
             <FormProvider {...form}>

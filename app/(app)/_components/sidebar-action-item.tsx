@@ -15,7 +15,7 @@ import {
   PencilEdit02Icon
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react"
-import type { ActionDescriptor, ActionType } from "@/components/providers/layout-actions-provider"
+import type { ActionDescriptor, ActionType } from "@/types/layout"
 
 // ─── Type → icon map ──────────────────────────────────────────────────────────
 

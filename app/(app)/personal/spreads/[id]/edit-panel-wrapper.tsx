@@ -15,18 +15,17 @@ import SpreadCanvas from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { generateCard, generateCardAt } from "../utils";
-import AppTopbar from "@/app/(app)/_components/app-topbar";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { FieldErrors } from "react-hook-form";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Cancel01Icon, Delete02Icon, PencilEdit02Icon, PlusSignIcon, Settings02Icon } from "hugeicons-react";
+import { PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
 import { useRouter } from "next/navigation";
-import { useSetLayoutActions, type ActionDescriptor } from "@/components/providers/layout-actions-provider";
+import { useLayoutDispatch } from "@/components/providers/layout-provider";
+import type { ActionDescriptor, BreadcrumbDescriptor } from "@/types/layout";
 
 interface EditPanelWrapperProps {
     spreadId: Id<"spreads">
@@ -35,16 +34,16 @@ interface EditPanelWrapperProps {
     mode: "view" | "edit"
 }
 
-const VIEW_BREADCRUMBS = [
-    { href: routes.personal.root, label: "Personal", isLast: false },
-    { href: routes.personal.spreads.root, label: "Spreads", isLast: false },
-    { href: "#", label: "View Spread", isLast: true },
+const VIEW_BREADCRUMBS: BreadcrumbDescriptor[] = [
+    { href: routes.personal.root, label: "Personal" },
+    { href: routes.personal.spreads.root, label: "Spreads" },
+    { href: "#", label: "View Spread" },
 ]
 
-const EDIT_BREADCRUMBS = [
-    { href: routes.personal.root, label: "Personal", isLast: false },
-    { href: routes.personal.spreads.root, label: "Spreads", isLast: false },
-    { href: "#", label: "Edit Spread", isLast: true },
+const EDIT_BREADCRUMBS: BreadcrumbDescriptor[] = [
+    { href: routes.personal.root, label: "Personal" },
+    { href: routes.personal.spreads.root, label: "Spreads" },
+    { href: "#", label: "Edit Spread" },
 ]
 
 export default function EditPanelWrapper({
@@ -113,9 +112,6 @@ export default function EditPanelWrapper({
 
     const watchedName = form.watch("name");
     const watchedPositions = form.watch("positions");
-
-    const spreadTitle = watchedName || "Untitled Spread";
-    const cardCount = `${watchedPositions?.length ?? 0} ${(watchedPositions?.length ?? 0) !== 1 ? "positions" : "position"}`;
 
     // ------------ MOBILE SHEET STATE ------------ //
 
@@ -233,11 +229,30 @@ export default function EditPanelWrapper({
     }, [router, viewUrl]);
 
 
-    // ------------ SIDEBAR LAYOUT ACTIONS ------------ //
+    // ------------ LAYOUT DISPATCH ------------ //
 
-    const setActions = useSetLayoutActions();
+    const { setActions, setTitle, setBreadcrumbs, reset } = useLayoutDispatch();
     const isDirty = form.formState.isDirty;
 
+    // Breadcrumbs effect
+    useEffect(() => {
+        setBreadcrumbs({
+            mode: "custom",
+            items: isViewMode ? VIEW_BREADCRUMBS : EDIT_BREADCRUMBS,
+        })
+    }, [isViewMode, setBreadcrumbs])
+
+    // Title effect
+    useEffect(() => {
+        setTitle({
+            variant: "spread",
+            name: watchedName || "Untitled Spread",
+            count: watchedPositions?.length ?? 0,
+            countUnit: "position",
+        })
+    }, [watchedName, watchedPositions?.length, setTitle])
+
+    // Actions effect
     const actions = useMemo<ActionDescriptor[] | null>(() => {
         if (!spread) return null;
 
@@ -279,65 +294,33 @@ export default function EditPanelWrapper({
 
     useEffect(() => {
         setActions(actions);
-        return () => setActions(null);
     }, [actions, setActions]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => reset()
+    }, [reset])
 
     // ------------ LOADING / NOT FOUND ------------ //
 
-    const breadcrumbs = isViewMode ? VIEW_BREADCRUMBS : EDIT_BREADCRUMBS;
-
     if (spread === undefined) {
         return (
-            <>
-                <AppTopbar breadcrumbs={breadcrumbs} />
-                <div className="h-app-content flex items-center justify-center">
-                    <Spinner className="size-6" />
-                </div>
-            </>
+            <div className="h-app-content flex items-center justify-center">
+                <Spinner className="size-6" />
+            </div>
         );
     }
 
     if (spread === null) {
         return (
-            <>
-                <AppTopbar breadcrumbs={breadcrumbs} />
-                <div className="h-app-content flex flex-col items-center justify-center gap-3">
-                    <p className="text-muted-foreground font-display text-lg">Spread not found</p>
-                    <Button variant="outline" onClick={() => router.push(routes.personal.spreads.root)}>
-                        Back to spreads
-                    </Button>
-                </div>
-            </>
+            <div className="h-app-content flex flex-col items-center justify-center gap-3">
+                <p className="text-muted-foreground font-display text-lg">Spread not found</p>
+                <Button variant="outline" onClick={() => router.push(routes.personal.spreads.root)}>
+                    Back to spreads
+                </Button>
+            </div>
         );
     }
-
-    // ------------ TOPBAR BUTTON GROUPS ------------ //
-
-    const viewModeButtons = (
-        <>
-            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={() => router.push(routes.personal.spreads.root)}>
-                {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Close</span>}
-            </Button>
-            <Button type="button" variant="default" size={isMobile ? "icon" : "default"} onClick={() => router.push(routes.personal.spreads.id(spreadId, "edit"))} className="bg-gold hover:bg-gold/90 text-background font-semibold">
-                {isMobile ? <PencilEdit02Icon /> : <span className="text-xs lg:text-sm">Edit Spread</span>}
-            </Button>
-        </>
-    );
-
-    const editModeButtons = (
-        <>
-            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} onClick={handleCancel}>
-                {isMobile ? <Cancel01Icon /> : <span className="text-xs lg:text-sm">Cancel</span>}
-            </Button>
-            <Button type="button" variant="ghost" size={isMobile ? "icon" : "default"} className="text-muted-foreground hover:text-destructive" onClick={() => setShowDeleteDialog(true)}>
-                {isMobile ? <Delete02Icon /> : <span className="text-xs lg:text-sm">Delete</span>}
-            </Button>
-            <Button type="button" variant="default" disabled={isSaving || !form.formState.isDirty} onClick={handleSave} className="bg-gold hover:bg-gold/90 text-background font-semibold">
-                {isSaving && <Spinner />}
-                <span className="text-xs lg:text-sm">{isMobile ? "Save" : "Save Changes"}</span>
-            </Button>
-        </>
-    );
 
     // ------------ SHARED PANEL PROPS ------------ //
 
@@ -362,21 +345,6 @@ export default function EditPanelWrapper({
 
     return (
         <>
-        {/* App Topbar */}
-        <AppTopbar
-            breadcrumbs={breadcrumbs}
-            centerTitle={
-                <>
-                    <span className="font-display font-bold text-foreground text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]">{spreadTitle}</span>
-                    {!isMobile && <>
-                        <Separator orientation="vertical" />
-                        <span className="text-muted-foreground text-xs lg:text-sm text-nowrap">{cardCount}</span>
-                    </>}
-                </>
-            }
-            rightButtonGroup={isViewMode ? viewModeButtons : editModeButtons}
-        />
-
         {/* Main Content */}
         <div className="h-app-content relative">
             <FormProvider {...form}>

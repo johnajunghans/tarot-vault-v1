@@ -35,8 +35,7 @@ import { routes } from "@/lib/routes"
 import ThemeToggle from "./theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Diamond01Icon } from "hugeicons-react"
-import { useLayoutMode } from "@/components/providers/layout-mode-provider"
-import { useLayoutActions } from "@/components/providers/layout-actions-provider"
+import { useLayoutMode, useLayoutContent } from "@/components/providers/layout-provider"
 import { SidebarActions } from "./sidebar-action-item"
 import { NewXDropdown } from "./new-x-button"
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -127,7 +126,7 @@ export default function AppSidebar() {
   const isMobile = useIsMobile()
   const { open } = useSidebar()
   const { topbarVisible, toggleTopbar } = useLayoutMode()
-  const actions = useLayoutActions()
+  const { actions } = useLayoutContent()
 
   const [sidebarHovered, setSidebarHovered] = useState(false)
 
