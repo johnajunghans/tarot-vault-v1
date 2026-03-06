@@ -2,13 +2,22 @@
 
 export type ActionType = "save" | "edit" | "delete" | "discard" | "cancel" | "close"
 
-export interface ActionDescriptor {
+interface BaseActionDescriptor {
   type: ActionType
   label: string
-  onClick: () => void
   disabled?: boolean
   loading?: boolean
 }
+
+export type ActionDescriptor =
+  | (BaseActionDescriptor & {
+      href: string
+      onClick?: () => void
+    })
+  | (BaseActionDescriptor & {
+      onClick: () => void
+      href?: never
+    })
 
 // ─── Title Types ───────────────────────────────────────────────────────────
 

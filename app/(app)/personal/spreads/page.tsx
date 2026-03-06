@@ -36,7 +36,9 @@ function loadDrafts(): SpreadDraft[] {
             console.error(`Error loading spread drafts: ${error}`)
         }
 
-        draft && drafts.push(draft)
+        if (draft) {
+            drafts.push(draft)
+        }
     }
 
     return drafts.sort((a, b) => b.date - a.date)
@@ -54,6 +56,7 @@ function EmptyState() {
             </p>
             <Button
                 variant="outline"
+                nativeButton={false}
                 render={<Link href={routes.personal.spreads.new.root} />}
                 className="border-gold/50 text-gold hover:bg-gold/10 hover:border-gold"
             >
@@ -66,17 +69,15 @@ function EmptyState() {
 
 export default function Spreads() {
     const spreads = useQuery(api.spreads.list)
-    const [drafts, setDrafts] = useState<SpreadDraft[]>([])
+    const [drafts, setDrafts] = useState<SpreadDraft[]>(() => (
+        typeof window === "undefined" ? [] : loadDrafts()
+    ))
     const { setTitle, reset } = useLayoutDispatch()
 
     useEffect(() => {
         setTitle({ variant: "page", label: "Your Spreads", icon: "spreads" })
         return () => reset()
     }, [setTitle, reset])
-
-    useEffect(() => {
-        setDrafts(loadDrafts())
-    }, [])
 
     const isEmpty = spreads !== undefined && spreads.length === 0 && drafts.length === 0
     const isLoading = spreads === undefined

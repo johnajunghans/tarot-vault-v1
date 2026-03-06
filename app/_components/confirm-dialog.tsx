@@ -10,9 +10,10 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
-import { HorseSaddleIcon, PineTreeIcon, SurpriseIcon, Tree01Icon } from "hugeicons-react"
+import { HorseSaddleIcon, PineTreeIcon, SurpriseIcon } from "hugeicons-react"
+import Link from "next/link"
 import type React from "react"
-import { ReactNode } from "react"
+import { ReactNode, type MouseEventHandler, useId } from "react"
 
 export interface ConfirmDialogProps {
     open: boolean
@@ -22,10 +23,12 @@ export interface ConfirmDialogProps {
     cancelLabel?: string
     confirmLabel: string
     onConfirm: () => void | Promise<void>
+    confirmHref?: string
     confirmVariant?: "default" | "destructive"
     isConfirming?: boolean
     secondaryLabel?: string
     onSecondary?: () => void
+    secondaryHref?: string
     secondaryVariant?: "secondary" | "outline"
 }
 
@@ -52,14 +55,17 @@ export default function ConfirmDialog({
     cancelLabel = "Cancel",
     confirmLabel,
     onConfirm,
+    confirmHref,
     confirmVariant = "destructive",
     isConfirming = false,
     secondaryLabel,
     onSecondary,
+    secondaryHref,
     secondaryVariant = "secondary",
 }: ConfirmDialogProps) {
-    const hasSecondary = Boolean(secondaryLabel && onSecondary)
+    const hasSecondary = Boolean(secondaryLabel && (onSecondary || secondaryHref))
     const disabled = isConfirming
+    const titleId = useId()
 
     const handleConfirm = () => {
         const result = onConfirm()
@@ -70,19 +76,30 @@ export default function ConfirmDialog({
         }
     }
 
-    const Title = () => {
+    const titleContent = (() => {
         if (title) return title
 
-        const randomIndex = Math.floor(Math.random() * zanyTitles.length)
-        const randomZanyTitle = zanyTitles[randomIndex]
+        const titleIndex = Array.from(titleId).reduce((sum, char) => sum + char.charCodeAt(0), 0) % zanyTitles.length
+        const fallbackTitle = zanyTitles[titleIndex]
 
         return (
             <div className="flex items-center gap-2">
-                { randomZanyTitle.icon }
-                <span>{randomZanyTitle.content}</span>
+                { fallbackTitle.icon }
+                <span>{fallbackTitle.content}</span>
             </div>
            
         )
+    })()
+
+    const handleLinkedAction = (
+        event: Parameters<MouseEventHandler<HTMLElement>>[0],
+        action?: () => void | Promise<void>,
+    ) => {
+        if (disabled) {
+            event.preventDefault()
+            return
+        }
+        action?.()
     }
 
     return (
@@ -90,7 +107,7 @@ export default function ConfirmDialog({
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle className="font-display">
-                        <Title />
+                        {titleContent}
                     </DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
@@ -106,13 +123,63 @@ export default function ConfirmDialog({
                     </Button>
                     {hasSecondary ? (
                         <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                            {secondaryHref ? (
+                                <Button
+                                    variant={secondaryVariant}
+                                    nativeButton={false}
+                                    render={<Link href={secondaryHref} />}
+                                    onClick={(event) => handleLinkedAction(event, onSecondary)}
+                                    disabled={undefined}
+                                    className={disabled ? "pointer-events-none opacity-50" : undefined}
+                                >
+                                    {secondaryLabel}
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant={secondaryVariant}
+                                    onClick={onSecondary}
+                                    disabled={disabled}
+                                >
+                                    {secondaryLabel}
+                                </Button>
+                            )}
+                            {confirmHref ? (
+                                <Button
+                                    variant={confirmVariant}
+                                    nativeButton={false}
+                                    render={<Link href={confirmHref} />}
+                                    onClick={(event) => handleLinkedAction(event, onConfirm)}
+                                    disabled={undefined}
+                                    className={disabled ? "pointer-events-none opacity-50" : undefined}
+                                >
+                                    {isConfirming && <Spinner />}
+                                    {confirmLabel}
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant={confirmVariant}
+                                    onClick={handleConfirm}
+                                    disabled={disabled}
+                                >
+                                    {isConfirming && <Spinner />}
+                                    {confirmLabel}
+                                </Button>
+                            )}
+                        </div>
+                    ) : (
+                        confirmHref ? (
                             <Button
-                                variant={secondaryVariant}
-                                onClick={onSecondary}
-                                disabled={disabled}
+                                variant={confirmVariant}
+                                nativeButton={false}
+                                render={<Link href={confirmHref} />}
+                                onClick={(event) => handleLinkedAction(event, onConfirm)}
+                                disabled={undefined}
+                                className={disabled ? "pointer-events-none opacity-50" : undefined}
                             >
-                                {secondaryLabel}
+                                {isConfirming && <Spinner />}
+                                {confirmLabel}
                             </Button>
+                        ) : (
                             <Button
                                 variant={confirmVariant}
                                 onClick={handleConfirm}
@@ -121,16 +188,7 @@ export default function ConfirmDialog({
                                 {isConfirming && <Spinner />}
                                 {confirmLabel}
                             </Button>
-                        </div>
-                    ) : (
-                        <Button
-                            variant={confirmVariant}
-                            onClick={handleConfirm}
-                            disabled={disabled}
-                        >
-                            {isConfirming && <Spinner />}
-                            {confirmLabel}
-                        </Button>
+                        )
                     )}
                 </DialogFooter>
             </DialogContent>

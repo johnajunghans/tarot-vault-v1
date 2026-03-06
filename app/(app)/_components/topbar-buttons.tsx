@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { cn } from "@/lib/utils"
 import type { ActionDescriptor, ActionType } from "@/types/layout"
 import {
   Cancel01Icon,
@@ -9,6 +10,8 @@ import {
   FloppyDiskIcon,
   PencilEdit02Icon,
 } from "hugeicons-react"
+import Link from "next/link"
+import type { MouseEventHandler } from "react"
 import NewXButton from "./new-x-button"
 
 // ─── Action type → button config map ───────────────────────────────────────
@@ -66,16 +69,28 @@ export default function TopbarButtons({ actions, isMobile }: TopbarButtonsProps)
       {[...actions].reverse().map((action) => {
         const config = ACTION_BUTTON_CONFIG[action.type]
         const Icon = config.icon
+        const isDisabled = action.disabled || action.loading
+        const handleClick: MouseEventHandler<HTMLElement> | undefined = action.href
+          ? (event) => {
+              if (isDisabled) {
+                event.preventDefault()
+                return
+              }
+              action.onClick?.()
+            }
+          : action.onClick
 
         return (
           <Button
             key={action.type}
-            type="button"
+            type={action.href ? undefined : "button"}
             variant={config.variant}
             size={isMobile ? "icon" : "default"}
-            disabled={action.disabled || action.loading}
-            onClick={action.onClick}
-            className={config.className}
+            disabled={action.href ? undefined : isDisabled}
+            nativeButton={action.href ? false : undefined}
+            onClick={handleClick}
+            render={action.href ? <Link href={action.href} /> : undefined}
+            className={cn(action.href && isDisabled && "pointer-events-none opacity-50", config.className)}
           >
             {action.loading && <Spinner />}
             {isMobile ? (

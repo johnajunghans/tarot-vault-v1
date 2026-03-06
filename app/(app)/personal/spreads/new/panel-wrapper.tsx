@@ -1,6 +1,6 @@
 "use client"
 
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -31,6 +31,8 @@ interface PanelWrapperProps {
     loadedDraftDate?: number
 }
 
+const now = Date.now()
+
 export default function PanelWrapper({
     defaultLayout,
     groupId,
@@ -58,8 +60,8 @@ export default function PanelWrapper({
 
     // ------------ SPREAD DRAFT LOGIC ------------ //
 
-    const draftDate = useRef(loadedDraftDate ?? Date.now());
-    const draftKey = draftDate.current ? `spread-draft-${draftDate.current}` : ""
+    const [draftDate] = useState(() => loadedDraftDate ?? now);
+    const draftKey = draftDate ? `spread-draft-${draftDate}` : "";
     const isDiscardingRef = useRef(false);
 
     useEffect(() => {
@@ -78,20 +80,20 @@ export default function PanelWrapper({
         } catch { /* ignore invalid draft data */ }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    const watchedValues = useWatch({ control: form.control });
+
     useEffect(() => {
-        const subscription = form.watch((values) => {
-            if (isDiscardingRef.current) return;
-            if (form.formState.isDirty) {
-                localStorage.setItem(draftKey, JSON.stringify({
-                    ...values,
-                    date: draftDate.current,
-                    positions: values.positions?.map((p, i) => ({ ...p, position: i + 1 })),
-                    numberOfCards: values.positions?.length
-                }));
-            }
-        });
-        return () => subscription.unsubscribe();
-    }, [form]);
+        if (isDiscardingRef.current) return;
+        if (!watchedValues) return;
+        if (form.formState.isDirty) {
+            localStorage.setItem(draftKey, JSON.stringify({
+                ...watchedValues,
+                date: draftDate,
+                positions: watchedValues.positions?.map((p, i) => ({ ...p, position: i + 1 })),
+                numberOfCards: watchedValues.positions?.length
+            }));
+        }
+    }, [watchedValues, form.formState.isDirty, draftDate]);
 
     // ------------ ADD CARD ------------ //
 
@@ -99,7 +101,7 @@ export default function PanelWrapper({
         const newCard = generateCard(cards.length);
         append(newCard, { focusName: `positions.${selectedCardIndex}.name` });
         setSelectedCardIndex(cards.length);
-    }, [cards.length, append, selectedCardIndex, setSelectedCardIndex]);
+    }, [cards.length, append, selectedCardIndex]);
 
     const addCardAt = useCallback((x: number, y: number) => {
         if (cards.length >= 78) return;
@@ -110,8 +112,8 @@ export default function PanelWrapper({
 
     // ------------ APP TOPBAR LOGIC ------------ //
 
-    const watchedName = form.watch("name");
-    const watchedPositions = form.watch("positions");
+    const watchedName = watchedValues?.name;
+    const watchedPositions = watchedValues?.positions;
 
     // ------------ MOBILE SHEET STATE ------------ //
 
@@ -200,15 +202,6 @@ export default function PanelWrapper({
         setShowDiscardDialog(true);
     }, [form.formState.isDirty, router]);
 
-    const handleClose = useCallback(() => {
-        router.push(routes.personal.spreads.root);
-    }, [router]);
-
-    const handleSaveAsDraft = useCallback(() => {
-        setShowDiscardDialog(false);
-        router.push(routes.personal.spreads.root);
-    }, [router]);
-
     const handleConfirmDiscard = useCallback(() => {
         const key = draftKey;
         isDiscardingRef.current = true;
@@ -255,11 +248,11 @@ export default function PanelWrapper({
             items.push({
                 type: "close",
                 label: "Close",
-                onClick: handleClose,
+                href: routes.personal.spreads.root,
             });
         }
         return items;
-    }, [loadedDraftDate, handleClose, handleDiscard, handleSave, isSaving, isDirty]);
+    }, [loadedDraftDate, handleDiscard, handleSave, isSaving, isDirty]);
 
     useEffect(() => {
         setActions(actions);
@@ -333,7 +326,6 @@ export default function PanelWrapper({
                             selectedCardIndex={selectedCardIndex}
                             setSelectedCardIndex={setSelectedCardIndex}
                             remove={remove}
-                            cardCount={cards.length}
                         />
                     </>
                 ) : (
@@ -381,7 +373,6 @@ export default function PanelWrapper({
                         selectedCardIndex={selectedCardIndex}
                         setSelectedCardIndex={setSelectedCardIndex}
                         remove={remove}
-                        cardCount={cards.length}
                     />
 
                     </ResizablePanelGroup>
@@ -398,7 +389,7 @@ export default function PanelWrapper({
             description="You have unsaved changes. Save as a draft to continue later, or discard entirely."
             cancelLabel="Keep editing"
             secondaryLabel="Save as draft"
-            onSecondary={handleSaveAsDraft}
+            secondaryHref={routes.personal.spreads.root}
             confirmLabel="Discard"
             onConfirm={handleConfirmDiscard}
         />

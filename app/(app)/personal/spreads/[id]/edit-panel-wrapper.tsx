@@ -1,6 +1,6 @@
 "use client"
 
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -111,8 +111,9 @@ export default function EditPanelWrapper({
 
     // ------------ APP TOPBAR LOGIC ------------ //
 
-    const watchedName = form.watch("name");
-    const watchedPositions = form.watch("positions");
+    const watchedValues = useWatch({ control: form.control });
+    const watchedName = watchedValues?.name;
+    const watchedPositions = watchedValues?.positions;
 
     // ------------ MOBILE SHEET STATE ------------ //
 
@@ -262,12 +263,12 @@ export default function EditPanelWrapper({
                 {
                     type: "edit",
                     label: "Edit Spread",
-                    onClick: () => router.push(routes.personal.spreads.id(spreadId, "edit")),
+                    href: routes.personal.spreads.id(spreadId, "edit"),
                 },
                 {
                     type: "close",
                     label: "Close",
-                    onClick: () => router.push(routes.personal.spreads.root),
+                    href: routes.personal.spreads.root,
                 },
             ];
         }
@@ -291,7 +292,7 @@ export default function EditPanelWrapper({
                 onClick: handleCancel,
             },
         ];
-    }, [spread, isViewMode, handleCancel, handleSave, isSaving, isDirty, spreadId, router]);
+    }, [spread, isViewMode, handleCancel, handleSave, isSaving, isDirty, spreadId]);
 
     useEffect(() => {
         setActions(actions);

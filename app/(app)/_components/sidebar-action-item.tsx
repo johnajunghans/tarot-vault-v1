@@ -20,6 +20,8 @@ import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react"
 import type { ActionDescriptor, ActionType } from "@/types/layout"
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { NewXDropdown } from "./new-x-button"
+import Link from "next/link"
+import type { MouseEventHandler } from "react"
 
 // ─── Type → icon map ──────────────────────────────────────────────────────────
 
@@ -51,14 +53,27 @@ interface SidebarActionButtonProps {
 }
 
 export function SidebarActionButton({ action, className }: SidebarActionButtonProps) {
+  const isDisabled = action.disabled || action.loading
+  const renderAsLink = action.href !== undefined
+  const handleClick: MouseEventHandler<HTMLElement> | undefined = action.href
+    ? (event) => {
+        if (isDisabled) {
+          event.preventDefault()
+          return
+        }
+        action.onClick?.()
+      }
+    : action.onClick
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
         tooltip={action.label}
-        onClick={action.onClick}
-        disabled={action.disabled || action.loading}
+        render={renderAsLink ? <Link href={action.href} /> : undefined}
+        onClick={handleClick}
+        disabled={isDisabled}
         className={cn(ACTION_VARIANTS[action.type], className, "disabled:opacity-50")}
+        suppressTooltipOnPress={renderAsLink}
       >
         {action.loading
           ? <Spinner className="shrink-0" />

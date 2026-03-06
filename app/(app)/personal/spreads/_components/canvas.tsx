@@ -64,7 +64,11 @@ export default function SpreadCanvas({
   }, []);
 
   const positionsRef = useRef(positions);
-  positionsRef.current = positions;
+
+  useEffect(() => {
+    positionsRef.current = positions;
+  }, [positions])
+  
 
   const [dragging, setDragging] = useState<{
     index: number;

@@ -324,22 +324,13 @@ export default function AppSidebar() {
 function ClerkUserButton() {
   const { isLoaded } = useUser()
   const { open } = useSidebar()
-  const [showName, setShowName] = useState(open)
   const isMobile = useIsMobile()
-
-  useEffect(() => {
-    if (!open) {
-      setTimeout(() => setShowName(false), 200)
-    } else {
-      setShowName(true)
-    }
-  }, [open])
 
   return (
     <div className="translate-x-[10px]">
       {isLoaded ? (
         <UserButton
-          showName={isMobile || showName}
+          showName={isMobile || open}
           appearance={{
             elements: {
               userButtonBox: {

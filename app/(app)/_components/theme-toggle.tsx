@@ -5,13 +5,14 @@ import { Moon01Icon, Sun02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Skeleton } from "@/components/ui/skeleton"
 
+let mounted = false
+
 export default function ThemeToggle() {
   const { theme, resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
   const [isThemeTooltipEnabled, setIsThemeTooltipEnabled] = useState(true)
   const themeTransitionTimeoutRef = useRef<number | null>(null)
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { if (!mounted) mounted = true }, [])
 
   const activeTheme = resolvedTheme ?? theme
   const isLightTheme = activeTheme === "light"

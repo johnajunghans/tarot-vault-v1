@@ -94,7 +94,6 @@ interface CardSettingsContentProps {
     selectedCardIndex: number | null
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
     remove: UseFieldArrayRemove
-    cardCount: number
     headerActions?: React.ReactNode
 }
 
@@ -103,7 +102,6 @@ export function CardSettingsContent({
     selectedCardIndex,
     setSelectedCardIndex,
     remove,
-    cardCount,
     headerActions,
 }: CardSettingsContentProps) {
     const form = useFormContext<{ positions: CardForm[] }>();
@@ -315,7 +313,6 @@ interface CardSettingsPanelProps {
     selectedCardIndex: number | null,
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
     remove?: UseFieldArrayRemove
-    cardCount?: number
     isMobile: boolean;
     isViewMode?: boolean;
     open?: boolean;
@@ -327,14 +324,13 @@ export default function CardSettingsPanel({
     selectedCardIndex,
     setSelectedCardIndex,
     remove,
-    cardCount,
     isMobile,
     isViewMode = false,
     open = false,
     onOpenChange,
 }: CardSettingsPanelProps) {
     const cardDetailsPanelRef = usePanelRef();
-
+    
     function handleResize() {
       if (cardDetailsPanelRef.current && cardDetailsPanelRef.current.isCollapsed()) {
         setSelectedCardIndex(null)
@@ -352,7 +348,7 @@ export default function CardSettingsPanel({
         }
       })
       return () => cancelAnimationFrame(id)
-    }, [selectedCardIndex])
+    }, [selectedCardIndex, cardDetailsPanelRef])
 
     useEffect(() => {
       if (
@@ -407,7 +403,6 @@ export default function CardSettingsPanel({
               selectedCardIndex={selectedCardIndex}
               setSelectedCardIndex={setSelectedCardIndex}
               remove={remove!}
-              cardCount={cardCount!}
               headerActions={closeHeaderAction}
             />
           )}
