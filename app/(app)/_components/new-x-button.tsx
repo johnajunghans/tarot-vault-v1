@@ -2,8 +2,8 @@
 
 import { buttonVariants } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/navigation";
 import { routes } from "@/lib/routes";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Cards01Icon, ConstellationIcon, LibraryIcon, PlusSignIcon } from "hugeicons-react";
 import { ReactNode } from "react";
@@ -23,9 +23,6 @@ export function NewXDropdown({
     open,
     onOpenChange 
 }: NewXDropdownProps) {
-
-    const router = useRouter()
-
     return (
         <DropdownMenu open={open} onOpenChange={onOpenChange}> 
             { children }  
@@ -35,9 +32,9 @@ export function NewXDropdown({
                     <LibraryIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                    render={<Link href={routes.personal.spreads.new.root} />}
                     className="justify-between gap-8"
-                    onClick={() => router.push(routes.personal.spreads.new.root)}
-                    >
+                >
                     <span>Spread</span>
                     <Cards01Icon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
                 </DropdownMenuItem>

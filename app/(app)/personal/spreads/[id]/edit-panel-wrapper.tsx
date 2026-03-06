@@ -26,6 +26,7 @@ import { SpreadForm } from "@/types/spreads";
 import { useRouter } from "next/navigation";
 import { useLayoutDispatch } from "@/components/providers/layout-provider";
 import type { ActionDescriptor, BreadcrumbDescriptor } from "@/types/layout";
+import Link from "next/link";
 
 interface EditPanelWrapperProps {
     spreadId: Id<"spreads">
@@ -315,8 +316,8 @@ export default function EditPanelWrapper({
         return (
             <div className="h-app-content flex flex-col items-center justify-center gap-3">
                 <p className="text-muted-foreground font-display text-lg">Spread not found</p>
-                <Button variant="outline" onClick={() => router.push(routes.personal.spreads.root)}>
-                    Back to spreads
+                <Button variant="outline">
+                    <Link href={routes.personal.spreads.root}>Back to spreads</Link>
                 </Button>
             </div>
         );

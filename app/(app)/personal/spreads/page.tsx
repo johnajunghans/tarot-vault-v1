@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
 import SpreadCard from "./_components/spread-card"
 import { Spinner } from "@/components/ui/spinner"
 import { SpreadDraft } from "@/types/spreads"
@@ -43,8 +43,6 @@ function loadDrafts(): SpreadDraft[] {
 }
 
 function EmptyState() {
-    const router = useRouter()
-
     return (
         <div className="flex flex-col items-center justify-center py-32 px-4 animate-fade-in-scale opacity-0">
             <div className="w-6 h-6 rotate-45 border border-gold/40 mb-8" />
@@ -56,7 +54,7 @@ function EmptyState() {
             </p>
             <Button
                 variant="outline"
-                onClick={() => router.push(routes.personal.spreads.new.root)}
+                render={<Link href={routes.personal.spreads.new.root} />}
                 className="border-gold/50 text-gold hover:bg-gold/10 hover:border-gold"
             >
                 <PlusSignIcon className="w-4 h-4 mr-1.5" strokeWidth={2} />

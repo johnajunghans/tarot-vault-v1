@@ -1,7 +1,8 @@
 "use client"
 
 import { Fragment } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -41,7 +42,6 @@ interface TopbarBreadcrumbsProps {
 
 export default function TopbarBreadcrumbs({ config }: TopbarBreadcrumbsProps) {
   const pathname = usePathname()
-  const router = useRouter()
 
   const items = config.mode === "auto"
     ? generateFromPathname(pathname)
@@ -61,11 +61,7 @@ export default function TopbarBreadcrumbs({ config }: TopbarBreadcrumbsProps) {
                 ) : (
                   <BreadcrumbLink
                     href={crumb.href}
-                    onClick={(event) => {
-                      event.preventDefault()
-                      router.push(crumb.href)
-                    }}
-                    onMouseEnter={() => router.prefetch(crumb.href)}
+                    render={<Link href={crumb.href} />}
                   >
                     {crumb.label}
                   </BreadcrumbLink>

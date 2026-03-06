@@ -21,6 +21,7 @@ import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import { routes } from "@/lib/routes"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface SpreadCardProps {
     name: string
@@ -45,14 +46,6 @@ export default function SpreadCard({
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const toggleFavorite = useMutation(api.spreads.toggleFavorite)
 
-    function handleCardClick() {
-        if (isDraft) {
-            router.push(routes.personal.spreads.new.draft(date))
-        } else if (id) {
-            router.push(routes.personal.spreads.id(id, "view"))
-        }
-    }
-
     function handleDeleteDraft(draftDate: number) {
         localStorage.removeItem(`spread-draft-${draftDate}`)
         setDrafts(prevDrafts => prevDrafts.filter(d => d.date !== draftDate))
@@ -60,11 +53,8 @@ export default function SpreadCard({
     }
 
     return (
-        <>
-        <Card
-            className="group hover:shadow-sm shadow-gold-muted/25 -translate-y-0 hover:-translate-y-1 border-border/50 hover:border-gold/30 transition-all duration-300 cursor-pointer overflow-hidden"
-            onClick={handleCardClick}
-        >
+        <Link href={isDraft ? routes.personal.spreads.new.draft(date) : id ? routes.personal.spreads.id(id, "view") : ""}>
+        <Card className="group hover:shadow-sm shadow-gold-muted/25 -translate-y-0 hover:-translate-y-1 border-border/50 hover:border-gold/30 transition-all duration-300 cursor-pointer overflow-hidden">
             <CardHeader className="pb-2">
                 <CardTitle className="font-display text-base tracking-tight">{name}</CardTitle>
                 {isDraft && (
@@ -127,6 +117,6 @@ export default function SpreadCard({
             confirmLabel="Delete"
             onConfirm={() => handleDeleteDraft(date)}
         />
-        </>
+        </Link>
     )
 }
