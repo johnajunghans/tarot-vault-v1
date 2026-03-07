@@ -3,7 +3,7 @@
 import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { routes } from "@/lib/routes";
@@ -31,7 +31,17 @@ interface PanelWrapperProps {
     loadedDraftDate?: number
 }
 
-const now = Date.now()
+function createDraftTimestamp() {
+    const timestamp = Date.now();
+    if (typeof window === "undefined") return timestamp;
+
+    let uniqueTimestamp = timestamp;
+    while (window.localStorage.getItem(`spread-draft-${uniqueTimestamp}`) !== null) {
+        uniqueTimestamp += 1;
+    }
+
+    return uniqueTimestamp;
+}
 
 export default function PanelWrapper({
     defaultLayout,
@@ -60,7 +70,7 @@ export default function PanelWrapper({
 
     // ------------ SPREAD DRAFT LOGIC ------------ //
 
-    const [draftDate] = useState(() => loadedDraftDate ?? now);
+    const [draftDate] = useState(() => loadedDraftDate ?? createDraftTimestamp());
     const draftKey = draftDate ? `spread-draft-${draftDate}` : "";
     const isDiscardingRef = useRef(false);
 
@@ -93,7 +103,7 @@ export default function PanelWrapper({
                 numberOfCards: watchedValues.positions?.length
             }));
         }
-    }, [watchedValues, form.formState.isDirty, draftDate]);
+    }, [watchedValues, form.formState.isDirty, draftDate, draftKey]);
 
     // ------------ ADD CARD ------------ //
 
@@ -187,7 +197,7 @@ export default function PanelWrapper({
                 setIsSaving(false);
             }
         }, onInvalid)();
-    }, [form, createSpread, router, isMobile]);
+    }, [form, createSpread, router, isMobile, draftKey]);
 
     // ------------ DELETE SPREAD MODAL LOGIC ------------ //
 
@@ -200,7 +210,7 @@ export default function PanelWrapper({
             return;
         }
         setShowDiscardDialog(true);
-    }, [form.formState.isDirty, router]);
+    }, [form.formState.isDirty, router, loadedDraftDate, draftKey]);
 
     const handleConfirmDiscard = useCallback(() => {
         const key = draftKey;
@@ -209,7 +219,7 @@ export default function PanelWrapper({
         form.reset();
         setShowDiscardDialog(false);
         router.push(routes.personal.spreads.root);
-    }, [form, router]);
+    }, [form, router, draftKey]);
 
 
     // ------------ LAYOUT DISPATCH ------------ //
@@ -229,7 +239,7 @@ export default function PanelWrapper({
     }, [watchedName, watchedPositions?.length, setTitle])
 
     // Actions effect
-    const actions = useMemo<ActionDescriptor[]>(() => {
+    useEffect(() => {
         const items: ActionDescriptor[] = [
             {
                 type: "save",
@@ -251,12 +261,8 @@ export default function PanelWrapper({
                 href: routes.personal.spreads.root,
             });
         }
-        return items;
-    }, [loadedDraftDate, handleDiscard, handleSave, isSaving, isDirty]);
-
-    useEffect(() => {
-        setActions(actions);
-    }, [actions, setActions]);
+        setActions(items);
+    }, [loadedDraftDate, handleDiscard, handleSave, isSaving, isDirty, setActions]);
 
     // Cleanup on unmount
     useEffect(() => {

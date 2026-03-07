@@ -5,7 +5,7 @@ import { LayoutProvider } from "@/components/providers/layout-provider"
 import { cookies } from "next/headers"
 import {
     ReactNode,
-    ViewTransition
+    // ViewTransition
 } from "react"
 
 export default async function AppLayout({
@@ -21,9 +21,9 @@ export default async function AppLayout({
                 <AppSidebar />
                 <SidebarInset className="z-10 h-screen relative">
                     <AppTopbar />
-                    <ViewTransition default="cross-fade">
+                    {/* <ViewTransition default="cross-fade"> */}
                         { children }
-                    </ViewTransition>
+                    {/* </ViewTransition> */}
                 </SidebarInset>
             </LayoutProvider>
         </SidebarProvider>

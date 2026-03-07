@@ -4,13 +4,49 @@ import { useEffect, useState } from "react"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import SpreadCard from "./_components/spread-card"
-import { Spinner } from "@/components/ui/spinner"
-import { SpreadDraft } from "@/types/spreads"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { CardDB, SpreadDB, SpreadDraft } from "@/types/spreads"
 import { Button } from "@/components/ui/button"
 import { PlusSignIcon } from "hugeicons-react"
 import { routes } from "@/lib/routes"
-import { useLayoutDispatch } from "@/components/providers/layout-provider"
+import { useLayoutDispatch, useLayoutMode } from "@/components/providers/layout-provider"
+
+type SpreadFilter = "all" | "saved" | "drafts"
+
+type SpreadListItem =
+    | {
+        kind: "draft"
+        key: number
+        timestamp: number
+        name: string
+        cards: CardDB[]
+      }
+    | {
+        kind: "saved"
+        key: SpreadDB["_id"]
+        timestamp: number
+        name: string
+        cards: CardDB[]
+        id: SpreadDB["_id"]
+        favorite: boolean | undefined
+      }
+
+const FILTER_OPTIONS: Array<{ value: SpreadFilter; label: string }> = [
+    { value: "all", label: "All" },
+    { value: "saved", label: "Saved" },
+    { value: "drafts", label: "Drafts" },
+]
+
+function getFilter(value: string | null): SpreadFilter {
+    if (value === "saved" || value === "drafts" || value === "all") {
+        return value
+    }
+
+    return "all"
+}
 
 function loadDrafts(): SpreadDraft[] {
     const drafts: SpreadDraft[] = []
@@ -41,7 +77,33 @@ function loadDrafts(): SpreadDraft[] {
         }
     }
 
-    return drafts.sort((a, b) => b.date - a.date)
+    return drafts
+}
+
+function LoadingGrid() {
+    return (
+        <div className="p-4 md:p-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }, (_, index) => (
+                    <Card key={index} className="border-border/50">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-start justify-between gap-3">
+                                <Skeleton className="h-5 w-32" />
+                                <Skeleton className="h-5 w-14 rounded-full" />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="flex justify-center py-4">
+                            <Skeleton className="h-[140px] w-[140px] rounded-xl" />
+                        </CardContent>
+                        <CardFooter className="justify-between">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    )
 }
 
 function EmptyState() {
@@ -69,73 +131,94 @@ function EmptyState() {
 
 export default function Spreads() {
     const spreads = useQuery(api.spreads.list)
+    const searchParams = useSearchParams()
     const [drafts, setDrafts] = useState<SpreadDraft[]>(() => (
         typeof window === "undefined" ? [] : loadDrafts()
     ))
     const { setTitle, reset } = useLayoutDispatch()
+    const { topbarVisible } = useLayoutMode()
+    const filter = getFilter(searchParams.get("view"))
 
     useEffect(() => {
-        setTitle({ variant: "page", label: "Your Spreads", icon: "spreads" })
         return () => reset()
-    }, [setTitle, reset])
+    }, [reset])
+
+    useEffect(() => {
+        if (topbarVisible) {
+            setTitle({
+                variant: "tabs",
+                value: filter,
+                tabs: FILTER_OPTIONS,
+                action: {
+                    type: "query-param",
+                    param: "view",
+                    defaultValue: "all",
+                },
+            })
+        } else {
+            setTitle({ variant: "page", label: "Your Spreads", icon: "spreads" })
+        }
+    }, [filter, setTitle, topbarVisible])
 
     const isEmpty = spreads !== undefined && spreads.length === 0 && drafts.length === 0
     const isLoading = spreads === undefined
+    const spreadItems: SpreadListItem[] = [
+        ...drafts.map((draft) => ({
+            kind: "draft" as const,
+            key: draft.date,
+            timestamp: draft.date,
+            name: draft.name,
+            cards: draft.positions,
+        })),
+        ...(spreads?.map((spread) => ({
+            kind: "saved" as const,
+            key: spread._id,
+            timestamp: spread._creationTime,
+            name: spread.name,
+            cards: spread.positions,
+            id: spread._id,
+            favorite: spread.favorite,
+        })) ?? []),
+    ]
+        .filter((item) => {
+            if (filter === "saved") return item.kind === "saved"
+            if (filter === "drafts") return item.kind === "draft"
+            return true
+        })
+        .sort((a, b) => b.timestamp - a.timestamp)
 
     return (
         <div className="overflow-y-auto">
             {isLoading ? (
-                <div className="flex items-center justify-center py-24">
-                    <Spinner />
-                </div>
+                <LoadingGrid />
             ) : isEmpty ? (
                 <EmptyState />
             ) : (
-                <div className="p-4 md:p-6 space-y-8">
-                    {/* Drafts Section */}
-                    {drafts.length > 0 && (
-                        <section>
-                            <h2 className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-[0.1em] mb-3">
-                                Drafts
-                            </h2>
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {drafts.map((draft) => (
-                                    <SpreadCard
-                                        key={draft.date}
-                                        name={draft.name}
-                                        date={draft.date}
-                                        isDraft
-                                        cards={draft.positions}
-                                        setDrafts={setDrafts}
-                                    />
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {/* Saved Spreads Section */}
-                    {spreads && spreads.length > 0 && (
-                        <section>
-                            {drafts.length > 0 && (
-                                <h2 className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-[0.1em] mb-3">
-                                    Saved
-                                </h2>
-                            )}
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {spreads.map((spread) => (
-                                    <SpreadCard
-                                        key={spread._id}
-                                        name={spread.name}
-                                        date={spread._creationTime}
-                                        cards={spread.positions}
-                                        setDrafts={setDrafts}
-                                        id={spread._id}
-                                        favorite={spread.favorite}
-                                    />
-                                ))}
-                            </div>
-                        </section>
-                    )}
+                <div className="p-4 md:p-6">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {spreadItems.map((item) => (
+                            item.kind === "draft" ? (
+                                <SpreadCard
+                                    key={item.key}
+                                    name={item.name}
+                                    date={item.timestamp}
+                                    isDraft
+                                    cards={item.cards}
+                                    setDrafts={setDrafts}
+                                />
+                            ) : (
+                                <SpreadCard
+                                    key={item.key}
+                                    name={item.name}
+                                    date={item.timestamp}
+                                    cards={item.cards}
+                                    setDrafts={setDrafts}
+                                    id={item.id}
+                                    favorite={item.favorite}
+                                />
+                            )
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
