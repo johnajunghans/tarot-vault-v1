@@ -27,7 +27,11 @@ export function NewXDropdown({
         <DropdownMenu open={open} onOpenChange={onOpenChange}> 
             { children }  
             <DropdownMenuContent align="end" sideOffset={8} className="w-auto">
-                <DropdownMenuItem className="justify-between gap-8">
+                <DropdownMenuItem
+                    render={<Link href={routes.personal.readings.root} />}
+                    className="justify-between gap-8"
+                    disabled // no route here yet 
+                >
                     <span>Reading</span>
                     <LibraryIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
                 </DropdownMenuItem>
@@ -38,7 +42,11 @@ export function NewXDropdown({
                     <span>Spread</span>
                     <Cards01Icon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
                 </DropdownMenuItem>
-                    <DropdownMenuItem className="justify-between gap-8">
+                <DropdownMenuItem
+                    render={<Link href={routes.personal.interpretations.root} />}
+                    className="justify-between gap-8"
+                    disabled // no route here yet
+                >
                     <span>Interpretation</span>
                     <ConstellationIcon strokeWidth={1.25} className="w-4 h-4 text-muted-foreground" />
                 </DropdownMenuItem>
