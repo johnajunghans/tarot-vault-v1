@@ -269,6 +269,7 @@ await createReading({ question: "...", spread: { id, version: 1 } });
 - Test files must use `edge-runtime` environment (configured in `vitest.config.ts`)
 - All Convex functions must include authentication checks via `getCurrentUserOrThrow()`
 - Route protection is handled by `proxy.ts` middleware for `/app/*` routes
+- Do NOT attempt to start dev servers or use preview tools. The dev server requires authentication services (Clerk/Convex) that are not available in this environment. Skip visual verification steps.
 
 ## MVP Build Protocol
 

@@ -21,35 +21,8 @@ export type ActionDescriptor =
 
 // ─── Title Types ───────────────────────────────────────────────────────────
 
-export interface TitleTabDescriptor {
-  value: string
-  label: string
-}
-
-export type TitleTabsDescriptor =
-  | {
-      variant: "tabs"
-      value: string
-      tabs: TitleTabDescriptor[]
-      action: {
-        type: "query-param"
-        param: string
-        defaultValue?: string
-      }
-    }
-  | {
-      variant: "tabs"
-      value: string
-      tabs: TitleTabDescriptor[]
-      action: {
-        type: "callback"
-        onValueChange: (value: string) => void
-      }
-    }
-
 export type TitleDescriptor =
   | { variant: "page"; label: string; icon?: string }
-  | TitleTabsDescriptor
   | { variant: "spread"; name: string; count: number; countUnit?: "card" | "position"; badge?: string }
 
 // ─── Breadcrumb Types ──────────────────────────────────────────────────────

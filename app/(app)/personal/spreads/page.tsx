@@ -12,9 +12,8 @@ import { CardDB, SpreadDB, SpreadDraft } from "@/types/spreads"
 import { Button } from "@/components/ui/button"
 import { PlusSignIcon } from "hugeicons-react"
 import { routes } from "@/lib/routes"
-import { useLayoutDispatch, useLayoutMode } from "@/components/providers/layout-provider"
-
-type SpreadFilter = "all" | "saved" | "drafts"
+import { useLayoutDispatch } from "@/components/providers/layout-provider"
+import SpreadsToolbar, { type SpreadFilter } from "./_components/spreads-toolbar"
 
 type SpreadListItem =
     | {
@@ -33,12 +32,6 @@ type SpreadListItem =
         id: SpreadDB["_id"]
         favorite: boolean | undefined
       }
-
-const FILTER_OPTIONS: Array<{ value: SpreadFilter; label: string }> = [
-    { value: "all", label: "All" },
-    { value: "saved", label: "Saved" },
-    { value: "drafts", label: "Drafts" },
-]
 
 function getFilter(value: string | null): SpreadFilter {
     if (value === "saved" || value === "drafts" || value === "all") {
@@ -82,7 +75,7 @@ function loadDrafts(): SpreadDraft[] {
 
 function LoadingGrid() {
     return (
-        <div className="p-4 md:p-6">
+        <div className="px-4 md:px-6 pb-4 md:pb-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }, (_, index) => (
                     <Card key={index} className="border-border/50">
@@ -136,7 +129,6 @@ export default function Spreads() {
         typeof window === "undefined" ? [] : loadDrafts()
     ))
     const { setTitle, reset } = useLayoutDispatch()
-    const { topbarVisible } = useLayoutMode()
     const filter = getFilter(searchParams.get("view"))
 
     useEffect(() => {
@@ -144,21 +136,8 @@ export default function Spreads() {
     }, [reset])
 
     useEffect(() => {
-        if (topbarVisible) {
-            setTitle({
-                variant: "tabs",
-                value: filter,
-                tabs: FILTER_OPTIONS,
-                action: {
-                    type: "query-param",
-                    param: "view",
-                    defaultValue: "all",
-                },
-            })
-        } else {
-            setTitle({ variant: "page", label: "Your Spreads", icon: "spreads" })
-        }
-    }, [filter, setTitle, topbarVisible])
+        setTitle({ variant: "page", label: "Your Spreads", icon: "spreads" })
+    }, [setTitle])
 
     const isEmpty = spreads !== undefined && spreads.length === 0 && drafts.length === 0
     const isLoading = spreads === undefined
@@ -189,12 +168,15 @@ export default function Spreads() {
 
     return (
         <div className="overflow-y-auto">
+            <div className="px-4 md:px-6 pt-4">
+                <SpreadsToolbar filter={filter} />
+            </div>
             {isLoading ? (
                 <LoadingGrid />
             ) : isEmpty ? (
                 <EmptyState />
             ) : (
-                <div className="p-4 md:p-6">
+                <div className="px-4 md:px-6 pb-4 md:pb-6">
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {spreadItems.map((item) => (
                             item.kind === "draft" ? (

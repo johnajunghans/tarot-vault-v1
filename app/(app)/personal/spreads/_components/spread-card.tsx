@@ -56,7 +56,7 @@ export default function SpreadCard({
 
     return (
         <>
-            <Card className="group relative hover:shadow-sm shadow-gold-muted/25 -translate-y-0 hover:-translate-y-1 border-border/50 hover:border-gold/30 transition-all duration-300 cursor-pointer overflow-hidden">
+            <Card className="group relative hover:shadow-sm shadow-gold-muted/25 -translate-y-0 hover:-translate-y-0.5 border-border/50 hover:border-gold/30 transition-all duration-300 cursor-pointer overflow-hidden">
                 <Link
                     href={href}
                     aria-label={`Open spread ${name}`}

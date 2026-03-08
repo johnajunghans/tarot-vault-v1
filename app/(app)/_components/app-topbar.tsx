@@ -29,7 +29,7 @@ export default function AppTopbar() {
         isVisible ? "max-h-[57px] opacity-100 pointer-events-auto" : "max-h-0 opacity-0 pointer-events-none"
       }`}
     >
-      <header className="flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-4 border-b border-border/60 overflow-hidden max-h-[57px]">
+      <header className="sticky flex items-center justify-between gap-4 bg-background px-3 lg:px-4 py-4 border-b border-border/60 overflow-hidden max-h-[57px]">
         {/* Left Section */}
         <div className="flex items-center gap-1.5 lg:gap-3 min-w-0">
           <SidebarToggle />
