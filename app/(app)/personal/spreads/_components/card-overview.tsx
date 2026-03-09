@@ -85,6 +85,7 @@ interface CardOverviewProps {
   remove: UseFieldArrayRemove;
   addCard: () => void;
   maxCards?: number;
+  isMobile?: boolean;
 }
 
 // Render the tile label and swap the index for a drag handle on hover.
@@ -110,29 +111,56 @@ function CardTileName({ index, isHovering = false }: { index: number; isHovering
 interface CardTileProps {
   index: number;
   isSelected: boolean;
+  isMobile?: boolean;
   variant?: "readonly" | "editable";
   onSelect?: () => void;
+  handleRef?: (el: HTMLDivElement | null) => void;
   rightSlot?: ReactNode;
 }
 
 // Render a single selectable card tile with optional trailing actions.
 const CardTile = forwardRef<HTMLDivElement, CardTileProps>(
-  ({ index, isSelected, variant = "editable", onSelect, rightSlot }, ref) => {
+  ({ index, isSelected, isMobile = false, variant = "editable", onSelect, handleRef, rightSlot }, ref) => {
     const [isHovering, setIsHovering] = useState(false);
+    const showMobileHandle = variant === "editable" && isMobile;
 
     return (
       <div
         ref={ref}
-        onClick={onSelect}
-        className={`flex items-center justify-between rounded-lg border px-3 cursor-pointer transition-all duration-200 !overflow-visible ${
-          isSelected ? "border-gold/80 bg-gold/10 shadow-sm !-translate-y-0.25" : "border-border/80 bg-surface/50 hover:bg-surface hover:border-border !-translate-y-0"
-        }`}
-        style={{ height: `${TILE_HEIGHT}px` }}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
+        className={`flex items-stretch transition-transform duration-200 ${showMobileHandle ? "gap-2" : ""}`}
+        style={{
+          height: `${TILE_HEIGHT}px`,
+          touchAction: showMobileHandle ? "pan-y" : undefined,
+        }}
       >
-        <CardTileName index={index} isHovering={variant === "editable" ? isHovering : false} />
-        {rightSlot && <div className="flex items-center shrink-0">{rightSlot}</div>}
+        <div
+          onClick={onSelect}
+          className={`flex min-w-0 flex-1 items-center justify-between rounded-lg border px-3 cursor-pointer transition-all duration-200 !overflow-visible ${
+            isSelected ? "border-gold/80 bg-gold/10 shadow-sm !-translate-y-0.25" : "border-border/80 bg-surface/50 hover:bg-surface hover:border-border !-translate-y-0"
+          }`}
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+        >
+          <CardTileName
+            index={index}
+            isHovering={variant === "editable" && !showMobileHandle ? isHovering : false}
+          />
+          {rightSlot && <div className="flex items-center shrink-0">{rightSlot}</div>}
+        </div>
+        {showMobileHandle && (
+          <div
+            ref={handleRef}
+            className={`flex w-10 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+              isSelected
+                ? "border-gold/40 bg-gold/8 text-gold/80"
+                : "border-border/70 bg-surface/35 text-muted-foreground/65"
+            }`}
+            style={{ touchAction: "none", flex: "0 0 40px" }}
+            aria-label={`Drag position ${index + 1}`}
+          >
+            <DragDropVerticalIcon size={20} strokeWidth={2.5} />
+          </div>
+        )}
       </div>
     );
   }
@@ -184,9 +212,11 @@ export default function CardOverview({
   remove,
   addCard,
   maxCards = 78,
+  isMobile = false,
 }: CardOverviewProps) {
   const cardCount = cardIds.length;
   const tileRefs = useRef<(TileElement | null)[]>([]);
+  const handleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const draggablesRef = useRef<Draggable[]>([]);
   const didReorderRef = useRef(false);
   const selectedCardIdRef = useRef<string | null>(null);
@@ -236,6 +266,7 @@ export default function CardOverview({
   useEffect(() => {
     cleanupDraggables();
     tileRefs.current = tileRefs.current.slice(0, cardCount);
+    handleRefs.current = handleRefs.current.slice(0, cardCount);
 
     const tiles = tileRefs.current.slice(0, cardCount).filter(Boolean) as TileElement[];
     if (tiles.length === 0) return;
@@ -249,6 +280,7 @@ export default function CardOverview({
 
       const [instance] = Draggable.create(tile, {
         type: "y",
+        trigger: isMobile ? handleRefs.current[i] ?? tile : tile,
         bounds: {
           minY: -i * SLOT_SIZE,
           maxY: (tiles.length - 1 - i) * SLOT_SIZE,
@@ -292,6 +324,9 @@ export default function CardOverview({
           }
         },
         onRelease() {
+          // On mobile, the handle should only reorder. Tapping the card body selects it.
+          if (isMobile) return;
+
           // Treat pointer release as selection when the tile was clicked, not dragged.
           if (didDrag) return;
           const currentIndex = tileRefs.current.indexOf(tile);
@@ -306,7 +341,7 @@ export default function CardOverview({
     draggablesRef.current = newDraggables;
 
     return cleanupDraggables;
-  }, [cardCount, cardIds, move, setSelectedCardIndex, cleanupDraggables]);
+  }, [cardCount, cardIds, cleanupDraggables, isMobile, move, setSelectedCardIndex]);
 
   // Remove the chosen card and keep selection aligned with the updated list.
   const handleDeleteConfirm = useCallback(() => {
@@ -328,7 +363,13 @@ export default function CardOverview({
     <div className="flex flex-col gap-1.5 mb-24 group">
       <div className="flex justify-between items-center px-1">
         <span className="font-display text-sm font-bold tracking-tight">Positions</span>
-        <span className="text-[10px] text-muted-foreground/40 italic opacity-0 group-hover:opacity-100 duration-300">Drag to reorder</span>
+        <span
+          className={`text-[10px] text-muted-foreground/40 italic duration-300 ${
+            isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
+        >
+          {isMobile ? "Use handle to reorder" : "Drag to reorder"}
+        </span>
       </div>
       <div className="relative flex flex-col" style={{ gap: `${TILE_GAP}px` }}>
         {cardIds.map((cardId, index) => (
@@ -337,6 +378,9 @@ export default function CardOverview({
             ref={(el) => { tileRefs.current[index] = el; }}
             index={index}
             isSelected={cardId === selectedCardId}
+            isMobile={isMobile}
+            onSelect={() => setSelectedCardIndex(index)}
+            handleRef={(el) => { handleRefs.current[index] = el; }}
             rightSlot={
               <Button
                 variant="ghost"

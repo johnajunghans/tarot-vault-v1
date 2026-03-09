@@ -121,6 +121,7 @@ export function SpreadSettingsContent({
           move={move}
           remove={remove}
           addCard={addCard}
+          isMobile={isMobile}
         />
       </div>
     )
