@@ -90,11 +90,12 @@ function CardDetailsContent({
 // ------------ Editable Content Component ------------ //
 
 interface CardSettingsContentProps {
-    cards: Record<"id", string>[]
-    selectedCardIndex: number | null
-    setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
-    remove: UseFieldArrayRemove
-    headerActions?: React.ReactNode
+    cards: Record<"id", string>[];
+    selectedCardIndex: number | null;
+    setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
+    remove: UseFieldArrayRemove;
+    headerActions?: React.ReactNode;
+    isMobile: boolean;
 }
 
 export function CardSettingsContent({
@@ -103,6 +104,7 @@ export function CardSettingsContent({
     setSelectedCardIndex,
     remove,
     headerActions,
+    isMobile
 }: CardSettingsContentProps) {
     const form = useFormContext<{ positions: CardForm[] }>();
     const selectedCard = selectedCardIndex !== null ? cards[selectedCardIndex] : null
@@ -135,7 +137,7 @@ export function CardSettingsContent({
                 <TextField
                   label="Position Name"
                   id="card-name"
-                  autoFocus
+                  autoFocus={!isMobile}
                   maxLength={50}
                   placeholder="e.g. Past, Present, Future"
                   value={field.value ?? ""}
@@ -404,6 +406,7 @@ export default function CardSettingsPanel({
               setSelectedCardIndex={setSelectedCardIndex}
               remove={remove!}
               headerActions={closeHeaderAction}
+              isMobile={isMobile}
             />
           )}
         </div>

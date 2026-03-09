@@ -71,6 +71,7 @@ interface SpreadSettingsContentProps {
     selectedCardIndex: number | null;
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
     headerActions?: React.ReactNode;
+    isMobile: boolean;
 }
 
 export function SpreadSettingsContent({
@@ -81,6 +82,7 @@ export function SpreadSettingsContent({
     selectedCardIndex,
     setSelectedCardIndex,
     headerActions,
+    isMobile
 }: SpreadSettingsContentProps) {
     const form = useFormContext()
 
@@ -98,7 +100,7 @@ export function SpreadSettingsContent({
               label="Name"
               id="spread-name"
               placeholder="e.g. Celtic Cross, Daily Draw..."
-              autoFocus
+              autoFocus={!isMobile}
               error={form.formState.errors.name}
               {...form.register("name")}
             />
@@ -251,6 +253,7 @@ export default function SpreadSettingsPanel({
                 selectedCardIndex={selectedCardIndex}
                 setSelectedCardIndex={setSelectedCardIndex}
                 headerActions={collapseHeaderAction}
+                isMobile={isMobile}
               />
             )}
           </div>
