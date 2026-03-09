@@ -36,7 +36,7 @@ import { routes } from "@/lib/routes"
 import ThemeToggle from "./theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useLayoutMode, useLayoutContent } from "@/components/providers/layout-provider"
-import { SidebarActions, SidebarActionsSkeleton, DefaultSidebarActions } from "./sidebar-action-item"
+import { SidebarActions, SidebarActionsSkeleton, DefaultSidebarActions } from "./sidebar-actions"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 

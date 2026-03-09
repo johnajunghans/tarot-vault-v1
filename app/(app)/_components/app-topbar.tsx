@@ -6,7 +6,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 import { useLayoutMode, useLayoutContent } from "@/components/providers/layout-provider"
 import { SidebarToggle } from "./app-sidebar"
 import TopbarTitle from "./topbar-titles"
-import TopbarButtons from "./topbar-buttons"
+import TopbarButtons from "./topbar-actions"
 import TopbarBreadcrumbs from "./topbar-breadcrumbs"
 import { routes } from "@/lib/routes"
 
