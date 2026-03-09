@@ -75,7 +75,7 @@ function loadDrafts(): SpreadDraft[] {
 
 function LoadingGrid() {
     return (
-        <div className="px-4 md:px-6 pb-4 md:pb-6">
+        <div className="">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }, (_, index) => (
                     <Card key={index} className="border-border/50">
@@ -130,6 +130,7 @@ export default function Spreads() {
     ))
     const { setTitle, reset } = useLayoutDispatch()
     const filter = getFilter(searchParams.get("view"))
+    const favoritesOnly = searchParams.get("fav") === "1"
 
     useEffect(() => {
         return () => reset()
@@ -164,19 +165,23 @@ export default function Spreads() {
             if (filter === "drafts") return item.kind === "draft"
             return true
         })
+        .filter((item) => {
+            if (!favoritesOnly) return true
+            return item.kind === "saved" && item.favorite
+        })
         .sort((a, b) => b.timestamp - a.timestamp)
 
     return (
-        <div className="overflow-y-auto">
-            <div className="px-4 md:px-6 pt-4">
-                <SpreadsToolbar filter={filter} />
+        <div className="overflow-y-auto p-4">
+            <div className="">
+                <SpreadsToolbar filter={filter} favoritesOnly={favoritesOnly} />
             </div>
             {isLoading ? (
                 <LoadingGrid />
             ) : isEmpty ? (
                 <EmptyState />
             ) : (
-                <div className="px-4 md:px-6 pb-4 md:pb-6">
+                <div className="">
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {spreadItems.map((item) => (
                             item.kind === "draft" ? (
