@@ -26,9 +26,9 @@ export default function TopbarTitle({ title, isMobile }: TopbarTitleProps) {
   if (title.variant === "page") {
     const Icon = title.icon ? TITLE_ICONS[title.icon] : null
     return (
-      <div className="flex items-center gap-3">
-        {Icon && <Icon strokeWidth={1.25} className="w-5 h-5 text-gold" />}
-        <h1 className="font-display text-xl font-bold tracking-tight">
+      <div className="flex items-center gap-1.5 md:gap-3">
+        {Icon && <Icon strokeWidth={1.25} className="size-4 md:size-5 text-gold" />}
+        <h1 className="font-display text-base md:text-lg lg:text-xl font-bold tracking-tight">
           {title.label}
         </h1>
       </div>

@@ -8,41 +8,20 @@ import {
 } from "@/components/ui/sidebar"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
-import {
-  Cancel01Icon,
-  Delete02Icon,
-  FloppyDiskIcon,
-  MultiplicationSignIcon,
-  PencilEdit02Icon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons"
-import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react"
-import type { ActionDescriptor, ActionType } from "@/types/layout"
+import { PlusSignIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import type { ActionDescriptor } from "@/types/layout"
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ACTION_CONFIG, type ActionTone } from "./actions/config"
+import { getActionClickHandler, isActionDisabled } from "./actions/helpers"
 import { NewXDropdown } from "./new-x-button"
 import Link from "next/link"
-import type { MouseEventHandler } from "react"
 
-// ─── Type → icon map ──────────────────────────────────────────────────────────
-
-const ACTION_ICONS: Record<ActionType, IconSvgElement> = {
-  save:    FloppyDiskIcon,
-  edit:    PencilEdit02Icon,
-  delete:  Delete02Icon,
-  discard: Delete02Icon,
-  cancel:  Cancel01Icon,
-  close:   MultiplicationSignIcon,
-}
-
-// ─── Type → button variant ────────────────────────────────────────────────────
-
-const ACTION_VARIANTS: Record<ActionType, string> = {
-  save:    "hover:bg-gold/10 [&_svg]:text-gold",
-  edit:    "hover:bg-gold/10 [&_svg]:text-gold",
-  delete:  "hover:bg-descructive/10 [&_svg]:text-destructive",
-  discard: "hover:bg-destructive/10 [&_svg]:text-destructive",
-  cancel:  "[&_svg]:text-muted-foreground",
-  close:   "[&_svg]:text-muted-foreground",
+const SIDEBAR_TONE_STYLES: Record<ActionTone, string> = {
+  primary: "hover:bg-gold/10 [&_svg]:text-gold",
+  danger: "hover:bg-destructive/10 [&_svg]:text-destructive",
+  neutral: "[&_svg]:text-muted-foreground",
 }
 
 // ─── Single action button ──────────────────────────────────────────────────────
@@ -53,17 +32,10 @@ interface SidebarActionButtonProps {
 }
 
 export function SidebarActionButton({ action, className }: SidebarActionButtonProps) {
-  const isDisabled = action.disabled || action.loading
+  const config = ACTION_CONFIG[action.type]
+  const disabled = isActionDisabled(action)
   const renderAsLink = action.href !== undefined
-  const handleClick: MouseEventHandler<HTMLElement> | undefined = action.href
-    ? (event) => {
-        if (isDisabled) {
-          event.preventDefault()
-          return
-        }
-        action.onClick?.()
-      }
-    : action.onClick
+  const handleClick = getActionClickHandler(action)
 
   return (
     <SidebarMenuItem>
@@ -71,13 +43,13 @@ export function SidebarActionButton({ action, className }: SidebarActionButtonPr
         tooltip={action.label}
         render={renderAsLink ? <Link href={action.href} /> : undefined}
         onClick={handleClick}
-        disabled={isDisabled}
-        className={cn(ACTION_VARIANTS[action.type], className, "disabled:opacity-50")}
+        disabled={disabled}
+        className={cn(SIDEBAR_TONE_STYLES[config.tone], className, "disabled:opacity-50")}
         suppressTooltipOnPress={renderAsLink}
       >
         {action.loading
           ? <Spinner className="shrink-0" />
-          : <HugeiconsIcon icon={ACTION_ICONS[action.type]} strokeWidth={action.type === "save" || action.type === "edit" ? 2 : 1.5} />
+          : <HugeiconsIcon icon={config.icon} strokeWidth={config.strokeWidth} />
         }
         <span className="group-data-[collapsible=icon]:scale-0 duration-150">{action.label}</span>
       </SidebarMenuButton>
@@ -97,6 +69,19 @@ export function SidebarActions({ actions }: SidebarActionsProps) {
       {actions.map((action) => (
         <SidebarActionButton key={action.type} action={action} />
       ))}
+    </SidebarMenu>
+  )
+}
+
+export function SidebarActionsSkeleton() {
+  return (
+    <SidebarMenu className="gap-1">
+      <SidebarMenuItem>
+        <div className="flex h-8 items-center gap-2 rounded-md px-2">
+          <Skeleton className="size-4 rounded-sm" />
+          <Skeleton className="h-4 w-20 rounded-sm group-data-[collapsible=icon]:hidden" />
+        </div>
+      </SidebarMenuItem>
     </SidebarMenu>
   )
 }

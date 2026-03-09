@@ -72,7 +72,7 @@ export default function SpreadsToolbar({ filter, favoritesOnly }: SpreadsToolbar
                     <ToggleGroupItem
                         key={option.value}
                         value={option.value}
-                        className="px-2 pt-0.5"
+                        className="px-2"
                     >
                         {option.label}
                     </ToggleGroupItem>
@@ -93,7 +93,7 @@ export default function SpreadsToolbar({ filter, favoritesOnly }: SpreadsToolbar
                         fill={favoritesOnly ? "var(--gold)" : "none"}
                         color={favoritesOnly ? "var(--gold)" : "currentColor"}
                     />
-                    <span className="pt-0.5">Favorites</span>
+                    <span>Favorites</span>
                 </Toggle>
             )}
         </div>

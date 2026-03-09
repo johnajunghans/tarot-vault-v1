@@ -1,6 +1,6 @@
 // ─── Action Types ──────────────────────────────────────────────────────────
 
-export type ActionType = "save" | "edit" | "delete" | "discard" | "cancel" | "close"
+export type ActionType = "new" | "save" | "edit" | "delete" | "discard" | "cancel" | "close" 
 
 interface BaseActionDescriptor {
   type: ActionType
@@ -39,7 +39,7 @@ export type BreadcrumbConfig =
 // ─── Layout Content State ──────────────────────────────────────────────────
 
 export interface LayoutContentState {
-  actions: ActionDescriptor[] | null
+  actions: ActionDescriptor[] | null | undefined
   title: TitleDescriptor | null
   breadcrumbs: BreadcrumbConfig
 }
@@ -47,7 +47,7 @@ export interface LayoutContentState {
 // ─── Reducer Actions ───────────────────────────────────────────────────────
 
 export type LayoutAction =
-  | { type: "SET_ACTIONS"; payload: ActionDescriptor[] | null }
+  | { type: "SET_ACTIONS"; payload: ActionDescriptor[] | null | undefined }
   | { type: "SET_TITLE"; payload: TitleDescriptor | null }
   | { type: "SET_BREADCRUMBS"; payload: BreadcrumbConfig }
   | { type: "SET_PAGE_LAYOUT"; payload: Partial<LayoutContentState> }

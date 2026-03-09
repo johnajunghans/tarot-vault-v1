@@ -128,7 +128,7 @@ export default function Spreads() {
     const [drafts, setDrafts] = useState<SpreadDraft[]>(() => (
         typeof window === "undefined" ? [] : loadDrafts()
     ))
-    const { setTitle, reset } = useLayoutDispatch()
+    const { setTitle, setActions, reset } = useLayoutDispatch()
     const filter = getFilter(searchParams.get("view"))
     const favoritesOnly = searchParams.get("fav") === "1"
 
@@ -139,6 +139,14 @@ export default function Spreads() {
     useEffect(() => {
         setTitle({ variant: "page", label: "Your Spreads", icon: "spreads" })
     }, [setTitle])
+
+    useEffect(() => {
+        setActions([{
+            type: "new",
+            label: "New Spread",
+            href: routes.personal.spreads.new.root
+        }])
+    }, [])
 
     const isEmpty = spreads !== undefined && spreads.length === 0 && drafts.length === 0
     const isLoading = spreads === undefined

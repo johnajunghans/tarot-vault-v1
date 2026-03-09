@@ -25,7 +25,7 @@ const LAYOUT_COOKIE_NAME = "layout_mode"
 const LAYOUT_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 
 const INITIAL_CONTENT_STATE: LayoutContentState = {
-  actions: null,
+  actions: undefined,
   title: null,
   breadcrumbs: { mode: "auto" },
 }
@@ -61,7 +61,7 @@ interface LayoutModeContextValue {
 }
 
 interface LayoutDispatchMethods {
-  setActions: (actions: ActionDescriptor[] | null) => void
+  setActions: (actions: ActionDescriptor[] | null | undefined) => void
   setTitle: (title: TitleDescriptor | null) => void
   setBreadcrumbs: (config: BreadcrumbConfig) => void
   setPageLayout: (layout: Partial<LayoutContentState>) => void

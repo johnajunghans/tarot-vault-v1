@@ -36,7 +36,7 @@ import { routes } from "@/lib/routes"
 import ThemeToggle from "./theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useLayoutMode, useLayoutContent } from "@/components/providers/layout-provider"
-import { SidebarActions, DefaultSidebarActions } from "./sidebar-action-item"
+import { SidebarActions, SidebarActionsSkeleton, DefaultSidebarActions } from "./sidebar-action-item"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -290,10 +290,12 @@ export default function AppSidebar() {
                 Actions
               </SidebarGroupLabel>
               <div className="animate-fade-in-scale">
-                {actions ? (
-                  <SidebarActions actions={actions} />
-                ) : (
+                {actions === undefined ? (
+                  <SidebarActionsSkeleton />
+                ) : actions === null ? (
                   <DefaultSidebarActions />
+                ) : (
+                  <SidebarActions actions={actions} />
                 )}
               </div>
             </SidebarGroup>
