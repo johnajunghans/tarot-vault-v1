@@ -1,6 +1,16 @@
 "use client";
 
-import { Dispatch, forwardRef, SetStateAction, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  forwardRef,
+  type ReactNode,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { UseFieldArrayMove, UseFieldArrayRemove } from "react-hook-form";
 import { gsap } from "gsap";
@@ -15,9 +25,55 @@ gsap.registerPlugin(Draggable);
 const TILE_HEIGHT = 40;
 const TILE_GAP = 6;
 const SLOT_SIZE = TILE_HEIGHT + TILE_GAP;
+const DRAG_THRESHOLD = 1;
+
+type TileElement = HTMLDivElement;
+
+function remapSelectedIndex(prev: number | null, fromSlot: number, toSlot: number) {
+  if (prev === null) return null;
+  if (prev === fromSlot) return toSlot;
+  if (fromSlot < toSlot && prev > fromSlot && prev <= toSlot) return prev - 1;
+  if (fromSlot > toSlot && prev >= toSlot && prev < fromSlot) return prev + 1;
+  return prev;
+}
+
+function getDropSlot(dragY: number, fromSlot: number, tileCount: number) {
+  const rawSlot = Math.round(dragY / SLOT_SIZE) + fromSlot;
+  return Math.max(0, Math.min(tileCount - 1, rawSlot));
+}
+
+function resetTilesImmediately(tiles: TileElement[]) {
+  tiles.forEach((tile) => {
+    tile.style.transition = "none";
+    gsap.set(tile, { y: 0, zIndex: "", scale: 1 });
+  });
+}
+
+function restoreTileTransitions(tiles: TileElement[]) {
+  requestAnimationFrame(() => {
+    tiles.forEach((tile) => {
+      tile.style.transition = "";
+    });
+  });
+}
+
+function updateNeighborShifts(tiles: TileElement[], fromSlot: number, toSlot: number) {
+  tiles.forEach((tile, index) => {
+    if (index === fromSlot) return;
+
+    let shift = 0;
+    if (fromSlot < toSlot && index > fromSlot && index <= toSlot) {
+      shift = -SLOT_SIZE;
+    } else if (fromSlot > toSlot && index >= toSlot && index < fromSlot) {
+      shift = SLOT_SIZE;
+    }
+
+    gsap.set(tile, { y: shift });
+  });
+}
 
 interface CardOverviewProps {
-  cardCount: number;
+  cardIds: string[];
   selectedCardIndex: number | null;
   setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
   move: UseFieldArrayMove;
@@ -29,11 +85,16 @@ interface CardOverviewProps {
 function CardTileName({ index, isHovering = false }: { index: number; isHovering?: boolean }) {
   const { control } = useFormContext<{ positions: CardForm[] }>();
   const name = useWatch({ control, name: `positions.${index}.name` });
-  const doubleDigitIndex = index >= 9
+  const doubleDigitIndex = index >= 9;
 
   return (
     <div className={`relative truncate text-sm mx-1 ${doubleDigitIndex ? "pl-6" : "pl-4"}`}>
-      <DragDropVerticalIcon size={20} color="var(--muted-foreground)" strokeWidth={2.5} className={`absolute ${doubleDigitIndex ? "-left-0.5" : "-left-1.5"} ${isHovering ? "scale-100" : "scale-0"} duration-150`} />  
+      <DragDropVerticalIcon
+        size={20}
+        color="var(--muted-foreground)"
+        strokeWidth={2.5}
+        className={`absolute ${doubleDigitIndex ? "-left-0.5" : "-left-1.5"} ${isHovering ? "scale-100" : "scale-0"} duration-150`}
+      />
       <span className={`absolute left-0 text-muted-foreground/80 font-medium font-mono mr-1.5 ${isHovering ? "scale-0" : "scale-100"} duration-150`}>{index + 1}</span>
       {name || <span className="text-muted-foreground/40 italic">Untitled</span>}
     </div>
@@ -44,24 +105,24 @@ interface CardTileProps {
   index: number;
   isSelected: boolean;
   variant?: "readonly" | "editable";
-  onClick?: () => void;
-  rightSlot?: React.ReactNode;
+  onSelect?: () => void;
+  rightSlot?: ReactNode;
 }
 
 const CardTile = forwardRef<HTMLDivElement, CardTileProps>(
-  ({ index, isSelected, variant = "editable", onClick, rightSlot }, ref) => {
-    const [isHovering, setIsHovering] = useState(false)
+  ({ index, isSelected, variant = "editable", onSelect, rightSlot }, ref) => {
+    const [isHovering, setIsHovering] = useState(false);
 
     return (
       <div
         ref={ref}
-        onClick={onClick}
+        onClick={onSelect}
         className={`flex items-center justify-between rounded-lg border px-3 cursor-pointer transition-all duration-200 !overflow-visible ${
-          isSelected ? "border-gold/80 bg-gold/10 shadow-md !-translate-y-0.5" : "border-border/80 bg-surface/50 hover:bg-surface hover:border-border !-translate-y-0"
+          isSelected ? "border-gold/80 bg-gold/10 shadow-sm !-translate-y-0.25" : "border-border/80 bg-surface/50 hover:bg-surface hover:border-border !-translate-y-0"
         }`}
         style={{ height: `${TILE_HEIGHT}px` }}
-        onMouseOver={() => setIsHovering(true)} 
-        onMouseOut={() => setIsHovering(false)}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
       >
         <CardTileName index={index} isHovering={variant === "editable" ? isHovering : false} />
         {rightSlot && <div className="flex items-center shrink-0">{rightSlot}</div>}
@@ -84,8 +145,6 @@ export function CardOverviewReadOnly({
   selectedCardIndex,
   setSelectedCardIndex,
 }: CardOverviewReadOnlyProps) {
-  const indices = Array.from({ length: cardCount }, (_, i) => i);
-
   return (
     <div className="flex flex-col gap-1.5 group">
       <div className="flex justify-between items-center px-1">
@@ -93,13 +152,13 @@ export function CardOverviewReadOnly({
         <span className="text-[10px] text-muted-foreground/40 italic opacity-0 group-hover:opacity-100 duration-300">Click to view</span>
       </div>
       <div className="relative flex flex-col" style={{ gap: `${TILE_GAP}px` }}>
-        {indices.map((index) => (
+        {Array.from({ length: cardCount }, (_, index) => (
           <CardTile
             key={index}
             index={index}
             isSelected={index === selectedCardIndex}
             variant="readonly"
-            onClick={() => setSelectedCardIndex(index)}
+            onSelect={() => setSelectedCardIndex(index)}
           />
         ))}
       </div>
@@ -110,7 +169,7 @@ export function CardOverviewReadOnly({
 // ------------ Editable Card Overview ------------ //
 
 export default function CardOverview({
-  cardCount,
+  cardIds,
   selectedCardIndex,
   setSelectedCardIndex,
   move,
@@ -118,12 +177,11 @@ export default function CardOverview({
   addCard,
   maxCards = 78,
 }: CardOverviewProps) {
-  const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const cardCount = cardIds.length;
+  const tileRefs = useRef<(TileElement | null)[]>([]);
   const draggablesRef = useRef<Draggable[]>([]);
+  const didReorderRef = useRef(false);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-  const [moveVersion, setMoveVersion] = useState(0);
-
-  const indices = Array.from({ length: cardCount }, (_, i) => i);
 
   const cleanupDraggables = useCallback(() => {
     draggablesRef.current.forEach((d) => d.kill());
@@ -134,33 +192,30 @@ export default function CardOverview({
   // reset to their natural positions at the same time the content updates —
   // preventing the animated "revert" that made drops look like they failed.
   useLayoutEffect(() => {
-    if (moveVersion === 0) return;
-    const tiles = tileRefs.current.slice(0, cardCount).filter(Boolean) as HTMLDivElement[];
-    tiles.forEach((t) => {
-      t.style.transition = "none";
-      gsap.set(t, { y: 0, zIndex: "", scale: 1 });
-    });
-    requestAnimationFrame(() => {
-      tiles.forEach((t) => { t.style.transition = ""; });
-    });
-  }, [moveVersion, cardCount]);
+    if (!didReorderRef.current) return;
+
+    const tiles = tileRefs.current.slice(0, cardCount).filter(Boolean) as TileElement[];
+    resetTilesImmediately(tiles);
+    restoreTileTransitions(tiles);
+    didReorderRef.current = false;
+  }, [cardIds, cardCount]);
 
   useEffect(() => {
     cleanupDraggables();
+    tileRefs.current = tileRefs.current.slice(0, cardCount);
 
-    const tiles = tileRefs.current.slice(0, cardCount).filter(Boolean) as HTMLDivElement[];
+    const tiles = tileRefs.current.slice(0, cardCount).filter(Boolean) as TileElement[];
     if (tiles.length === 0) return;
 
     const newDraggables: Draggable[] = [];
 
     tiles.forEach((tile, i) => {
+      let didDrag = false;
+
       gsap.set(tile, { y: 0 });
 
       const [instance] = Draggable.create(tile, {
         type: "y",
-        // Use slot-based bounds instead of container measurement. These tiles stay
-        // in normal flex flow, and container bounds can introduce small mount-time
-        // corrections on the first tile when Draggable reconciles positions.
         bounds: {
           minY: -i * SLOT_SIZE,
           maxY: (tiles.length - 1 - i) * SLOT_SIZE,
@@ -168,6 +223,9 @@ export default function CardOverview({
         cursor: "pointer",
         activeCursor: "grabbing",
         zIndexBoost: true,
+        onPress() {
+          didDrag = false;
+        },
         onDragStart() {
           // Disable CSS transition so the tile follows the cursor instantly
           // instead of lagging by the transition duration on every transform update.
@@ -175,53 +233,31 @@ export default function CardOverview({
           gsap.set(tile, { zIndex: 50, scale: 1.02 });
         },
         onDrag() {
-          const dragY = this.y;
-          const fromSlot = i;
-          const currentSlot = Math.round(dragY / SLOT_SIZE) + fromSlot;
-          const clampedSlot = Math.max(0, Math.min(tiles.length - 1, currentSlot));
+          if (Math.abs(this.y) > DRAG_THRESHOLD) {
+            didDrag = true;
+          }
 
-          tiles.forEach((otherTile, j) => {
-            if (j === i) return;
-            let shift = 0;
-            if (fromSlot < clampedSlot && j > fromSlot && j <= clampedSlot) {
-              shift = -SLOT_SIZE;
-            } else if (fromSlot > clampedSlot && j >= clampedSlot && j < fromSlot) {
-              shift = SLOT_SIZE;
-            }
-            gsap.set(otherTile, { y: shift });
-          });
+          updateNeighborShifts(tiles, i, getDropSlot(this.y, i, tiles.length));
         },
         onDragEnd() {
-          const dragY = this.y;
           const fromSlot = i;
-          const currentSlot = Math.round(dragY / SLOT_SIZE) + fromSlot;
-          const toSlot = Math.max(0, Math.min(tiles.length - 1, currentSlot));
+          const toSlot = getDropSlot(this.y, fromSlot, tiles.length);
 
           if (fromSlot !== toSlot) {
-            // Don't reset transforms here. useLayoutEffect will reset them after
-            // React commits the move so the reset is invisible (happens before paint).
-            setSelectedCardIndex((prev) => {
-              if (prev === null) return null;
-              if (prev === fromSlot) return toSlot;
-              if (fromSlot < toSlot && prev > fromSlot && prev <= toSlot) return prev - 1;
-              if (fromSlot > toSlot && prev >= toSlot && prev < fromSlot) return prev + 1;
-              return prev;
-            });
+            setSelectedCardIndex((prev) => remapSelectedIndex(prev, fromSlot, toSlot));
             move(fromSlot, toSlot);
-            setMoveVersion((v) => v + 1);
+            didReorderRef.current = true;
           } else {
-            // No positional change — reset everything instantly without CSS transitions.
-            tiles.forEach((t) => {
-              t.style.transition = "none";
-              gsap.set(t, { y: 0, zIndex: "", scale: 1 });
-            });
-            requestAnimationFrame(() => {
-              tiles.forEach((t) => { t.style.transition = ""; });
-            });
+            resetTilesImmediately(tiles);
+            restoreTileTransitions(tiles);
           }
         },
-        onClick() {
-          setSelectedCardIndex(i);
+        onRelease() {
+          if (didDrag) return;
+          const currentIndex = tileRefs.current.indexOf(tile);
+          if (currentIndex !== -1) {
+            setSelectedCardIndex(currentIndex);
+          }
         },
       });
       newDraggables.push(instance);
@@ -230,7 +266,7 @@ export default function CardOverview({
     draggablesRef.current = newDraggables;
 
     return cleanupDraggables;
-  }, [cardCount, move, setSelectedCardIndex, cleanupDraggables, moveVersion]);
+  }, [cardCount, cardIds, move, setSelectedCardIndex, cleanupDraggables]);
 
   const handleDeleteConfirm = useCallback(() => {
     if (deleteIndex === null) return;
@@ -254,9 +290,9 @@ export default function CardOverview({
         <span className="text-[10px] text-muted-foreground/40 italic opacity-0 group-hover:opacity-100 duration-300">Drag to reorder</span>
       </div>
       <div className="relative flex flex-col" style={{ gap: `${TILE_GAP}px` }}>
-        {indices.map((index) => (
+        {cardIds.map((cardId, index) => (
           <CardTile
-            key={index}
+            key={cardId}
             ref={(el) => { tileRefs.current[index] = el; }}
             index={index}
             isSelected={index === selectedCardIndex}

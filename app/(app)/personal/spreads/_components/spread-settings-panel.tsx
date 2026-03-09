@@ -115,7 +115,7 @@ export function SpreadSettingsContent({
           </FieldSet>
         </form>
         <CardOverview
-          cardCount={cards.length}
+          cardIds={cards.map((card) => card.id)}
           selectedCardIndex={selectedCardIndex}
           setSelectedCardIndex={setSelectedCardIndex}
           move={move}
