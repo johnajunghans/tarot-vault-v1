@@ -29,6 +29,7 @@ const DRAG_THRESHOLD = 1;
 
 type TileElement = HTMLDivElement;
 
+// Remap the selected card index after a tile moves to a new slot.
 function remapSelectedIndex(prev: number | null, fromSlot: number, toSlot: number) {
   if (prev === null) return null;
   if (prev === fromSlot) return toSlot;
@@ -37,11 +38,13 @@ function remapSelectedIndex(prev: number | null, fromSlot: number, toSlot: numbe
   return prev;
 }
 
+// Convert the current drag offset into the nearest valid drop slot.
 function getDropSlot(dragY: number, fromSlot: number, tileCount: number) {
   const rawSlot = Math.round(dragY / SLOT_SIZE) + fromSlot;
   return Math.max(0, Math.min(tileCount - 1, rawSlot));
 }
 
+// Clear all drag transforms so tiles snap back to their natural layout.
 function resetTilesImmediately(tiles: TileElement[]) {
   tiles.forEach((tile) => {
     tile.style.transition = "none";
@@ -49,6 +52,7 @@ function resetTilesImmediately(tiles: TileElement[]) {
   });
 }
 
+// Re-enable tile transitions after an immediate reset finishes.
 function restoreTileTransitions(tiles: TileElement[]) {
   requestAnimationFrame(() => {
     tiles.forEach((tile) => {
@@ -57,6 +61,7 @@ function restoreTileTransitions(tiles: TileElement[]) {
   });
 }
 
+// Shift surrounding tiles to preview where the dragged tile will land.
 function updateNeighborShifts(tiles: TileElement[], fromSlot: number, toSlot: number) {
   tiles.forEach((tile, index) => {
     if (index === fromSlot) return;
@@ -82,6 +87,7 @@ interface CardOverviewProps {
   maxCards?: number;
 }
 
+// Render the tile label and swap the index for a drag handle on hover.
 function CardTileName({ index, isHovering = false }: { index: number; isHovering?: boolean }) {
   const { control } = useFormContext<{ positions: CardForm[] }>();
   const name = useWatch({ control, name: `positions.${index}.name` });
@@ -109,6 +115,7 @@ interface CardTileProps {
   rightSlot?: ReactNode;
 }
 
+// Render a single selectable card tile with optional trailing actions.
 const CardTile = forwardRef<HTMLDivElement, CardTileProps>(
   ({ index, isSelected, variant = "editable", onSelect, rightSlot }, ref) => {
     const [isHovering, setIsHovering] = useState(false);
@@ -140,6 +147,7 @@ interface CardOverviewReadOnlyProps {
   setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
 }
 
+// Show a non-draggable list of positions for read-only contexts.
 export function CardOverviewReadOnly({
   cardCount,
   selectedCardIndex,
@@ -181,16 +189,20 @@ export default function CardOverview({
   const tileRefs = useRef<(TileElement | null)[]>([]);
   const draggablesRef = useRef<Draggable[]>([]);
   const didReorderRef = useRef(false);
+  const selectedCardIdRef = useRef<string | null>(null);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const [selectedCardIdOverride, setSelectedCardIdOverride] = useState<string | null>(null);
+  const selectedCardId =
+    selectedCardIdOverride ??
+    (selectedCardIndex !== null ? cardIds[selectedCardIndex] ?? null : null);
 
+  // Tear down existing draggable instances before rebuilding the list.
   const cleanupDraggables = useCallback(() => {
     draggablesRef.current.forEach((d) => d.kill());
     draggablesRef.current = [];
   }, []);
 
-  // Runs synchronously after React commits (before browser paint) so tiles are
-  // reset to their natural positions at the same time the content updates —
-  // preventing the animated "revert" that made drops look like they failed.
+  // Reset tile transforms immediately after a reorder commits to the DOM.
   useLayoutEffect(() => {
     if (!didReorderRef.current) return;
 
@@ -200,6 +212,27 @@ export default function CardOverview({
     didReorderRef.current = false;
   }, [cardIds, cardCount]);
 
+  // Clear the temporary selected-id override once React catches up to the new order.
+  useLayoutEffect(() => {
+    if (selectedCardIdOverride === null) return;
+    if (selectedCardIndex === null) {
+      setSelectedCardIdOverride(null);
+      return;
+    }
+
+    const remappedSelectedCardId = cardIds[selectedCardIndex] ?? null;
+    if (remappedSelectedCardId === selectedCardIdOverride) {
+      setSelectedCardIdOverride(null);
+    }
+  }, [cardIds, selectedCardIndex, selectedCardIdOverride]);
+
+  // Track the selected card by id so selection survives list reordering.
+  useEffect(() => {
+    selectedCardIdRef.current =
+      selectedCardIndex !== null ? cardIds[selectedCardIndex] ?? null : null;
+  }, [cardIds, selectedCardIndex]);
+
+  // Create draggable tiles and keep click-to-select working when no drag occurs.
   useEffect(() => {
     cleanupDraggables();
     tileRefs.current = tileRefs.current.slice(0, cardCount);
@@ -224,6 +257,7 @@ export default function CardOverview({
         activeCursor: "grabbing",
         zIndexBoost: true,
         onPress() {
+          // Reset drag state at the start of each pointer interaction.
           didDrag = false;
         },
         onDragStart() {
@@ -233,6 +267,7 @@ export default function CardOverview({
           gsap.set(tile, { zIndex: 50, scale: 1.02 });
         },
         onDrag() {
+          // Track real drags and update neighboring tiles as the drop target changes.
           if (Math.abs(this.y) > DRAG_THRESHOLD) {
             didDrag = true;
           }
@@ -240,10 +275,14 @@ export default function CardOverview({
           updateNeighborShifts(tiles, i, getDropSlot(this.y, i, tiles.length));
         },
         onDragEnd() {
+          // Commit the reorder, or restore the tiles if nothing changed.
           const fromSlot = i;
           const toSlot = getDropSlot(this.y, fromSlot, tiles.length);
 
           if (fromSlot !== toSlot) {
+            if (selectedCardIdRef.current !== null) {
+              setSelectedCardIdOverride(selectedCardIdRef.current);
+            }
             setSelectedCardIndex((prev) => remapSelectedIndex(prev, fromSlot, toSlot));
             move(fromSlot, toSlot);
             didReorderRef.current = true;
@@ -253,6 +292,7 @@ export default function CardOverview({
           }
         },
         onRelease() {
+          // Treat pointer release as selection when the tile was clicked, not dragged.
           if (didDrag) return;
           const currentIndex = tileRefs.current.indexOf(tile);
           if (currentIndex !== -1) {
@@ -268,6 +308,7 @@ export default function CardOverview({
     return cleanupDraggables;
   }, [cardCount, cardIds, move, setSelectedCardIndex, cleanupDraggables]);
 
+  // Remove the chosen card and keep selection aligned with the updated list.
   const handleDeleteConfirm = useCallback(() => {
     if (deleteIndex === null) return;
 
@@ -295,7 +336,7 @@ export default function CardOverview({
             key={cardId}
             ref={(el) => { tileRefs.current[index] = el; }}
             index={index}
-            isSelected={index === selectedCardIndex}
+            isSelected={cardId === selectedCardId}
             rightSlot={
               <Button
                 variant="ghost"
