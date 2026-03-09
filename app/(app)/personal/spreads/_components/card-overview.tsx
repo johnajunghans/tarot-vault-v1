@@ -12,8 +12,8 @@ import { CardForm } from "@/types/spreads";
 
 gsap.registerPlugin(Draggable);
 
-const TILE_HEIGHT = 38;
-const TILE_GAP = 5;
+const TILE_HEIGHT = 40;
+const TILE_GAP = 6;
 const SLOT_SIZE = TILE_HEIGHT + TILE_GAP;
 
 interface CardOverviewProps {
@@ -118,7 +118,6 @@ export default function CardOverview({
   addCard,
   maxCards = 78,
 }: CardOverviewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
   const draggablesRef = useRef<Draggable[]>([]);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
@@ -159,7 +158,13 @@ export default function CardOverview({
 
       const [instance] = Draggable.create(tile, {
         type: "y",
-        bounds: containerRef.current!,
+        // Use slot-based bounds instead of container measurement. These tiles stay
+        // in normal flex flow, and container bounds can introduce small mount-time
+        // corrections on the first tile when Draggable reconciles positions.
+        bounds: {
+          minY: -i * SLOT_SIZE,
+          maxY: (tiles.length - 1 - i) * SLOT_SIZE,
+        },
         cursor: "pointer",
         activeCursor: "grabbing",
         zIndexBoost: true,
@@ -248,11 +253,7 @@ export default function CardOverview({
         <span className="font-display text-sm font-bold tracking-tight">Positions</span>
         <span className="text-[10px] text-muted-foreground/40 italic opacity-0 group-hover:opacity-100 duration-300">Drag to reorder</span>
       </div>
-      <div
-        ref={containerRef}
-        className="relative flex flex-col"
-        style={{ gap: `${TILE_GAP}px` }}
-      >
+      <div className="relative flex flex-col" style={{ gap: `${TILE_GAP}px` }}>
         {indices.map((index) => (
           <CardTile
             key={index}
