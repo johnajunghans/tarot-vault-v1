@@ -95,7 +95,7 @@ function CardTileName({ index, isHovering = false }: { index: number; isHovering
   const doubleDigitIndex = index >= 9;
 
   return (
-    <div className={`relative truncate text-sm mx-1 ${doubleDigitIndex ? "pl-6" : "pl-4"}`}>
+    <div className={`relative truncate text-sm mx-1 overflow-visible ${doubleDigitIndex ? "pl-6" : "pl-4"}`}>
       <DragDropVerticalIcon
         size={20}
         color="var(--muted-foreground)"

@@ -304,7 +304,6 @@ function CanvasCard({
             style={{ pointerEvents: "none", userSelect: "none", overflow: "visible" }}
           >
             <div
-              xmlns="http://www.w3.org/1999/xhtml"
               className="flex h-full items-end justify-center text-center font-semibold"
               style={{
                 color: "var(--foreground)",
