@@ -22,7 +22,7 @@ import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PlusSignIcon, Settings02Icon } from "hugeicons-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { SpreadForm } from "@/types/spreads";
+import { SpreadDB, SpreadForm } from "@/types/spreads";
 import { useRouter } from "next/navigation";
 import { useLayoutDispatch } from "@/components/providers/layout-provider";
 import type { ActionDescriptor, BreadcrumbDescriptor } from "@/types/layout";
@@ -46,6 +46,16 @@ const EDIT_BREADCRUMBS: BreadcrumbDescriptor[] = [
     { href: routes.personal.spreads.root, label: "Spreads" },
     { href: "#", label: "Edit Spread" },
 ]
+
+function toSpreadFormValues(spread: Pick<SpreadDB, "name" | "description" | "positions">): SpreadForm {
+    return {
+        name: spread.name,
+        description: spread.description ?? "",
+        positions: spread.positions.map(({ name, description, allowReverse, x, y, r, z }) => ({
+            name, description, allowReverse, x, y, r, z,
+        })),
+    };
+}
 
 export default function EditPanelWrapper({
     spreadId,
@@ -81,17 +91,14 @@ export default function EditPanelWrapper({
     // ------------ POPULATE FORM FROM DB ------------ //
 
     const hasReset = useRef(false);
+    const initialValuesRef = useRef<SpreadForm | null>(null);
 
     useLayoutEffect(() => {
         if (hasReset.current || !spread) return;
+        const initialValues = toSpreadFormValues(spread);
+        initialValuesRef.current = initialValues;
         hasReset.current = true;
-        form.reset({
-            name: spread.name,
-            description: spread.description ?? "",
-            positions: spread.positions.map(({ name, description, allowReverse, x, y, r, z }) => ({
-                name, description, allowReverse, x, y, r, z,
-            })),
-        });
+        form.reset(initialValues);
     }, [spread, form]);
 
     // ------------ ADD CARD ------------ //
@@ -178,6 +185,7 @@ export default function EditPanelWrapper({
                     positions,
                 });
 
+                initialValuesRef.current = data;
                 form.reset(data);
                 toast.success("Spread updated!");
                 router.push(routes.personal.spreads.root);
@@ -226,9 +234,12 @@ export default function EditPanelWrapper({
     }, [form.formState.isDirty, router, viewUrl]);
 
     const handleConfirmDiscard = useCallback(() => {
+        form.reset(initialValuesRef.current ?? undefined);
+        setSelectedCardIndex(null);
+        setSpreadSheetOpen(false);
         setShowDiscardDialog(false);
         router.push(viewUrl);
-    }, [router, viewUrl]);
+    }, [form, router, viewUrl]);
 
 
     // ------------ LAYOUT DISPATCH ------------ //

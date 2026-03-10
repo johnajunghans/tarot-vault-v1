@@ -17,10 +17,20 @@ import type { BreadcrumbConfig, BreadcrumbDescriptor } from "@/types/layout"
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 function formatSegment(segment: string) {
+  if (isOpaqueRouteSegment(segment)) return ""
+
   return segment
     .split("-")
     .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
     .join(" ")
+}
+
+function isOpaqueRouteSegment(segment: string) {
+  return (
+    /^[0-9a-f]{24}$/i.test(segment) ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(segment) ||
+    /^[A-Za-z0-9]{16,}$/.test(segment)
+  )
 }
 
 function generateFromPathname(pathname: string): BreadcrumbDescriptor[] {
@@ -28,10 +38,12 @@ function generateFromPathname(pathname: string): BreadcrumbDescriptor[] {
   const appIndex = rawSegments.indexOf("app")
   const segments = appIndex === -1 ? rawSegments : rawSegments.slice(appIndex + 1)
 
-  return segments.map((segment, index) => ({
-    href: `/${segments.slice(0, index + 1).join("/")}`,
-    label: formatSegment(decodeURIComponent(segment)),
-  }))
+  return segments
+    .map((segment, index) => ({
+      href: `/${segments.slice(0, index + 1).join("/")}`,
+      label: formatSegment(decodeURIComponent(segment)),
+    }))
+    .filter((crumb) => crumb.label.length > 0)
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────

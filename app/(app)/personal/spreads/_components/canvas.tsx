@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext, useWatch } from "react-hook-form";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import SpreadCard, { CARD_WIDTH, CARD_HEIGHT, type CanvasCard } from "./canvas-card";
 import { CardForm } from "@/types/spreads";
 import { useTheme } from "next-themes";
@@ -28,6 +28,7 @@ export default function SpreadCanvas({
 }: SpreadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const cardsLayerRef = useRef<SVGGElement>(null);
   const { control, setValue } = useFormContext<{ positions: CardForm[] }>();
   const positions = useWatch({ control, name: "positions" });
 
@@ -123,14 +124,47 @@ export default function SpreadCanvas({
     }
   }, []);
 
-  /** Cards ordered by z-index for correct stacking. */
-  const sortedCards = useMemo(
+  /** Base render order follows persisted z-index; transient stacking is applied by reordering the cards layer DOM. */
+  const baseSortedCards = useMemo(
     () =>
       cards
         .map((card, index) => ({ card, index }))
-        .sort((a, b) => a.card.z - b.card.z),
+        .sort((a, b) => {
+          if (a.card.z !== b.card.z) return a.card.z - b.card.z;
+          return a.index - b.index;
+        }),
     [cards]
   );
+
+  /** Temporary interaction stacking: selected cards rise above base order, active drag rises above everything. */
+  const layeredCardIndices = useMemo(
+    () =>
+      baseSortedCards
+        .map(({ index }) => index)
+        .sort((a, b) => {
+          const aSelected = a === selectedCardIndex ? 1 : 0;
+          const bSelected = b === selectedCardIndex ? 1 : 0;
+          const aDragging = dragging?.index === a ? 1 : 0;
+          const bDragging = dragging?.index === b ? 1 : 0;
+
+          if (aDragging !== bDragging) return aDragging - bDragging;
+          if (aSelected !== bSelected) return aSelected - bSelected;
+          return 0;
+        }),
+    [baseSortedCards, dragging?.index, selectedCardIndex]
+  );
+
+  useLayoutEffect(() => {
+    const cardsLayer = cardsLayerRef.current;
+    if (!cardsLayer) return;
+
+    for (const index of layeredCardIndices) {
+      const el = cardGroupRefs.current.get(index);
+      if (el && el.parentNode === cardsLayer) {
+        cardsLayer.appendChild(el);
+      }
+    }
+  }, [layeredCardIndices]);
 
   /** Vertical/horizontal alignment lines when a single card’s edge matches another. Hidden in view mode or during group drag. */
   const guides = useMemo(() => {
@@ -574,31 +608,33 @@ export default function SpreadCanvas({
           )
         )}
 
-        {/* Cards — sorted by zIndex for correct layering */}
-        {sortedCards.map(({ card, index }) => {
-          const isDraggingInGroup =
-            dragging !== null &&
-            groupSelectedIndices.size > 1 &&
-            groupSelectedIndices.has(dragging.index) &&
-            groupSelectedIndices.has(index);
+        {/* Cards */}
+        <g ref={cardsLayerRef}>
+          {baseSortedCards.map(({ card, index }) => {
+            const isDraggingInGroup =
+              dragging !== null &&
+              groupSelectedIndices.size > 1 &&
+              groupSelectedIndices.has(dragging.index) &&
+              groupSelectedIndices.has(index);
 
-          return (
-            <SpreadCard
-              key={String(index)}
-              card={card}
-              index={index}
-              selected={index === selectedCardIndex}
-              groupSelected={isViewMode ? false : groupSelectedIndices.has(index)}
-              isDraggingInGroup={isViewMode ? false : isDraggingInGroup}
-              isViewMode={isViewMode}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDrag={handleDrag}
-              onClick={handleCardClick}
-              registerRef={registerCardRef}
-            />
-          );
-        })}
+            return (
+              <SpreadCard
+                key={String(index)}
+                card={card}
+                index={index}
+                selected={index === selectedCardIndex}
+                groupSelected={isViewMode ? false : groupSelectedIndices.has(index)}
+                isDraggingInGroup={isViewMode ? false : isDraggingInGroup}
+                isViewMode={isViewMode}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDrag={handleDrag}
+                onClick={handleCardClick}
+                registerRef={registerCardRef}
+              />
+            );
+          })}
+        </g>
 
         {/* Marquee selection rectangle */}
         {marqueeRect && (

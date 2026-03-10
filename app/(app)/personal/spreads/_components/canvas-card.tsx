@@ -15,6 +15,15 @@ const GRID_SIZE = 15;
 const BOUNDS = { minX: 0, minY: 0, maxX: 1410, maxY: 1350 };
 const CORNER_R = 8;
 
+function getCardNameFontSize(name: string): number {
+  const length = name.trim().length;
+
+  if (length <= 12) return 14;
+  if (length <= 20) return 12.5;
+  if (length <= 30) return 11;
+  return 9.5;
+}
+
 /** Card data for canvas (no position field; index is used instead). */
 export interface CanvasCard {
   name: string;
@@ -222,6 +231,8 @@ function CanvasCard({
   const isActiveDrag = isDraggingState || isDraggingInGroup;
   const isHighlighted = selected || groupSelected;
   const badgeColor = isHighlighted ? "var(--gold)" : "var(--gold-muted)";
+  const cardName = watched.name?.trim() ?? "";
+  const cardNameFontSize = getCardNameFontSize(cardName);
 
   return (
     <g
@@ -285,18 +296,33 @@ function CanvasCard({
           </text>
 
           {/* Position name */}
-          <text
-            x={CARD_WIDTH / 2}
-            y={CARD_HEIGHT - 18}
-            textAnchor="middle"
-            fontSize={9}
-            fontWeight="600"
-            fill="var(--foreground)"
-            fillOpacity={0.7}
-            style={{ pointerEvents: "none", userSelect: "none" }}
+          <foreignObject
+            x={11}
+            y={CARD_HEIGHT - 46}
+            width={CARD_WIDTH - 22}
+            height={30}
+            style={{ pointerEvents: "none", userSelect: "none", overflow: "visible" }}
           >
-            {watched.name || ""}
-          </text>
+            <div
+              xmlns="http://www.w3.org/1999/xhtml"
+              className="flex h-full items-end justify-center text-center font-semibold"
+              style={{
+                color: "var(--foreground)",
+                opacity: 0.78,
+                fontSize: `${cardNameFontSize}px`,
+                lineHeight: 1.05,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "normal",
+                overflowWrap: "anywhere",
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: 2,
+              }}
+            >
+              {cardName}
+            </div>
+          </foreignObject>
         </g>
       </g>
     </g>
