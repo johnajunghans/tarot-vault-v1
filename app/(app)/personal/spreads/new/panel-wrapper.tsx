@@ -245,7 +245,7 @@ export default function PanelWrapper({
                 type: "save",
                 label: "Save Spread",
                 onClick: handleSave,
-                disabled: isSaving || !isDirty,
+                disabled: isSaving || (!isDirty && !loadedDraftDate),
                 loading: isSaving,
             },
             {
