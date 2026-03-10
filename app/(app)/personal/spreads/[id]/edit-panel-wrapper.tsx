@@ -3,7 +3,7 @@
 import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -69,7 +69,7 @@ export default function EditPanelWrapper({
         defaultValues: {
             name: "",
             description: "",
-            positions: [generateCard(0)]
+            positions: []
         }
     });
 
@@ -82,7 +82,7 @@ export default function EditPanelWrapper({
 
     const hasReset = useRef(false);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (hasReset.current || !spread) return;
         hasReset.current = true;
         form.reset({
@@ -353,7 +353,7 @@ export default function EditPanelWrapper({
                 {isMobile ? (
                     <>
                         {/* Floating Toolbar */}
-                        <Card className="absolute bottom-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50 pointer-events-auto">
+                        <Card className="absolute top-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50 pointer-events-auto">
                             <CardContent>
                                 <div className="flex items-center gap-1">
                                     <Button
