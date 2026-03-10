@@ -19,11 +19,13 @@ export default async function AppLayout({
         <SidebarProvider defaultOpen={false}>
             <LayoutProvider defaultTopbarVisible={defaultTopbarVisible}>
                 <AppSidebar />
-                <SidebarInset className="z-10 h-screen relative">
+                <SidebarInset className="relative z-10 h-dvh flex-col overflow-hidden">
                     <AppTopbar />
-                    {/* <ViewTransition default="cross-fade"> */}
-                        { children }
-                    {/* </ViewTransition> */}
+                    <div className="min-h-0 flex-1 overflow-hidden">
+                        {/* <ViewTransition default="cross-fade"> */}
+                            { children }
+                        {/* </ViewTransition> */}
+                    </div>
                 </SidebarInset>
             </LayoutProvider>
         </SidebarProvider>

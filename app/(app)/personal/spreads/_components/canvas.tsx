@@ -440,7 +440,10 @@ export default function SpreadCanvas({
   const showEmptyPrompt = !isViewMode && cards.length === 0;
 
   return (
-    <div ref={containerRef} className={`h-full w-full overflow-auto ${themeBasedStyles.containerBg}`}>
+    <div
+      ref={containerRef}
+      className={`h-full w-full overflow-auto overscroll-contain ${themeBasedStyles.containerBg}`}
+    >
       <svg
         ref={svgRef}
         width={svgWidth}

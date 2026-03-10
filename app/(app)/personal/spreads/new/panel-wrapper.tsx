@@ -272,7 +272,7 @@ export default function PanelWrapper({
     return (
         <>
         {/* Main Content */}
-        <div className="h-app-content relative">
+        <div className="relative h-full min-h-0 overflow-hidden">
             <FormProvider {...form}>
                 {isMobile ? (
                     <>

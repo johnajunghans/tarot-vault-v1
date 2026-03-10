@@ -307,7 +307,7 @@ export default function EditPanelWrapper({
 
     if (spread === undefined) {
         return (
-            <div className="h-app-content flex items-center justify-center">
+            <div className="flex h-full min-h-0 items-center justify-center">
                 <Spinner className="size-6" />
             </div>
         );
@@ -315,7 +315,7 @@ export default function EditPanelWrapper({
 
     if (spread === null) {
         return (
-            <div className="h-app-content flex flex-col items-center justify-center gap-3">
+            <div className="flex h-full min-h-0 flex-col items-center justify-center gap-3">
                 <p className="text-muted-foreground font-display text-lg">Spread not found</p>
                 <Button variant="outline">
                     <Link href={routes.personal.spreads.root}>Back to spreads</Link>
@@ -348,7 +348,7 @@ export default function EditPanelWrapper({
     return (
         <>
         {/* Main Content */}
-        <div className="h-app-content relative">
+        <div className="relative h-full min-h-0 overflow-hidden">
             <FormProvider {...form}>
                 {isMobile ? (
                     <>
