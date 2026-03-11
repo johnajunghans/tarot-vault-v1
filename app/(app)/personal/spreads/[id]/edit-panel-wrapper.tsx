@@ -13,6 +13,7 @@ import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import SpreadSettingsPanel from "../_components/spread-settings-panel";
 import SpreadCanvas from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
+import ZoomControls from "../_components/zoom-controls";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { generateCard, generateCardAt } from "../utils";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,7 @@ export default function EditPanelWrapper({
     const isViewMode = mode === "view";
     const router = useRouter();
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+    const [zoom, setZoom] = useState(1);
     const isMobile = useIsMobile()
 
     // ------------ FETCH SPREAD DATA ------------ //
@@ -388,6 +390,13 @@ export default function EditPanelWrapper({
                             </CardContent>
                         </Card>
 
+                        {/* Zoom Controls */}
+                        <ZoomControls
+                            zoom={zoom}
+                            onZoomChange={setZoom}
+                            className="absolute top-3 right-3 z-10"
+                        />
+
                         {/* Full Canvas */}
                         <SpreadCanvas
                             cards={cards}
@@ -395,6 +404,8 @@ export default function EditPanelWrapper({
                             onCardSelect={setSelectedCardIndex}
                             onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
                             isViewMode={isViewMode}
+                            zoom={zoom}
+                            onZoomChange={setZoom}
                         />
 
                         {/* Spread Settings */}
@@ -422,6 +433,8 @@ export default function EditPanelWrapper({
                         onCardSelect={setSelectedCardIndex}
                         onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
                         isViewMode={isViewMode}
+                        zoom={zoom}
+                        onZoomChange={setZoom}
                     />
 
                     {/* Layer 2: Panel group overlaid on canvas */}
@@ -440,7 +453,15 @@ export default function EditPanelWrapper({
                     <ResizablePanel
                         id="spread-canvas-spacer"
                         style={{ pointerEvents: "none" }}
-                    />
+                    >
+                        <div className="relative h-full">
+                            <ZoomControls
+                                zoom={zoom}
+                                onZoomChange={setZoom}
+                                className="absolute top-3 right-3 z-10 pointer-events-auto"
+                            />
+                        </div>
+                    </ResizablePanel>
 
                     <CardSettingsPanel {...cardPanelProps} />
 

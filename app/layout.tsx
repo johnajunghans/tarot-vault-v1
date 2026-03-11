@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   description:
     "A tarot app. You do readings. It keeps track of them.",
   icons: {
-    icon: "/diamond.svg",
+    icon: "/diamond-2.svg",
   },
 };
 

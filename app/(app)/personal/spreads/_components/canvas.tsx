@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import SpreadCard, { CARD_WIDTH, CARD_HEIGHT, type CanvasCard } from "./canvas-card";
 import { CardForm } from "@/types/spreads";
 import { useTheme } from "next-themes";
+import { ZOOM_MIN, ZOOM_MAX } from "./zoom-controls";
 
 const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
@@ -16,6 +17,8 @@ interface SpreadCanvasProps {
   onCardSelect: (index: number | null) => void;
   onCanvasDoubleClick?: (x: number, y: number) => void;
   isViewMode?: boolean;
+  zoom?: number;
+  onZoomChange?: (zoom: number) => void;
 }
 
 /** SVG canvas for arranging spread positions. Supports drag, marquee select, spacebar pan, alignment guides, and grid snapping. */
@@ -25,6 +28,8 @@ export default function SpreadCanvas({
   onCardSelect,
   onCanvasDoubleClick,
   isViewMode = false,
+  zoom = 1,
+  onZoomChange,
 }: SpreadCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -425,6 +430,69 @@ export default function SpreadCanvas({
     };
   }, []);
 
+  /** Refs for zoom values so the pinch effect doesn't re-register listeners on every zoom change. */
+  const zoomRef = useRef(zoom);
+  const onZoomChangeRef = useRef(onZoomChange);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  useEffect(() => { onZoomChangeRef.current = onZoomChange; }, [onZoomChange]);
+
+  /** Pinch zoom: touchpad (wheel + ctrlKey) and mobile touch (two-finger pinch). */
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const clampZoom = (v: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, v));
+
+    const handleWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      if (!onZoomChangeRef.current) return;
+      e.preventDefault();
+
+      const delta = -e.deltaY * 0.01;
+      onZoomChangeRef.current(clampZoom(zoomRef.current + delta));
+    };
+
+    let lastPinchDist = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastPinchDist = Math.sqrt(dx * dx + dy * dy);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 2 || lastPinchDist === 0) return;
+      if (!onZoomChangeRef.current) return;
+      e.preventDefault();
+
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const scale = dist / lastPinchDist;
+      lastPinchDist = dist;
+
+      onZoomChangeRef.current(clampZoom(zoomRef.current * scale));
+    };
+
+    const handleTouchEnd = () => {
+      lastPinchDist = 0;
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchmove", handleTouchMove, { passive: false });
+    container.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchmove", handleTouchMove);
+      container.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, []);
+
   /** Start marquee selection on background click (unless Space is held for pan). */
   const handleBackgroundMouseDown = useCallback(
     (e: React.MouseEvent<SVGRectElement>) => {
@@ -478,12 +546,14 @@ export default function SpreadCanvas({
       ref={containerRef}
       className={`h-full w-full overflow-auto overscroll-contain ${themeBasedStyles.containerBg}`}
     >
+      <div style={{ width: svgWidth * zoom, height: svgHeight * zoom }}>
       <svg
         ref={svgRef}
         width={svgWidth}
         height={svgHeight}
         xmlns="http://www.w3.org/2000/svg"
         className="select-none"
+        style={{ transform: `scale(${zoom})`, transformOrigin: "0 0" }}
       >
         <defs>
           {/* Stone texture pattern */}
@@ -653,6 +723,7 @@ export default function SpreadCanvas({
           />
         )}
       </svg>
+      </div>
     </div>
   );
 }
