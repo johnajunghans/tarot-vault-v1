@@ -20,10 +20,6 @@ export default function Personal() {
         return () => reset()
     }, [reset])
 
-    if (!user.isSignedIn) {
-        router.push(routes.root)
-    }
-
     return (
         <div></div>
     )
