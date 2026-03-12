@@ -10,6 +10,9 @@ import { ZOOM_MIN, ZOOM_MAX } from "./zoom-controls";
 const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
 const BOUNDS = { minX: 0, minY: 0, maxX: 1410, maxY: 1350 };
+const WHEEL_DELTA_LINE_PX = 16;
+const WHEEL_ZOOM_SENSITIVITY = 0.005;
+const ZOOM_CHANGE_EPSILON = 0.0001;
 
 interface SpreadCanvasProps {
   cards: CanvasCard[];
@@ -430,10 +433,23 @@ export default function SpreadCanvas({
     };
   }, []);
 
-  /** Refs for zoom values so the pinch effect doesn't re-register listeners on every zoom change. */
-  const zoomRef = useRef(zoom);
+  /** Track rendered zoom separately from the in-flight target zoom during high-frequency gestures. */
+  const renderedZoomRef = useRef(zoom);
+  const targetZoomRef = useRef(zoom);
   const onZoomChangeRef = useRef(onZoomChange);
-  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  const pendingScrollRef = useRef<{ left: number; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    renderedZoomRef.current = zoom;
+    targetZoomRef.current = zoom;
+
+    if (!pendingScrollRef.current || !containerRef.current) return;
+
+    containerRef.current.scrollLeft = pendingScrollRef.current.left;
+    containerRef.current.scrollTop = pendingScrollRef.current.top;
+    pendingScrollRef.current = null;
+  }, [zoom]);
+
   useEffect(() => { onZoomChangeRef.current = onZoomChange; }, [onZoomChange]);
 
   /** Pinch zoom: touchpad (wheel + ctrlKey) and mobile touch (two-finger pinch). */
@@ -443,13 +459,44 @@ export default function SpreadCanvas({
 
     const clampZoom = (v: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, v));
 
+    const normalizeWheelDelta = (e: WheelEvent) => {
+      if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) return e.deltaY * WHEEL_DELTA_LINE_PX;
+      if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) return e.deltaY * container.clientHeight;
+      return e.deltaY;
+    };
+
+    const setZoomAtPoint = (nextZoom: number, clientX: number, clientY: number) => {
+      if (!onZoomChangeRef.current) return;
+
+      const clampedZoom = clampZoom(nextZoom);
+      const currentZoom = targetZoomRef.current;
+
+      if (Math.abs(clampedZoom - currentZoom) < ZOOM_CHANGE_EPSILON) return;
+
+      const rect = container.getBoundingClientRect();
+      const viewportX = clientX - rect.left;
+      const viewportY = clientY - rect.top;
+      const renderedZoom = renderedZoomRef.current || 1;
+      const contentX = (container.scrollLeft + viewportX) / renderedZoom;
+      const contentY = (container.scrollTop + viewportY) / renderedZoom;
+
+      pendingScrollRef.current = {
+        left: contentX * clampedZoom - viewportX,
+        top: contentY * clampedZoom - viewportY,
+      };
+
+      targetZoomRef.current = clampedZoom;
+      onZoomChangeRef.current(clampedZoom);
+    };
+
     const handleWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
       if (!onZoomChangeRef.current) return;
       e.preventDefault();
 
-      const delta = -e.deltaY * 0.01;
-      onZoomChangeRef.current(clampZoom(zoomRef.current + delta));
+      const delta = normalizeWheelDelta(e);
+      const scaleFactor = Math.exp(-delta * WHEEL_ZOOM_SENSITIVITY);
+      setZoomAtPoint(targetZoomRef.current * scaleFactor, e.clientX, e.clientY);
     };
 
     let lastPinchDist = 0;
@@ -467,13 +514,17 @@ export default function SpreadCanvas({
       if (!onZoomChangeRef.current) return;
       e.preventDefault();
 
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const touchA = e.touches[0];
+      const touchB = e.touches[1];
+      const dx = touchA.clientX - touchB.clientX;
+      const dy = touchA.clientY - touchB.clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const scale = dist / lastPinchDist;
       lastPinchDist = dist;
 
-      onZoomChangeRef.current(clampZoom(zoomRef.current * scale));
+      const midpointX = (touchA.clientX + touchB.clientX) / 2;
+      const midpointY = (touchA.clientY + touchB.clientY) / 2;
+      setZoomAtPoint(targetZoomRef.current * scale, midpointX, midpointY);
     };
 
     const handleTouchEnd = () => {
