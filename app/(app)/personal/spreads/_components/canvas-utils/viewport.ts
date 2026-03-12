@@ -70,6 +70,30 @@ function getViewportScrollForCanvasPoint({
     }
 }
 
+function clampViewportScroll({
+    left,
+    top,
+    clientWidth,
+    clientHeight,
+    contentWidth,
+    contentHeight,
+}: {
+    left: number
+    top: number
+    clientWidth: number
+    clientHeight: number
+    contentWidth: number
+    contentHeight: number
+}) {
+    const maxLeft = Math.max(contentWidth - clientWidth, 0)
+    const maxTop = Math.max(contentHeight - clientHeight, 0)
+
+    return {
+        left: Math.max(0, Math.min(maxLeft, left)),
+        top: Math.max(0, Math.min(maxTop, top)),
+    }
+}
+
 function getCanvasViewportRect({
     scrollLeft,
     scrollTop,
@@ -96,6 +120,7 @@ function getCanvasViewportRect({
 }
 
 export {
+    clampViewportScroll,
     getCanvasPointAtViewportPoint,
     getViewportScrollForCanvasPoint,
     getCanvasViewportRect,

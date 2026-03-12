@@ -9,17 +9,13 @@ import {
     useRef,
     useState,
 } from 'react'
-import SpreadCard, {
-    CARD_WIDTH,
-    CARD_HEIGHT,
-    type CanvasCard,
-} from './canvas-card'
+import SpreadCard, { type CanvasCard } from './canvas-card'
 import CanvasBackground from './canvas-parts/background'
 import CanvasGuides, { type CanvasGuide } from './canvas-parts/guides'
 import CanvasPointerOverlay from './canvas-parts/pointer-overlay'
 import { CardForm } from '@/types/spreads'
 import { useTheme } from 'next-themes'
-import { clampZoom, normalizeZoom } from './canvas-utils/zoom'
+import { DEFAULT_ZOOM, clampZoom, normalizeZoom } from './canvas-utils/zoom'
 import {
     getCenteredCardPlacement,
     getRect,
@@ -30,18 +26,42 @@ import {
     rectsIntersect,
 } from './canvas-utils/geometry'
 import {
+    clampViewportScroll,
     getCanvasPointAtViewportPoint,
     getCanvasViewportRect,
     getViewportScrollForCanvasPoint,
 } from './canvas-utils/viewport'
+import {
+    CANVAS_BOUNDS,
+    CANVAS_CENTER,
+    CANVAS_HEIGHT,
+    CANVAS_WIDTH,
+    CARD_HEIGHT,
+    CARD_WIDTH,
+    GRID_SIZE,
+    type SpreadBounds,
+} from '../spread-layout'
 
-const CANVAS_SIZE = 1500
-const GRID_SIZE = 15
-const BOUNDS = { minX: 0, minY: 0, maxX: 1410, maxY: 1350 }
 const WHEEL_DELTA_LINE_PX = 16
 const WHEEL_ZOOM_SENSITIVITY = 0.005
 const POINTER_EDGE_PADDING = 18
 const POINTER_ICON_SIZE = 16
+const VIEWPORT_FIT_PADDING = 48
+
+export type SpreadCanvasViewportRequest =
+    | {
+          key: string
+          type: 'center-canvas-point'
+          point: { x: number; y: number }
+          zoom?: number
+      }
+    | {
+          key: string
+          type: 'fit-spread'
+          bounds: SpreadBounds
+          maxZoom?: number
+          padding?: number
+      }
 
 interface SpreadCanvasProps {
     cards: CanvasCard[]
@@ -51,6 +71,7 @@ interface SpreadCanvasProps {
     isViewMode?: boolean
     zoom?: number
     onZoomChange?: (zoom: number) => void
+    viewportRequest?: SpreadCanvasViewportRequest | null
 }
 
 /** SVG canvas for arranging spread positions. Supports drag, marquee select, spacebar pan, alignment guides, and grid snapping. */
@@ -62,15 +83,13 @@ export default function SpreadCanvas({
     isViewMode = false,
     zoom = 1,
     onZoomChange,
+    viewportRequest,
 }: SpreadCanvasProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const svgRef = useRef<SVGSVGElement>(null)
     const cardsLayerRef = useRef<SVGGElement>(null)
     const { control, setValue } = useFormContext<{ positions: CardForm[] }>()
     const positions = useWatch({ control, name: 'positions' })
-
-    const [svgWidth, setSvgWidth] = useState(CANVAS_SIZE)
-    const [svgHeight, setSvgHeight] = useState(CANVAS_SIZE)
     const [viewportState, setViewportState] = useState({
         scrollLeft: 0,
         scrollTop: 0,
@@ -91,6 +110,9 @@ export default function SpreadCanvas({
         }),
         [resolvedTheme]
     )
+
+    const svgWidth = CANVAS_WIDTH
+    const svgHeight = CANVAS_HEIGHT
 
     const syncViewportState = useCallback(() => {
         const container = containerRef.current
@@ -115,22 +137,6 @@ export default function SpreadCanvas({
 
             return next
         })
-    }, [])
-
-    /** Keep SVG at least CANVAS_SIZE; grow with container for responsive layout. */
-    useEffect(() => {
-        const container = containerRef.current
-        if (!container) return
-
-        const observer = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                setSvgWidth(Math.max(CANVAS_SIZE, entry.contentRect.width))
-                setSvgHeight(Math.max(CANVAS_SIZE, entry.contentRect.height))
-            }
-        })
-
-        observer.observe(container)
-        return () => observer.disconnect()
     }, [])
 
     /** Track scroll viewport so offscreen card pointers can render in screen space. */
@@ -372,7 +378,7 @@ export default function SpreadCanvas({
                 const { x: clampedX, y: clampedY } = getSnappedClampedPosition(
                     origin.x + dx,
                     origin.y + dy,
-                    BOUNDS,
+                    CANVAS_BOUNDS,
                     GRID_SIZE
                 )
 
@@ -394,7 +400,7 @@ export default function SpreadCanvas({
                         getSnappedClampedPosition(
                             origin.x + dx,
                             origin.y + dy,
-                            BOUNDS,
+                            CANVAS_BOUNDS,
                             GRID_SIZE
                         )
 
@@ -541,6 +547,7 @@ export default function SpreadCanvas({
     const targetZoomRef = useRef(zoom)
     const onZoomChangeRef = useRef(onZoomChange)
     const pendingScrollRef = useRef<{ left: number; top: number } | null>(null)
+    const appliedViewportRequestKeyRef = useRef<string | null>(null)
 
     useLayoutEffect(() => {
         const normalizedZoom = normalizeZoom(zoom)
@@ -558,6 +565,69 @@ export default function SpreadCanvas({
     useEffect(() => {
         onZoomChangeRef.current = onZoomChange
     }, [onZoomChange])
+
+    useLayoutEffect(() => {
+        const container = containerRef.current
+        if (!container || !viewportRequest) return
+        if (container.clientWidth <= 0 || container.clientHeight <= 0) return
+        if (appliedViewportRequestKeyRef.current === viewportRequest.key) return
+
+        let nextZoom = renderedZoomRef.current || DEFAULT_ZOOM
+        let contentX = CANVAS_CENTER.x
+        let contentY = CANVAS_CENTER.y
+
+        if (viewportRequest.type === 'fit-spread') {
+            const padding = viewportRequest.padding ?? VIEWPORT_FIT_PADDING
+            const availableWidth = Math.max(container.clientWidth - padding * 2, 1)
+            const availableHeight = Math.max(
+                container.clientHeight - padding * 2,
+                1
+            )
+            const fitZoom = clampZoom(
+                Math.min(
+                    availableWidth / Math.max(viewportRequest.bounds.width, 1),
+                    availableHeight / Math.max(viewportRequest.bounds.height, 1)
+                )
+            )
+
+            nextZoom = normalizeZoom(
+                Math.min(viewportRequest.maxZoom ?? DEFAULT_ZOOM, fitZoom)
+            )
+            contentX = viewportRequest.bounds.centerX
+            contentY = viewportRequest.bounds.centerY
+        } else {
+            nextZoom = normalizeZoom(viewportRequest.zoom ?? DEFAULT_ZOOM)
+            contentX = viewportRequest.point.x
+            contentY = viewportRequest.point.y
+        }
+
+        const clampedScroll = clampViewportScroll({
+            ...getViewportScrollForCanvasPoint({
+                contentX,
+                contentY,
+                viewportX: container.clientWidth / 2,
+                viewportY: container.clientHeight / 2,
+                zoom: nextZoom,
+            }),
+            clientWidth: container.clientWidth,
+            clientHeight: container.clientHeight,
+            contentWidth: svgWidth * nextZoom,
+            contentHeight: svgHeight * nextZoom,
+        })
+
+        appliedViewportRequestKeyRef.current = viewportRequest.key
+        targetZoomRef.current = nextZoom
+
+        if (nextZoom !== renderedZoomRef.current) {
+            pendingScrollRef.current = clampedScroll
+            onZoomChangeRef.current?.(nextZoom)
+            return
+        }
+
+        container.scrollLeft = clampedScroll.left
+        container.scrollTop = clampedScroll.top
+        syncViewportState()
+    }, [syncViewportState, svgHeight, svgWidth, viewportRequest])
 
     /** Pinch zoom: touchpad (wheel + ctrlKey) and mobile touch (two-finger pinch). */
     useEffect(() => {
@@ -595,12 +665,18 @@ export default function SpreadCanvas({
                 zoom: renderedZoomRef.current || 1,
             })
 
-            pendingScrollRef.current = getViewportScrollForCanvasPoint({
-                contentX,
-                contentY,
-                viewportX,
-                viewportY,
-                zoom: normalizedZoom,
+            pendingScrollRef.current = clampViewportScroll({
+                ...getViewportScrollForCanvasPoint({
+                    contentX,
+                    contentY,
+                    viewportX,
+                    viewportY,
+                    zoom: normalizedZoom,
+                }),
+                clientWidth: container.clientWidth,
+                clientHeight: container.clientHeight,
+                contentWidth: svgWidth * normalizedZoom,
+                contentHeight: svgHeight * normalizedZoom,
             })
 
             targetZoomRef.current = normalizedZoom
@@ -668,7 +744,7 @@ export default function SpreadCanvas({
             container.removeEventListener('touchmove', handleTouchMove)
             container.removeEventListener('touchend', handleTouchEnd)
         }
-    }, [])
+    }, [svgHeight, svgWidth])
 
     /** Start marquee selection on background click (unless Space is held for pan). */
     const handleBackgroundMouseDown = useCallback(
@@ -697,7 +773,7 @@ export default function SpreadCanvas({
                 pt.y,
                 CARD_WIDTH,
                 CARD_HEIGHT,
-                BOUNDS,
+                CANVAS_BOUNDS,
                 GRID_SIZE
             )
             onCanvasDoubleClick(x, y)
@@ -841,8 +917,8 @@ export default function SpreadCanvas({
                             <g pointerEvents="none">
                                 {/* Ghost card outline */}
                                 <rect
-                                    x={svgWidth / 2 - CARD_WIDTH / 2}
-                                    y={15}
+                                    x={CANVAS_CENTER.x - CARD_WIDTH / 2}
+                                    y={CANVAS_CENTER.y - CARD_HEIGHT / 2}
                                     width={CARD_WIDTH}
                                     height={CARD_HEIGHT}
                                     rx={8}
@@ -857,8 +933,8 @@ export default function SpreadCanvas({
                                 />
                                 {/* Prompt text */}
                                 <text
-                                    x={svgWidth / 2}
-                                    y={CARD_HEIGHT + 40}
+                                    x={CANVAS_CENTER.x}
+                                    y={CANVAS_CENTER.y + CARD_HEIGHT / 2 + 34}
                                     textAnchor="middle"
                                     fontSize={13}
                                     fill="var(--muted-foreground)"

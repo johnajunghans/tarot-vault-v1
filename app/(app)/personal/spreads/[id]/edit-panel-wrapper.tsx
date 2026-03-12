@@ -11,7 +11,9 @@ import { routes } from "@/lib/routes";
 import { toast } from "sonner";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import SpreadSettingsPanel from "../_components/spread-settings-panel";
-import SpreadCanvas from "../_components/canvas";
+import SpreadCanvas, {
+    type SpreadCanvasViewportRequest,
+} from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
 import ZoomControls from "../_components/zoom-controls";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
@@ -28,6 +30,13 @@ import { useRouter } from "next/navigation";
 import { useLayoutDispatch } from "@/components/providers/layout-provider";
 import type { ActionDescriptor, BreadcrumbDescriptor } from "@/types/layout";
 import Link from "next/link";
+import {
+    CANVAS_CENTER,
+    CARD_HEIGHT,
+    CARD_WIDTH,
+    getSpreadBounds,
+    normalizeCardsToCanvasCenter,
+} from "../spread-layout";
 
 interface EditPanelWrapperProps {
     spreadId: Id<"spreads">
@@ -64,10 +73,21 @@ export default function EditPanelWrapper({
     groupId,
     mode,
 }: EditPanelWrapperProps) {
+    const emptyCanvasViewportRequest = useMemo<SpreadCanvasViewportRequest>(
+        () => ({
+            key: `spread-${spreadId}-empty`,
+            type: "center-canvas-point",
+            point: CANVAS_CENTER,
+            zoom: 1,
+        }),
+        [spreadId]
+    );
     const isViewMode = mode === "view";
     const router = useRouter();
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const [zoom, setZoom] = useState(1);
+    const [viewportRequest, setViewportRequest] =
+        useState<SpreadCanvasViewportRequest | null>(null);
     const isMobile = useIsMobile()
 
     // ------------ FETCH SPREAD DATA ------------ //
@@ -98,15 +118,40 @@ export default function EditPanelWrapper({
     useLayoutEffect(() => {
         if (hasReset.current || !spread) return;
         const initialValues = toSpreadFormValues(spread);
-        initialValuesRef.current = initialValues;
+        const normalizedPositions = normalizeCardsToCanvasCenter(
+            initialValues.positions
+        );
+        const normalizedValues = {
+            ...initialValues,
+            positions: normalizedPositions,
+        };
+        const bounds = getSpreadBounds(normalizedPositions);
+        initialValuesRef.current = normalizedValues;
         hasReset.current = true;
-        form.reset(initialValues);
-    }, [spread, form]);
+        form.reset(normalizedValues);
+        setZoom(1);
+        setViewportRequest(
+            bounds
+                ? {
+                      key: `spread-${spreadId}-${spread._creationTime}-${mode}`,
+                      type: "fit-spread",
+                      bounds,
+                      maxZoom: 1,
+                  }
+                : emptyCanvasViewportRequest
+        );
+    }, [emptyCanvasViewportRequest, form, mode, spread, spreadId]);
 
     // ------------ ADD CARD ------------ //
 
     const addCard = useCallback(() => {
-        const newCard = generateCard(cards.length);
+        const newCard =
+            cards.length === 0
+                ? generateCardAt(
+                      CANVAS_CENTER.x - CARD_WIDTH / 2,
+                      CANVAS_CENTER.y - CARD_HEIGHT / 2
+                  )
+                : generateCard(cards.length);
         append(newCard, { focusName: `positions.${selectedCardIndex}.name` });
         setSelectedCardIndex(cards.length);
     }, [cards.length, append, selectedCardIndex, setSelectedCardIndex]);
@@ -406,6 +451,7 @@ export default function EditPanelWrapper({
                             isViewMode={isViewMode}
                             zoom={zoom}
                             onZoomChange={setZoom}
+                            viewportRequest={viewportRequest}
                         />
 
                         {/* Spread Settings */}
@@ -435,6 +481,7 @@ export default function EditPanelWrapper({
                         isViewMode={isViewMode}
                         zoom={zoom}
                         onZoomChange={setZoom}
+                        viewportRequest={viewportRequest}
                     />
 
                     {/* Layer 2: Panel group overlaid on canvas */}

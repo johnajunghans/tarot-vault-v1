@@ -10,7 +10,9 @@ import { routes } from "@/lib/routes";
 import { toast } from "sonner";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import SpreadSettingsPanel from "../_components/spread-settings-panel";
-import SpreadCanvas from "../_components/canvas";
+import SpreadCanvas, {
+    type SpreadCanvasViewportRequest,
+} from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
 import ZoomControls from "../_components/zoom-controls";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
@@ -25,6 +27,13 @@ import { SpreadForm } from "@/types/spreads";
 import { useRouter } from "next/navigation";
 import { useLayoutDispatch } from "@/components/providers/layout-provider";
 import type { ActionDescriptor } from "@/types/layout";
+import {
+    CANVAS_CENTER,
+    CARD_HEIGHT,
+    CARD_WIDTH,
+    getSpreadBounds,
+    normalizeCardsToCanvasCenter,
+} from "../spread-layout";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -49,9 +58,17 @@ export default function PanelWrapper({
     groupId,
     loadedDraftDate,
 }: PanelWrapperProps) {
+    const emptyCanvasViewportRequest: SpreadCanvasViewportRequest = {
+        key: "new-spread-empty",
+        type: "center-canvas-point",
+        point: CANVAS_CENTER,
+        zoom: 1,
+    };
     const router = useRouter();
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const [zoom, setZoom] = useState(1);
+    const [viewportRequest, setViewportRequest] =
+        useState<SpreadCanvasViewportRequest | null>(emptyCanvasViewportRequest);
     const isMobile = useIsMobile()
 
     // ------------ SPREAD FORM ------------ //
@@ -82,13 +99,40 @@ export default function PanelWrapper({
         if (!raw) return;
         try {
             const draft = JSON.parse(raw) as SpreadForm & { date?: number; numberOfCards?: number };
+            const normalizedPositions = normalizeCardsToCanvasCenter(
+                (draft.positions ?? []).map(
+                    ({ name, description, allowReverse, x, y, r, z }) => ({
+                        name,
+                        description,
+                        allowReverse,
+                        x,
+                        y,
+                        r,
+                        z,
+                    })
+                )
+            );
             form.reset({
                 name: draft.name ?? "",
                 description: draft.description ?? "",
-                positions: (draft.positions ?? []).map(({ name, description, allowReverse, x, y, r, z }) => ({
-                    name, description, allowReverse, x, y, r, z,
-                })),
+                positions: normalizedPositions,
             });
+
+            const bounds = getSpreadBounds(normalizedPositions);
+            const frame = window.requestAnimationFrame(() => {
+                setViewportRequest(
+                    bounds
+                        ? {
+                              key: `draft-${loadedDraftDate}-${normalizedPositions.length}`,
+                              type: "fit-spread",
+                              bounds,
+                              maxZoom: 1,
+                          }
+                        : emptyCanvasViewportRequest
+                );
+            });
+
+            return () => window.cancelAnimationFrame(frame);
         } catch { /* ignore invalid draft data */ }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -110,10 +154,16 @@ export default function PanelWrapper({
     // ------------ ADD CARD ------------ //
 
     const addCard = useCallback(() => {
-        const newCard = generateCard(cards.length);
+        const newCard =
+            cards.length === 0
+                ? generateCardAt(
+                      CANVAS_CENTER.x - CARD_WIDTH / 2,
+                      CANVAS_CENTER.y - CARD_HEIGHT / 2
+                  )
+                : generateCard(cards.length);
         append(newCard, { focusName: `positions.${selectedCardIndex}.name` });
         setSelectedCardIndex(cards.length);
-    }, [cards.length, append, selectedCardIndex]);
+    }, [append, cards.length, selectedCardIndex]);
 
     const addCardAt = useCallback((x: number, y: number) => {
         if (cards.length >= 78) return;
@@ -316,6 +366,7 @@ export default function PanelWrapper({
                             onCanvasDoubleClick={addCardAt}
                             zoom={zoom}
                             onZoomChange={setZoom}
+                            viewportRequest={viewportRequest}
                         />
 
                         {/* Spread Settings (Sheet on mobile via ResponsivePanel) */}
@@ -355,6 +406,7 @@ export default function PanelWrapper({
                         onCanvasDoubleClick={addCardAt}
                         zoom={zoom}
                         onZoomChange={setZoom}
+                        viewportRequest={viewportRequest}
                     />
 
                     {/* Layer 2: Panel group overlaid on canvas */}

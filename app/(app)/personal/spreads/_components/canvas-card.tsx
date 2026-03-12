@@ -6,13 +6,16 @@ import { gsap } from 'gsap'
 import { Draggable } from 'gsap/Draggable'
 import { useGSAP } from '@gsap/react'
 import { CardForm } from '@/types/spreads'
+import {
+    CANVAS_BOUNDS,
+    CARD_HEIGHT,
+    CARD_WIDTH,
+    GRID_SIZE,
+} from '../spread-layout'
 
 gsap.registerPlugin(Draggable)
 
-export const CARD_WIDTH = 90
-export const CARD_HEIGHT = 150
-const GRID_SIZE = 15
-const BOUNDS = { minX: 0, minY: 0, maxX: 1410, maxY: 1350 }
+export { CARD_WIDTH, CARD_HEIGHT } from '../spread-layout'
 const CORNER_R = 8
 
 function getCardNameFontSize(name: string): number {
@@ -287,16 +290,16 @@ function CanvasCard({
                         const snapped =
                             Math.round(value / GRID_SIZE) * GRID_SIZE
                         return Math.max(
-                            BOUNDS.minX,
-                            Math.min(BOUNDS.maxX, snapped)
+                            CANVAS_BOUNDS.minX,
+                            Math.min(CANVAS_BOUNDS.maxX, snapped)
                         )
                     },
                     y: (value) => {
                         const snapped =
                             Math.round(value / GRID_SIZE) * GRID_SIZE
                         return Math.max(
-                            BOUNDS.minY,
-                            Math.min(BOUNDS.maxY, snapped)
+                            CANVAS_BOUNDS.minY,
+                            Math.min(CANVAS_BOUNDS.maxY, snapped)
                         )
                     },
                 },

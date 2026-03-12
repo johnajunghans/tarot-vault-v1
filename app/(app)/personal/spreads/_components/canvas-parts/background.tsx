@@ -89,6 +89,27 @@ export default function CanvasBackground({
                     pointerEvents="none"
                 />
             )}
+
+            <line
+                x1={svgWidth - 1}
+                y1={0}
+                x2={svgWidth - 1}
+                y2={svgHeight}
+                stroke="var(--border)"
+                strokeOpacity={0.85}
+                strokeWidth={2}
+                pointerEvents="none"
+            />
+            <line
+                x1={0}
+                y1={svgHeight - 1}
+                x2={svgWidth}
+                y2={svgHeight - 1}
+                stroke="var(--border)"
+                strokeOpacity={0.85}
+                strokeWidth={2}
+                pointerEvents="none"
+            />
         </>
     )
 }
