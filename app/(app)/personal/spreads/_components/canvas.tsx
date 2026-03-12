@@ -5,14 +5,13 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import SpreadCard, { CARD_WIDTH, CARD_HEIGHT, type CanvasCard } from "./canvas-card";
 import { CardForm } from "@/types/spreads";
 import { useTheme } from "next-themes";
-import { ZOOM_MIN, ZOOM_MAX } from "./zoom-controls";
+import { clampZoom, normalizeZoom } from "./zoom";
 
 const CANVAS_SIZE = 1500;
 const GRID_SIZE = 15;
 const BOUNDS = { minX: 0, minY: 0, maxX: 1410, maxY: 1350 };
 const WHEEL_DELTA_LINE_PX = 16;
 const WHEEL_ZOOM_SENSITIVITY = 0.005;
-const ZOOM_CHANGE_EPSILON = 0.0001;
 
 interface SpreadCanvasProps {
   cards: CanvasCard[];
@@ -440,8 +439,9 @@ export default function SpreadCanvas({
   const pendingScrollRef = useRef<{ left: number; top: number } | null>(null);
 
   useLayoutEffect(() => {
-    renderedZoomRef.current = zoom;
-    targetZoomRef.current = zoom;
+    const normalizedZoom = normalizeZoom(zoom);
+    renderedZoomRef.current = normalizedZoom;
+    targetZoomRef.current = normalizedZoom;
 
     if (!pendingScrollRef.current || !containerRef.current) return;
 
@@ -457,8 +457,6 @@ export default function SpreadCanvas({
     const container = containerRef.current;
     if (!container) return;
 
-    const clampZoom = (v: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, v));
-
     const normalizeWheelDelta = (e: WheelEvent) => {
       if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) return e.deltaY * WHEEL_DELTA_LINE_PX;
       if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) return e.deltaY * container.clientHeight;
@@ -468,10 +466,10 @@ export default function SpreadCanvas({
     const setZoomAtPoint = (nextZoom: number, clientX: number, clientY: number) => {
       if (!onZoomChangeRef.current) return;
 
-      const clampedZoom = clampZoom(nextZoom);
+      const normalizedZoom = normalizeZoom(clampZoom(nextZoom));
       const currentZoom = targetZoomRef.current;
 
-      if (Math.abs(clampedZoom - currentZoom) < ZOOM_CHANGE_EPSILON) return;
+      if (normalizedZoom === currentZoom) return;
 
       const rect = container.getBoundingClientRect();
       const viewportX = clientX - rect.left;
@@ -481,12 +479,12 @@ export default function SpreadCanvas({
       const contentY = (container.scrollTop + viewportY) / renderedZoom;
 
       pendingScrollRef.current = {
-        left: contentX * clampedZoom - viewportX,
-        top: contentY * clampedZoom - viewportY,
+        left: contentX * normalizedZoom - viewportX,
+        top: contentY * normalizedZoom - viewportY,
       };
 
-      targetZoomRef.current = clampedZoom;
-      onZoomChangeRef.current(clampedZoom);
+      targetZoomRef.current = normalizedZoom;
+      onZoomChangeRef.current(normalizedZoom);
     };
 
     const handleWheel = (e: WheelEvent) => {

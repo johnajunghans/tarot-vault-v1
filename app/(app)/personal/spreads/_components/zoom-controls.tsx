@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MinusSignIcon, PlusSignIcon, Refresh01Icon } from "hugeicons-react";
+import {
+  DEFAULT_ZOOM,
+  ZOOM_MIN,
+  ZOOM_MAX,
+  ZOOM_STEP,
+  clampZoom,
+  normalizeZoom,
+} from "./zoom";
 
-const DEFAULT_ZOOM = 1;
-const ZOOM_MIN = 0.5;
-const ZOOM_MAX = 2.5;
-const ZOOM_STEP = 0.1;
-const ZOOM_STEP_EPSILON = 0.0001;
 const TOOLTIP_DELAY = 500;
 
 interface ZoomControlsProps {
@@ -19,20 +22,21 @@ interface ZoomControlsProps {
 }
 
 export default function ZoomControls({ zoom, onZoomChange, className }: ZoomControlsProps) {
-  const clamp = (value: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
-  const isDefaultZoom = Math.abs(zoom - DEFAULT_ZOOM) < ZOOM_STEP_EPSILON;
+  const normalizedZoom = normalizeZoom(zoom);
+  const isDefaultZoom = normalizedZoom === DEFAULT_ZOOM;
+
   const snapZoom = (direction: "in" | "out") => {
-    const stepIndex = zoom / ZOOM_STEP;
+    const stepIndex = normalizedZoom / ZOOM_STEP;
     const nearestStep = Math.round(stepIndex);
-    const isStepAligned = Math.abs(stepIndex - nearestStep) < ZOOM_STEP_EPSILON;
+    const isStepAligned = normalizedZoom === nearestStep * ZOOM_STEP;
 
     if (direction === "in") {
       const nextStep = isStepAligned ? nearestStep + 1 : Math.ceil(stepIndex);
-      return clamp(nextStep * ZOOM_STEP);
+      return clampZoom(nextStep * ZOOM_STEP);
     }
 
     const nextStep = isStepAligned ? nearestStep - 1 : Math.floor(stepIndex);
-    return clamp(nextStep * ZOOM_STEP);
+    return clampZoom(nextStep * ZOOM_STEP);
   };
 
   return (
@@ -44,10 +48,10 @@ export default function ZoomControls({ zoom, onZoomChange, className }: ZoomCont
           <Tooltip delay={TOOLTIP_DELAY}>
             <TooltipTrigger
               render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => onZoomChange(DEFAULT_ZOOM)}
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => onZoomChange(DEFAULT_ZOOM)}
                 >
                   <Refresh01Icon />
                 </Button>
@@ -65,7 +69,7 @@ export default function ZoomControls({ zoom, onZoomChange, className }: ZoomCont
               variant="ghost"
               size="icon-sm"
               onClick={() => onZoomChange(snapZoom("out"))}
-              disabled={zoom <= ZOOM_MIN}
+              disabled={normalizedZoom <= ZOOM_MIN}
             >
               <MinusSignIcon />
             </Button>
@@ -76,7 +80,7 @@ export default function ZoomControls({ zoom, onZoomChange, className }: ZoomCont
       <span
         className="min-w-12 select-none text-center font-mono text-sm text-muted-foreground"
       >
-        {Math.round(zoom * 100)}%
+        {Math.round(normalizedZoom * 100)}%
       </span>
       <Tooltip delay={TOOLTIP_DELAY}>
         <TooltipTrigger
@@ -85,7 +89,7 @@ export default function ZoomControls({ zoom, onZoomChange, className }: ZoomCont
               variant="ghost"
               size="icon-sm"
               onClick={() => onZoomChange(snapZoom("in"))}
-              disabled={zoom >= ZOOM_MAX}
+              disabled={normalizedZoom >= ZOOM_MAX}
             >
               <PlusSignIcon />
             </Button>
