@@ -1,7 +1,23 @@
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
-import { FieldGroup, FieldSeparator, FieldSet } from "@/components/ui/field";
-import { Cancel01Icon, Delete02Icon } from "hugeicons-react";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+  FieldSet,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { normalizeRotationForStorage } from "../rotation";
+import {
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  Cancel01Icon,
+  Delete02Icon,
+  LayerBringToFrontIcon,
+  LayerSendToBackIcon,
+} from "hugeicons-react";
 import { Dispatch, SetStateAction, useCallback, useEffect, useState } from "react";
 import { Controller, useFormContext, useWatch, UseFieldArrayRemove } from "react-hook-form";
 import { CardForm } from "@/types/spreads";
@@ -16,6 +32,33 @@ const GRID_SIZE = 15;
 
 function snapToGrid(value: number): number {
   return Math.round(value / GRID_SIZE) * GRID_SIZE;
+}
+
+function clampLayer(value: number): number {
+  return Math.max(0, Math.round(value));
+}
+
+function getLayersWithFrontCard(layers: number[], selectedIndex: number): number[] {
+  const maxLayer = layers.reduce((max, layer) => Math.max(max, layer), 0);
+  const nextLayers = [...layers];
+  nextLayers[selectedIndex] = maxLayer + 1;
+  return nextLayers;
+}
+
+function getLayersWithBackCard(layers: number[], selectedIndex: number): number[] {
+  if (layers.length === 0) return layers;
+
+  const minLayer = layers.reduce((min, layer) => Math.min(min, layer), layers[0] ?? 0);
+  const nextLayers = [...layers];
+
+  if (minLayer > 0) {
+    nextLayers[selectedIndex] = minLayer - 1;
+    return nextLayers;
+  }
+
+  return nextLayers.map((layer, index) =>
+    index === selectedIndex ? 0 : layer + 1
+  );
 }
 
 // ------------ Read-Only Content Component ------------ //
@@ -93,6 +136,7 @@ interface CardSettingsContentProps {
     cards: Record<"id", string>[];
     selectedCardIndex: number | null;
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
+    onRotationChange: (index: number, value: number) => void;
     remove: UseFieldArrayRemove;
     headerActions?: React.ReactNode;
     isMobile: boolean;
@@ -102,6 +146,7 @@ export function CardSettingsContent({
     cards,
     selectedCardIndex,
     setSelectedCardIndex,
+    onRotationChange,
     remove,
     headerActions,
     isMobile
@@ -109,6 +154,32 @@ export function CardSettingsContent({
     const form = useFormContext<{ positions: CardForm[] }>();
     const selectedCard = selectedCardIndex !== null ? cards[selectedCardIndex] : null
     const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+
+    const applyLayerValues = useCallback((nextLayers: number[]) => {
+      nextLayers.forEach((layer, index) => {
+        form.setValue(`positions.${index}.z`, layer, {
+          shouldDirty: true,
+        });
+      });
+    }, [form]);
+
+    const handleBringToFront = useCallback(() => {
+      if (selectedCardIndex === null) return;
+
+      const layers = (form.getValues("positions") ?? []).map((card) =>
+        clampLayer(card.z ?? 0)
+      );
+      applyLayerValues(getLayersWithFrontCard(layers, selectedCardIndex));
+    }, [applyLayerValues, form, selectedCardIndex]);
+
+    const handleMoveToBack = useCallback(() => {
+      if (selectedCardIndex === null) return;
+
+      const layers = (form.getValues("positions") ?? []).map((card) =>
+        clampLayer(card.z ?? 0)
+      );
+      applyLayerValues(getLayersWithBackCard(layers, selectedCardIndex));
+    }, [applyLayerValues, form, selectedCardIndex]);
 
     const handleDeleteConfirm = useCallback(() => {
       if (deleteIndex === null) return;
@@ -234,11 +305,10 @@ export function CardSettingsContent({
                       label="Rotation"
                       id={field.name}
                       value={field.value}
-                      onChangeValue={field.onChange}
+                      onChangeValue={(value) => onRotationChange(selectedCardIndex, value)}
+                      onBlurTransform={normalizeRotationForStorage}
                       onBlur={field.onBlur}
                       step={45}
-                      min={0}
-                      max={315}
                       error={fieldState.error}
                     />
                   )}
@@ -247,17 +317,53 @@ export function CardSettingsContent({
                   name={`positions.${selectedCardIndex}.z`}
                   control={form.control}
                   render={({ field, fieldState }) => (
-                    <NumberField
-                      label="Layer"
-                      id={field.name}
-                      value={field.value}
-                      onChangeValue={field.onChange}
-                      onBlur={field.onBlur}
-                      step={1}
-                      min={0}
-                      max={100}
-                      error={fieldState.error}
-                    />
+                    <Field data-invalid={!!fieldState.error || undefined}>
+                      <FieldLabel htmlFor={field.name}>Layer</FieldLabel>
+                      <div className="flex items-end gap-2">
+                        <Input
+                          id={field.name}
+                          type="number"
+                          value={field.value}
+                          aria-invalid={!!fieldState.error || undefined}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value, 10);
+                            if (!isNaN(value)) {
+                              field.onChange(clampLayer(value));
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value, 10);
+                            if (!isNaN(value)) {
+                              field.onChange(clampLayer(value));
+                            }
+                            field.onBlur();
+                          }}
+                          step={1}
+                          min={0}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          aria-label="Move position to back"
+                          title="Move to Back"
+                          onClick={handleMoveToBack}
+                        >
+                          <LayerBringToFrontIcon />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          aria-label="Bring position to front"
+                          title="Bring to Front"
+                          onClick={handleBringToFront}
+                        >
+                          <LayerSendToBackIcon />
+                        </Button>
+                      </div>
+                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                    </Field>
                   )}
                 />
               </FieldGroup>
@@ -314,6 +420,7 @@ interface CardSettingsPanelProps {
     cards: Record<"id", string>[]
     selectedCardIndex: number | null,
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
+    onRotationChange?: (index: number, value: number) => void
     remove?: UseFieldArrayRemove
     isMobile: boolean;
     isViewMode?: boolean;
@@ -325,6 +432,7 @@ export default function CardSettingsPanel({
     cards,
     selectedCardIndex,
     setSelectedCardIndex,
+    onRotationChange,
     remove,
     isMobile,
     isViewMode = false,
@@ -406,6 +514,7 @@ export default function CardSettingsPanel({
               cards={cards}
               selectedCardIndex={selectedCardIndex}
               setSelectedCardIndex={setSelectedCardIndex}
+              onRotationChange={onRotationChange!}
               remove={remove!}
               headerActions={closeHeaderAction}
               isMobile={isMobile}

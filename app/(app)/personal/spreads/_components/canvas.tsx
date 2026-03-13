@@ -65,6 +65,8 @@ export type SpreadCanvasViewportRequest =
 
 interface SpreadCanvasProps {
     cards: CanvasCard[]
+    cardKeys?: string[]
+    rotationAngles?: number[]
     selectedCardIndex: number | null
     onCardSelect: (index: number | null) => void
     onCanvasDoubleClick?: (x: number, y: number) => void
@@ -77,6 +79,8 @@ interface SpreadCanvasProps {
 /** SVG canvas for arranging spread positions. Supports drag, marquee select, spacebar pan, alignment guides, and grid snapping. */
 export default function SpreadCanvas({
     cards,
+    cardKeys,
+    rotationAngles,
     selectedCardIndex,
     onCardSelect,
     onCanvasDoubleClick,
@@ -963,9 +967,12 @@ export default function SpreadCanvas({
 
                                 return (
                                     <SpreadCard
-                                        key={String(index)}
+                                        key={cardKeys?.[index] ?? String(index)}
                                         card={card}
                                         index={index}
+                                        renderRotation={
+                                            rotationAngles?.[index] ?? card.r
+                                        }
                                         selected={index === selectedCardIndex}
                                         groupSelected={
                                             isViewMode

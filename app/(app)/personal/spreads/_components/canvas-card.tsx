@@ -97,6 +97,7 @@ export interface CanvasCard {
 interface CanvasCardProps {
     card: CanvasCard
     index: number
+    renderRotation: number
     selected: boolean
     groupSelected: boolean
     isDraggingInGroup: boolean
@@ -242,6 +243,7 @@ function TarotCardBack({
 function CanvasCard({
     card,
     index,
+    renderRotation,
     selected,
     groupSelected,
     isDraggingInGroup,
@@ -259,6 +261,8 @@ function CanvasCard({
     const [isDraggingState, setIsDraggingState] = useState(false)
 
     const groupRef = useRef<SVGGElement>(null)
+    const rotationRef = useRef<SVGGElement>(null)
+    const badgeRef = useRef<SVGGElement>(null)
     const draggableRef = useRef<Draggable | null>(null)
     const isDraggingRef = useRef(false)
     const initialPos = useRef({ x: card.x, y: card.y })
@@ -280,6 +284,18 @@ function CanvasCard({
             const startX = currentPos?.x ?? initialPos.current.x
             const startY = currentPos?.y ?? initialPos.current.y
             gsap.set(group, { x: startX, y: startY })
+            if (rotationRef.current) {
+                gsap.set(rotationRef.current, {
+                    rotation: renderRotation,
+                    svgOrigin: `${CARD_WIDTH / 2} ${CARD_HEIGHT / 2}`,
+                })
+            }
+            if (badgeRef.current) {
+                gsap.set(badgeRef.current, {
+                    rotation: -renderRotation,
+                    svgOrigin: '15 15',
+                })
+            }
 
             if (isViewMode) return
 
@@ -353,6 +369,30 @@ function CanvasCard({
     }, [watched.x, watched.y])
 
     useEffect(() => {
+        const duration = isDraggingRef.current ? 0 : 0.18
+
+        if (rotationRef.current) {
+            gsap.to(rotationRef.current, {
+                rotation: renderRotation,
+                svgOrigin: `${CARD_WIDTH / 2} ${CARD_HEIGHT / 2}`,
+                duration,
+                ease: 'power2.out',
+                overwrite: true,
+            })
+        }
+
+        if (badgeRef.current) {
+            gsap.to(badgeRef.current, {
+                rotation: -renderRotation,
+                svgOrigin: '15 15',
+                duration,
+                ease: 'power2.out',
+                overwrite: true,
+            })
+        }
+    }, [renderRotation])
+
+    useEffect(() => {
         registerRef(index, groupRef.current)
         return () => registerRef(index, null)
     }, [index, registerRef])
@@ -401,9 +441,7 @@ function CanvasCard({
                 }}
             >
                 {/* Rotation wrapper */}
-                <g
-                    transform={`rotate(${watched.r}, ${CARD_WIDTH / 2}, ${CARD_HEIGHT / 2})`}
-                >
+                <g ref={rotationRef}>
                     {/* Selection glow ring */}
                     {selected && !groupSelected && (
                         <rect
@@ -427,24 +465,29 @@ function CanvasCard({
                     />
 
                     {/* Position number badge */}
-                    <circle
-                        cx={15}
-                        cy={15}
-                        r={10}
-                        fill={badgeColor}
-                        fillOpacity={0.9}
-                    />
-                    <text
-                        x={15}
-                        y={19}
-                        textAnchor="middle"
-                        fontSize={10}
-                        fill="var(--background)"
-                        style={{ pointerEvents: 'none', userSelect: 'none' }}
-                        className="font-medium font-mono"
-                    >
-                        {index + 1}
-                    </text>
+                    <g ref={badgeRef}>
+                        <circle
+                            cx={15}
+                            cy={15}
+                            r={10}
+                            fill={badgeColor}
+                            fillOpacity={0.9}
+                        />
+                        <text
+                            x={15}
+                            y={19}
+                            textAnchor="middle"
+                            fontSize={10}
+                            fill="var(--background)"
+                            style={{
+                                pointerEvents: 'none',
+                                userSelect: 'none',
+                            }}
+                            className="font-medium font-mono"
+                        >
+                            {index + 1}
+                        </text>
+                    </g>
 
                     {/* Position name */}
                     {cardNameLines.length > 0 && (
@@ -496,6 +539,7 @@ function arePropsEqual(prev: CanvasCardProps, next: CanvasCardProps): boolean {
         prev.card.r === next.card.r &&
         prev.card.z === next.card.z &&
         prev.index === next.index &&
+        prev.renderRotation === next.renderRotation &&
         prev.selected === next.selected &&
         prev.groupSelected === next.groupSelected &&
         prev.isDraggingInGroup === next.isDraggingInGroup &&

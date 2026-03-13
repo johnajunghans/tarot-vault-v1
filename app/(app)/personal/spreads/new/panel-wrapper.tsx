@@ -35,6 +35,11 @@ import {
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
 } from "../spread-layout";
+import {
+    normalizeRotationForStorage,
+    reconcileContinuousRotations,
+    resolveContinuousRotation,
+} from "../rotation";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -179,6 +184,72 @@ export default function PanelWrapper({
 
     const watchedName = watchedValues?.name;
     const watchedPositions = watchedValues?.positions;
+    const [cardRotations, setCardRotations] = useState<Record<string, number>>(
+        {}
+    );
+    const cardRotationsRef = useRef<Record<string, number>>({});
+    const canvasCards = (watchedPositions ?? []).map((card) => ({
+        name: card.name ?? "",
+        description: card.description,
+        allowReverse: card.allowReverse,
+        x: card.x ?? 0,
+        y: card.y ?? 0,
+        r: card.r ?? 0,
+        z: card.z ?? 0,
+    }));
+    const canvasRotationAngles = cards.map(
+        ({ id }, index) => cardRotations[id] ?? canvasCards[index]?.r ?? 0
+    );
+
+    useEffect(() => {
+        const nextRotations = reconcileContinuousRotations(
+            cards.map(({ id }) => id),
+            (watchedPositions ?? []).map((card) => card.r ?? 0),
+            cardRotationsRef.current
+        );
+
+        const hasChanged =
+            Object.keys(nextRotations).length !==
+                Object.keys(cardRotationsRef.current).length ||
+            Object.entries(nextRotations).some(
+                ([cardId, rotation]) =>
+                    cardRotationsRef.current[cardId] !== rotation
+            );
+
+        if (!hasChanged) return;
+
+        cardRotationsRef.current = nextRotations;
+        setCardRotations(nextRotations);
+    }, [cards, watchedPositions]);
+
+    const handleCardRotationChange = useCallback(
+        (index: number, nextValue: number) => {
+            const cardId = cards[index]?.id;
+            if (!cardId) return;
+
+            const currentStoredRotation =
+                form.getValues(`positions.${index}.r`) ?? 0;
+            const previousActualRotation =
+                cardRotationsRef.current[cardId] ??
+                normalizeRotationForStorage(currentStoredRotation);
+            const nextActualRotation = resolveContinuousRotation(
+                nextValue,
+                previousActualRotation
+            );
+            const nextStoredRotation = normalizeRotationForStorage(nextValue);
+            const nextRotations = {
+                ...cardRotationsRef.current,
+                [cardId]: nextActualRotation,
+            };
+
+            cardRotationsRef.current = nextRotations;
+            setCardRotations(nextRotations);
+            form.setValue(`positions.${index}.r`, nextStoredRotation, {
+                shouldDirty: true,
+            });
+        },
+        [cards, form]
+    );
 
     // ------------ MOBILE SHEET STATE ------------ //
 
@@ -363,7 +434,9 @@ export default function PanelWrapper({
 
                         {/* Full Canvas */}
                         <SpreadCanvas
-                            cards={cards}
+                            cards={canvasCards}
+                            cardKeys={cards.map(({ id }) => id)}
+                            rotationAngles={canvasRotationAngles}
                             selectedCardIndex={selectedCardIndex}
                             onCardSelect={setSelectedCardIndex}
                             onCanvasDoubleClick={addCardAt}
@@ -396,6 +469,7 @@ export default function PanelWrapper({
                             cards={cards}
                             selectedCardIndex={selectedCardIndex}
                             setSelectedCardIndex={setSelectedCardIndex}
+                            onRotationChange={handleCardRotationChange}
                             remove={remove}
                         />
                     </>
@@ -403,7 +477,9 @@ export default function PanelWrapper({
                     <>
                     {/* Layer 1: Canvas fills entire area */}
                     <SpreadCanvas
-                        cards={cards}
+                        cards={canvasCards}
+                        cardKeys={cards.map(({ id }) => id)}
+                        rotationAngles={canvasRotationAngles}
                         selectedCardIndex={selectedCardIndex}
                         onCardSelect={setSelectedCardIndex}
                         onCanvasDoubleClick={addCardAt}
@@ -454,6 +530,7 @@ export default function PanelWrapper({
                         cards={cards}
                         selectedCardIndex={selectedCardIndex}
                         setSelectedCardIndex={setSelectedCardIndex}
+                        onRotationChange={handleCardRotationChange}
                         remove={remove}
                     />
 

@@ -7,7 +7,7 @@ export const cardSchema = z.object({
     x: z.number(),
     y: z.number(),
     r: z.number().min(0).max(315),
-    z: z.number().min(0).max(100),
+    z: z.number().min(0),
   })
   
   // Form validation schema
