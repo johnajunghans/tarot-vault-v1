@@ -513,7 +513,6 @@ export default function EditPanelWrapper({
                         <ZoomControls
                             zoom={zoom}
                             onZoomChange={setZoom}
-                            className="absolute top-3 right-3 z-10"
                         />
 
                         {/* Full Canvas */}
@@ -584,7 +583,7 @@ export default function EditPanelWrapper({
                             <ZoomControls
                                 zoom={zoom}
                                 onZoomChange={setZoom}
-                                className="absolute top-3 right-3 z-10 pointer-events-auto"
+                                className="pointer-events-auto"
                             />
                         </div>
                     </ResizablePanel>

@@ -167,11 +167,15 @@ export default function SpreadSettingsPanel({
 
     const panelTitle = isViewMode ? "Spread Details" : "Spread Settings";
 
-    const collapseHeaderAction = !isMobile && (
-      <Tooltip>
+    const panelToggleIcon = !isMobile && (
+      <Tooltip delay={500}>
         <TooltipTrigger
           render={
-            <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.collapse()}>
+            <Button 
+              variant="ghost" 
+              size="icon-sm" 
+              onClick={() => spreadSettingsPanelRef.current?.isCollapsed() ? spreadSettingsPanelRef.current?.expand() : spreadSettingsPanelRef.current?.collapse()}
+            >
               <PanelLeftIcon />
             </Button>
           }
@@ -182,14 +186,17 @@ export default function SpreadSettingsPanel({
 
     return (
       <>
-        {hideSettings &&
-          <Card className="absolute top-3 left-3 py-2 z-10 min-w-[150px] max-w-[350px] shadow-md bg-background/90 backdrop-blur-sm border-border/50 pointer-events-auto">
-            <CardContent>
+          <Card className={`
+              absolute py-2 h-11 z-10 top-2 left-2 min-w-[150px] max-w-[350px] shadow-md bg-background/90 backdrop-blur-sm border-border/50 transition-[scale] duration-50
+              ${hideSettings ? "scale-100 opacity-100 pointer-events-auto" : "scale-110 opacity-0 pointer-events-none"}
+            `}
+          >
+            <CardContent className="px-2">
               <div className="flex w-full justify-between items-center gap-8">
                 <h3 className="font-display text-sm font-bold tracking-tight">{panelTitle}</h3>
                 <div className="flex items-center gap-1">
                   {!isViewMode && addCard && (
-                    <Tooltip>
+                    <Tooltip delay={500}>
                       <TooltipTrigger
                         render={
                           <Button
@@ -205,21 +212,12 @@ export default function SpreadSettingsPanel({
                       <TooltipContent>Add Position</TooltipContent>
                     </Tooltip>
                   )}
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button variant="ghost" size="icon-sm" onClick={() => spreadSettingsPanelRef.current?.expand()}>
-                          <PanelLeftIcon />
-                        </Button>
-                      }
-                    />
-                    <TooltipContent>Show Panel</TooltipContent>
-                  </Tooltip>
+                  { panelToggleIcon }
                 </div>
               </div>
             </CardContent>
           </Card>
-        }
+        
 
         <ResponsivePanel
           isMobile={isMobile}
@@ -243,7 +241,7 @@ export default function SpreadSettingsPanel({
                 cards={cards}
                 selectedCardIndex={selectedCardIndex}
                 setSelectedCardIndex={setSelectedCardIndex}
-                headerActions={collapseHeaderAction}
+                headerActions={panelToggleIcon}
               />
             ) : (
               <SpreadSettingsContent
@@ -253,7 +251,7 @@ export default function SpreadSettingsPanel({
                 move={move!}
                 selectedCardIndex={selectedCardIndex}
                 setSelectedCardIndex={setSelectedCardIndex}
-                headerActions={collapseHeaderAction}
+                headerActions={panelToggleIcon}
                 isMobile={isMobile}
               />
             )}
