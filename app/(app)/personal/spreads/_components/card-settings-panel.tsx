@@ -332,9 +332,11 @@ export default function CardSettingsPanel({
     onOpenChange,
 }: CardSettingsPanelProps) {
     const cardDetailsPanelRef = usePanelRef();
-    
+
     function handleResize() {
-      if (cardDetailsPanelRef.current && cardDetailsPanelRef.current.isCollapsed()) {
+      if (!cardDetailsPanelRef.current) return;
+
+      if (cardDetailsPanelRef.current.isCollapsed()) {
         setSelectedCardIndex(null)
       }
     }
@@ -359,7 +361,7 @@ export default function CardSettingsPanel({
       ) {
         setSelectedCardIndex(null);
       }
-    }, [cards, selectedCardIndex]);
+    }, [cards, selectedCardIndex, setSelectedCardIndex]);
 
     const panelTitle = isViewMode ? "Position Details" : "Position Settings";
 

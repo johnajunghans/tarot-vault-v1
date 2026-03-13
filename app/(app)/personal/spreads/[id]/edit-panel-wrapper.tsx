@@ -17,7 +17,7 @@ import SpreadCanvas, {
 import CardSettingsPanel from "../_components/card-settings-panel";
 import ZoomControls from "../_components/zoom-controls";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
-import { generateCard, generateCardAt } from "../utils";
+import { generateCardAt } from "../utils";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { FieldErrors } from "react-hook-form";
@@ -33,6 +33,7 @@ import Link from "next/link";
 import {
     CANVAS_CENTER,
     CARD_HEIGHT,
+    CARD_SPACING_X,
     CARD_WIDTH,
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
@@ -145,16 +146,18 @@ export default function EditPanelWrapper({
     // ------------ ADD CARD ------------ //
 
     const addCard = useCallback(() => {
+        const nextIndex = cards.length;
+        const lastCard = nextIndex > 0 ? form.getValues(`positions.${nextIndex - 1}`) : null;
         const newCard =
-            cards.length === 0
-                ? generateCardAt(
+            lastCard
+                ? generateCardAt(lastCard.x + CARD_SPACING_X, lastCard.y)
+                : generateCardAt(
                       CANVAS_CENTER.x - CARD_WIDTH / 2,
                       CANVAS_CENTER.y - CARD_HEIGHT / 2
-                  )
-                : generateCard(cards.length);
-        append(newCard, { focusName: `positions.${selectedCardIndex}.name` });
-        setSelectedCardIndex(cards.length);
-    }, [cards.length, append, selectedCardIndex, setSelectedCardIndex]);
+                  );
+        append(newCard, { focusName: `positions.${nextIndex}.name` });
+        setSelectedCardIndex(nextIndex);
+    }, [cards.length, append, form, setSelectedCardIndex]);
 
     const addCardAt = useCallback((x: number, y: number) => {
         if (cards.length >= 78) return;

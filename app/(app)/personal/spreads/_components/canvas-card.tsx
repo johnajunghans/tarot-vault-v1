@@ -361,8 +361,10 @@ function CanvasCard({
     const isHighlighted = selected || groupSelected
     const badgeColor = isHighlighted ? 'var(--gold)' : 'var(--gold-muted)'
     const cardName = watched.name?.trim() ?? ''
-    const cardNameFontSize = getCardNameFontSize(cardName)
-    const cardNameLines = splitCardNameIntoLines(cardName)
+    const hasCardName = cardName.length > 0
+    const displayName = hasCardName ? cardName : 'Untitled'
+    const cardNameFontSize = getCardNameFontSize(displayName)
+    const cardNameLines = splitCardNameIntoLines(displayName)
 
     return (
         <g
@@ -454,9 +456,10 @@ function CanvasCard({
                             }
                             textAnchor="middle"
                             fill="var(--foreground)"
-                            fillOpacity={0.78}
+                            fillOpacity={hasCardName ? 0.78 : 0.48}
                             fontSize={cardNameFontSize}
-                            fontWeight={600}
+                            fontStyle={hasCardName ? undefined : 'italic'}
+                            fontWeight={hasCardName ? 600 : 500}
                             style={{
                                 pointerEvents: 'none',
                                 userSelect: 'none',

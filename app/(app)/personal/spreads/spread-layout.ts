@@ -20,7 +20,7 @@ export const CANVAS_CENTER = {
 }
 
 const CARDS_PER_ROW = 10
-const CARD_SPACING_X = 105
+export const CARD_SPACING_X = 105
 const CARD_SPACING_Y = 165
 
 export interface SpreadBounds {
