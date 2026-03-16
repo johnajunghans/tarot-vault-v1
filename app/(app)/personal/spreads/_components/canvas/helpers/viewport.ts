@@ -3,16 +3,16 @@
 import { DEFAULT_ZOOM, normalizeZoom } from './zoom'
 
 interface CanvasViewportInput {
-    scrollLeft: number
-    scrollTop: number
+    panX: number
+    panY: number
     clientWidth: number
     clientHeight: number
     zoom: number
 }
 
 interface CanvasPointInput {
-    scrollLeft: number
-    scrollTop: number
+    panX: number
+    panY: number
     viewportX: number
     viewportY: number
     zoom: number
@@ -35,8 +35,8 @@ interface CanvasViewportRect {
 }
 
 function getCanvasPointAtViewportPoint({
-    scrollLeft,
-    scrollTop,
+    panX,
+    panY,
     viewportX,
     viewportY,
     zoom,
@@ -44,12 +44,12 @@ function getCanvasPointAtViewportPoint({
     const normalizedZoom = normalizeZoom(zoom || DEFAULT_ZOOM)
 
     return {
-        x: (scrollLeft + viewportX) / normalizedZoom,
-        y: (scrollTop + viewportY) / normalizedZoom,
+        x: panX + viewportX / normalizedZoom,
+        y: panY + viewportY / normalizedZoom,
     }
 }
 
-function getViewportScrollForCanvasPoint({
+function getPanForCanvasPoint({
     contentX,
     contentY,
     viewportX,
@@ -65,38 +65,38 @@ function getViewportScrollForCanvasPoint({
     const normalizedZoom = normalizeZoom(zoom || DEFAULT_ZOOM)
 
     return {
-        left: contentX * normalizedZoom - viewportX,
-        top: contentY * normalizedZoom - viewportY,
+        x: contentX - viewportX / normalizedZoom,
+        y: contentY - viewportY / normalizedZoom,
     }
 }
 
-function clampViewportScroll({
-    left,
-    top,
-    clientWidth,
-    clientHeight,
-    contentWidth,
-    contentHeight,
+function clampPan({
+    panX,
+    panY,
+    canvasWidth,
+    canvasHeight,
+    viewportWidth,
+    viewportHeight,
 }: {
-    left: number
-    top: number
-    clientWidth: number
-    clientHeight: number
-    contentWidth: number
-    contentHeight: number
+    panX: number
+    panY: number
+    canvasWidth: number
+    canvasHeight: number
+    viewportWidth: number
+    viewportHeight: number
 }) {
-    const maxLeft = Math.max(contentWidth - clientWidth, 0)
-    const maxTop = Math.max(contentHeight - clientHeight, 0)
+    const maxPanX = Math.max(canvasWidth - viewportWidth, 0)
+    const maxPanY = Math.max(canvasHeight - viewportHeight, 0)
 
     return {
-        left: Math.max(0, Math.min(maxLeft, left)),
-        top: Math.max(0, Math.min(maxTop, top)),
+        x: Math.max(0, Math.min(maxPanX, panX)),
+        y: Math.max(0, Math.min(maxPanY, panY)),
     }
 }
 
-function getClampedViewportScrollForZoomAnchor({
-    scrollLeft,
-    scrollTop,
+function getClampedPanForZoomAnchor({
+    panX,
+    panY,
     anchorViewportX,
     anchorViewportY,
     targetViewportX = anchorViewportX,
@@ -105,11 +105,11 @@ function getClampedViewportScrollForZoomAnchor({
     toZoom,
     clientWidth,
     clientHeight,
-    contentWidth,
-    contentHeight,
+    canvasWidth,
+    canvasHeight,
 }: {
-    scrollLeft: number
-    scrollTop: number
+    panX: number
+    panY: number
     anchorViewportX: number
     anchorViewportY: number
     targetViewportX?: number
@@ -118,61 +118,64 @@ function getClampedViewportScrollForZoomAnchor({
     toZoom: number
     clientWidth: number
     clientHeight: number
-    contentWidth: number
-    contentHeight: number
+    canvasWidth: number
+    canvasHeight: number
 }) {
+    const normalizedToZoom = normalizeZoom(toZoom || DEFAULT_ZOOM)
+
     const { x: contentX, y: contentY } = getCanvasPointAtViewportPoint({
-        scrollLeft,
-        scrollTop,
+        panX,
+        panY,
         viewportX: anchorViewportX,
         viewportY: anchorViewportY,
         zoom: fromZoom,
     })
 
-    return clampViewportScroll({
-        ...getViewportScrollForCanvasPoint({
-            contentX,
-            contentY,
-            viewportX: targetViewportX,
-            viewportY: targetViewportY,
-            zoom: toZoom,
-        }),
-        clientWidth,
-        clientHeight,
-        contentWidth,
-        contentHeight,
+    const newPan = getPanForCanvasPoint({
+        contentX,
+        contentY,
+        viewportX: targetViewportX,
+        viewportY: targetViewportY,
+        zoom: toZoom,
+    })
+
+    return clampPan({
+        panX: newPan.x,
+        panY: newPan.y,
+        canvasWidth,
+        canvasHeight,
+        viewportWidth: clientWidth / normalizedToZoom,
+        viewportHeight: clientHeight / normalizedToZoom,
     })
 }
 
 function getCanvasViewportRect({
-    scrollLeft,
-    scrollTop,
+    panX,
+    panY,
     clientWidth,
     clientHeight,
     zoom,
 }: CanvasViewportInput): CanvasViewportRect {
     const normalizedZoom = normalizeZoom(zoom || DEFAULT_ZOOM)
-    const left = scrollLeft / normalizedZoom
-    const top = scrollTop / normalizedZoom
     const width = clientWidth / normalizedZoom
     const height = clientHeight / normalizedZoom
 
     return {
-        left,
-        top,
-        right: left + width,
-        bottom: top + height,
+        left: panX,
+        top: panY,
+        right: panX + width,
+        bottom: panY + height,
         width,
         height,
-        centerX: left + width / 2,
-        centerY: top + height / 2,
+        centerX: panX + width / 2,
+        centerY: panY + height / 2,
     }
 }
 
 export {
-    clampViewportScroll,
-    getClampedViewportScrollForZoomAnchor,
+    clampPan,
+    getClampedPanForZoomAnchor,
     getCanvasPointAtViewportPoint,
-    getViewportScrollForCanvasPoint,
+    getPanForCanvasPoint,
     getCanvasViewportRect,
 }

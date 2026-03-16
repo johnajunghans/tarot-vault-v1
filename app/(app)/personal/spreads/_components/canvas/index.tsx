@@ -33,9 +33,9 @@ import {
 } from './helpers/geometry'
 import {
     getCanvasViewportRect,
-    getClampedViewportScrollForZoomAnchor,
-    getViewportScrollForCanvasPoint,
-    clampViewportScroll,
+    getClampedPanForZoomAnchor,
+    getPanForCanvasPoint,
+    clampPan,
 } from './helpers/viewport'
 import {
     CANVAS_BOUNDS,
@@ -145,12 +145,8 @@ function SpreadCanvasComponent(
     const cardsLayerRef = useRef<SVGGElement>(null)
     const { resolvedTheme } = useTheme()
 
-    const [viewportState, setViewportState] = useState({
-        scrollLeft: 0,
-        scrollTop: 0,
-        clientWidth: 0,
-        clientHeight: 0,
-    })
+    const [pan, setPan] = useState({ x: 0, y: 0 })
+    const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
     const [zoom, setZoom] = useState(DEFAULT_ZOOM)
     const [isZoomInteractionActive, setIsZoomInteractionActive] = useState(false)
     const [dragging, setDragging] = useState<{
@@ -198,22 +194,23 @@ function SpreadCanvasComponent(
     const marqueeStart = useRef({ x: 0, y: 0 })
     const isSpaceHeld = useRef(false)
     const isPanning = useRef(false)
-    const panStart = useRef({ x: 0, y: 0, scrollX: 0, scrollY: 0 })
+    const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
+    const panRef = useRef({ x: 0, y: 0 })
+    const containerSizeRef = useRef({ width: 0, height: 0 })
     const renderedZoomRef = useRef(DEFAULT_ZOOM)
     const targetZoomRef = useRef(DEFAULT_ZOOM)
-    const targetScrollRef = useRef({ left: 0, top: 0 })
-    const pendingScrollRef = useRef<{ left: number; top: number } | null>(null)
+    const targetPanRef = useRef({ x: 0, y: 0 })
     const pendingViewportCommitRef = useRef<{
         zoom: number
-        scroll: { left: number; top: number }
+        pan: { x: number; y: number }
         shouldFlagInteraction: boolean
         viewportRequestKey: string | null
     } | null>(null)
+    const panFrameRef = useRef(0)
     const viewportFrameRef = useRef(0)
     const zoomInteractionTimeoutRef = useRef<number | null>(null)
     const appliedViewportRequestKeyRef = useRef<string | null>(null)
     const scheduledViewportRequestKeyRef = useRef<string | null>(null)
-    const pendingAppliedViewportRequestKeyRef = useRef<string | null>(null)
     const onZoomDisplayChangeRef = useRef(onZoomDisplayChange)
     const pinchStateRef = useRef<{
         distance: number
@@ -231,29 +228,16 @@ function SpreadCanvasComponent(
         setGroupSelectedIndices(next)
     }, [])
 
-    const syncViewportState = useCallback(() => {
+    const syncContainerSize = useCallback(() => {
         const container = containerRef.current
         if (!container) return
-
-        setViewportState((prev) => {
-            const next = {
-                scrollLeft: container.scrollLeft,
-                scrollTop: container.scrollTop,
-                clientWidth: container.clientWidth,
-                clientHeight: container.clientHeight,
-            }
-
-            if (
-                prev.scrollLeft === next.scrollLeft &&
-                prev.scrollTop === next.scrollTop &&
-                prev.clientWidth === next.clientWidth &&
-                prev.clientHeight === next.clientHeight
-            ) {
-                return prev
-            }
-
-            return next
-        })
+        const { clientWidth, clientHeight } = container
+        containerSizeRef.current = { width: clientWidth, height: clientHeight }
+        setContainerSize((prev) =>
+            prev.width === clientWidth && prev.height === clientHeight
+                ? prev
+                : { width: clientWidth, height: clientHeight }
+        )
     }, [])
 
     const setZoomInteractionActiveForFrame = useCallback(() => {
@@ -311,6 +295,9 @@ function SpreadCanvasComponent(
             if (viewportFrameRef.current !== 0) {
                 window.cancelAnimationFrame(viewportFrameRef.current)
             }
+            if (panFrameRef.current !== 0) {
+                window.cancelAnimationFrame(panFrameRef.current)
+            }
             if (zoomInteractionTimeoutRef.current !== null) {
                 window.clearTimeout(zoomInteractionTimeoutRef.current)
             }
@@ -328,7 +315,7 @@ function SpreadCanvasComponent(
 
             frame = window.requestAnimationFrame(() => {
                 frame = 0
-                syncViewportState()
+                syncContainerSize()
             })
         }
 
@@ -336,16 +323,14 @@ function SpreadCanvasComponent(
 
         const observer = new ResizeObserver(scheduleSync)
         observer.observe(container)
-        container.addEventListener('scroll', scheduleSync, { passive: true })
 
         return () => {
             observer.disconnect()
-            container.removeEventListener('scroll', scheduleSync)
             if (frame !== 0) {
                 window.cancelAnimationFrame(frame)
             }
         }
-    }, [syncViewportState])
+    }, [syncContainerSize])
 
     const clientToSVG = useCallback((clientX: number, clientY: number) => {
         const svg = svgRef.current
@@ -541,37 +526,27 @@ function SpreadCanvasComponent(
     }, [effectiveCards, dragging, groupSelectedIndices, isViewMode])
 
     const getViewportSnapshot = useCallback(() => {
-        const container = containerRef.current
-        if (!container) {
-            return {
-                scrollLeft: 0,
-                scrollTop: 0,
-                zoom: targetZoomRef.current || DEFAULT_ZOOM,
-                clientWidth: 0,
-                clientHeight: 0,
-            }
-        }
+        const size = containerSizeRef.current
 
         if (
             pendingViewportCommitRef.current ||
-            pendingScrollRef.current ||
             targetZoomRef.current !== renderedZoomRef.current
         ) {
             return {
-                scrollLeft: targetScrollRef.current.left,
-                scrollTop: targetScrollRef.current.top,
+                panX: targetPanRef.current.x,
+                panY: targetPanRef.current.y,
                 zoom: targetZoomRef.current,
-                clientWidth: container.clientWidth,
-                clientHeight: container.clientHeight,
+                clientWidth: size.width,
+                clientHeight: size.height,
             }
         }
 
         return {
-            scrollLeft: container.scrollLeft,
-            scrollTop: container.scrollTop,
+            panX: panRef.current.x,
+            panY: panRef.current.y,
             zoom: renderedZoomRef.current,
-            clientWidth: container.clientWidth,
-            clientHeight: container.clientHeight,
+            clientWidth: size.width,
+            clientHeight: size.height,
         }
     }, [])
 
@@ -579,50 +554,44 @@ function SpreadCanvasComponent(
         viewportFrameRef.current = 0
         const pending = pendingViewportCommitRef.current
         pendingViewportCommitRef.current = null
-        const container = containerRef.current
-        if (!pending || !container) return
+        if (!pending) return
 
         if (pending.shouldFlagInteraction) {
             setZoomInteractionActiveForFrame()
         }
 
-        if (pending.zoom !== renderedZoomRef.current) {
-            pendingScrollRef.current = pending.scroll
-            pendingAppliedViewportRequestKeyRef.current =
-                pending.viewportRequestKey
-            setZoom(pending.zoom)
-            return
-        }
-
+        panRef.current = pending.pan
+        targetPanRef.current = pending.pan
         targetZoomRef.current = pending.zoom
-        targetScrollRef.current = pending.scroll
-        container.scrollLeft = pending.scroll.left
-        container.scrollTop = pending.scroll.top
+        renderedZoomRef.current = pending.zoom
+
         if (pending.viewportRequestKey) {
             appliedViewportRequestKeyRef.current = pending.viewportRequestKey
             scheduledViewportRequestKeyRef.current = null
         }
-        syncViewportState()
-    }, [setZoomInteractionActiveForFrame, syncViewportState])
+
+        setPan(pending.pan)
+        setZoom(pending.zoom)
+        onZoomDisplayChangeRef.current?.(pending.zoom)
+    }, [setZoomInteractionActiveForFrame])
 
     const scheduleViewportCommit = useCallback(
         (
             nextZoom: number,
-            nextScroll: { left: number; top: number },
+            nextPan: { x: number; y: number },
             shouldFlagInteraction: boolean,
             viewportRequestKey: string | null = null
         ) => {
             targetZoomRef.current = nextZoom
-            targetScrollRef.current = nextScroll
+            targetPanRef.current = nextPan
             if (viewportRequestKey) {
                 scheduledViewportRequestKeyRef.current = viewportRequestKey
             } else if (pendingViewportCommitRef.current?.viewportRequestKey) {
                 scheduledViewportRequestKeyRef.current = null
-                pendingAppliedViewportRequestKeyRef.current = null
             }
             pendingViewportCommitRef.current = {
                 zoom: nextZoom,
-                scroll: nextScroll,
+                pan: nextPan,
                 shouldFlagInteraction,
                 viewportRequestKey,
             }
@@ -652,70 +621,48 @@ function SpreadCanvasComponent(
             targetViewportY?: number
             shouldFlagInteraction: boolean
         }) => {
-            const container = containerRef.current
-            if (!container) return
-
             const normalizedZoom = normalizeZoom(nextZoom)
             const currentViewport = getViewportSnapshot()
 
-            const nextScroll = getClampedViewportScrollForZoomAnchor({
-                scrollLeft: currentViewport.scrollLeft,
-                scrollTop: currentViewport.scrollTop,
+            const nextPan = getClampedPanForZoomAnchor({
+                panX: currentViewport.panX,
+                panY: currentViewport.panY,
                 anchorViewportX,
                 anchorViewportY,
                 targetViewportX,
                 targetViewportY,
                 fromZoom: currentViewport.zoom,
                 toZoom: normalizedZoom,
-                clientWidth: container.clientWidth,
-                clientHeight: container.clientHeight,
-                contentWidth: svgWidth * normalizedZoom,
-                contentHeight: svgHeight * normalizedZoom,
+                clientWidth: currentViewport.clientWidth,
+                clientHeight: currentViewport.clientHeight,
+                canvasWidth: svgWidth,
+                canvasHeight: svgHeight,
             })
 
             if (
                 normalizedZoom === currentViewport.zoom &&
-                nextScroll.left === currentViewport.scrollLeft &&
-                nextScroll.top === currentViewport.scrollTop
+                nextPan.x === currentViewport.panX &&
+                nextPan.y === currentViewport.panY
             ) {
                 return
             }
 
-            scheduleViewportCommit(normalizedZoom, nextScroll, shouldFlagInteraction)
+            scheduleViewportCommit(normalizedZoom, nextPan, shouldFlagInteraction)
         },
         [getViewportSnapshot, scheduleViewportCommit, svgHeight, svgWidth]
     )
 
     useLayoutEffect(() => {
         renderedZoomRef.current = zoom
-
-        if (!pendingScrollRef.current || !containerRef.current) {
-            onZoomDisplayChangeRef.current?.(zoom)
-            return
-        }
-
-        containerRef.current.scrollLeft = pendingScrollRef.current.left
-        containerRef.current.scrollTop = pendingScrollRef.current.top
-        targetScrollRef.current = pendingScrollRef.current
-        pendingScrollRef.current = null
-        if (pendingAppliedViewportRequestKeyRef.current) {
-            appliedViewportRequestKeyRef.current =
-                pendingAppliedViewportRequestKeyRef.current
-            scheduledViewportRequestKeyRef.current = null
-            pendingAppliedViewportRequestKeyRef.current = null
-        }
-        syncViewportState()
-        onZoomDisplayChangeRef.current?.(zoom)
-    }, [zoom, syncViewportState])
+        panRef.current = pan
+    }, [zoom, pan])
 
     useEffect(() => {
-        const container = containerRef.current
-        if (!container || !viewportRequest) return
-        const clientWidth = container.clientWidth
-        const clientHeight = container.clientHeight
+        if (!viewportRequest) return
+        const { width: clientWidth, height: clientHeight } = containerSizeRef.current
 
         // New spreads can dispatch their initial viewport request before the
-        // scroll container has measurable size. Retry once sizing settles.
+        // container has measurable size. Retry once sizing settles.
         if (clientWidth <= 0 || clientHeight <= 0) return
 
         let nextZoom = renderedZoomRef.current || DEFAULT_ZOOM
@@ -744,119 +691,198 @@ function SpreadCanvasComponent(
             contentY = viewportRequest.point.y
         }
 
-        const nextScroll = clampViewportScroll({
-            ...getViewportScrollForCanvasPoint({
-                contentX,
-                contentY,
-                viewportX: clientWidth / 2,
-                viewportY: clientHeight / 2,
-                zoom: nextZoom,
-            }),
-            clientWidth,
-            clientHeight,
-            contentWidth: svgWidth * nextZoom,
-            contentHeight: svgHeight * nextZoom,
+        const normalizedNextZoom = normalizeZoom(nextZoom)
+        const rawPan = getPanForCanvasPoint({
+            contentX,
+            contentY,
+            viewportX: clientWidth / 2,
+            viewportY: clientHeight / 2,
+            zoom: normalizedNextZoom,
+        })
+        const nextPan = clampPan({
+            panX: rawPan.x,
+            panY: rawPan.y,
+            canvasWidth: svgWidth,
+            canvasHeight: svgHeight,
+            viewportWidth: clientWidth / normalizedNextZoom,
+            viewportHeight: clientHeight / normalizedNextZoom,
         })
 
         if (appliedViewportRequestKeyRef.current === viewportRequest.key) return
         if (scheduledViewportRequestKeyRef.current === viewportRequest.key) return
 
-        scheduleViewportCommit(nextZoom, nextScroll, false, viewportRequest.key)
+        scheduleViewportCommit(normalizedNextZoom, nextPan, false, viewportRequest.key)
     }, [
         scheduleViewportCommit,
         svgHeight,
         svgWidth,
         viewportRequest,
-        viewportState.clientWidth,
-        viewportState.clientHeight,
+        containerSize.width,
+        containerSize.height,
     ])
+
+    const schedulePanUpdate = useCallback(
+        (nextPan: { x: number; y: number }) => {
+            panRef.current = nextPan
+            targetPanRef.current = nextPan
+            if (panFrameRef.current !== 0) return
+            panFrameRef.current = window.requestAnimationFrame(() => {
+                panFrameRef.current = 0
+                setPan({ ...panRef.current })
+            })
+        },
+        []
+    )
+
+    const getClampedPan = useCallback(
+        (rawX: number, rawY: number) => {
+            const size = containerSizeRef.current
+            const currentZoom = targetZoomRef.current
+            return clampPan({
+                panX: rawX,
+                panY: rawY,
+                canvasWidth: svgWidth,
+                canvasHeight: svgHeight,
+                viewportWidth: size.width / currentZoom,
+                viewportHeight: size.height / currentZoom,
+            })
+        },
+        [svgWidth, svgHeight]
+    )
 
     useEffect(() => {
         const container = containerRef.current
         if (!container) return
+
+        let touchPanState: { x: number; y: number; panX: number; panY: number } | null = null
 
         const normalizeWheelDelta = (e: WheelEvent) => {
             if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
                 return e.deltaY * WHEEL_DELTA_LINE_PX
             }
             if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
-                return e.deltaY * container.clientHeight
+                return e.deltaY * containerSizeRef.current.height
             }
             return e.deltaY
         }
 
+        const normalizeWheelDeltaX = (e: WheelEvent) => {
+            if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+                return e.deltaX * WHEEL_DELTA_LINE_PX
+            }
+            if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+                return e.deltaX * containerSizeRef.current.width
+            }
+            return e.deltaX
+        }
+
         const handleWheel = (e: WheelEvent) => {
             if (safariGestureStateRef.current) return
-            if (!e.ctrlKey && !e.metaKey) return
-            e.preventDefault()
 
-            const rect = container.getBoundingClientRect()
-            const delta = normalizeWheelDelta(e)
-            const scaleFactor = Math.exp(-delta * WHEEL_ZOOM_SENSITIVITY)
+            if (e.ctrlKey || e.metaKey) {
+                // Zoom
+                e.preventDefault()
+                const rect = container.getBoundingClientRect()
+                const delta = normalizeWheelDelta(e)
+                const scaleFactor = Math.exp(-delta * WHEEL_ZOOM_SENSITIVITY)
 
-            setZoomAroundViewportPoint({
-                nextZoom: targetZoomRef.current * scaleFactor,
-                anchorViewportX: e.clientX - rect.left,
-                anchorViewportY: e.clientY - rect.top,
-                shouldFlagInteraction: true,
-            })
+                setZoomAroundViewportPoint({
+                    nextZoom: targetZoomRef.current * scaleFactor,
+                    anchorViewportX: e.clientX - rect.left,
+                    anchorViewportY: e.clientY - rect.top,
+                    shouldFlagInteraction: true,
+                })
+            } else {
+                // Pan
+                e.preventDefault()
+                const currentZoom = targetZoomRef.current
+                const dx = normalizeWheelDeltaX(e) / currentZoom
+                const dy = normalizeWheelDelta(e) / currentZoom
+                const current = panRef.current
+                const next = getClampedPan(current.x + dx, current.y + dy)
+                schedulePanUpdate(next)
+            }
         }
 
         const handleTouchStart = (e: TouchEvent) => {
-            if (e.touches.length !== 2) return
-            e.preventDefault()
-            container.style.touchAction = 'none'
-
-            const touchA = e.touches[0]
-            const touchB = e.touches[1]
-            pinchStateRef.current = {
-                distance: Math.hypot(
-                    touchA.clientX - touchB.clientX,
-                    touchA.clientY - touchB.clientY
-                ),
-                midpointX: (touchA.clientX + touchB.clientX) / 2,
-                midpointY: (touchA.clientY + touchB.clientY) / 2,
+            if (e.touches.length === 2) {
+                // Pinch zoom
+                e.preventDefault()
+                touchPanState = null
+                const touchA = e.touches[0]
+                const touchB = e.touches[1]
+                pinchStateRef.current = {
+                    distance: Math.hypot(
+                        touchA.clientX - touchB.clientX,
+                        touchA.clientY - touchB.clientY
+                    ),
+                    midpointX: (touchA.clientX + touchB.clientX) / 2,
+                    midpointY: (touchA.clientY + touchB.clientY) / 2,
+                }
+            } else if (e.touches.length === 1 && !isMarqueeActive.current) {
+                // Single-finger touch pan
+                const touch = e.touches[0]
+                touchPanState = {
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    panX: panRef.current.x,
+                    panY: panRef.current.y,
+                }
             }
         }
 
         const handleTouchMove = (e: TouchEvent) => {
-            if (e.touches.length !== 2 || !pinchStateRef.current) return
-            e.preventDefault()
+            if (e.touches.length === 2 && pinchStateRef.current) {
+                // Pinch zoom
+                e.preventDefault()
+                touchPanState = null
+                const touchA = e.touches[0]
+                const touchB = e.touches[1]
+                const distance = Math.hypot(
+                    touchA.clientX - touchB.clientX,
+                    touchA.clientY - touchB.clientY
+                )
+                const midpointX = (touchA.clientX + touchB.clientX) / 2
+                const midpointY = (touchA.clientY + touchB.clientY) / 2
+                const previousPinch = pinchStateRef.current
+                const rect = container.getBoundingClientRect()
+                const scale =
+                    previousPinch.distance === 0
+                        ? 1
+                        : distance / previousPinch.distance
 
-            const touchA = e.touches[0]
-            const touchB = e.touches[1]
-            const distance = Math.hypot(
-                touchA.clientX - touchB.clientX,
-                touchA.clientY - touchB.clientY
-            )
-            const midpointX = (touchA.clientX + touchB.clientX) / 2
-            const midpointY = (touchA.clientY + touchB.clientY) / 2
-            const previousPinch = pinchStateRef.current
-            const rect = container.getBoundingClientRect()
-            const scale =
-                previousPinch.distance === 0
-                    ? 1
-                    : distance / previousPinch.distance
+                setZoomAroundViewportPoint({
+                    nextZoom: targetZoomRef.current * scale,
+                    anchorViewportX: previousPinch.midpointX - rect.left,
+                    anchorViewportY: previousPinch.midpointY - rect.top,
+                    targetViewportX: midpointX - rect.left,
+                    targetViewportY: midpointY - rect.top,
+                    shouldFlagInteraction: true,
+                })
 
-            setZoomAroundViewportPoint({
-                nextZoom: targetZoomRef.current * scale,
-                anchorViewportX: previousPinch.midpointX - rect.left,
-                anchorViewportY: previousPinch.midpointY - rect.top,
-                targetViewportX: midpointX - rect.left,
-                targetViewportY: midpointY - rect.top,
-                shouldFlagInteraction: true,
-            })
-
-            pinchStateRef.current = {
-                distance,
-                midpointX,
-                midpointY,
+                pinchStateRef.current = {
+                    distance,
+                    midpointX,
+                    midpointY,
+                }
+            } else if (e.touches.length === 1 && touchPanState) {
+                // Single-finger touch pan
+                e.preventDefault()
+                const touch = e.touches[0]
+                const currentZoom = targetZoomRef.current
+                const dx = (touch.clientX - touchPanState.x) / currentZoom
+                const dy = (touch.clientY - touchPanState.y) / currentZoom
+                const next = getClampedPan(
+                    touchPanState.panX - dx,
+                    touchPanState.panY - dy
+                )
+                schedulePanUpdate(next)
             }
         }
 
-        const clearPinchState = () => {
+        const clearTouchState = () => {
             pinchStateRef.current = null
-            container.style.touchAction = 'pan-x pan-y'
+            touchPanState = null
         }
 
         const handleSafariGestureStart = (event: Event) => {
@@ -909,19 +935,18 @@ function SpreadCanvasComponent(
         container.addEventListener('touchmove', handleTouchMove, {
             passive: false,
         })
-        container.addEventListener('touchend', clearPinchState)
-        container.addEventListener('touchcancel', clearPinchState)
+        container.addEventListener('touchend', clearTouchState)
+        container.addEventListener('touchcancel', clearTouchState)
         container.addEventListener('gesturestart', handleSafariGestureStart)
         container.addEventListener('gesturechange', handleSafariGestureChange)
         container.addEventListener('gestureend', clearSafariGestureState)
 
         return () => {
-            container.style.touchAction = 'pan-x pan-y'
             container.removeEventListener('wheel', handleWheel)
             container.removeEventListener('touchstart', handleTouchStart)
             container.removeEventListener('touchmove', handleTouchMove)
-            container.removeEventListener('touchend', clearPinchState)
-            container.removeEventListener('touchcancel', clearPinchState)
+            container.removeEventListener('touchend', clearTouchState)
+            container.removeEventListener('touchcancel', clearTouchState)
             container.removeEventListener('gesturestart', handleSafariGestureStart)
             container.removeEventListener(
                 'gesturechange',
@@ -929,53 +954,45 @@ function SpreadCanvasComponent(
             )
             container.removeEventListener('gestureend', clearSafariGestureState)
         }
-    }, [setZoomAroundViewportPoint])
+    }, [setZoomAroundViewportPoint, schedulePanUpdate, getClampedPan])
 
     useImperativeHandle(
         ref,
         () => ({
             getZoom: () => targetZoomRef.current,
             resetZoom: () => {
-                const container = containerRef.current
-                if (!container) return
-
+                const size = containerSizeRef.current
                 setZoomAroundViewportPoint({
                     nextZoom: DEFAULT_ZOOM,
-                    anchorViewportX: container.clientWidth / 2,
-                    anchorViewportY: container.clientHeight / 2,
+                    anchorViewportX: size.width / 2,
+                    anchorViewportY: size.height / 2,
                     shouldFlagInteraction: true,
                 })
             },
             setZoom: (nextZoom: number) => {
-                const container = containerRef.current
-                if (!container) return
-
+                const size = containerSizeRef.current
                 setZoomAroundViewportPoint({
                     nextZoom,
-                    anchorViewportX: container.clientWidth / 2,
-                    anchorViewportY: container.clientHeight / 2,
+                    anchorViewportX: size.width / 2,
+                    anchorViewportY: size.height / 2,
                     shouldFlagInteraction: true,
                 })
             },
             zoomIn: () => {
-                const container = containerRef.current
-                if (!container) return
-
+                const size = containerSizeRef.current
                 setZoomAroundViewportPoint({
                     nextZoom: getSteppedZoom(targetZoomRef.current, 'in'),
-                    anchorViewportX: container.clientWidth / 2,
-                    anchorViewportY: container.clientHeight / 2,
+                    anchorViewportX: size.width / 2,
+                    anchorViewportY: size.height / 2,
                     shouldFlagInteraction: true,
                 })
             },
             zoomOut: () => {
-                const container = containerRef.current
-                if (!container) return
-
+                const size = containerSizeRef.current
                 setZoomAroundViewportPoint({
                     nextZoom: getSteppedZoom(targetZoomRef.current, 'out'),
-                    anchorViewportX: container.clientWidth / 2,
-                    anchorViewportY: container.clientHeight / 2,
+                    anchorViewportX: size.width / 2,
+                    anchorViewportY: size.height / 2,
                     shouldFlagInteraction: true,
                 })
             },
@@ -1010,17 +1027,21 @@ function SpreadCanvasComponent(
             panStart.current = {
                 x: e.clientX,
                 y: e.clientY,
-                scrollX: container.scrollLeft,
-                scrollY: container.scrollTop,
+                panX: panRef.current.x,
+                panY: panRef.current.y,
             }
         }
 
         const handleMouseMove = (e: MouseEvent) => {
             if (!isPanning.current) return
-            const dx = e.clientX - panStart.current.x
-            const dy = e.clientY - panStart.current.y
-            container.scrollLeft = panStart.current.scrollX - dx
-            container.scrollTop = panStart.current.scrollY - dy
+            const currentZoom = targetZoomRef.current
+            const dx = (e.clientX - panStart.current.x) / currentZoom
+            const dy = (e.clientY - panStart.current.y) / currentZoom
+            const next = getClampedPan(
+                panStart.current.panX - dx,
+                panStart.current.panY - dy
+            )
+            schedulePanUpdate(next)
         }
 
         const handleMouseUp = () => {
@@ -1042,7 +1063,7 @@ function SpreadCanvasComponent(
             window.removeEventListener('mousemove', handleMouseMove)
             window.removeEventListener('mouseup', handleMouseUp)
         }
-    }, [])
+    }, [schedulePanUpdate, getClampedPan])
 
     const handleDragStart = useCallback(
         (index: number, x: number, y: number) => {
@@ -1217,20 +1238,20 @@ function SpreadCanvasComponent(
     const showEmptyPrompt = !isViewMode && cards.length === 0
 
     const offscreenPointers = useMemo(() => {
-        if (viewportState.clientWidth <= 0 || viewportState.clientHeight <= 0) {
+        if (containerSize.width <= 0 || containerSize.height <= 0) {
             return []
         }
 
         const viewport = getCanvasViewportRect({
-            scrollLeft: viewportState.scrollLeft,
-            scrollTop: viewportState.scrollTop,
-            clientWidth: viewportState.clientWidth,
-            clientHeight: viewportState.clientHeight,
+            panX: pan.x,
+            panY: pan.y,
+            clientWidth: containerSize.width,
+            clientHeight: containerSize.height,
             zoom,
         })
 
-        const overlayCenterX = viewportState.clientWidth / 2
-        const overlayCenterY = viewportState.clientHeight / 2
+        const overlayCenterX = containerSize.width / 2
+        const overlayCenterY = containerSize.height / 2
         const maxOffsetX = Math.max(overlayCenterX - POINTER_EDGE_PADDING, 0)
         const maxOffsetY = Math.max(overlayCenterY - POINTER_EDGE_PADDING, 0)
 
@@ -1270,28 +1291,25 @@ function SpreadCanvasComponent(
                 },
             ]
         })
-    }, [effectiveCards, viewportState, zoom])
+    }, [effectiveCards, pan, containerSize, zoom])
+
+    const viewBox = `${pan.x} ${pan.y} ${containerSize.width > 0 ? containerSize.width / zoom : svgWidth} ${containerSize.height > 0 ? containerSize.height / zoom : svgHeight}`
 
     return (
         <div className="relative h-full w-full">
             <div
                 ref={containerRef}
-                className={`h-full w-full overflow-auto overscroll-contain ${themeBasedStyles.containerBg}`}
-                style={{ touchAction: 'pan-x pan-y' }}
+                className={`h-full w-full overflow-hidden ${themeBasedStyles.containerBg}`}
+                style={{ touchAction: 'none' }}
             >
-                <div style={{ width: svgWidth * zoom, height: svgHeight * zoom }}>
-                    <svg
-                        ref={svgRef}
-                        width={svgWidth}
-                        height={svgHeight}
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="select-none"
-                        style={{
-                            transform: `scale(${zoom})`,
-                            transformOrigin: '0 0',
-                            willChange: 'transform',
-                        }}
-                    >
+                <svg
+                    ref={svgRef}
+                    width="100%"
+                    height="100%"
+                    viewBox={viewBox}
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="select-none"
+                >
                         <defs>
                             <filter
                                 id="canvas-card-shadow-active"
@@ -1422,8 +1440,7 @@ function SpreadCanvasComponent(
                                 pointerEvents="none"
                             />
                         )}
-                    </svg>
-                </div>
+                </svg>
             </div>
 
             <CanvasPointerOverlay

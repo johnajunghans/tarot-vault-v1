@@ -33,6 +33,26 @@ Future considerations/recommendations/warnings
 ## 0.2_Recent_Entries
 *For context about what has recently been done. Most recent at the top.*
 
+**03/16/2026 -- 1.4.6 -- Claude Opus 4.6**
+Summary of actions taken:
+- Replaced CSS `transform: scale(zoom)` + scroll container zoom with dynamic SVG `viewBox`-based zoom/pan
+- Rewrote `helpers/viewport.ts` — all functions now use pan-based coordinates (`panX/panY`) instead of scroll-based (`scrollLeft/scrollTop`); renamed: `clampViewportScroll` → `clampPan`, `getClampedViewportScrollForZoomAnchor` → `getClampedPanForZoomAnchor`, `getViewportScrollForCanvasPoint` → `getPanForCanvasPoint`
+- Added wheel pan (trackpad two-finger scroll now pans the canvas via viewBox origin manipulation)
+- Added single-finger touch pan for mobile (replaces browser native scroll)
+- Simplified viewport commit system — eliminated two-phase zoom→scroll dance (`pendingScrollRef` + `useLayoutEffect`); pan and zoom are now both React state set atomically in `flushViewportCommit`
+- Removed wrapper `<div>` that sized the scrollable area; SVG now fills container with `width="100%" height="100%"`
+- Container changed from `overflow-auto` to `overflow-hidden`, `touchAction: 'none'`
+- Spacebar+drag pan now manipulates `panRef` instead of `container.scrollLeft/Top`
+- Replaced `viewportState` (scrollLeft, scrollTop, clientWidth, clientHeight) with separate `pan` and `containerSize` states
+- Removed `pendingAppliedViewportRequestKeyRef` (vestigial from two-phase commit)
+- Updated viewport tests to use new pan-based function signatures
+
+Future considerations/recommendations/warnings
+- Native scrollbars are gone — panning is now via wheel/trackpad scroll, spacebar+drag, or single-finger touch. This is standard for canvas tools (Figma, Excalidraw) but may surprise users expecting scrollbar-based navigation
+- GSAP Draggable compatibility with dynamic viewBox relies on GSAP using `getScreenCTM()` for SVG coordinate conversion — if GSAP is updated and changes this behavior, drag coordinates could break
+- Manual testing is critical: card drag at various zoom levels, pinch zoom anchoring, marquee selection, double-click placement, off-screen pointers
+- Consider adding custom scrollbar indicators or a minimap in a future step to help users orient within the canvas
+
 **03/16/2026 -- 1.4.5 -- Claude Opus 4.6**
 Summary of actions taken:
 - Phase 1 — Quick wins:
@@ -121,46 +141,6 @@ Future considerations/recommendations/warnings
 ### ~~1.4.5_Spreads Audit and Refactor~~ ~~Complete~~
 Audited all spreads route files. Created shared `useSpreadForm` hook to DRY up duplicated form/canvas/card logic between new and edit wrappers. Eliminated `utils.ts`, consolidated `snapToGrid`, removed dead types, fixed redundant zoom normalization, added GPU compositing hint for mobile pinch zoom.
 
-### 1.4.6_ViewBox-Based Zoom
-Replace the current CSS `scale()` zoom with SVG `viewBox`-based zoom to eliminate full SVG repaints during zoom and improve mobile pinch zoom performance. Start in plan mode.
-
-**Context from 1.4.5 investigation:** The current system uses `transform: scale(${zoom})` on the SVG element inside a scroll container sized to `svgWidth * zoom` x `svgHeight * zoom`. This causes the browser to repaint the entire SVG on every zoom change. A `viewBox` approach lets the browser handle zoom natively without repainting.
-
-**Key files:**
-- `_components/canvas/index.tsx` — main canvas (1442 lines), owns zoom state, scroll panning, touch/pinch/wheel handlers
-- `_components/canvas/components/card.tsx` — GSAP Draggable integration (493 lines)
-- `_components/canvas/helpers/viewport.ts` — viewport ↔ canvas coordinate transforms
-- `_components/canvas/helpers/zoom.ts` — zoom constants and normalization
-- `_components/canvas/tests/viewport.test.ts` — existing viewport tests
-
-**What needs to change (ordered by risk):**
-
-1. **GSAP Draggable coordinate handling** (HIGH risk) — Currently reads coordinates from CSS-scaled SVG automatically. With viewBox, Draggable receives unscaled screen coordinates. Must intercept drag values and divide by zoom, or wrap Draggable's coordinate space. This is the critical blocker — solve this first.
-    - `card.tsx`: `Draggable.create()` — `onDragStart`, `onDrag`, `onDragEnd` all use `this.x` / `this.y` which currently return canvas-space values due to CSS scale
-    - `card.tsx`: `gsap.set(group, { x: card.x, y: card.y })` — position sync also relies on scaled space
-    - `index.tsx`: `transientPositionsRef` — stores drag positions in canvas coordinates
-
-2. **`clientToSVG` function** (MEDIUM risk) — Uses `svg.getScreenCTM().inverse()` which currently includes CSS scale in the matrix. With viewBox only, the CTM changes. Must verify/adjust the matrix math.
-    - Used for: marquee selection start/move/end, background double-click to place cards
-
-3. **Container and SVG element** (LOW risk) — Replace the sized wrapper div + CSS scale with viewBox attribute on SVG.
-    - Remove: `<div style={{ width: svgWidth * zoom, height: svgHeight * zoom }}>`
-    - Remove: `style={{ transform: scale(${zoom}), transformOrigin: '0 0', willChange: 'transform' }}`
-    - Add: `viewBox` attribute computed from zoom + scroll position
-    - Scroll panning may need to change to viewBox manipulation instead of native scroll
-
-4. **Viewport math** (LOW risk) — Functions in `viewport.ts` are pure ratio math and should work unchanged, but verify.
-
-5. **No changes needed:** alignment guides, off-screen pointers, geometry helpers, zoom event handlers (wheel/pinch/safari gesture) — all pass viewport coordinates to functions that handle transformation math independently.
-
-**Testing checklist:**
-- Existing `viewport.test.ts` tests pass
-- Single card drag + grid snap works at zoom levels 0.5x, 1.0x, 2.0x
-- Group drag (marquee select + multi-drag) works at non-1x zoom
-- Pinch zoom on mobile anchors correctly (zoom toward pinch midpoint)
-- Wheel zoom anchors correctly (zoom toward cursor)
-- Spacebar pan works at all zoom levels
-- Double-click to place card lands at correct canvas position at non-1x zoom
-- Off-screen card pointers point in correct direction
-- Alignment guides appear at correct positions during drag
+### ~~1.4.6_ViewBox-Based Zoom~~ ~~Complete~~
+Replaced CSS `scale()` zoom with dynamic SVG `viewBox`-based zoom/pan. SVG fills container with `width="100%" height="100%"` and a dynamic `viewBox` that acts as a movable window into the canvas. Eliminated native scroll in favor of wheel/touch/spacebar pan via viewBox origin manipulation. Simplified viewport commit system. GSAP Draggable and `clientToSVG()` work unchanged since `getScreenCTM()` includes viewBox transforms. Card component required no changes.
 
