@@ -33,6 +33,25 @@ Future considerations/recommendations/warnings
 ## 0.2_Recent_Entries
 *For context about what has recently been done. Most recent at the top.*
 
+**03/16/2026 -- 1.4.5 -- Claude Opus 4.6**
+Summary of actions taken:
+- Phase 1 — Quick wins:
+	- Removed unused `CardTransform` type from `types/spreads.ts`
+	- Consolidated duplicate `snapToGrid` in `card-settings-panel.tsx` to import from `spread-layout.ts`
+	- Eliminated `utils.ts` entirely — moved `generateCardAt` to `spread-layout.ts`, removed dead `generateCard`, updated 3 import sites
+	- Fixed redundant `normalizeZoom(clampZoom(nextZoom))` → `normalizeZoom(nextZoom)` in canvas `index.tsx`
+- Phase 2 — Panel wrapper consolidation:
+	- Created `_hooks/use-spread-form.ts` with `useSpreadForm` hook (form + field array + canvas model + addCard/addCardAt), `mapPositionsForApi` utility, and `useValidationErrorHandler` hook
+	- Refactored both `panel-wrapper.tsx` and `edit-panel-wrapper.tsx` to use shared hook, eliminating duplicated form setup, card CRUD, and validation logic
+- Phase 3 — Zoom performance:
+	- Added `willChange: 'transform'` CSS hint to SVG element for GPU compositing during pinch zoom
+
+Future considerations/recommendations/warnings
+- The JSX layout (mobile/desktop panels) is still duplicated between wrappers — could be consolidated into a shared layout component if the view mode conditionals become less divergent
+- Read-only vs editable panel content components (`SpreadDetailsContent` / `SpreadSettingsContent`, etc.) are still separate — merging them was deemed higher risk than reward
+- SVG viewBox-based zoom (replacing CSS scale transform) could further improve zoom performance but requires reworking the drag/snap/pan coordinate system — too risky for this step
+- Manual testing recommended: create new spread, edit spread, view spread, draft save/load, discard dialog, mobile layout
+
 ## 0.3_Archived_Entries
 *Full entries available in `./mvp-build-archive.md`*
 
@@ -99,14 +118,49 @@ Future considerations/recommendations/warnings
 - **1.4.3** — Edit spreads (dynamic `[id]` route, edit panel, save/cancel/discard). ~~Complete~~
 - **1.4.4** — View spreads (view mode, read-only canvas + panels, view/edit toggle). ~~Complete~~
 
-### 1.4.5_Spreads Audit and Refactor
-1. The spreads route has become potentially bogged down with LLM generated code that might be redundant, inefficient, or unmaintainable. Your primary goals are the following:
-    1. Read and review all files in the spreads route (app/(app)/personal/spreads/*)
-        1. Check for any major bugs that might be inhibiting performance, particularly in the spreads/canvas directory.
-        2. Look for redunant code that can be distilled or completely removed to lean out the codebase.
-        3. Look for ways to improve readibility and maintainability.
-        4. Look for ways to restructure files and folders for better organization.
-    2. Focus in on the zoom functionality and check again for any bugs. Zoom functionality feels jerky and stuttery on mobile devices (with touch pinch zoom) and generally laggy at times.
-2. In general, focus on removing or replacing code rather than adding more code in. Try and finds ways of abstracting, distilling, and making the codebase more DRY. Of course, if there are bugs that need to be solved by adding code, then that is okay.
-3. Start in plan mode to read and make a plan/suggestion for refactoring actions that could be taken. Prioritize biggest bang for the buck refactors (highest return for lowest refactoring effort and risk).
+### ~~1.4.5_Spreads Audit and Refactor~~ ~~Complete~~
+Audited all spreads route files. Created shared `useSpreadForm` hook to DRY up duplicated form/canvas/card logic between new and edit wrappers. Eliminated `utils.ts`, consolidated `snapToGrid`, removed dead types, fixed redundant zoom normalization, added GPU compositing hint for mobile pinch zoom.
+
+### 1.4.6_ViewBox-Based Zoom
+Replace the current CSS `scale()` zoom with SVG `viewBox`-based zoom to eliminate full SVG repaints during zoom and improve mobile pinch zoom performance. Start in plan mode.
+
+**Context from 1.4.5 investigation:** The current system uses `transform: scale(${zoom})` on the SVG element inside a scroll container sized to `svgWidth * zoom` x `svgHeight * zoom`. This causes the browser to repaint the entire SVG on every zoom change. A `viewBox` approach lets the browser handle zoom natively without repainting.
+
+**Key files:**
+- `_components/canvas/index.tsx` — main canvas (1442 lines), owns zoom state, scroll panning, touch/pinch/wheel handlers
+- `_components/canvas/components/card.tsx` — GSAP Draggable integration (493 lines)
+- `_components/canvas/helpers/viewport.ts` — viewport ↔ canvas coordinate transforms
+- `_components/canvas/helpers/zoom.ts` — zoom constants and normalization
+- `_components/canvas/tests/viewport.test.ts` — existing viewport tests
+
+**What needs to change (ordered by risk):**
+
+1. **GSAP Draggable coordinate handling** (HIGH risk) — Currently reads coordinates from CSS-scaled SVG automatically. With viewBox, Draggable receives unscaled screen coordinates. Must intercept drag values and divide by zoom, or wrap Draggable's coordinate space. This is the critical blocker — solve this first.
+    - `card.tsx`: `Draggable.create()` — `onDragStart`, `onDrag`, `onDragEnd` all use `this.x` / `this.y` which currently return canvas-space values due to CSS scale
+    - `card.tsx`: `gsap.set(group, { x: card.x, y: card.y })` — position sync also relies on scaled space
+    - `index.tsx`: `transientPositionsRef` — stores drag positions in canvas coordinates
+
+2. **`clientToSVG` function** (MEDIUM risk) — Uses `svg.getScreenCTM().inverse()` which currently includes CSS scale in the matrix. With viewBox only, the CTM changes. Must verify/adjust the matrix math.
+    - Used for: marquee selection start/move/end, background double-click to place cards
+
+3. **Container and SVG element** (LOW risk) — Replace the sized wrapper div + CSS scale with viewBox attribute on SVG.
+    - Remove: `<div style={{ width: svgWidth * zoom, height: svgHeight * zoom }}>`
+    - Remove: `style={{ transform: scale(${zoom}), transformOrigin: '0 0', willChange: 'transform' }}`
+    - Add: `viewBox` attribute computed from zoom + scroll position
+    - Scroll panning may need to change to viewBox manipulation instead of native scroll
+
+4. **Viewport math** (LOW risk) — Functions in `viewport.ts` are pure ratio math and should work unchanged, but verify.
+
+5. **No changes needed:** alignment guides, off-screen pointers, geometry helpers, zoom event handlers (wheel/pinch/safari gesture) — all pass viewport coordinates to functions that handle transformation math independently.
+
+**Testing checklist:**
+- Existing `viewport.test.ts` tests pass
+- Single card drag + grid snap works at zoom levels 0.5x, 1.0x, 2.0x
+- Group drag (marquee select + multi-drag) works at non-1x zoom
+- Pinch zoom on mobile anchors correctly (zoom toward pinch midpoint)
+- Wheel zoom anchors correctly (zoom toward cursor)
+- Spacebar pan works at all zoom levels
+- Double-click to place card lands at correct canvas position at non-1x zoom
+- Off-screen card pointers point in correct direction
+- Alignment guides appear at correct positions during drag
 

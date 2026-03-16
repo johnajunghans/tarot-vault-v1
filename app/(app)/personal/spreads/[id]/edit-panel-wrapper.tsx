@@ -1,8 +1,6 @@
 "use client"
 
-import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { spreadSchema } from "../schema";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { FormProvider } from "react-hook-form";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -17,10 +15,8 @@ import SpreadCanvas, {
 import CardSettingsPanel from "../_components/card-settings-panel";
 import ZoomControls from "../_components/canvas/components/zoom-controls";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
-import { generateCardAt } from "../utils";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { FieldErrors } from "react-hook-form";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PlusSignIcon, Settings02Icon } from "hugeicons-react";
@@ -32,13 +28,12 @@ import type { ActionDescriptor, BreadcrumbDescriptor } from "@/types/layout";
 import Link from "next/link";
 import {
     CANVAS_CENTER,
-    CARD_HEIGHT,
-    CARD_SPACING_X,
-    CARD_WIDTH,
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
 } from "../spread-layout";
-import { useSpreadCanvasModel } from "../_components/canvas/hooks/use-spread-canvas-model";
+import { useSpreadForm } from "../_hooks/use-spread-form";
+import { useValidationErrorHandler } from "../_hooks/use-validation-error-handler";
+import { mapPositionsForApi } from "../_helpers/map-positions-for-api";
 
 interface EditPanelWrapperProps {
     spreadId: Id<"spreads">
@@ -96,19 +91,26 @@ export default function EditPanelWrapper({
 
     // ------------ SPREAD FORM ------------ //
 
-    const form = useForm<SpreadForm>({
-        resolver: zodResolver(spreadSchema),
-        defaultValues: {
-            name: "",
-            description: "",
-            positions: []
-        }
-    });
-
-    const { fields: cards, append, remove, move } = useFieldArray({
-        control: form.control,
-        name: "positions"
-    });
+    const {
+        form,
+        cards,
+        remove,
+        move,
+        watchedName,
+        watchedPositions,
+        addCard,
+        addCardAt,
+        canvasRef,
+        cardKeys,
+        canvasCards,
+        canvasRotationAngles,
+        selectedCardIndex,
+        setSelectedCardIndex,
+        zoomDisplay,
+        setZoomDisplay,
+        handleCardRotationChange,
+        handleCanvasPositionsCommit,
+    } = useSpreadForm();
 
     // ------------ POPULATE FORM FROM DB ------------ //
 
@@ -141,49 +143,6 @@ export default function EditPanelWrapper({
         );
     }, [emptyCanvasViewportRequest, form, mode, spread, spreadId]);
 
-    // ------------ ADD CARD ------------ //
-
-    const watchedValues = useWatch({ control: form.control });
-    const watchedName = watchedValues?.name;
-    const watchedPositions = watchedValues?.positions;
-    const {
-        canvasRef,
-        cardKeys,
-        canvasCards,
-        canvasRotationAngles,
-        selectedCardIndex,
-        setSelectedCardIndex,
-        zoomDisplay,
-        setZoomDisplay,
-        handleCardRotationChange,
-        handleCanvasPositionsCommit,
-    } = useSpreadCanvasModel({
-        cards,
-        form,
-        watchedPositions,
-    });
-
-    const addCard = useCallback(() => {
-        const nextIndex = cards.length;
-        const lastCard = nextIndex > 0 ? form.getValues(`positions.${nextIndex - 1}`) : null;
-        const newCard =
-            lastCard
-                ? generateCardAt(lastCard.x + CARD_SPACING_X, lastCard.y)
-                : generateCardAt(
-                      CANVAS_CENTER.x - CARD_WIDTH / 2,
-                      CANVAS_CENTER.y - CARD_HEIGHT / 2
-                  );
-        append(newCard, { focusName: `positions.${nextIndex}.name` });
-        setSelectedCardIndex(nextIndex);
-    }, [cards.length, append, form, setSelectedCardIndex]);
-
-    const addCardAt = useCallback((x: number, y: number) => {
-        if (cards.length >= 78) return;
-        const newCard = generateCardAt(x, y);
-        append(newCard);
-        setSelectedCardIndex(cards.length);
-    }, [cards.length, append, setSelectedCardIndex]);
-
     // ------------ MOBILE SHEET STATE ------------ //
 
     const [spreadSheetOpen, setSpreadSheetOpen] = useState(false);
@@ -194,50 +153,18 @@ export default function EditPanelWrapper({
     const [isSaving, setIsSaving] = useState(false);
     const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
 
+    const onInvalid = useValidationErrorHandler(
+        isMobile,
+        setSpreadSheetOpen,
+        spreadSettingsPanelRef,
+    );
+
     const handleSave = useCallback(() => {
-        const onInvalid = (errors: FieldErrors<SpreadForm>) => {
-            if (errors.name) {
-                toast.error("Give your spread a name", {
-                    description: errors.name.message,
-                });
-            }
-            if (errors.description) {
-                toast.error("Invalid description", {
-                    description: errors.description.message,
-                });
-            }
-            if (errors.positions) {
-                toast.error("Position issues", {
-                    description: "One or more positions need attention.",
-                });
-            }
-
-            if (errors.name || errors.description) {
-                if (isMobile) {
-                    setSpreadSheetOpen(true);
-                } else {
-                    const panel = spreadSettingsPanelRef.current;
-                    if (panel?.isCollapsed()) {
-                        panel.expand();
-                    }
-                }
-            }
-        };
-
         form.handleSubmit(async (data) => {
             setIsSaving(true);
 
             try {
-                const positions = data.positions.map((card, index) => ({
-                    position: index + 1,
-                    name: card.name,
-                    description: card.description,
-                    allowReverse: card.allowReverse,
-                    x: card.x,
-                    y: card.y,
-                    r: card.r,
-                    z: card.z,
-                }));
+                const positions = mapPositionsForApi(data.positions);
 
                 await updateSpread({
                     _id: spreadId,
@@ -259,7 +186,7 @@ export default function EditPanelWrapper({
                 setIsSaving(false);
             }
         }, onInvalid)();
-    }, [form, updateSpread, spreadId, isMobile, router]);
+    }, [form, updateSpread, spreadId, router, onInvalid]);
 
     // ------------ DELETE SPREAD LOGIC ------------ //
 
@@ -303,13 +230,11 @@ export default function EditPanelWrapper({
         router.push(viewUrl);
     }, [form, router, setSelectedCardIndex, viewUrl]);
 
-
     // ------------ LAYOUT DISPATCH ------------ //
 
     const { setActions, setTitle, setBreadcrumbs, reset } = useLayoutDispatch();
     const isDirty = form.formState.isDirty;
 
-    // Breadcrumbs effect
     useEffect(() => {
         setBreadcrumbs({
             mode: "custom",
@@ -317,7 +242,6 @@ export default function EditPanelWrapper({
         })
     }, [isViewMode, setBreadcrumbs])
 
-    // Title effect
     useEffect(() => {
         setTitle({
             variant: "spread",
@@ -327,7 +251,6 @@ export default function EditPanelWrapper({
         })
     }, [watchedName, watchedPositions?.length, setTitle])
 
-    // Actions effect
     const actions = useMemo<ActionDescriptor[] | null>(() => {
         if (!spread) return null;
 
@@ -371,7 +294,6 @@ export default function EditPanelWrapper({
         setActions(actions);
     }, [actions, setActions]);
 
-    // Cleanup on unmount
     useEffect(() => {
         return () => reset()
     }, [reset])

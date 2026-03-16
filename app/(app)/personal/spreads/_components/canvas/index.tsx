@@ -655,7 +655,7 @@ function SpreadCanvasComponent(
             const container = containerRef.current
             if (!container) return
 
-            const normalizedZoom = normalizeZoom(clampZoom(nextZoom))
+            const normalizedZoom = normalizeZoom(nextZoom)
             const currentViewport = getViewportSnapshot()
 
             const nextScroll = getClampedViewportScrollForZoomAnchor({
@@ -1289,6 +1289,7 @@ function SpreadCanvasComponent(
                         style={{
                             transform: `scale(${zoom})`,
                             transformOrigin: '0 0',
+                            willChange: 'transform',
                         }}
                     >
                         <defs>

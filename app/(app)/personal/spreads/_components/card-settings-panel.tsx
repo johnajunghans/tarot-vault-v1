@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { normalizeRotationForStorage } from "../rotation";
+import { snapToGrid } from "../spread-layout";
 import {
   ArrowDown01Icon,
   ArrowUp01Icon,
@@ -30,12 +31,7 @@ import SwitchField from "@/components/form/switch-field";
 import NumberField from "@/components/form/number-field";
 import { ResponsivePanel } from "@/app/(app)/_components/responsive-panel";
 
-const GRID_SIZE = 15;
 const TOOLTIP_DELAY = 500;
-
-function snapToGrid(value: number): number {
-  return Math.round(value / GRID_SIZE) * GRID_SIZE;
-}
 
 function clampLayer(value: number): number {
   return Math.max(0, Math.round(value));

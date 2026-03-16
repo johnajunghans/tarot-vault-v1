@@ -6,8 +6,6 @@ import z from "zod";
 
 export type CardDB = Infer<typeof spreadPositionValidator>
 
-export type CardTransform = Pick<CardDB, "x" | "y" | "r" | "z">
-
 export type SpreadDB = Doc<"spreads">
 
 export type SpreadInput = Omit<SpreadDB, "_id" | "_creationTime" | "userId" | "updatedAt">

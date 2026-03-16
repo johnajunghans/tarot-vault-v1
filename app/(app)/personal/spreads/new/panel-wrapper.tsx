@@ -1,8 +1,6 @@
 "use client"
 
-import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { spreadSchema } from "../schema";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { FormProvider } from "react-hook-form";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -16,9 +14,7 @@ import SpreadCanvas, {
 import CardSettingsPanel from "../_components/card-settings-panel";
 import ZoomControls from "../_components/canvas/components/zoom-controls";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
-import { generateCardAt } from "../utils"
 import { Button } from "@/components/ui/button";
-import { FieldErrors } from "react-hook-form";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PlusSignIcon, Settings02Icon } from "hugeicons-react";
@@ -29,13 +25,12 @@ import { useLayoutDispatch } from "@/components/providers/layout-provider";
 import type { ActionDescriptor } from "@/types/layout";
 import {
     CANVAS_CENTER,
-    CARD_HEIGHT,
-    CARD_SPACING_X,
-    CARD_WIDTH,
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
 } from "../spread-layout";
-import { useSpreadCanvasModel } from "../_components/canvas/hooks/use-spread-canvas-model";
+import { useSpreadForm } from "../_hooks/use-spread-form";
+import { useValidationErrorHandler } from "../_hooks/use-validation-error-handler";
+import { mapPositionsForApi } from "../_helpers/map-positions-for-api";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -76,19 +71,27 @@ export default function PanelWrapper({
 
     // ------------ SPREAD FORM ------------ //
 
-    const form = useForm<SpreadForm>({
-        resolver: zodResolver(spreadSchema),
-        defaultValues: {
-        name: "",
-        description: "",
-        positions: []
-        }
-    });
-
-    const { fields: cards, append, remove, move } = useFieldArray({
-        control: form.control,
-        name: "positions"
-    });
+    const {
+        form,
+        cards,
+        remove,
+        move,
+        watchedValues,
+        watchedName,
+        watchedPositions,
+        addCard,
+        addCardAt,
+        canvasRef,
+        cardKeys,
+        canvasCards,
+        canvasRotationAngles,
+        selectedCardIndex,
+        setSelectedCardIndex,
+        zoomDisplay,
+        setZoomDisplay,
+        handleCardRotationChange,
+        handleCanvasPositionsCommit,
+    } = useSpreadForm();
 
     // ------------ SPREAD DRAFT LOGIC ------------ //
 
@@ -156,8 +159,6 @@ export default function PanelWrapper({
         return () => window.cancelAnimationFrame(frame);
     }, [emptyCanvasViewportRequest, form, loadedDraftDate]);
 
-    const watchedValues = useWatch({ control: form.control });
-
     useEffect(() => {
         if (isDiscardingRef.current) return;
         if (!watchedValues) return;
@@ -171,48 +172,6 @@ export default function PanelWrapper({
         }
     }, [watchedValues, form.formState.isDirty, draftDate, draftKey]);
 
-    // ------------ ADD CARD ------------ //
-
-    const watchedName = watchedValues?.name;
-    const watchedPositions = watchedValues?.positions;
-    const {
-        canvasRef,
-        cardKeys,
-        canvasCards,
-        canvasRotationAngles,
-        selectedCardIndex,
-        setSelectedCardIndex,
-        zoomDisplay,
-        setZoomDisplay,
-        handleCardRotationChange,
-        handleCanvasPositionsCommit,
-    } = useSpreadCanvasModel({
-        cards,
-        form,
-        watchedPositions,
-    });
-
-    const addCard = useCallback(() => {
-        const nextIndex = cards.length;
-        const lastCard = nextIndex > 0 ? form.getValues(`positions.${nextIndex - 1}`) : null;
-        const newCard =
-            lastCard
-                ? generateCardAt(lastCard.x + CARD_SPACING_X, lastCard.y)
-                : generateCardAt(
-                      CANVAS_CENTER.x - CARD_WIDTH / 2,
-                      CANVAS_CENTER.y - CARD_HEIGHT / 2
-                  );
-        append(newCard, { focusName: `positions.${nextIndex}.name` });
-        setSelectedCardIndex(nextIndex);
-    }, [append, cards.length, form, setSelectedCardIndex]);
-
-    const addCardAt = useCallback((x: number, y: number) => {
-        if (cards.length >= 78) return;
-        const newCard = generateCardAt(x, y);
-        append(newCard);
-        setSelectedCardIndex(cards.length);
-    }, [cards.length, append, setSelectedCardIndex]);
-
     // ------------ MOBILE SHEET STATE ------------ //
 
     const [spreadSheetOpen, setSpreadSheetOpen] = useState(false);
@@ -223,50 +182,18 @@ export default function PanelWrapper({
     const [isSaving, setIsSaving] = useState(false);
     const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
 
+    const onInvalid = useValidationErrorHandler(
+        isMobile,
+        setSpreadSheetOpen,
+        spreadSettingsPanelRef,
+    );
+
     const handleSave = useCallback(() => {
-        const onInvalid = (errors: FieldErrors<SpreadForm>) => {
-            if (errors.name) {
-                toast.error("Give your spread a name", {
-                    description: errors.name.message,
-                });
-            }
-            if (errors.description) {
-                toast.error("Invalid description", {
-                    description: errors.description.message,
-                });
-            }
-            if (errors.positions) {
-                toast.error("Card issues", {
-                    description: "One or more cards need attention.",
-                });
-            }
-
-            if (errors.name || errors.description) {
-                if (isMobile) {
-                    setSpreadSheetOpen(true);
-                } else {
-                    const panel = spreadSettingsPanelRef.current;
-                    if (panel?.isCollapsed()) {
-                        panel.expand();
-                    }
-                }
-            }
-        };
-
         form.handleSubmit(async (data) => {
             setIsSaving(true);
 
             try {
-                const positions = data.positions.map((card, index) => ({
-                    position: index + 1,
-                    name: card.name,
-                    description: card.description,
-                    allowReverse: card.allowReverse,
-                    x: card.x,
-                    y: card.y,
-                    r: card.r,
-                    z: card.z,
-                }));
+                const positions = mapPositionsForApi(data.positions);
 
                 await createSpread({
                     name: data.name,
@@ -285,9 +212,9 @@ export default function PanelWrapper({
                 setIsSaving(false);
             }
         }, onInvalid)();
-    }, [form, createSpread, router, isMobile, draftKey]);
+    }, [form, createSpread, router, draftKey, onInvalid]);
 
-    // ------------ DELETE SPREAD MODAL LOGIC ------------ //
+    // ------------ DISCARD LOGIC ------------ //
 
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
@@ -309,13 +236,11 @@ export default function PanelWrapper({
         router.push(routes.personal.spreads.root);
     }, [form, router, draftKey]);
 
-
     // ------------ LAYOUT DISPATCH ------------ //
 
     const { setActions, setTitle, reset } = useLayoutDispatch();
     const isDirty = form.formState.isDirty;
 
-    // Title effect
     useEffect(() => {
         setTitle({
             variant: "spread",
@@ -326,7 +251,6 @@ export default function PanelWrapper({
         })
     }, [watchedName, watchedPositions?.length, setTitle])
 
-    // Actions effect
     useEffect(() => {
         const items: ActionDescriptor[] = [
             {
@@ -352,7 +276,6 @@ export default function PanelWrapper({
         setActions(items);
     }, [loadedDraftDate, handleDiscard, handleSave, isSaving, isDirty, setActions]);
 
-    // Cleanup on unmount
     useEffect(() => {
         return () => reset()
     }, [reset])
@@ -496,7 +419,6 @@ export default function PanelWrapper({
         <ConfirmDialog
             open={showDiscardDialog}
             onOpenChange={setShowDiscardDialog}
-            // title="Hold yer horses, partner."
             description="You have unsaved changes. Save as a draft to continue later, or discard entirely."
             cancelLabel="Keep editing"
             secondaryLabel="Save as draft"

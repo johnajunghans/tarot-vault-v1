@@ -163,8 +163,21 @@ function calcSpreadDimensions(cards: CardDB[]) {
     }
 }
 
+function generateCardAt(x: number, y: number): CardForm {
+    return {
+        name: "",
+        description: "",
+        allowReverse: true,
+        x,
+        y,
+        r: 0,
+        z: 0,
+    }
+}
+
 export {
     calcSpreadDimensions,
+    generateCardAt,
     getGeneratedCardPosition,
     getSpreadBounds,
     getSpreadCenteringDelta,
