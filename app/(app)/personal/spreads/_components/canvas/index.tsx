@@ -1,0 +1,1441 @@
+'use client'
+
+import {
+    forwardRef,
+    memo,
+    useCallback,
+    useEffect,
+    useImperativeHandle,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
+import SpreadCard, { type CanvasCard } from './components/card'
+import CanvasBackground from './components/background'
+import CanvasGuides, { type CanvasGuide } from './components/guides'
+import CanvasPointerOverlay from './components/pointer-overlay'
+import { useTheme } from 'next-themes'
+import {
+    DEFAULT_ZOOM,
+    clampZoom,
+    getSteppedZoom,
+    normalizeZoom,
+} from './helpers/zoom'
+import {
+    getCenteredCardPlacement,
+    getRect,
+    getRectCenter,
+    getSnappedClampedPosition,
+    isRectFullyOutsideRect,
+    projectVectorToEdge,
+    rectsIntersect,
+} from './helpers/geometry'
+import {
+    getCanvasViewportRect,
+    getClampedViewportScrollForZoomAnchor,
+    getViewportScrollForCanvasPoint,
+    clampViewportScroll,
+} from './helpers/viewport'
+import {
+    CANVAS_BOUNDS,
+    CANVAS_CENTER,
+    CANVAS_HEIGHT,
+    CANVAS_WIDTH,
+    CARD_HEIGHT,
+    CARD_WIDTH,
+    GRID_SIZE,
+    type SpreadBounds,
+} from '../../spread-layout'
+
+const WHEEL_DELTA_LINE_PX = 16
+const WHEEL_ZOOM_SENSITIVITY = 0.005
+const POINTER_EDGE_PADDING = 18
+const POINTER_ICON_SIZE = 16
+const VIEWPORT_FIT_PADDING = 48
+const ZOOM_INTERACTION_IDLE_MS = 120
+
+export type SpreadCanvasViewportRequest =
+    | {
+          key: string
+          type: 'center-canvas-point'
+          point: { x: number; y: number }
+          zoom?: number
+      }
+    | {
+          key: string
+          type: 'fit-spread'
+          bounds: SpreadBounds
+          maxZoom?: number
+          padding?: number
+      }
+
+export interface SpreadCanvasPositionUpdate {
+    index: number
+    x: number
+    y: number
+}
+
+export interface SpreadCanvasHandle {
+    getZoom: () => number
+    resetZoom: () => void
+    setZoom: (zoom: number) => void
+    zoomIn: () => void
+    zoomOut: () => void
+}
+
+interface SpreadCanvasProps {
+    cards: CanvasCard[]
+    cardKeys?: string[]
+    rotationAngles?: number[]
+    selectedCardIndex: number | null
+    onCardSelect: (index: number | null) => void
+    onCanvasDoubleClick?: (x: number, y: number) => void
+    onPositionsCommit?: (updates: SpreadCanvasPositionUpdate[]) => void
+    onZoomDisplayChange?: (zoom: number) => void
+    isViewMode?: boolean
+    viewportRequest?: SpreadCanvasViewportRequest | null
+}
+
+interface Point {
+    x: number
+    y: number
+}
+
+interface WebKitGestureEvent extends Event {
+    scale?: number
+    clientX?: number
+    clientY?: number
+}
+
+type TransientPositions = Record<number, Point>
+
+function areTransientPositionsEqual(
+    prev: TransientPositions,
+    next: TransientPositions
+) {
+    const prevKeys = Object.keys(prev)
+    const nextKeys = Object.keys(next)
+
+    if (prevKeys.length !== nextKeys.length) return false
+
+    return nextKeys.every((key) => {
+        const index = Number(key)
+        return prev[index]?.x === next[index]?.x && prev[index]?.y === next[index]?.y
+    })
+}
+
+function SpreadCanvasComponent(
+    {
+        cards,
+        cardKeys,
+        rotationAngles,
+        selectedCardIndex,
+        onCardSelect,
+        onCanvasDoubleClick,
+        onPositionsCommit,
+        onZoomDisplayChange,
+        isViewMode = false,
+        viewportRequest,
+    }: SpreadCanvasProps,
+    ref: React.ForwardedRef<SpreadCanvasHandle>
+) {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const svgRef = useRef<SVGSVGElement>(null)
+    const cardsLayerRef = useRef<SVGGElement>(null)
+    const { resolvedTheme } = useTheme()
+
+    const [viewportState, setViewportState] = useState({
+        scrollLeft: 0,
+        scrollTop: 0,
+        clientWidth: 0,
+        clientHeight: 0,
+    })
+    const [zoom, setZoom] = useState(DEFAULT_ZOOM)
+    const [isZoomInteractionActive, setIsZoomInteractionActive] = useState(false)
+    const [dragging, setDragging] = useState<{
+        index: number
+        x: number
+        y: number
+    } | null>(null)
+    const [groupSelectedIndices, setGroupSelectedIndices] = useState<
+        Set<number>
+    >(new Set())
+    const [marquee, setMarquee] = useState<{
+        startX: number
+        startY: number
+        currentX: number
+        currentY: number
+    } | null>(null)
+    const [transientPositions, setTransientPositions] = useState<TransientPositions>(
+        {}
+    )
+
+    const themeBasedStyles = useMemo(
+        () => ({
+            containerBg: 'bg-[var(--canvas-bg)]',
+            dragGridFill:
+                resolvedTheme === 'dark' ? 'var(--gold)' : 'var(--foreground)',
+            dragGridFillOpacity: resolvedTheme === 'dark' ? '0.3' : '0.7',
+            ghostCardStrokeOpacity: resolvedTheme === 'dark' ? '0.4' : '0.8',
+        }),
+        [resolvedTheme]
+    )
+
+    const svgWidth = CANVAS_WIDTH
+    const svgHeight = CANVAS_HEIGHT
+
+    const transientPositionsRef = useRef<TransientPositions>({})
+    const pendingTransientPositionsRef = useRef<TransientPositions | null>(null)
+    const transientFrameRef = useRef(0)
+    const effectiveCardsRef = useRef(cards)
+    const draggingRef = useRef<{ index: number; x: number; y: number } | null>(null)
+    const dragStartPos = useRef<Point | null>(null)
+    const groupSelectedRef = useRef<Set<number>>(new Set())
+    const groupDragOrigins = useRef<Map<number, Point>>(new Map())
+    const cardGroupRefs = useRef<Map<number, SVGGElement>>(new Map())
+    const isMarqueeActive = useRef(false)
+    const marqueeStart = useRef({ x: 0, y: 0 })
+    const isSpaceHeld = useRef(false)
+    const isPanning = useRef(false)
+    const panStart = useRef({ x: 0, y: 0, scrollX: 0, scrollY: 0 })
+    const renderedZoomRef = useRef(DEFAULT_ZOOM)
+    const targetZoomRef = useRef(DEFAULT_ZOOM)
+    const targetScrollRef = useRef({ left: 0, top: 0 })
+    const pendingScrollRef = useRef<{ left: number; top: number } | null>(null)
+    const pendingViewportCommitRef = useRef<{
+        zoom: number
+        scroll: { left: number; top: number }
+        shouldFlagInteraction: boolean
+        viewportRequestKey: string | null
+    } | null>(null)
+    const viewportFrameRef = useRef(0)
+    const zoomInteractionTimeoutRef = useRef<number | null>(null)
+    const appliedViewportRequestKeyRef = useRef<string | null>(null)
+    const scheduledViewportRequestKeyRef = useRef<string | null>(null)
+    const pendingAppliedViewportRequestKeyRef = useRef<string | null>(null)
+    const onZoomDisplayChangeRef = useRef(onZoomDisplayChange)
+    const pinchStateRef = useRef<{
+        distance: number
+        midpointX: number
+        midpointY: number
+    } | null>(null)
+    const safariGestureStateRef = useRef<{
+        startZoom: number
+        clientX: number
+        clientY: number
+    } | null>(null)
+
+    const updateGroupSelection = useCallback((next: Set<number>) => {
+        groupSelectedRef.current = next
+        setGroupSelectedIndices(next)
+    }, [])
+
+    const syncViewportState = useCallback(() => {
+        const container = containerRef.current
+        if (!container) return
+
+        setViewportState((prev) => {
+            const next = {
+                scrollLeft: container.scrollLeft,
+                scrollTop: container.scrollTop,
+                clientWidth: container.clientWidth,
+                clientHeight: container.clientHeight,
+            }
+
+            if (
+                prev.scrollLeft === next.scrollLeft &&
+                prev.scrollTop === next.scrollTop &&
+                prev.clientWidth === next.clientWidth &&
+                prev.clientHeight === next.clientHeight
+            ) {
+                return prev
+            }
+
+            return next
+        })
+    }, [])
+
+    const setZoomInteractionActiveForFrame = useCallback(() => {
+        setIsZoomInteractionActive(true)
+
+        if (zoomInteractionTimeoutRef.current !== null) {
+            window.clearTimeout(zoomInteractionTimeoutRef.current)
+        }
+
+        zoomInteractionTimeoutRef.current = window.setTimeout(() => {
+            setIsZoomInteractionActive(false)
+            zoomInteractionTimeoutRef.current = null
+        }, ZOOM_INTERACTION_IDLE_MS)
+    }, [])
+
+    const effectiveCards = useMemo(
+        () =>
+            cards.map((card, index) => {
+                const nextPosition = transientPositions[index]
+                return nextPosition
+                    ? { ...card, x: nextPosition.x, y: nextPosition.y }
+                    : card
+            }),
+        [cards, transientPositions]
+    )
+
+    useEffect(() => {
+        effectiveCardsRef.current = effectiveCards
+    }, [effectiveCards])
+
+    useEffect(() => {
+        onZoomDisplayChangeRef.current = onZoomDisplayChange
+    }, [onZoomDisplayChange])
+
+    useEffect(() => {
+        if (draggingRef.current) return
+        if (Object.keys(transientPositionsRef.current).length === 0) return
+
+        transientPositionsRef.current = {}
+        pendingTransientPositionsRef.current = null
+        const frame = window.requestAnimationFrame(() => {
+            setTransientPositions({})
+        })
+
+        return () => {
+            window.cancelAnimationFrame(frame)
+        }
+    }, [cards])
+
+    useEffect(() => {
+        return () => {
+            if (transientFrameRef.current !== 0) {
+                window.cancelAnimationFrame(transientFrameRef.current)
+            }
+            if (viewportFrameRef.current !== 0) {
+                window.cancelAnimationFrame(viewportFrameRef.current)
+            }
+            if (zoomInteractionTimeoutRef.current !== null) {
+                window.clearTimeout(zoomInteractionTimeoutRef.current)
+            }
+        }
+    }, [])
+
+    useEffect(() => {
+        const container = containerRef.current
+        if (!container) return
+
+        let frame = 0
+
+        const scheduleSync = () => {
+            if (frame !== 0) return
+
+            frame = window.requestAnimationFrame(() => {
+                frame = 0
+                syncViewportState()
+            })
+        }
+
+        scheduleSync()
+
+        const observer = new ResizeObserver(scheduleSync)
+        observer.observe(container)
+        container.addEventListener('scroll', scheduleSync, { passive: true })
+
+        return () => {
+            observer.disconnect()
+            container.removeEventListener('scroll', scheduleSync)
+            if (frame !== 0) {
+                window.cancelAnimationFrame(frame)
+            }
+        }
+    }, [syncViewportState])
+
+    const clientToSVG = useCallback((clientX: number, clientY: number) => {
+        const svg = svgRef.current
+        if (!svg) return { x: clientX, y: clientY }
+        const ctm = svg.getScreenCTM()
+        if (!ctm) return { x: clientX, y: clientY }
+        const inv = ctm.inverse()
+        return {
+            x: clientX * inv.a + clientY * inv.c + inv.e,
+            y: clientX * inv.b + clientY * inv.d + inv.f,
+        }
+    }, [])
+
+    const registerCardRef = useCallback((index: number, el: SVGGElement | null) => {
+        if (el) {
+            cardGroupRefs.current.set(index, el)
+            return
+        }
+
+        cardGroupRefs.current.delete(index)
+    }, [])
+
+    const baseSortedCards = useMemo(
+        () =>
+            effectiveCards
+                .map((card, index) => ({ card, index }))
+                .sort((a, b) => {
+                    if (a.card.z !== b.card.z) return a.card.z - b.card.z
+                    return a.index - b.index
+                }),
+        [effectiveCards]
+    )
+
+    const layeredCardIndices = useMemo(
+        () =>
+            baseSortedCards
+                .map(({ index }) => index)
+                .sort((a, b) => {
+                    const aSelected = a === selectedCardIndex ? 1 : 0
+                    const bSelected = b === selectedCardIndex ? 1 : 0
+                    const aDragging = dragging?.index === a ? 1 : 0
+                    const bDragging = dragging?.index === b ? 1 : 0
+
+                    if (aDragging !== bDragging) return aDragging - bDragging
+                    if (aSelected !== bSelected) return aSelected - bSelected
+                    return 0
+                }),
+        [baseSortedCards, dragging?.index, selectedCardIndex]
+    )
+
+    useLayoutEffect(() => {
+        const cardsLayer = cardsLayerRef.current
+        if (!cardsLayer) return
+
+        for (const index of layeredCardIndices) {
+            const el = cardGroupRefs.current.get(index)
+            if (el && el.parentNode === cardsLayer) {
+                cardsLayer.appendChild(el)
+            }
+        }
+    }, [layeredCardIndices])
+
+    const flushTransientPositions = useCallback(() => {
+        transientFrameRef.current = 0
+        const next = pendingTransientPositionsRef.current
+        pendingTransientPositionsRef.current = null
+        if (!next) return
+
+        transientPositionsRef.current = next
+        setTransientPositions((prev) =>
+            areTransientPositionsEqual(prev, next) ? prev : next
+        )
+    }, [])
+
+    const scheduleTransientPositions = useCallback(
+        (updates: TransientPositions) => {
+            const base =
+                pendingTransientPositionsRef.current ?? transientPositionsRef.current
+            const next = { ...base }
+            let hasChanged = false
+
+            for (const [key, value] of Object.entries(updates)) {
+                const index = Number(key)
+                if (next[index]?.x === value.x && next[index]?.y === value.y) {
+                    continue
+                }
+
+                next[index] = value
+                hasChanged = true
+            }
+
+            if (!hasChanged) return
+
+            pendingTransientPositionsRef.current = next
+
+            if (transientFrameRef.current !== 0) return
+
+            transientFrameRef.current = window.requestAnimationFrame(
+                flushTransientPositions
+            )
+        },
+        [flushTransientPositions]
+    )
+
+    const buildDragUpdates = useCallback(
+        (index: number, x: number, y: number) => {
+            const updates: TransientPositions = {
+                [index]: { x, y },
+            }
+
+            if (groupDragOrigins.current.size > 0 && dragStartPos.current) {
+                const dx = x - dragStartPos.current.x
+                const dy = y - dragStartPos.current.y
+
+                for (const [groupIndex, origin] of groupDragOrigins.current) {
+                    const { x: clampedX, y: clampedY } =
+                        getSnappedClampedPosition(
+                            origin.x + dx,
+                            origin.y + dy,
+                            CANVAS_BOUNDS,
+                            GRID_SIZE
+                        )
+
+                    updates[groupIndex] = { x: clampedX, y: clampedY }
+                }
+            }
+
+            return updates
+        },
+        []
+    )
+
+    const commitTransientPositions = useCallback((updates: TransientPositions) => {
+        if (transientFrameRef.current !== 0) {
+            window.cancelAnimationFrame(transientFrameRef.current)
+            transientFrameRef.current = 0
+        }
+
+        pendingTransientPositionsRef.current = null
+        const next = { ...transientPositionsRef.current, ...updates }
+        transientPositionsRef.current = next
+        setTransientPositions((prev) =>
+            areTransientPositionsEqual(prev, next) ? prev : next
+        )
+    }, [])
+
+    const guides = useMemo<CanvasGuide[]>(() => {
+        if (isViewMode || !dragging) return []
+
+        if (
+            groupSelectedIndices.size > 1 &&
+            groupSelectedIndices.has(dragging.index)
+        ) {
+            return []
+        }
+
+        const draggedRect = getRect(
+            dragging.x,
+            dragging.y,
+            CARD_WIDTH,
+            CARD_HEIGHT
+        )
+        const lines: CanvasGuide[] = []
+
+        effectiveCards.forEach((card, index) => {
+            if (index === dragging.index) return
+            const otherRect = getRect(card.x, card.y, CARD_WIDTH, CARD_HEIGHT)
+
+            for (const draggedEdge of [draggedRect.left, draggedRect.right]) {
+                for (const otherEdge of [otherRect.left, otherRect.right]) {
+                    if (draggedEdge === otherEdge) {
+                        lines.push({ axis: 'v', pos: draggedEdge })
+                    }
+                }
+            }
+
+            for (const draggedEdge of [draggedRect.top, draggedRect.bottom]) {
+                for (const otherEdge of [otherRect.top, otherRect.bottom]) {
+                    if (draggedEdge === otherEdge) {
+                        lines.push({ axis: 'h', pos: draggedEdge })
+                    }
+                }
+            }
+        })
+
+        const seen = new Set<string>()
+        return lines.filter((line) => {
+            const key = `${line.axis}-${line.pos}`
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+        })
+    }, [effectiveCards, dragging, groupSelectedIndices, isViewMode])
+
+    const getViewportSnapshot = useCallback(() => {
+        const container = containerRef.current
+        if (!container) {
+            return {
+                scrollLeft: 0,
+                scrollTop: 0,
+                zoom: targetZoomRef.current || DEFAULT_ZOOM,
+                clientWidth: 0,
+                clientHeight: 0,
+            }
+        }
+
+        if (
+            pendingViewportCommitRef.current ||
+            pendingScrollRef.current ||
+            targetZoomRef.current !== renderedZoomRef.current
+        ) {
+            return {
+                scrollLeft: targetScrollRef.current.left,
+                scrollTop: targetScrollRef.current.top,
+                zoom: targetZoomRef.current,
+                clientWidth: container.clientWidth,
+                clientHeight: container.clientHeight,
+            }
+        }
+
+        return {
+            scrollLeft: container.scrollLeft,
+            scrollTop: container.scrollTop,
+            zoom: renderedZoomRef.current,
+            clientWidth: container.clientWidth,
+            clientHeight: container.clientHeight,
+        }
+    }, [])
+
+    const flushViewportCommit = useCallback(() => {
+        viewportFrameRef.current = 0
+        const pending = pendingViewportCommitRef.current
+        pendingViewportCommitRef.current = null
+        const container = containerRef.current
+        if (!pending || !container) return
+
+        if (pending.shouldFlagInteraction) {
+            setZoomInteractionActiveForFrame()
+        }
+
+        if (pending.zoom !== renderedZoomRef.current) {
+            pendingScrollRef.current = pending.scroll
+            pendingAppliedViewportRequestKeyRef.current =
+                pending.viewportRequestKey
+            setZoom(pending.zoom)
+            return
+        }
+
+        targetZoomRef.current = pending.zoom
+        targetScrollRef.current = pending.scroll
+        container.scrollLeft = pending.scroll.left
+        container.scrollTop = pending.scroll.top
+        if (pending.viewportRequestKey) {
+            appliedViewportRequestKeyRef.current = pending.viewportRequestKey
+            scheduledViewportRequestKeyRef.current = null
+        }
+        syncViewportState()
+    }, [setZoomInteractionActiveForFrame, syncViewportState])
+
+    const scheduleViewportCommit = useCallback(
+        (
+            nextZoom: number,
+            nextScroll: { left: number; top: number },
+            shouldFlagInteraction: boolean,
+            viewportRequestKey: string | null = null
+        ) => {
+            targetZoomRef.current = nextZoom
+            targetScrollRef.current = nextScroll
+            if (viewportRequestKey) {
+                scheduledViewportRequestKeyRef.current = viewportRequestKey
+            } else if (pendingViewportCommitRef.current?.viewportRequestKey) {
+                scheduledViewportRequestKeyRef.current = null
+                pendingAppliedViewportRequestKeyRef.current = null
+            }
+            pendingViewportCommitRef.current = {
+                zoom: nextZoom,
+                scroll: nextScroll,
+                shouldFlagInteraction,
+                viewportRequestKey,
+            }
+
+            if (viewportFrameRef.current !== 0) return
+
+            viewportFrameRef.current = window.requestAnimationFrame(
+                flushViewportCommit
+            )
+        },
+        [flushViewportCommit]
+    )
+
+    const setZoomAroundViewportPoint = useCallback(
+        ({
+            nextZoom,
+            anchorViewportX,
+            anchorViewportY,
+            targetViewportX = anchorViewportX,
+            targetViewportY = anchorViewportY,
+            shouldFlagInteraction,
+        }: {
+            nextZoom: number
+            anchorViewportX: number
+            anchorViewportY: number
+            targetViewportX?: number
+            targetViewportY?: number
+            shouldFlagInteraction: boolean
+        }) => {
+            const container = containerRef.current
+            if (!container) return
+
+            const normalizedZoom = normalizeZoom(clampZoom(nextZoom))
+            const currentViewport = getViewportSnapshot()
+
+            const nextScroll = getClampedViewportScrollForZoomAnchor({
+                scrollLeft: currentViewport.scrollLeft,
+                scrollTop: currentViewport.scrollTop,
+                anchorViewportX,
+                anchorViewportY,
+                targetViewportX,
+                targetViewportY,
+                fromZoom: currentViewport.zoom,
+                toZoom: normalizedZoom,
+                clientWidth: container.clientWidth,
+                clientHeight: container.clientHeight,
+                contentWidth: svgWidth * normalizedZoom,
+                contentHeight: svgHeight * normalizedZoom,
+            })
+
+            if (
+                normalizedZoom === currentViewport.zoom &&
+                nextScroll.left === currentViewport.scrollLeft &&
+                nextScroll.top === currentViewport.scrollTop
+            ) {
+                return
+            }
+
+            scheduleViewportCommit(normalizedZoom, nextScroll, shouldFlagInteraction)
+        },
+        [getViewportSnapshot, scheduleViewportCommit, svgHeight, svgWidth]
+    )
+
+    useLayoutEffect(() => {
+        renderedZoomRef.current = zoom
+
+        if (!pendingScrollRef.current || !containerRef.current) {
+            onZoomDisplayChangeRef.current?.(zoom)
+            return
+        }
+
+        containerRef.current.scrollLeft = pendingScrollRef.current.left
+        containerRef.current.scrollTop = pendingScrollRef.current.top
+        targetScrollRef.current = pendingScrollRef.current
+        pendingScrollRef.current = null
+        if (pendingAppliedViewportRequestKeyRef.current) {
+            appliedViewportRequestKeyRef.current =
+                pendingAppliedViewportRequestKeyRef.current
+            scheduledViewportRequestKeyRef.current = null
+            pendingAppliedViewportRequestKeyRef.current = null
+        }
+        syncViewportState()
+        onZoomDisplayChangeRef.current?.(zoom)
+    }, [zoom, syncViewportState])
+
+    useEffect(() => {
+        const container = containerRef.current
+        if (!container || !viewportRequest) return
+        const clientWidth = container.clientWidth
+        const clientHeight = container.clientHeight
+
+        // New spreads can dispatch their initial viewport request before the
+        // scroll container has measurable size. Retry once sizing settles.
+        if (clientWidth <= 0 || clientHeight <= 0) return
+
+        let nextZoom = renderedZoomRef.current || DEFAULT_ZOOM
+        let contentX = CANVAS_CENTER.x
+        let contentY = CANVAS_CENTER.y
+
+        if (viewportRequest.type === 'fit-spread') {
+            const padding = viewportRequest.padding ?? VIEWPORT_FIT_PADDING
+            const availableWidth = Math.max(clientWidth - padding * 2, 1)
+            const availableHeight = Math.max(clientHeight - padding * 2, 1)
+            const fitZoom = clampZoom(
+                Math.min(
+                    availableWidth / Math.max(viewportRequest.bounds.width, 1),
+                    availableHeight / Math.max(viewportRequest.bounds.height, 1)
+                )
+            )
+
+            nextZoom = normalizeZoom(
+                Math.min(viewportRequest.maxZoom ?? DEFAULT_ZOOM, fitZoom)
+            )
+            contentX = viewportRequest.bounds.centerX
+            contentY = viewportRequest.bounds.centerY
+        } else {
+            nextZoom = normalizeZoom(viewportRequest.zoom ?? DEFAULT_ZOOM)
+            contentX = viewportRequest.point.x
+            contentY = viewportRequest.point.y
+        }
+
+        const nextScroll = clampViewportScroll({
+            ...getViewportScrollForCanvasPoint({
+                contentX,
+                contentY,
+                viewportX: clientWidth / 2,
+                viewportY: clientHeight / 2,
+                zoom: nextZoom,
+            }),
+            clientWidth,
+            clientHeight,
+            contentWidth: svgWidth * nextZoom,
+            contentHeight: svgHeight * nextZoom,
+        })
+
+        if (appliedViewportRequestKeyRef.current === viewportRequest.key) return
+        if (scheduledViewportRequestKeyRef.current === viewportRequest.key) return
+
+        scheduleViewportCommit(nextZoom, nextScroll, false, viewportRequest.key)
+    }, [
+        scheduleViewportCommit,
+        svgHeight,
+        svgWidth,
+        viewportRequest,
+        viewportState.clientWidth,
+        viewportState.clientHeight,
+    ])
+
+    useEffect(() => {
+        const container = containerRef.current
+        if (!container) return
+
+        const normalizeWheelDelta = (e: WheelEvent) => {
+            if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+                return e.deltaY * WHEEL_DELTA_LINE_PX
+            }
+            if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+                return e.deltaY * container.clientHeight
+            }
+            return e.deltaY
+        }
+
+        const handleWheel = (e: WheelEvent) => {
+            if (safariGestureStateRef.current) return
+            if (!e.ctrlKey && !e.metaKey) return
+            e.preventDefault()
+
+            const rect = container.getBoundingClientRect()
+            const delta = normalizeWheelDelta(e)
+            const scaleFactor = Math.exp(-delta * WHEEL_ZOOM_SENSITIVITY)
+
+            setZoomAroundViewportPoint({
+                nextZoom: targetZoomRef.current * scaleFactor,
+                anchorViewportX: e.clientX - rect.left,
+                anchorViewportY: e.clientY - rect.top,
+                shouldFlagInteraction: true,
+            })
+        }
+
+        const handleTouchStart = (e: TouchEvent) => {
+            if (e.touches.length !== 2) return
+            e.preventDefault()
+            container.style.touchAction = 'none'
+
+            const touchA = e.touches[0]
+            const touchB = e.touches[1]
+            pinchStateRef.current = {
+                distance: Math.hypot(
+                    touchA.clientX - touchB.clientX,
+                    touchA.clientY - touchB.clientY
+                ),
+                midpointX: (touchA.clientX + touchB.clientX) / 2,
+                midpointY: (touchA.clientY + touchB.clientY) / 2,
+            }
+        }
+
+        const handleTouchMove = (e: TouchEvent) => {
+            if (e.touches.length !== 2 || !pinchStateRef.current) return
+            e.preventDefault()
+
+            const touchA = e.touches[0]
+            const touchB = e.touches[1]
+            const distance = Math.hypot(
+                touchA.clientX - touchB.clientX,
+                touchA.clientY - touchB.clientY
+            )
+            const midpointX = (touchA.clientX + touchB.clientX) / 2
+            const midpointY = (touchA.clientY + touchB.clientY) / 2
+            const previousPinch = pinchStateRef.current
+            const rect = container.getBoundingClientRect()
+            const scale =
+                previousPinch.distance === 0
+                    ? 1
+                    : distance / previousPinch.distance
+
+            setZoomAroundViewportPoint({
+                nextZoom: targetZoomRef.current * scale,
+                anchorViewportX: previousPinch.midpointX - rect.left,
+                anchorViewportY: previousPinch.midpointY - rect.top,
+                targetViewportX: midpointX - rect.left,
+                targetViewportY: midpointY - rect.top,
+                shouldFlagInteraction: true,
+            })
+
+            pinchStateRef.current = {
+                distance,
+                midpointX,
+                midpointY,
+            }
+        }
+
+        const clearPinchState = () => {
+            pinchStateRef.current = null
+            container.style.touchAction = 'pan-x pan-y'
+        }
+
+        const handleSafariGestureStart = (event: Event) => {
+            const e = event as WebKitGestureEvent
+            e.preventDefault()
+
+            const rect = container.getBoundingClientRect()
+            safariGestureStateRef.current = {
+                startZoom: targetZoomRef.current,
+                clientX: e.clientX ?? rect.left + rect.width / 2,
+                clientY: e.clientY ?? rect.top + rect.height / 2,
+            }
+        }
+
+        const handleSafariGestureChange = (event: Event) => {
+            const e = event as WebKitGestureEvent
+            const gesture = safariGestureStateRef.current
+            if (!gesture) return
+            if (!e.scale || e.scale <= 0) return
+            e.preventDefault()
+
+            const rect = container.getBoundingClientRect()
+            const clientX = e.clientX ?? gesture.clientX
+            const clientY = e.clientY ?? gesture.clientY
+
+            setZoomAroundViewportPoint({
+                nextZoom: gesture.startZoom * e.scale,
+                anchorViewportX: gesture.clientX - rect.left,
+                anchorViewportY: gesture.clientY - rect.top,
+                targetViewportX: clientX - rect.left,
+                targetViewportY: clientY - rect.top,
+                shouldFlagInteraction: true,
+            })
+
+            safariGestureStateRef.current = {
+                ...gesture,
+                clientX,
+                clientY,
+            }
+        }
+
+        const clearSafariGestureState = () => {
+            safariGestureStateRef.current = null
+        }
+
+        container.addEventListener('wheel', handleWheel, { passive: false })
+        container.addEventListener('touchstart', handleTouchStart, {
+            passive: false,
+        })
+        container.addEventListener('touchmove', handleTouchMove, {
+            passive: false,
+        })
+        container.addEventListener('touchend', clearPinchState)
+        container.addEventListener('touchcancel', clearPinchState)
+        container.addEventListener('gesturestart', handleSafariGestureStart)
+        container.addEventListener('gesturechange', handleSafariGestureChange)
+        container.addEventListener('gestureend', clearSafariGestureState)
+
+        return () => {
+            container.style.touchAction = 'pan-x pan-y'
+            container.removeEventListener('wheel', handleWheel)
+            container.removeEventListener('touchstart', handleTouchStart)
+            container.removeEventListener('touchmove', handleTouchMove)
+            container.removeEventListener('touchend', clearPinchState)
+            container.removeEventListener('touchcancel', clearPinchState)
+            container.removeEventListener('gesturestart', handleSafariGestureStart)
+            container.removeEventListener(
+                'gesturechange',
+                handleSafariGestureChange
+            )
+            container.removeEventListener('gestureend', clearSafariGestureState)
+        }
+    }, [setZoomAroundViewportPoint])
+
+    useImperativeHandle(
+        ref,
+        () => ({
+            getZoom: () => targetZoomRef.current,
+            resetZoom: () => {
+                const container = containerRef.current
+                if (!container) return
+
+                setZoomAroundViewportPoint({
+                    nextZoom: DEFAULT_ZOOM,
+                    anchorViewportX: container.clientWidth / 2,
+                    anchorViewportY: container.clientHeight / 2,
+                    shouldFlagInteraction: true,
+                })
+            },
+            setZoom: (nextZoom: number) => {
+                const container = containerRef.current
+                if (!container) return
+
+                setZoomAroundViewportPoint({
+                    nextZoom,
+                    anchorViewportX: container.clientWidth / 2,
+                    anchorViewportY: container.clientHeight / 2,
+                    shouldFlagInteraction: true,
+                })
+            },
+            zoomIn: () => {
+                const container = containerRef.current
+                if (!container) return
+
+                setZoomAroundViewportPoint({
+                    nextZoom: getSteppedZoom(targetZoomRef.current, 'in'),
+                    anchorViewportX: container.clientWidth / 2,
+                    anchorViewportY: container.clientHeight / 2,
+                    shouldFlagInteraction: true,
+                })
+            },
+            zoomOut: () => {
+                const container = containerRef.current
+                if (!container) return
+
+                setZoomAroundViewportPoint({
+                    nextZoom: getSteppedZoom(targetZoomRef.current, 'out'),
+                    anchorViewportX: container.clientWidth / 2,
+                    anchorViewportY: container.clientHeight / 2,
+                    shouldFlagInteraction: true,
+                })
+            },
+        }),
+        [setZoomAroundViewportPoint]
+    )
+
+    useEffect(() => {
+        const container = containerRef.current
+        if (!container) return
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.code !== 'Space') return
+            const tag = (e.target as HTMLElement).tagName
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+            e.preventDefault()
+            isSpaceHeld.current = true
+            container.style.cursor = 'grab'
+        }
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (e.code !== 'Space') return
+            isSpaceHeld.current = false
+            isPanning.current = false
+            container.style.cursor = ''
+        }
+
+        const handleMouseDown = (e: MouseEvent) => {
+            if (!isSpaceHeld.current) return
+            isPanning.current = true
+            container.style.cursor = 'grabbing'
+            panStart.current = {
+                x: e.clientX,
+                y: e.clientY,
+                scrollX: container.scrollLeft,
+                scrollY: container.scrollTop,
+            }
+        }
+
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isPanning.current) return
+            const dx = e.clientX - panStart.current.x
+            const dy = e.clientY - panStart.current.y
+            container.scrollLeft = panStart.current.scrollX - dx
+            container.scrollTop = panStart.current.scrollY - dy
+        }
+
+        const handleMouseUp = () => {
+            if (!isPanning.current) return
+            isPanning.current = false
+            container.style.cursor = isSpaceHeld.current ? 'grab' : ''
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        window.addEventListener('keyup', handleKeyUp)
+        container.addEventListener('mousedown', handleMouseDown)
+        window.addEventListener('mousemove', handleMouseMove)
+        window.addEventListener('mouseup', handleMouseUp)
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+            window.removeEventListener('keyup', handleKeyUp)
+            container.removeEventListener('mousedown', handleMouseDown)
+            window.removeEventListener('mousemove', handleMouseMove)
+            window.removeEventListener('mouseup', handleMouseUp)
+        }
+    }, [])
+
+    const handleDragStart = useCallback(
+        (index: number, x: number, y: number) => {
+            setDragging({ index, x, y })
+            draggingRef.current = { index, x, y }
+
+            const currentCard = effectiveCardsRef.current[index]
+            dragStartPos.current = currentCard
+                ? { x: currentCard.x, y: currentCard.y }
+                : { x, y }
+
+            if (
+                groupSelectedRef.current.has(index) &&
+                groupSelectedRef.current.size > 1
+            ) {
+                const origins = new Map<number, Point>()
+                for (const groupIndex of groupSelectedRef.current) {
+                    if (groupIndex === index) continue
+                    const groupCard = effectiveCardsRef.current[groupIndex]
+                    if (groupCard) {
+                        origins.set(groupIndex, {
+                            x: groupCard.x,
+                            y: groupCard.y,
+                        })
+                    }
+                }
+                groupDragOrigins.current = origins
+                return
+            }
+
+            groupDragOrigins.current = new Map()
+        },
+        []
+    )
+
+    const handleDrag = useCallback(
+        (index: number, x: number, y: number) => {
+            setDragging({ index, x, y })
+            draggingRef.current = { index, x, y }
+            scheduleTransientPositions(buildDragUpdates(index, x, y))
+        },
+        [buildDragUpdates, scheduleTransientPositions]
+    )
+
+    const handleDragEnd = useCallback(
+        (index: number, x: number, y: number) => {
+            const nextPositions = buildDragUpdates(index, x, y)
+            commitTransientPositions(nextPositions)
+
+            onPositionsCommit?.(
+                Object.entries(nextPositions).map(([key, value]) => ({
+                    index: Number(key),
+                    x: value.x,
+                    y: value.y,
+                }))
+            )
+
+            groupDragOrigins.current = new Map()
+            dragStartPos.current = null
+            draggingRef.current = null
+            setDragging(null)
+        },
+        [buildDragUpdates, commitTransientPositions, onPositionsCommit]
+    )
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isMarqueeActive.current) return
+            const pt = clientToSVG(e.clientX, e.clientY)
+            setMarquee((prev) =>
+                prev ? { ...prev, currentX: pt.x, currentY: pt.y } : null
+            )
+        }
+
+        const handleMouseUp = (e: MouseEvent) => {
+            if (!isMarqueeActive.current) return
+            isMarqueeActive.current = false
+
+            const endPt = clientToSVG(e.clientX, e.clientY)
+            const dx = endPt.x - marqueeStart.current.x
+            const dy = endPt.y - marqueeStart.current.y
+            const dist = Math.sqrt(dx * dx + dy * dy)
+
+            if (dist < 5) {
+                updateGroupSelection(new Set())
+                onCardSelect(null)
+            } else {
+                const left = Math.min(marqueeStart.current.x, endPt.x)
+                const right = Math.max(marqueeStart.current.x, endPt.x)
+                const top = Math.min(marqueeStart.current.y, endPt.y)
+                const bottom = Math.max(marqueeStart.current.y, endPt.y)
+                const selectionRect = { left, right, top, bottom }
+                const selected = new Set<number>()
+
+                effectiveCardsRef.current.forEach((card, index) => {
+                    if (
+                        rectsIntersect(
+                            getRect(card.x, card.y, CARD_WIDTH, CARD_HEIGHT),
+                            selectionRect
+                        )
+                    ) {
+                        selected.add(index)
+                    }
+                })
+
+                updateGroupSelection(selected)
+            }
+
+            setMarquee(null)
+        }
+
+        window.addEventListener('mousemove', handleMouseMove)
+        window.addEventListener('mouseup', handleMouseUp)
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove)
+            window.removeEventListener('mouseup', handleMouseUp)
+        }
+    }, [clientToSVG, onCardSelect, updateGroupSelection])
+
+    const handleBackgroundMouseDown = useCallback(
+        (e: React.MouseEvent<SVGRectElement>) => {
+            if (isSpaceHeld.current) return
+            const pt = clientToSVG(e.clientX, e.clientY)
+            isMarqueeActive.current = true
+            marqueeStart.current = { x: pt.x, y: pt.y }
+            setMarquee({
+                startX: pt.x,
+                startY: pt.y,
+                currentX: pt.x,
+                currentY: pt.y,
+            })
+        },
+        [clientToSVG]
+    )
+
+    const handleBackgroundDoubleClick = useCallback(
+        (e: React.MouseEvent<SVGRectElement>) => {
+            if (isViewMode || !onCanvasDoubleClick) return
+            const pt = clientToSVG(e.clientX, e.clientY)
+            const { x, y } = getCenteredCardPlacement(
+                pt.x,
+                pt.y,
+                CARD_WIDTH,
+                CARD_HEIGHT,
+                CANVAS_BOUNDS,
+                GRID_SIZE
+            )
+            onCanvasDoubleClick(x, y)
+        },
+        [clientToSVG, isViewMode, onCanvasDoubleClick]
+    )
+
+    const handleCardClick = useCallback(
+        (index: number) => {
+            updateGroupSelection(new Set())
+            onCardSelect(index)
+        },
+        [onCardSelect, updateGroupSelection]
+    )
+
+    const marqueeRect = useMemo(() => {
+        if (!marquee) return null
+        return {
+            x: Math.min(marquee.startX, marquee.currentX),
+            y: Math.min(marquee.startY, marquee.currentY),
+            width: Math.abs(marquee.currentX - marquee.startX),
+            height: Math.abs(marquee.currentY - marquee.startY),
+        }
+    }, [marquee])
+
+    const showEmptyPrompt = !isViewMode && cards.length === 0
+
+    const offscreenPointers = useMemo(() => {
+        if (viewportState.clientWidth <= 0 || viewportState.clientHeight <= 0) {
+            return []
+        }
+
+        const viewport = getCanvasViewportRect({
+            scrollLeft: viewportState.scrollLeft,
+            scrollTop: viewportState.scrollTop,
+            clientWidth: viewportState.clientWidth,
+            clientHeight: viewportState.clientHeight,
+            zoom,
+        })
+
+        const overlayCenterX = viewportState.clientWidth / 2
+        const overlayCenterY = viewportState.clientHeight / 2
+        const maxOffsetX = Math.max(overlayCenterX - POINTER_EDGE_PADDING, 0)
+        const maxOffsetY = Math.max(overlayCenterY - POINTER_EDGE_PADDING, 0)
+
+        if (maxOffsetX === 0 || maxOffsetY === 0) return []
+
+        return effectiveCards.flatMap((card, index) => {
+            const cardRect = getRect(card.x, card.y, CARD_WIDTH, CARD_HEIGHT)
+
+            if (!isRectFullyOutsideRect(cardRect, viewport)) return []
+
+            const cardCenter = getRectCenter(cardRect)
+            const pointerPosition = projectVectorToEdge(
+                cardCenter.x - viewport.centerX,
+                cardCenter.y - viewport.centerY,
+                overlayCenterX,
+                overlayCenterY,
+                maxOffsetX,
+                maxOffsetY
+            )
+
+            if (!pointerPosition) return []
+
+            return [
+                {
+                    index,
+                    x: pointerPosition.x,
+                    y: pointerPosition.y,
+                    rotation:
+                        pointerPosition.edge === 'top'
+                            ? 0
+                            : pointerPosition.edge === 'right'
+                              ? 90
+                              : pointerPosition.edge === 'bottom'
+                                ? 180
+                                : -90,
+                    label: card.name?.trim() || `Card ${index + 1}`,
+                },
+            ]
+        })
+    }, [effectiveCards, viewportState, zoom])
+
+    return (
+        <div className="relative h-full w-full">
+            <div
+                ref={containerRef}
+                className={`h-full w-full overflow-auto overscroll-contain ${themeBasedStyles.containerBg}`}
+                style={{ touchAction: 'pan-x pan-y' }}
+            >
+                <div style={{ width: svgWidth * zoom, height: svgHeight * zoom }}>
+                    <svg
+                        ref={svgRef}
+                        width={svgWidth}
+                        height={svgHeight}
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="select-none"
+                        style={{
+                            transform: `scale(${zoom})`,
+                            transformOrigin: '0 0',
+                        }}
+                    >
+                        <defs>
+                            <filter
+                                id="canvas-card-shadow-active"
+                                x="-25%"
+                                y="-25%"
+                                width="150%"
+                                height="150%"
+                            >
+                                <feDropShadow
+                                    dx={0}
+                                    dy={5}
+                                    stdDeviation={6}
+                                    floodColor="black"
+                                    floodOpacity={0.24}
+                                />
+                            </filter>
+                        </defs>
+
+                        <CanvasBackground
+                            svgWidth={svgWidth}
+                            svgHeight={svgHeight}
+                            gridSize={GRID_SIZE}
+                            isViewMode={isViewMode}
+                            dragGridFill={themeBasedStyles.dragGridFill}
+                            dragGridFillOpacity={
+                                themeBasedStyles.dragGridFillOpacity
+                            }
+                        />
+
+                        <rect
+                            width={svgWidth}
+                            height={svgHeight}
+                            fill="transparent"
+                            onMouseDown={
+                                isViewMode
+                                    ? () => onCardSelect(null)
+                                    : handleBackgroundMouseDown
+                            }
+                            onDoubleClick={handleBackgroundDoubleClick}
+                        />
+
+                        {showEmptyPrompt && (
+                            <g pointerEvents="none">
+                                <rect
+                                    x={CANVAS_CENTER.x - CARD_WIDTH / 2}
+                                    y={CANVAS_CENTER.y - CARD_HEIGHT / 2}
+                                    width={CARD_WIDTH}
+                                    height={CARD_HEIGHT}
+                                    rx={8}
+                                    fill="none"
+                                    stroke="var(--gold)"
+                                    strokeWidth={1}
+                                    strokeOpacity={
+                                        themeBasedStyles.ghostCardStrokeOpacity
+                                    }
+                                    strokeDasharray="6 4"
+                                    className="animate-gentle-pulse"
+                                />
+                                <text
+                                    x={CANVAS_CENTER.x}
+                                    y={CANVAS_CENTER.y + CARD_HEIGHT / 2 + 34}
+                                    textAnchor="middle"
+                                    fontSize={13}
+                                    fill="var(--muted-foreground)"
+                                    fillOpacity={0.6}
+                                    fontFamily="var(--font-nunito), sans-serif"
+                                >
+                                    Double-click to place your first position
+                                </text>
+                            </g>
+                        )}
+
+                        <CanvasGuides
+                            guides={guides}
+                            svgWidth={svgWidth}
+                            svgHeight={svgHeight}
+                        />
+
+                        <g ref={cardsLayerRef}>
+                            {baseSortedCards.map(({ card, index }) => {
+                                const isDraggingInGroup =
+                                    dragging !== null &&
+                                    groupSelectedIndices.size > 1 &&
+                                    groupSelectedIndices.has(dragging.index) &&
+                                    groupSelectedIndices.has(index)
+
+                                return (
+                                    <SpreadCard
+                                        key={cardKeys?.[index] ?? String(index)}
+                                        card={card}
+                                        index={index}
+                                        renderRotation={
+                                            rotationAngles?.[index] ?? card.r
+                                        }
+                                        selected={index === selectedCardIndex}
+                                        groupSelected={
+                                            isViewMode
+                                                ? false
+                                                : groupSelectedIndices.has(index)
+                                        }
+                                        isDraggingInGroup={
+                                            isViewMode ? false : isDraggingInGroup
+                                        }
+                                        isViewMode={isViewMode}
+                                        disableHeavyEffects={isZoomInteractionActive}
+                                        onDragStart={handleDragStart}
+                                        onDragEnd={handleDragEnd}
+                                        onDrag={handleDrag}
+                                        onClick={handleCardClick}
+                                        registerRef={registerCardRef}
+                                    />
+                                )
+                            })}
+                        </g>
+
+                        {marqueeRect && (
+                            <rect
+                                x={marqueeRect.x}
+                                y={marqueeRect.y}
+                                width={marqueeRect.width}
+                                height={marqueeRect.height}
+                                fill="var(--gold)"
+                                fillOpacity={0.08}
+                                stroke="var(--gold)"
+                                strokeOpacity={0.3}
+                                strokeWidth={1}
+                                strokeDasharray="4 3"
+                                pointerEvents="none"
+                            />
+                        )}
+                    </svg>
+                </div>
+            </div>
+
+            <CanvasPointerOverlay
+                pointers={offscreenPointers}
+                iconSize={POINTER_ICON_SIZE}
+            />
+        </div>
+    )
+}
+
+const SpreadCanvas = memo(forwardRef(SpreadCanvasComponent))
+
+SpreadCanvas.displayName = 'SpreadCanvas'
+
+export default SpreadCanvas
+export type { CanvasCard }

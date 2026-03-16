@@ -12,42 +12,28 @@ import {
     DEFAULT_ZOOM,
     ZOOM_MIN,
     ZOOM_MAX,
-    ZOOM_STEP,
-    clampZoom,
     normalizeZoom,
-} from './canvas-utils/zoom'
+} from '../helpers/zoom'
 
 const TOOLTIP_DELAY = 500
 
 interface ZoomControlsProps {
     zoom: number
-    onZoomChange: (zoom: number) => void
+    onZoomIn: () => void
+    onZoomOut: () => void
+    onResetZoom: () => void
     className?: string
 }
 
 export default function ZoomControls({
     zoom,
-    onZoomChange,
+    onZoomIn,
+    onZoomOut,
+    onResetZoom,
     className,
 }: ZoomControlsProps) {
     const normalizedZoom = normalizeZoom(zoom)
     const isDefaultZoom = normalizedZoom === DEFAULT_ZOOM
-
-    const snapZoom = (direction: 'in' | 'out') => {
-        const stepIndex = normalizedZoom / ZOOM_STEP
-        const nearestStep = Math.round(stepIndex)
-        const isStepAligned = normalizedZoom === nearestStep * ZOOM_STEP
-
-        if (direction === 'in') {
-            const nextStep = isStepAligned
-                ? nearestStep + 1
-                : Math.ceil(stepIndex)
-            return clampZoom(nextStep * ZOOM_STEP)
-        }
-
-        const nextStep = isStepAligned ? nearestStep - 1 : Math.floor(stepIndex)
-        return clampZoom(nextStep * ZOOM_STEP)
-    }
 
     return (
         <div
@@ -61,7 +47,7 @@ export default function ZoomControls({
                                 <Button
                                     variant="ghost"
                                     size="icon-sm"
-                                    onClick={() => onZoomChange(DEFAULT_ZOOM)}
+                                    onClick={onResetZoom}
                                 >
                                     <Refresh01Icon />
                                 </Button>
@@ -78,7 +64,7 @@ export default function ZoomControls({
                         <Button
                             variant="ghost"
                             size="icon-sm"
-                            onClick={() => onZoomChange(snapZoom('out'))}
+                            onClick={onZoomOut}
                             disabled={normalizedZoom <= ZOOM_MIN}
                         >
                             <MinusSignIcon />
@@ -96,7 +82,7 @@ export default function ZoomControls({
                         <Button
                             variant="ghost"
                             size="icon-sm"
-                            onClick={() => onZoomChange(snapZoom('in'))}
+                            onClick={onZoomIn}
                             disabled={normalizedZoom >= ZOOM_MAX}
                         >
                             <PlusSignIcon />
@@ -108,5 +94,3 @@ export default function ZoomControls({
         </div>
     )
 }
-
-export { ZOOM_MIN, ZOOM_MAX, ZOOM_STEP }

@@ -15,7 +15,7 @@ import SpreadCanvas, {
     type SpreadCanvasViewportRequest,
 } from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
-import ZoomControls from "../_components/zoom-controls";
+import ZoomControls from "../_components/canvas/components/zoom-controls";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { generateCardAt } from "../utils";
 import { Button } from "@/components/ui/button";
@@ -38,11 +38,7 @@ import {
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
 } from "../spread-layout";
-import {
-    normalizeRotationForStorage,
-    reconcileContinuousRotations,
-    resolveContinuousRotation,
-} from "../rotation";
+import { useSpreadCanvasModel } from "../_components/canvas/hooks/use-spread-canvas-model";
 
 interface EditPanelWrapperProps {
     spreadId: Id<"spreads">
@@ -90,8 +86,6 @@ export default function EditPanelWrapper({
     );
     const isViewMode = mode === "view";
     const router = useRouter();
-    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
-    const [zoom, setZoom] = useState(1);
     const [viewportRequest, setViewportRequest] =
         useState<SpreadCanvasViewportRequest | null>(null);
     const isMobile = useIsMobile()
@@ -135,7 +129,6 @@ export default function EditPanelWrapper({
         initialValuesRef.current = normalizedValues;
         hasReset.current = true;
         form.reset(normalizedValues);
-        setZoom(1);
         setViewportRequest(
             bounds
                 ? {
@@ -149,6 +142,26 @@ export default function EditPanelWrapper({
     }, [emptyCanvasViewportRequest, form, mode, spread, spreadId]);
 
     // ------------ ADD CARD ------------ //
+
+    const watchedValues = useWatch({ control: form.control });
+    const watchedName = watchedValues?.name;
+    const watchedPositions = watchedValues?.positions;
+    const {
+        canvasRef,
+        cardKeys,
+        canvasCards,
+        canvasRotationAngles,
+        selectedCardIndex,
+        setSelectedCardIndex,
+        zoomDisplay,
+        setZoomDisplay,
+        handleCardRotationChange,
+        handleCanvasPositionsCommit,
+    } = useSpreadCanvasModel({
+        cards,
+        form,
+        watchedPositions,
+    });
 
     const addCard = useCallback(() => {
         const nextIndex = cards.length;
@@ -170,78 +183,6 @@ export default function EditPanelWrapper({
         append(newCard);
         setSelectedCardIndex(cards.length);
     }, [cards.length, append, setSelectedCardIndex]);
-
-    // ------------ APP TOPBAR LOGIC ------------ //
-
-    const watchedValues = useWatch({ control: form.control });
-    const watchedName = watchedValues?.name;
-    const watchedPositions = watchedValues?.positions;
-    const [cardRotations, setCardRotations] = useState<Record<string, number>>(
-        {}
-    );
-    const cardRotationsRef = useRef<Record<string, number>>({});
-    const canvasCards = (watchedPositions ?? []).map((card) => ({
-        name: card.name ?? "",
-        description: card.description,
-        allowReverse: card.allowReverse,
-        x: card.x ?? 0,
-        y: card.y ?? 0,
-        r: card.r ?? 0,
-        z: card.z ?? 0,
-    }));
-    const canvasRotationAngles = cards.map(
-        ({ id }, index) => cardRotations[id] ?? canvasCards[index]?.r ?? 0
-    );
-
-    useEffect(() => {
-        const nextRotations = reconcileContinuousRotations(
-            cards.map(({ id }) => id),
-            (watchedPositions ?? []).map((card) => card.r ?? 0),
-            cardRotationsRef.current
-        );
-
-        const hasChanged =
-            Object.keys(nextRotations).length !==
-                Object.keys(cardRotationsRef.current).length ||
-            Object.entries(nextRotations).some(
-                ([cardId, rotation]) =>
-                    cardRotationsRef.current[cardId] !== rotation
-            );
-
-        if (!hasChanged) return;
-
-        cardRotationsRef.current = nextRotations;
-        setCardRotations(nextRotations);
-    }, [cards, watchedPositions]);
-
-    const handleCardRotationChange = useCallback(
-        (index: number, nextValue: number) => {
-            const cardId = cards[index]?.id;
-            if (!cardId) return;
-
-            const currentStoredRotation =
-                form.getValues(`positions.${index}.r`) ?? 0;
-            const previousActualRotation =
-                cardRotationsRef.current[cardId] ??
-                normalizeRotationForStorage(currentStoredRotation);
-            const nextActualRotation = resolveContinuousRotation(
-                nextValue,
-                previousActualRotation
-            );
-            const nextStoredRotation = normalizeRotationForStorage(nextValue);
-            const nextRotations = {
-                ...cardRotationsRef.current,
-                [cardId]: nextActualRotation,
-            };
-
-            cardRotationsRef.current = nextRotations;
-            setCardRotations(nextRotations);
-            form.setValue(`positions.${index}.r`, nextStoredRotation, {
-                shouldDirty: true,
-            });
-        },
-        [cards, form]
-    );
 
     // ------------ MOBILE SHEET STATE ------------ //
 
@@ -360,7 +301,7 @@ export default function EditPanelWrapper({
         setSpreadSheetOpen(false);
         setShowDiscardDialog(false);
         router.push(viewUrl);
-    }, [form, router, viewUrl]);
+    }, [form, router, setSelectedCardIndex, viewUrl]);
 
 
     // ------------ LAYOUT DISPATCH ------------ //
@@ -482,6 +423,20 @@ export default function EditPanelWrapper({
         {/* Main Content */}
         <div className="relative h-full min-h-0 overflow-hidden">
             <FormProvider {...form}>
+                <SpreadCanvas
+                    ref={canvasRef}
+                    cards={canvasCards}
+                    cardKeys={cardKeys}
+                    rotationAngles={canvasRotationAngles}
+                    selectedCardIndex={selectedCardIndex}
+                    onCardSelect={setSelectedCardIndex}
+                    onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
+                    isViewMode={isViewMode}
+                    onPositionsCommit={handleCanvasPositionsCommit}
+                    onZoomDisplayChange={setZoomDisplay}
+                    viewportRequest={viewportRequest}
+                />
+
                 {isMobile ? (
                     <>
                         {/* Floating Toolbar */}
@@ -511,22 +466,10 @@ export default function EditPanelWrapper({
 
                         {/* Zoom Controls */}
                         <ZoomControls
-                            zoom={zoom}
-                            onZoomChange={setZoom}
-                        />
-
-                        {/* Full Canvas */}
-                        <SpreadCanvas
-                            cards={canvasCards}
-                            cardKeys={cards.map(({ id }) => id)}
-                            rotationAngles={canvasRotationAngles}
-                            selectedCardIndex={selectedCardIndex}
-                            onCardSelect={setSelectedCardIndex}
-                            onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
-                            isViewMode={isViewMode}
-                            zoom={zoom}
-                            onZoomChange={setZoom}
-                            viewportRequest={viewportRequest}
+                            zoom={zoomDisplay}
+                            onZoomIn={() => canvasRef.current?.zoomIn()}
+                            onZoomOut={() => canvasRef.current?.zoomOut()}
+                            onResetZoom={() => canvasRef.current?.resetZoom()}
                         />
 
                         {/* Spread Settings */}
@@ -548,20 +491,6 @@ export default function EditPanelWrapper({
                     </>
                 ) : (
                     <>
-                    {/* Layer 1: Canvas fills entire area */}
-                    <SpreadCanvas
-                        cards={canvasCards}
-                        cardKeys={cards.map(({ id }) => id)}
-                        rotationAngles={canvasRotationAngles}
-                        selectedCardIndex={selectedCardIndex}
-                        onCardSelect={setSelectedCardIndex}
-                        onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
-                        isViewMode={isViewMode}
-                        zoom={zoom}
-                        onZoomChange={setZoom}
-                        viewportRequest={viewportRequest}
-                    />
-
                     {/* Layer 2: Panel group overlaid on canvas */}
                     <ResizablePanelGroup
                         id={groupId}
@@ -581,8 +510,10 @@ export default function EditPanelWrapper({
                     >
                         <div className="relative h-full">
                             <ZoomControls
-                                zoom={zoom}
-                                onZoomChange={setZoom}
+                                zoom={zoomDisplay}
+                                onZoomIn={() => canvasRef.current?.zoomIn()}
+                                onZoomOut={() => canvasRef.current?.zoomOut()}
+                                onResetZoom={() => canvasRef.current?.resetZoom()}
                                 className="pointer-events-auto"
                             />
                         </div>

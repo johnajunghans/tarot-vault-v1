@@ -94,6 +94,56 @@ function clampViewportScroll({
     }
 }
 
+function getClampedViewportScrollForZoomAnchor({
+    scrollLeft,
+    scrollTop,
+    anchorViewportX,
+    anchorViewportY,
+    targetViewportX = anchorViewportX,
+    targetViewportY = anchorViewportY,
+    fromZoom,
+    toZoom,
+    clientWidth,
+    clientHeight,
+    contentWidth,
+    contentHeight,
+}: {
+    scrollLeft: number
+    scrollTop: number
+    anchorViewportX: number
+    anchorViewportY: number
+    targetViewportX?: number
+    targetViewportY?: number
+    fromZoom: number
+    toZoom: number
+    clientWidth: number
+    clientHeight: number
+    contentWidth: number
+    contentHeight: number
+}) {
+    const { x: contentX, y: contentY } = getCanvasPointAtViewportPoint({
+        scrollLeft,
+        scrollTop,
+        viewportX: anchorViewportX,
+        viewportY: anchorViewportY,
+        zoom: fromZoom,
+    })
+
+    return clampViewportScroll({
+        ...getViewportScrollForCanvasPoint({
+            contentX,
+            contentY,
+            viewportX: targetViewportX,
+            viewportY: targetViewportY,
+            zoom: toZoom,
+        }),
+        clientWidth,
+        clientHeight,
+        contentWidth,
+        contentHeight,
+    })
+}
+
 function getCanvasViewportRect({
     scrollLeft,
     scrollTop,
@@ -121,6 +171,7 @@ function getCanvasViewportRect({
 
 export {
     clampViewportScroll,
+    getClampedViewportScrollForZoomAnchor,
     getCanvasPointAtViewportPoint,
     getViewportScrollForCanvasPoint,
     getCanvasViewportRect,

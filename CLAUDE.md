@@ -285,7 +285,7 @@ When you have a step to complete (e.g., "Complete step 1.1.1"):
    - Run tests with `npm run test:once`
    - If all tests pass, proceed to step 3; if not, debug and rerun until passing
    - Recommend any manual user actions (e.g., environment variable updates in Convex dashboard)
-   - Create an entry in the `# Change Log` section of `mvp-build.md`
+   - Create an entry in the `## 0.2_Recent Entries` section of `mvp-build.md`
 3. **Follow-up**: Await potential follow-up prompts
    - If the user provides additional feedback, repeat step 2 and update the completion log entry
 
@@ -299,5 +299,6 @@ When you have a step to complete (e.g., "Complete step 1.1.1"):
 ### Referencing mvp-build.md
 
 The `mvp-build.md` file contains:
-- **`# Change Log`**: Completion log entries, most recent first (updated as steps are finished)
-- **`# Build Plan`**: Individual step definitions with requirements and acceptance criteria
+- **`# Archiving Protol`**: Instructions on how to correctly archives entries and steps in build plan.
+- **`# 0_Entries`**: Completion log entries, most recent first (updated as steps are finished)
+- **`# 1_Build Plan`**: Individual step definitions with requirements and acceptance criteria

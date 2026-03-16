@@ -21,6 +21,21 @@ function normalizeZoom(value: number) {
     return clampedZoom
 }
 
+function getSteppedZoom(value: number, direction: 'in' | 'out') {
+    const normalizedZoom = normalizeZoom(value)
+    const stepIndex = normalizedZoom / ZOOM_STEP
+    const nearestStep = Math.round(stepIndex)
+    const isStepAligned = normalizedZoom === nearestStep * ZOOM_STEP
+
+    if (direction === 'in') {
+        const nextStep = isStepAligned ? nearestStep + 1 : Math.ceil(stepIndex)
+        return clampZoom(nextStep * ZOOM_STEP)
+    }
+
+    const nextStep = isStepAligned ? nearestStep - 1 : Math.floor(stepIndex)
+    return clampZoom(nextStep * ZOOM_STEP)
+}
+
 export {
     DEFAULT_ZOOM,
     ZOOM_MIN,
@@ -28,5 +43,6 @@ export {
     ZOOM_STEP,
     ZOOM_STEP_EPSILON,
     clampZoom,
+    getSteppedZoom,
     normalizeZoom,
 }

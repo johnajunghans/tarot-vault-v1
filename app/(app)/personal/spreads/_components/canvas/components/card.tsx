@@ -1,21 +1,19 @@
 'use client'
 
-import { useFormContext, useWatch } from 'react-hook-form'
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { Draggable } from 'gsap/Draggable'
 import { useGSAP } from '@gsap/react'
-import { CardForm } from '@/types/spreads'
 import {
     CANVAS_BOUNDS,
     CARD_HEIGHT,
     CARD_WIDTH,
     GRID_SIZE,
-} from '../spread-layout'
+} from '../../../spread-layout'
 
 gsap.registerPlugin(Draggable)
 
-export { CARD_WIDTH, CARD_HEIGHT } from '../spread-layout'
+export { CARD_WIDTH, CARD_HEIGHT } from '../../../spread-layout'
 const CORNER_R = 8
 
 function getCardNameFontSize(name: string): number {
@@ -102,8 +100,9 @@ interface CanvasCardProps {
     groupSelected: boolean
     isDraggingInGroup: boolean
     isViewMode: boolean
+    disableHeavyEffects: boolean
     onDragStart: (index: number, x: number, y: number) => void
-    onDragEnd: (index: number) => void
+    onDragEnd: (index: number, x: number, y: number) => void
     onDrag: (index: number, x: number, y: number) => void
     onClick: (index: number) => void
     registerRef: (index: number, el: SVGGElement | null) => void
@@ -126,7 +125,6 @@ function TarotCardBack({
 
     return (
         <>
-            {/* Card body */}
             <rect
                 x={0}
                 y={0}
@@ -138,8 +136,6 @@ function TarotCardBack({
                 strokeWidth={1.5}
                 strokeOpacity={borderOpacity}
             />
-
-            {/* Inner frame */}
             <rect
                 x={5}
                 y={5}
@@ -151,8 +147,6 @@ function TarotCardBack({
                 strokeWidth={0.5}
                 strokeOpacity={accentOpacity}
             />
-
-            {/* Second inner frame */}
             <rect
                 x={8}
                 y={8}
@@ -163,8 +157,6 @@ function TarotCardBack({
                 fillOpacity={fillOpacity}
                 stroke="none"
             />
-
-            {/* Central diamond */}
             <polygon
                 points={`${cx},${cy - 22} ${cx + 15},${cy} ${cx},${cy + 22} ${cx - 15},${cy}`}
                 fill="none"
@@ -172,16 +164,12 @@ function TarotCardBack({
                 strokeWidth={0.75}
                 strokeOpacity={accentOpacity * 1.4}
             />
-
-            {/* Inner diamond */}
             <polygon
                 points={`${cx},${cy - 12} ${cx + 8},${cy} ${cx},${cy + 12} ${cx - 8},${cy}`}
                 fill="var(--gold)"
                 fillOpacity={fillOpacity * 1.5}
                 stroke="none"
             />
-
-            {/* Cross lines through center */}
             <line
                 x1={cx}
                 y1={14}
@@ -200,8 +188,6 @@ function TarotCardBack({
                 strokeWidth={0.4}
                 strokeOpacity={accentOpacity * 0.6}
             />
-
-            {/* Diagonal lines (stone fractures) */}
             <line
                 x1={14}
                 y1={14}
@@ -220,8 +206,6 @@ function TarotCardBack({
                 strokeWidth={0.3}
                 strokeOpacity={accentOpacity * 0.5}
             />
-
-            {/* Corner ornaments - small diamonds */}
             {[
                 { x: 14, y: 14 },
                 { x: CARD_WIDTH - 14, y: 14 },
@@ -248,16 +232,13 @@ function CanvasCard({
     groupSelected,
     isDraggingInGroup,
     isViewMode,
+    disableHeavyEffects,
     onDragStart,
     onDragEnd,
     onDrag,
     onClick,
     registerRef,
 }: CanvasCardProps) {
-    const { control, setValue, getValues } = useFormContext<{
-        positions: CardForm[]
-    }>()
-    const watched = useWatch({ control, name: `positions.${index}` })
     const [isDraggingState, setIsDraggingState] = useState(false)
 
     const groupRef = useRef<SVGGElement>(null)
@@ -265,25 +246,13 @@ function CanvasCard({
     const badgeRef = useRef<SVGGElement>(null)
     const draggableRef = useRef<Draggable | null>(null)
     const isDraggingRef = useRef(false)
-    const initialPos = useRef({ x: card.x, y: card.y })
-
-    const handleCardTranslation = useCallback(
-        (index: number, x: number, y: number) => {
-            setValue(`positions.${index}.x`, x, { shouldDirty: true })
-            setValue(`positions.${index}.y`, y, { shouldDirty: true })
-        },
-        [setValue]
-    )
 
     useGSAP(
         () => {
             const group = groupRef.current
             if (!group) return
 
-            const currentPos = getValues(`positions.${index}`)
-            const startX = currentPos?.x ?? initialPos.current.x
-            const startY = currentPos?.y ?? initialPos.current.y
-            gsap.set(group, { x: startX, y: startY })
+            gsap.set(group, { x: card.x, y: card.y })
             if (rotationRef.current) {
                 gsap.set(rotationRef.current, {
                     rotation: renderRotation,
@@ -303,16 +272,14 @@ function CanvasCard({
                 type: 'x,y',
                 liveSnap: {
                     x: (value) => {
-                        const snapped =
-                            Math.round(value / GRID_SIZE) * GRID_SIZE
+                        const snapped = Math.round(value / GRID_SIZE) * GRID_SIZE
                         return Math.max(
                             CANVAS_BOUNDS.minX,
                             Math.min(CANVAS_BOUNDS.maxX, snapped)
                         )
                     },
                     y: (value) => {
-                        const snapped =
-                            Math.round(value / GRID_SIZE) * GRID_SIZE
+                        const snapped = Math.round(value / GRID_SIZE) * GRID_SIZE
                         return Math.max(
                             CANVAS_BOUNDS.minY,
                             Math.min(CANVAS_BOUNDS.maxY, snapped)
@@ -326,13 +293,11 @@ function CanvasCard({
                 },
                 onDrag: function () {
                     onDrag(index, this.x, this.y)
-                    handleCardTranslation(index, this.x, this.y)
                 },
                 onDragEnd: function () {
                     isDraggingRef.current = false
                     setIsDraggingState(false)
-                    onDragEnd(index)
-                    handleCardTranslation(index, this.x, this.y)
+                    onDragEnd(index, this.x, this.y)
                 },
                 onClick: function () {
                     onClick(index)
@@ -351,7 +316,6 @@ function CanvasCard({
             dependencies: [
                 index,
                 isViewMode,
-                handleCardTranslation,
                 onDragStart,
                 onDragEnd,
                 onDrag,
@@ -362,11 +326,9 @@ function CanvasCard({
 
     useEffect(() => {
         if (!groupRef.current || isDraggingRef.current) return
-        gsap.set(groupRef.current, { x: watched.x, y: watched.y })
-        if (draggableRef.current) {
-            draggableRef.current.update()
-        }
-    }, [watched.x, watched.y])
+        gsap.set(groupRef.current, { x: card.x, y: card.y })
+        draggableRef.current?.update()
+    }, [card.x, card.y])
 
     useEffect(() => {
         const duration = isDraggingRef.current ? 0 : 0.18
@@ -400,11 +362,16 @@ function CanvasCard({
     const isActiveDrag = isDraggingState || isDraggingInGroup
     const isHighlighted = selected || groupSelected
     const badgeColor = isHighlighted ? 'var(--gold)' : 'var(--gold-muted)'
-    const cardName = watched.name?.trim() ?? ''
+    const cardName = card.name?.trim() ?? ''
     const hasCardName = cardName.length > 0
     const displayName = hasCardName ? cardName : 'Untitled'
     const cardNameFontSize = getCardNameFontSize(displayName)
     const cardNameLines = splitCardNameIntoLines(displayName)
+    const shadowFilter = disableHeavyEffects
+        ? undefined
+        : isActiveDrag
+          ? 'url(#canvas-card-shadow-active)'
+          : undefined
 
     return (
         <g
@@ -412,37 +379,15 @@ function CanvasCard({
             onClick={isViewMode ? () => onClick(index) : undefined}
             style={{ cursor: 'pointer' }}
         >
-            {/* Shadow filter definition scoped to this card */}
-            <defs>
-                <filter
-                    id={`shadow-${index}`}
-                    x="-20%"
-                    y="-20%"
-                    width="140%"
-                    height="140%"
-                >
-                    <feDropShadow
-                        dx={0}
-                        dy={isActiveDrag ? 6 : 2}
-                        stdDeviation={isActiveDrag ? 8 : 3}
-                        floodColor="black"
-                        floodOpacity={isActiveDrag ? 0.4 : 0.15}
-                    />
-                </filter>
-            </defs>
-
-            {/* Outer group with shadow + drag transform */}
             <g
-                filter={`url(#shadow-${index})`}
+                filter={shadowFilter}
                 style={{
                     transition: isActiveDrag ? 'none' : 'filter 300ms ease',
                     transform: isActiveDrag ? 'scale(1.03)' : 'scale(1)',
                     transformOrigin: `${CARD_WIDTH / 2}px ${CARD_HEIGHT / 2}px`,
                 }}
             >
-                {/* Rotation wrapper */}
                 <g ref={rotationRef}>
-                    {/* Selection glow ring */}
                     {selected && !groupSelected && (
                         <rect
                             x={-4}
@@ -458,13 +403,11 @@ function CanvasCard({
                         />
                     )}
 
-                    {/* The tarot card back */}
                     <TarotCardBack
                         selected={selected}
                         groupSelected={groupSelected}
                     />
 
-                    {/* Position number badge */}
                     <g ref={badgeRef}>
                         <circle
                             cx={15}
@@ -489,7 +432,6 @@ function CanvasCard({
                         </text>
                     </g>
 
-                    {/* Position name */}
                     {cardNameLines.length > 0 && (
                         <text
                             x={CARD_WIDTH / 2}
@@ -531,19 +473,14 @@ function CanvasCard({
 
 function arePropsEqual(prev: CanvasCardProps, next: CanvasCardProps): boolean {
     return (
-        prev.card.name === next.card.name &&
-        prev.card.description === next.card.description &&
-        prev.card.allowReverse === next.card.allowReverse &&
-        prev.card.x === next.card.x &&
-        prev.card.y === next.card.y &&
-        prev.card.r === next.card.r &&
-        prev.card.z === next.card.z &&
+        prev.card === next.card &&
         prev.index === next.index &&
         prev.renderRotation === next.renderRotation &&
         prev.selected === next.selected &&
         prev.groupSelected === next.groupSelected &&
         prev.isDraggingInGroup === next.isDraggingInGroup &&
         prev.isViewMode === next.isViewMode &&
+        prev.disableHeavyEffects === next.disableHeavyEffects &&
         prev.onDragStart === next.onDragStart &&
         prev.onDragEnd === next.onDragEnd &&
         prev.onDrag === next.onDrag &&

@@ -3,7 +3,7 @@
 import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { spreadSchema } from "../schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { routes } from "@/lib/routes";
@@ -14,7 +14,7 @@ import SpreadCanvas, {
     type SpreadCanvasViewportRequest,
 } from "../_components/canvas";
 import CardSettingsPanel from "../_components/card-settings-panel";
-import ZoomControls from "../_components/zoom-controls";
+import ZoomControls from "../_components/canvas/components/zoom-controls";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { generateCardAt } from "../utils"
 import { Button } from "@/components/ui/button";
@@ -35,11 +35,7 @@ import {
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
 } from "../spread-layout";
-import {
-    normalizeRotationForStorage,
-    reconcileContinuousRotations,
-    resolveContinuousRotation,
-} from "../rotation";
+import { useSpreadCanvasModel } from "../_components/canvas/hooks/use-spread-canvas-model";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -64,17 +60,18 @@ export default function PanelWrapper({
     groupId,
     loadedDraftDate,
 }: PanelWrapperProps) {
-    const emptyCanvasViewportRequest: SpreadCanvasViewportRequest = {
-        key: "new-spread-empty",
-        type: "center-canvas-point",
-        point: CANVAS_CENTER,
-        zoom: 1,
-    };
+    const emptyCanvasViewportRequest = useMemo<SpreadCanvasViewportRequest>(
+        () => ({
+            key: "new-spread-empty",
+            type: "center-canvas-point",
+            point: CANVAS_CENTER,
+            zoom: 1,
+        }),
+        []
+    );
     const router = useRouter();
-    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
-    const [zoom, setZoom] = useState(1);
     const [viewportRequest, setViewportRequest] =
-        useState<SpreadCanvasViewportRequest | null>(emptyCanvasViewportRequest);
+        useState<SpreadCanvasViewportRequest | null>(null);
     const isMobile = useIsMobile()
 
     // ------------ SPREAD FORM ------------ //
@@ -99,10 +96,27 @@ export default function PanelWrapper({
     const draftKey = draftDate ? `spread-draft-${draftDate}` : "";
     const isDiscardingRef = useRef(false);
 
-    useEffect(() => {
-        if (!loadedDraftDate) return;
+    useLayoutEffect(() => {
+        let nextViewportRequest: SpreadCanvasViewportRequest =
+            emptyCanvasViewportRequest;
+
+        if (!loadedDraftDate) {
+            const frame = window.requestAnimationFrame(() => {
+                setViewportRequest(emptyCanvasViewportRequest);
+            });
+
+            return () => window.cancelAnimationFrame(frame);
+        }
+
         const raw = localStorage.getItem(`spread-draft-${loadedDraftDate}`);
-        if (!raw) return;
+        if (!raw) {
+            const frame = window.requestAnimationFrame(() => {
+                setViewportRequest(emptyCanvasViewportRequest);
+            });
+
+            return () => window.cancelAnimationFrame(frame);
+        }
+
         try {
             const draft = JSON.parse(raw) as SpreadForm & { date?: number; numberOfCards?: number };
             const normalizedPositions = normalizeCardsToCanvasCenter(
@@ -125,22 +139,22 @@ export default function PanelWrapper({
             });
 
             const bounds = getSpreadBounds(normalizedPositions);
-            const frame = window.requestAnimationFrame(() => {
-                setViewportRequest(
-                    bounds
-                        ? {
-                              key: `draft-${loadedDraftDate}-${normalizedPositions.length}`,
-                              type: "fit-spread",
-                              bounds,
-                              maxZoom: 1,
-                          }
-                        : emptyCanvasViewportRequest
-                );
-            });
-
-            return () => window.cancelAnimationFrame(frame);
+            nextViewportRequest = bounds
+                ? {
+                      key: `draft-${loadedDraftDate}-${normalizedPositions.length}`,
+                      type: "fit-spread",
+                      bounds,
+                      maxZoom: 1,
+                  }
+                : emptyCanvasViewportRequest;
         } catch { /* ignore invalid draft data */ }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+        const frame = window.requestAnimationFrame(() => {
+            setViewportRequest(nextViewportRequest);
+        });
+
+        return () => window.cancelAnimationFrame(frame);
+    }, [emptyCanvasViewportRequest, form, loadedDraftDate]);
 
     const watchedValues = useWatch({ control: form.control });
 
@@ -159,6 +173,25 @@ export default function PanelWrapper({
 
     // ------------ ADD CARD ------------ //
 
+    const watchedName = watchedValues?.name;
+    const watchedPositions = watchedValues?.positions;
+    const {
+        canvasRef,
+        cardKeys,
+        canvasCards,
+        canvasRotationAngles,
+        selectedCardIndex,
+        setSelectedCardIndex,
+        zoomDisplay,
+        setZoomDisplay,
+        handleCardRotationChange,
+        handleCanvasPositionsCommit,
+    } = useSpreadCanvasModel({
+        cards,
+        form,
+        watchedPositions,
+    });
+
     const addCard = useCallback(() => {
         const nextIndex = cards.length;
         const lastCard = nextIndex > 0 ? form.getValues(`positions.${nextIndex - 1}`) : null;
@@ -171,7 +204,7 @@ export default function PanelWrapper({
                   );
         append(newCard, { focusName: `positions.${nextIndex}.name` });
         setSelectedCardIndex(nextIndex);
-    }, [append, cards.length, form]);
+    }, [append, cards.length, form, setSelectedCardIndex]);
 
     const addCardAt = useCallback((x: number, y: number) => {
         if (cards.length >= 78) return;
@@ -179,77 +212,6 @@ export default function PanelWrapper({
         append(newCard);
         setSelectedCardIndex(cards.length);
     }, [cards.length, append, setSelectedCardIndex]);
-
-    // ------------ APP TOPBAR LOGIC ------------ //
-
-    const watchedName = watchedValues?.name;
-    const watchedPositions = watchedValues?.positions;
-    const [cardRotations, setCardRotations] = useState<Record<string, number>>(
-        {}
-    );
-    const cardRotationsRef = useRef<Record<string, number>>({});
-    const canvasCards = (watchedPositions ?? []).map((card) => ({
-        name: card.name ?? "",
-        description: card.description,
-        allowReverse: card.allowReverse,
-        x: card.x ?? 0,
-        y: card.y ?? 0,
-        r: card.r ?? 0,
-        z: card.z ?? 0,
-    }));
-    const canvasRotationAngles = cards.map(
-        ({ id }, index) => cardRotations[id] ?? canvasCards[index]?.r ?? 0
-    );
-
-    useEffect(() => {
-        const nextRotations = reconcileContinuousRotations(
-            cards.map(({ id }) => id),
-            (watchedPositions ?? []).map((card) => card.r ?? 0),
-            cardRotationsRef.current
-        );
-
-        const hasChanged =
-            Object.keys(nextRotations).length !==
-                Object.keys(cardRotationsRef.current).length ||
-            Object.entries(nextRotations).some(
-                ([cardId, rotation]) =>
-                    cardRotationsRef.current[cardId] !== rotation
-            );
-
-        if (!hasChanged) return;
-
-        cardRotationsRef.current = nextRotations;
-        setCardRotations(nextRotations);
-    }, [cards, watchedPositions]);
-
-    const handleCardRotationChange = useCallback(
-        (index: number, nextValue: number) => {
-            const cardId = cards[index]?.id;
-            if (!cardId) return;
-
-            const currentStoredRotation =
-                form.getValues(`positions.${index}.r`) ?? 0;
-            const previousActualRotation =
-                cardRotationsRef.current[cardId] ??
-                normalizeRotationForStorage(currentStoredRotation);
-            const nextActualRotation = resolveContinuousRotation(
-                nextValue,
-                previousActualRotation
-            );
-            const nextStoredRotation = normalizeRotationForStorage(nextValue);
-            const nextRotations = {
-                ...cardRotationsRef.current,
-                [cardId]: nextActualRotation,
-            };
-
-            cardRotationsRef.current = nextRotations;
-            setCardRotations(nextRotations);
-            form.setValue(`positions.${index}.r`, nextStoredRotation, {
-                shouldDirty: true,
-            });
-        },
-        [cards, form]
-    );
 
     // ------------ MOBILE SHEET STATE ------------ //
 
@@ -400,6 +362,19 @@ export default function PanelWrapper({
         {/* Main Content */}
         <div className="relative h-full min-h-0 overflow-hidden">
             <FormProvider {...form}>
+                <SpreadCanvas
+                    ref={canvasRef}
+                    cards={canvasCards}
+                    cardKeys={cardKeys}
+                    rotationAngles={canvasRotationAngles}
+                    selectedCardIndex={selectedCardIndex}
+                    onCardSelect={setSelectedCardIndex}
+                    onCanvasDoubleClick={addCardAt}
+                    onPositionsCommit={handleCanvasPositionsCommit}
+                    onZoomDisplayChange={setZoomDisplay}
+                    viewportRequest={viewportRequest}
+                />
+
                 {isMobile ? (
                     <>
                         {/* Floating Toolbar */}
@@ -427,21 +402,10 @@ export default function PanelWrapper({
 
                         {/* Zoom Controls */}
                         <ZoomControls
-                            zoom={zoom}
-                            onZoomChange={setZoom}
-                        />
-
-                        {/* Full Canvas */}
-                        <SpreadCanvas
-                            cards={canvasCards}
-                            cardKeys={cards.map(({ id }) => id)}
-                            rotationAngles={canvasRotationAngles}
-                            selectedCardIndex={selectedCardIndex}
-                            onCardSelect={setSelectedCardIndex}
-                            onCanvasDoubleClick={addCardAt}
-                            zoom={zoom}
-                            onZoomChange={setZoom}
-                            viewportRequest={viewportRequest}
+                            zoom={zoomDisplay}
+                            onZoomIn={() => canvasRef.current?.zoomIn()}
+                            onZoomOut={() => canvasRef.current?.zoomOut()}
+                            onResetZoom={() => canvasRef.current?.resetZoom()}
                         />
 
                         {/* Spread Settings (Sheet on mobile via ResponsivePanel) */}
@@ -474,19 +438,6 @@ export default function PanelWrapper({
                     </>
                 ) : (
                     <>
-                    {/* Layer 1: Canvas fills entire area */}
-                    <SpreadCanvas
-                        cards={canvasCards}
-                        cardKeys={cards.map(({ id }) => id)}
-                        rotationAngles={canvasRotationAngles}
-                        selectedCardIndex={selectedCardIndex}
-                        onCardSelect={setSelectedCardIndex}
-                        onCanvasDoubleClick={addCardAt}
-                        zoom={zoom}
-                        onZoomChange={setZoom}
-                        viewportRequest={viewportRequest}
-                    />
-
                     {/* Layer 2: Panel group overlaid on canvas */}
                     <ResizablePanelGroup
                         id={groupId}
@@ -516,8 +467,10 @@ export default function PanelWrapper({
                     >
                         <div className="relative h-full">
                             <ZoomControls
-                                zoom={zoom}
-                                onZoomChange={setZoom}
+                                zoom={zoomDisplay}
+                                onZoomIn={() => canvasRef.current?.zoomIn()}
+                                onZoomOut={() => canvasRef.current?.zoomOut()}
+                                onResetZoom={() => canvasRef.current?.resetZoom()}
                                 className="pointer-events-auto"
                             />
                         </div>

@@ -1,6 +1,4 @@
-# MVP Build Archive
-
-## 0.5.2_Entries (archived)
+# 0_Archived_Entries
 
 *Ordered with most recent at the top*
 
@@ -614,6 +612,8 @@ Future considerations/recommendations/warnings:
 - Consider adding index on readings.starred alone if filtering starred readings without userId becomes needed
 
 ---
+
+# 1_Archived_Build_Plan
 
 ## 1.1_Database & Auth Setup (archived)
 
