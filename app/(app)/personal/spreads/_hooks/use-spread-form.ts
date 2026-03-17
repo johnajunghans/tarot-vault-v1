@@ -12,7 +12,7 @@ import {
     CARD_WIDTH,
     generateCardAt,
 } from "../spread-layout"
-import { useSpreadCanvasModel } from "../_components/canvas/hooks/use-spread-canvas-model"
+import { useSpreadCanvasModel } from "../_components/canvas/hooks/use-canvas-model"
 
 interface UseSpreadFormOptions {
     defaultValues?: SpreadForm
