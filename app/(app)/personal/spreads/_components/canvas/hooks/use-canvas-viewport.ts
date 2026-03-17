@@ -51,6 +51,142 @@ interface UseCanvasViewportArgs {
     isMarqueeActiveRef: { current: boolean }
 }
 
+function shouldApplyViewportRequest(
+    viewportRequest: SpreadCanvasViewportRequest | null | undefined,
+    appliedViewportRequestKey: string | null,
+    scheduledViewportRequestKey: string | null
+) {
+    if (!viewportRequest) return false
+    if (appliedViewportRequestKey === viewportRequest.key) return false
+    if (scheduledViewportRequestKey === viewportRequest.key) return false
+    return true
+}
+
+function resolveViewportRequest({
+    viewportRequest,
+    clientWidth,
+    clientHeight,
+    svgWidth,
+    svgHeight,
+    minimumZoom,
+}: {
+    viewportRequest: SpreadCanvasViewportRequest
+    clientWidth: number
+    clientHeight: number
+    svgWidth: number
+    svgHeight: number
+    minimumZoom: number
+}) {
+    let nextZoom = DEFAULT_ZOOM
+    let contentX = CANVAS_CENTER.x
+    let contentY = CANVAS_CENTER.y
+
+    if (viewportRequest.type === 'fit-spread') {
+        const padding = viewportRequest.padding ?? VIEWPORT_FIT_PADDING
+        const availableWidth = Math.max(clientWidth - padding * 2, 1)
+        const availableHeight = Math.max(clientHeight - padding * 2, 1)
+        const fitZoom = clampZoom(
+            Math.min(
+                availableWidth / Math.max(viewportRequest.bounds.width, 1),
+                availableHeight / Math.max(viewportRequest.bounds.height, 1)
+            )
+        )
+
+        nextZoom = normalizeZoom(
+            Math.min(viewportRequest.maxZoom ?? DEFAULT_ZOOM, fitZoom),
+            minimumZoom
+        )
+        contentX = viewportRequest.bounds.centerX
+        contentY = viewportRequest.bounds.centerY
+    } else {
+        nextZoom = normalizeZoom(viewportRequest.zoom ?? DEFAULT_ZOOM, minimumZoom)
+        contentX = viewportRequest.point.x
+        contentY = viewportRequest.point.y
+    }
+
+    const normalizedNextZoom = normalizeZoom(nextZoom, minimumZoom)
+    const rawPan = getPanForCanvasPoint({
+        contentX,
+        contentY,
+        viewportX: clientWidth / 2,
+        viewportY: clientHeight / 2,
+        zoom: normalizedNextZoom,
+    })
+
+    return {
+        zoom: normalizedNextZoom,
+        pan: clampPan({
+            panX: rawPan.x,
+            panY: rawPan.y,
+            canvasWidth: svgWidth,
+            canvasHeight: svgHeight,
+            viewportWidth: clientWidth / normalizedNextZoom,
+            viewportHeight: clientHeight / normalizedNextZoom,
+        }),
+    }
+}
+
+function reconcileViewportBounds({
+    panX,
+    panY,
+    zoom,
+    clientWidth,
+    clientHeight,
+    svgWidth,
+    svgHeight,
+    minimumZoom,
+}: {
+    panX: number
+    panY: number
+    zoom: number
+    clientWidth: number
+    clientHeight: number
+    svgWidth: number
+    svgHeight: number
+    minimumZoom: number
+}) {
+    const nextZoom = normalizeZoom(zoom, minimumZoom)
+    let nextPan = clampPan({
+        panX,
+        panY,
+        canvasWidth: svgWidth,
+        canvasHeight: svgHeight,
+        viewportWidth: clientWidth / nextZoom,
+        viewportHeight: clientHeight / nextZoom,
+    })
+
+    if (nextZoom !== zoom) {
+        const viewportRect = getCanvasViewportRect({
+            panX,
+            panY,
+            clientWidth,
+            clientHeight,
+            zoom,
+        })
+        const centeredPan = getPanForCanvasPoint({
+            contentX: viewportRect.centerX,
+            contentY: viewportRect.centerY,
+            viewportX: clientWidth / 2,
+            viewportY: clientHeight / 2,
+            zoom: nextZoom,
+        })
+
+        nextPan = clampPan({
+            panX: centeredPan.x,
+            panY: centeredPan.y,
+            canvasWidth: svgWidth,
+            canvasHeight: svgHeight,
+            viewportWidth: clientWidth / nextZoom,
+            viewportHeight: clientHeight / nextZoom,
+        })
+    }
+
+    return {
+        zoom: nextZoom,
+        pan: nextPan,
+    }
+}
+
 export function useCanvasViewport({
     svgWidth,
     svgHeight,
@@ -363,56 +499,33 @@ export function useCanvasViewport({
         const { width: clientWidth, height: clientHeight } = containerSizeRef.current
 
         if (clientWidth <= 0 || clientHeight <= 0) return
-
-        let nextZoom = renderedZoomRef.current || DEFAULT_ZOOM
-        let contentX = CANVAS_CENTER.x
-        let contentY = CANVAS_CENTER.y
         const minimumZoom = getMinimumZoom(clientWidth, clientHeight)
 
-        if (viewportRequest.type === 'fit-spread') {
-            const padding = viewportRequest.padding ?? VIEWPORT_FIT_PADDING
-            const availableWidth = Math.max(clientWidth - padding * 2, 1)
-            const availableHeight = Math.max(clientHeight - padding * 2, 1)
-            const fitZoom = clampZoom(
-                Math.min(
-                    availableWidth / Math.max(viewportRequest.bounds.width, 1),
-                    availableHeight / Math.max(viewportRequest.bounds.height, 1)
-                )
+        if (
+            !shouldApplyViewportRequest(
+                viewportRequest,
+                appliedViewportRequestKeyRef.current,
+                scheduledViewportRequestKeyRef.current
             )
-
-            nextZoom = normalizeZoom(
-                Math.min(viewportRequest.maxZoom ?? DEFAULT_ZOOM, fitZoom),
-                minimumZoom
-            )
-            contentX = viewportRequest.bounds.centerX
-            contentY = viewportRequest.bounds.centerY
-        } else {
-            nextZoom = normalizeZoom(viewportRequest.zoom ?? DEFAULT_ZOOM, minimumZoom)
-            contentX = viewportRequest.point.x
-            contentY = viewportRequest.point.y
+        ) {
+            return
         }
 
-        const normalizedNextZoom = normalizeZoom(nextZoom, minimumZoom)
-        const rawPan = getPanForCanvasPoint({
-            contentX,
-            contentY,
-            viewportX: clientWidth / 2,
-            viewportY: clientHeight / 2,
-            zoom: normalizedNextZoom,
-        })
-        const nextPan = clampPan({
-            panX: rawPan.x,
-            panY: rawPan.y,
-            canvasWidth: svgWidth,
-            canvasHeight: svgHeight,
-            viewportWidth: clientWidth / normalizedNextZoom,
-            viewportHeight: clientHeight / normalizedNextZoom,
+        const resolvedViewport = resolveViewportRequest({
+            viewportRequest,
+            clientWidth,
+            clientHeight,
+            svgWidth,
+            svgHeight,
+            minimumZoom,
         })
 
-        if (appliedViewportRequestKeyRef.current === viewportRequest.key) return
-        if (scheduledViewportRequestKeyRef.current === viewportRequest.key) return
-
-        scheduleViewportCommit(normalizedNextZoom, nextPan, false, viewportRequest.key)
+        scheduleViewportCommit(
+            resolvedViewport.zoom,
+            resolvedViewport.pan,
+            false,
+            viewportRequest.key
+        )
     }, [
         containerSize.height,
         containerSize.width,
@@ -429,51 +542,30 @@ export function useCanvasViewport({
 
         const currentViewport = getViewportSnapshot()
         const minimumZoom = getMinimumZoom(width, height)
-        const nextZoom = normalizeZoom(currentViewport.zoom, minimumZoom)
-        let nextPan = clampPan({
+        const reconciledViewport = reconcileViewportBounds({
             panX: currentViewport.panX,
             panY: currentViewport.panY,
-            canvasWidth: svgWidth,
-            canvasHeight: svgHeight,
-            viewportWidth: width / nextZoom,
-            viewportHeight: height / nextZoom,
+            zoom: currentViewport.zoom,
+            clientWidth: width,
+            clientHeight: height,
+            svgWidth,
+            svgHeight,
+            minimumZoom,
         })
 
-        if (nextZoom !== currentViewport.zoom) {
-            const viewportRect = getCanvasViewportRect({
-                panX: currentViewport.panX,
-                panY: currentViewport.panY,
-                clientWidth: width,
-                clientHeight: height,
-                zoom: currentViewport.zoom,
-            })
-            const centeredPan = getPanForCanvasPoint({
-                contentX: viewportRect.centerX,
-                contentY: viewportRect.centerY,
-                viewportX: width / 2,
-                viewportY: height / 2,
-                zoom: nextZoom,
-            })
-
-            nextPan = clampPan({
-                panX: centeredPan.x,
-                panY: centeredPan.y,
-                canvasWidth: svgWidth,
-                canvasHeight: svgHeight,
-                viewportWidth: width / nextZoom,
-                viewportHeight: height / nextZoom,
-            })
-        }
-
         if (
-            nextZoom === currentViewport.zoom &&
-            nextPan.x === currentViewport.panX &&
-            nextPan.y === currentViewport.panY
+            reconciledViewport.zoom === currentViewport.zoom &&
+            reconciledViewport.pan.x === currentViewport.panX &&
+            reconciledViewport.pan.y === currentViewport.panY
         ) {
             return
         }
 
-        scheduleViewportCommit(nextZoom, nextPan, false)
+        scheduleViewportCommit(
+            reconciledViewport.zoom,
+            reconciledViewport.pan,
+            false
+        )
     }, [
         containerSize.height,
         containerSize.width,
@@ -901,4 +993,10 @@ export function useCanvasViewport({
         isCardSelectionSuppressed,
         isSpaceHeldRef: isSpaceHeld,
     }
+}
+
+export {
+    reconcileViewportBounds,
+    resolveViewportRequest,
+    shouldApplyViewportRequest,
 }
