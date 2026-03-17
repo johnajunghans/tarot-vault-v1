@@ -1,9 +1,6 @@
 'use client'
 
-interface CanvasGuide {
-    axis: 'v' | 'h'
-    pos: number
-}
+import type { CanvasGuide } from '../types'
 
 interface CanvasGuidesProps {
     guides: CanvasGuide[]
@@ -50,5 +47,3 @@ export default function CanvasGuides({
         </>
     )
 }
-
-export type { CanvasGuide }

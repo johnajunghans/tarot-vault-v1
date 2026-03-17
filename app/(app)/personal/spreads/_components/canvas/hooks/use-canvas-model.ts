@@ -3,11 +3,11 @@
 import type { SpreadForm } from '@/types/spreads'
 import type { UseFormReturn } from 'react-hook-form'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { CanvasCard } from '../types'
 import type {
-    CanvasCard,
     SpreadCanvasHandle,
     SpreadCanvasPositionUpdate,
-} from '..'
+} from '../types'
 import { ZOOM_MIN } from '../helpers/zoom'
 import {
     normalizeRotationForStorage,

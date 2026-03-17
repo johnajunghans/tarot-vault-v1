@@ -1,17 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLatestRef } from '@/hooks/use-latest-ref'
 import { getSnappedClampedPosition } from '../helpers/geometry'
 import { CANVAS_BOUNDS, GRID_SIZE } from '../../../spread-layout'
-import type { CanvasCard } from '../components/card'
-import type { SpreadCanvasPositionUpdate } from '..'
+import type { CanvasCard } from '../types'
+import type { CanvasPoint, SpreadCanvasPositionUpdate } from '../types'
 
-interface Point {
-    x: number
-    y: number
-}
-
-type TransientPositions = Record<number, Point>
+type TransientPositions = Record<number, CanvasPoint>
 
 function areTransientPositionsEqual(
     prev: TransientPositions,
@@ -49,11 +45,10 @@ export function useCanvasDrag({
     const transientPositionsRef = useRef<TransientPositions>({})
     const pendingTransientPositionsRef = useRef<TransientPositions | null>(null)
     const transientFrameRef = useRef(0)
-    const effectiveCardsRef = useRef(cards)
     const draggingRef = useRef<{ index: number; x: number; y: number } | null>(null)
-    const dragStartPos = useRef<Point | null>(null)
+    const dragStartPos = useRef<CanvasPoint | null>(null)
     const groupSelectedRef = useRef<Set<number>>(new Set())
-    const groupDragOrigins = useRef<Map<number, Point>>(new Map())
+    const groupDragOrigins = useRef<Map<number, CanvasPoint>>(new Map())
 
     const effectiveCards = useMemo(
         () =>
@@ -66,9 +61,7 @@ export function useCanvasDrag({
         [cards, transientPositions]
     )
 
-    useEffect(() => {
-        effectiveCardsRef.current = effectiveCards
-    }, [effectiveCards])
+    const latestEffectiveCardsRef = useLatestRef(effectiveCards)
 
     useEffect(() => {
         if (draggingRef.current) return
@@ -185,7 +178,7 @@ export function useCanvasDrag({
         setDragging({ index, x, y })
         draggingRef.current = { index, x, y }
 
-        const currentCard = effectiveCardsRef.current[index]
+        const currentCard = latestEffectiveCardsRef.current[index]
         dragStartPos.current = currentCard
             ? { x: currentCard.x, y: currentCard.y }
             : { x, y }
@@ -194,10 +187,10 @@ export function useCanvasDrag({
             groupSelectedRef.current.has(index) &&
             groupSelectedRef.current.size > 1
         ) {
-            const origins = new Map<number, Point>()
+            const origins = new Map<number, CanvasPoint>()
             for (const groupIndex of groupSelectedRef.current) {
                 if (groupIndex === index) continue
-                const groupCard = effectiveCardsRef.current[groupIndex]
+                const groupCard = latestEffectiveCardsRef.current[groupIndex]
                 if (groupCard) {
                     origins.set(groupIndex, {
                         x: groupCard.x,
@@ -210,7 +203,7 @@ export function useCanvasDrag({
         }
 
         groupDragOrigins.current = new Map()
-    }, [])
+    }, [latestEffectiveCardsRef])
 
     const handleDrag = useCallback(
         (index: number, x: number, y: number) => {

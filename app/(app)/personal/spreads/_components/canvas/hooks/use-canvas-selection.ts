@@ -8,20 +8,17 @@ import {
     useState,
     type MouseEvent as ReactMouseEvent,
 } from 'react'
-import type { CanvasCard } from '../components/card'
+import { useLatestRef } from '@/hooks/use-latest-ref'
+import type { CanvasCard } from '../types'
 import { getRect, rectsIntersect } from '../helpers/geometry'
 import { CARD_HEIGHT, CARD_WIDTH } from '../../../spread-layout'
-
-interface Point {
-    x: number
-    y: number
-}
+import type { CanvasPoint } from '../types'
 
 interface UseCanvasSelectionArgs {
     effectiveCards: CanvasCard[]
     onCardSelect: (index: number | null) => void
     syncGroupSelection: (next: Set<number>) => void
-    clientToSVG: (clientX: number, clientY: number) => Point
+    clientToSVG: (clientX: number, clientY: number) => CanvasPoint
     isCardSelectionSuppressed: () => boolean
     isSpaceHeldRef: { current: boolean }
     isMarqueeActiveRef: { current: boolean }
@@ -46,12 +43,8 @@ export function useCanvasSelection({
         currentY: number
     } | null>(null)
 
-    const effectiveCardsRef = useRef(effectiveCards)
-    const marqueeStartRef = useRef({ x: 0, y: 0 })
-
-    useEffect(() => {
-        effectiveCardsRef.current = effectiveCards
-    }, [effectiveCards])
+    const effectiveCardsRef = useLatestRef(effectiveCards)
+    const marqueeStartRef = useRef<CanvasPoint>({ x: 0, y: 0 })
 
     const updateGroupSelection = useCallback(
         (next: Set<number>) => {
@@ -114,7 +107,13 @@ export function useCanvasSelection({
             window.removeEventListener('mousemove', handleMouseMove)
             window.removeEventListener('mouseup', handleMouseUp)
         }
-    }, [clientToSVG, isMarqueeActiveRef, onCardSelect, updateGroupSelection])
+    }, [
+        clientToSVG,
+        effectiveCardsRef,
+        isMarqueeActiveRef,
+        onCardSelect,
+        updateGroupSelection,
+    ])
 
     const handleBackgroundMouseDown = useCallback(
         (e: ReactMouseEvent<SVGRectElement>) => {

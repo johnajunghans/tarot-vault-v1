@@ -1,14 +1,7 @@
 'use client'
 
 import { ArrowUp01Icon } from 'hugeicons-react'
-
-interface OffscreenPointer {
-    index: number
-    x: number
-    y: number
-    rotation: number
-    label: string
-}
+import type { OffscreenPointer } from '../types'
 
 interface CanvasPointerOverlayProps {
     pointers: OffscreenPointer[]
@@ -42,5 +35,3 @@ export default function CanvasPointerOverlay({
         </div>
     )
 }
-
-export type { OffscreenPointer }

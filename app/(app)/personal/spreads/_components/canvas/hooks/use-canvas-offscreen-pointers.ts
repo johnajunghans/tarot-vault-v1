@@ -1,8 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { CanvasCard } from '../components/card'
-import type { OffscreenPointer } from '../components/pointer-overlay'
+import type { CanvasCard, OffscreenPointer } from '../types'
 import {
     getRect,
     getRectCenter,

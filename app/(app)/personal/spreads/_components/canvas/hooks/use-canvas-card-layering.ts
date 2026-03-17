@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
-import type { CanvasCard } from '../components/card'
+import type { CanvasCard } from '../types'
 
 interface UseCardLayeringArgs {
     effectiveCards: CanvasCard[]

@@ -8,9 +8,13 @@ import {
     useMemo,
     useRef,
 } from 'react'
-import SpreadCard, { type CanvasCard } from './components/card'
+import SpreadCard from './components/card'
 import CanvasBackground from './components/background'
-import CanvasGuides, { type CanvasGuide } from './components/guides'
+import CanvasDefs from './components/defs'
+import CanvasEmptyPrompt from './components/empty-prompt'
+import CanvasGuides from './components/guides'
+import type { CanvasGuide } from './types'
+import CanvasMarquee from './components/marquee'
 import CanvasPointerOverlay from './components/pointer-overlay'
 import CanvasScrollbars from './components/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
@@ -18,6 +22,12 @@ import { useCanvasOffscreenPointers } from './hooks/use-canvas-offscreen-pointer
 import { useCardLayering } from './hooks/use-canvas-card-layering'
 import { useCanvasSelection } from './hooks/use-canvas-selection'
 import { useCanvasViewport } from './hooks/use-canvas-viewport'
+import type {
+    CanvasCard,
+    SpreadCanvasHandle,
+    SpreadCanvasPositionUpdate,
+    SpreadCanvasViewportRequest,
+} from './types'
 import { useTheme } from 'next-themes'
 import {
     getCenteredCardPlacement,
@@ -25,46 +35,15 @@ import {
 } from './helpers/geometry'
 import {
     CANVAS_BOUNDS,
-    CANVAS_CENTER,
     CANVAS_HEIGHT,
     CANVAS_WIDTH,
     CARD_HEIGHT,
     CARD_WIDTH,
     GRID_SIZE,
-    type SpreadBounds,
 } from '../../spread-layout'
 
 const POINTER_ICON_SIZE = 16
 const CARD_INTERACTION_SELECTOR = '[data-spread-card-interactive="true"]'
-
-export type SpreadCanvasViewportRequest =
-    | {
-          key: string
-          type: 'center-canvas-point'
-          point: { x: number; y: number }
-          zoom?: number
-      }
-    | {
-          key: string
-          type: 'fit-spread'
-          bounds: SpreadBounds
-          maxZoom?: number
-          padding?: number
-      }
-
-export interface SpreadCanvasPositionUpdate {
-    index: number
-    x: number
-    y: number
-}
-
-export interface SpreadCanvasHandle {
-    getZoom: () => number
-    resetZoom: () => void
-    setZoom: (zoom: number) => void
-    zoomIn: () => void
-    zoomOut: () => void
-}
 
 interface SpreadCanvasProps {
     cards: CanvasCard[]
@@ -284,23 +263,7 @@ function SpreadCanvasComponent(
                     xmlns="http://www.w3.org/2000/svg"
                     className="select-none"
                 >
-                        <defs>
-                            <filter
-                                id="canvas-card-shadow-active"
-                                x="-25%"
-                                y="-25%"
-                                width="150%"
-                                height="150%"
-                            >
-                                <feDropShadow
-                                    dx={0}
-                                    dy={5}
-                                    stdDeviation={6}
-                                    floodColor="black"
-                                    floodOpacity={0.24}
-                                />
-                            </filter>
-                        </defs>
+                        <CanvasDefs />
 
                         <CanvasBackground
                             svgWidth={svgWidth}
@@ -326,34 +289,11 @@ function SpreadCanvasComponent(
                         />
 
                         {showEmptyPrompt && (
-                            <g pointerEvents="none">
-                                <rect
-                                    x={CANVAS_CENTER.x - CARD_WIDTH / 2}
-                                    y={CANVAS_CENTER.y - CARD_HEIGHT / 2}
-                                    width={CARD_WIDTH}
-                                    height={CARD_HEIGHT}
-                                    rx={8}
-                                    fill="none"
-                                    stroke="var(--gold)"
-                                    strokeWidth={1}
-                                    strokeOpacity={
-                                        themeBasedStyles.ghostCardStrokeOpacity
-                                    }
-                                    strokeDasharray="6 4"
-                                    className="animate-gentle-pulse"
-                                />
-                                <text
-                                    x={CANVAS_CENTER.x}
-                                    y={CANVAS_CENTER.y + CARD_HEIGHT / 2 + 34}
-                                    textAnchor="middle"
-                                    fontSize={13}
-                                    fill="var(--muted-foreground)"
-                                    fillOpacity={0.6}
-                                    fontFamily="var(--font-nunito), sans-serif"
-                                >
-                                    Double-click to place your first position
-                                </text>
-                            </g>
+                            <CanvasEmptyPrompt
+                                strokeOpacity={
+                                    themeBasedStyles.ghostCardStrokeOpacity
+                                }
+                            />
                         )}
 
                         <CanvasGuides
@@ -399,21 +339,7 @@ function SpreadCanvasComponent(
                             })}
                         </g>
 
-                        {marqueeRect && (
-                            <rect
-                                x={marqueeRect.x}
-                                y={marqueeRect.y}
-                                width={marqueeRect.width}
-                                height={marqueeRect.height}
-                                fill="var(--gold)"
-                                fillOpacity={0.08}
-                                stroke="var(--gold)"
-                                strokeOpacity={0.3}
-                                strokeWidth={1}
-                                strokeDasharray="4 3"
-                                pointerEvents="none"
-                            />
-                        )}
+                        <CanvasMarquee rect={marqueeRect} />
                 </svg>
             </div>
 
@@ -441,4 +367,9 @@ const SpreadCanvas = memo(forwardRef(SpreadCanvasComponent))
 SpreadCanvas.displayName = 'SpreadCanvas'
 
 export default SpreadCanvas
-export type { CanvasCard }
+export type {
+    CanvasCard,
+    SpreadCanvasHandle,
+    SpreadCanvasPositionUpdate,
+    SpreadCanvasViewportRequest,
+} from './types'

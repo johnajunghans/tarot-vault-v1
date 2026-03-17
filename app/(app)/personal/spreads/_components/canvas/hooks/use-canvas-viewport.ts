@@ -21,7 +21,12 @@ import {
     getPanForCanvasPoint,
     clampPan,
 } from '../helpers/viewport'
-import { CANVAS_CENTER, type SpreadBounds } from '../../../spread-layout'
+import { useLatestRef } from '@/hooks/use-latest-ref'
+import { CANVAS_CENTER } from '../../../spread-layout'
+import type {
+    SpreadCanvasHandle,
+    SpreadCanvasViewportRequest,
+} from '../types'
 
 const WHEEL_DELTA_LINE_PX = 16
 const WHEEL_ZOOM_SENSITIVITY = 0.005
@@ -36,37 +41,14 @@ interface WebKitGestureEvent extends Event {
     clientY?: number
 }
 
-type ViewportRequest =
-    | {
-          key: string
-          type: 'center-canvas-point'
-          point: { x: number; y: number }
-          zoom?: number
-      }
-    | {
-          key: string
-          type: 'fit-spread'
-          bounds: SpreadBounds
-          maxZoom?: number
-          padding?: number
-      }
-
 interface UseCanvasViewportArgs {
     svgWidth: number
     svgHeight: number
-    viewportRequest?: ViewportRequest | null
+    viewportRequest?: SpreadCanvasViewportRequest | null
     onZoomDisplayChange?: (zoom: number) => void
     onZoomBoundsChange?: (minZoom: number) => void
     isCardInteractionTarget: (target: EventTarget | null) => boolean
     isMarqueeActiveRef: { current: boolean }
-}
-
-interface CanvasViewportHandle {
-    getZoom: () => number
-    resetZoom: () => void
-    setZoom: (zoom: number) => void
-    zoomIn: () => void
-    zoomOut: () => void
 }
 
 export function useCanvasViewport({
@@ -102,8 +84,8 @@ export function useCanvasViewport({
     const zoomInteractionTimeoutRef = useRef<number | null>(null)
     const appliedViewportRequestKeyRef = useRef<string | null>(null)
     const scheduledViewportRequestKeyRef = useRef<string | null>(null)
-    const onZoomDisplayChangeRef = useRef(onZoomDisplayChange)
-    const onZoomBoundsChangeRef = useRef(onZoomBoundsChange)
+    const onZoomDisplayChangeRef = useLatestRef(onZoomDisplayChange)
+    const onZoomBoundsChangeRef = useLatestRef(onZoomBoundsChange)
     const reportedMinZoomRef = useRef<number | null>(null)
     const suppressCardSelectionUntilRef = useRef(0)
     const scrollbarIdleTimeoutRef = useRef<number | null>(null)
@@ -163,14 +145,6 @@ export function useCanvasViewport({
         suppressCardSelectionUntilRef.current =
             Date.now() + CARD_SELECTION_SUPPRESS_MS
     }, [])
-
-    useEffect(() => {
-        onZoomDisplayChangeRef.current = onZoomDisplayChange
-    }, [onZoomDisplayChange])
-
-    useEffect(() => {
-        onZoomBoundsChangeRef.current = onZoomBoundsChange
-    }, [onZoomBoundsChange])
 
     useEffect(() => {
         return () => {
@@ -261,7 +235,12 @@ export function useCanvasViewport({
 
         reportedMinZoomRef.current = minZoom
         onZoomBoundsChangeRef.current?.(minZoom)
-    }, [containerSize.height, containerSize.width, getMinimumZoom])
+    }, [
+        containerSize.height,
+        containerSize.width,
+        getMinimumZoom,
+        onZoomBoundsChangeRef,
+    ])
 
     const flushViewportCommit = useCallback(() => {
         viewportFrameRef.current = 0
@@ -287,7 +266,11 @@ export function useCanvasViewport({
         setZoom(pending.zoom)
         onZoomDisplayChangeRef.current?.(pending.zoom)
         setScrollbarActiveForFrame()
-    }, [setScrollbarActiveForFrame, setZoomInteractionActiveForFrame])
+    }, [
+        onZoomDisplayChangeRef,
+        setScrollbarActiveForFrame,
+        setZoomInteractionActiveForFrame,
+    ])
 
     const scheduleViewportCommit = useCallback(
         (
@@ -835,7 +818,7 @@ export function useCanvasViewport({
         }
     }, [getClampedPan, schedulePanUpdate])
 
-    const imperativeHandle = useMemo<CanvasViewportHandle>(
+    const imperativeHandle = useMemo<SpreadCanvasHandle>(
         () => ({
             getZoom: () => targetZoomRef.current,
             resetZoom: () => {
