@@ -14,6 +14,7 @@ import CanvasGuides, { type CanvasGuide } from './components/guides'
 import CanvasPointerOverlay from './components/pointer-overlay'
 import CanvasScrollbars from './components/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
+import { useCanvasOffscreenPointers } from './hooks/use-canvas-offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
 import { useCanvasSelection } from './hooks/use-canvas-selection'
 import { useCanvasViewport } from './hooks/use-canvas-viewport'
@@ -21,11 +22,7 @@ import { useTheme } from 'next-themes'
 import {
     getCenteredCardPlacement,
     getRect,
-    getRectCenter,
-    isRectFullyOutsideRect,
-    projectVectorToEdge,
 } from './helpers/geometry'
-import { getCanvasViewportRect } from './helpers/viewport'
 import {
     CANVAS_BOUNDS,
     CANVAS_CENTER,
@@ -37,7 +34,6 @@ import {
     type SpreadBounds,
 } from '../../spread-layout'
 
-const POINTER_EDGE_PADDING = 18
 const POINTER_ICON_SIZE = 16
 const CARD_INTERACTION_SELECTOR = '[data-spread-card-interactive="true"]'
 
@@ -266,61 +262,12 @@ function SpreadCanvasComponent(
 
     const showEmptyPrompt = !isViewMode && cards.length === 0
 
-    const offscreenPointers = useMemo(() => {
-        if (containerSize.width <= 0 || containerSize.height <= 0) {
-            return []
-        }
-
-        const viewport = getCanvasViewportRect({
-            panX: pan.x,
-            panY: pan.y,
-            clientWidth: containerSize.width,
-            clientHeight: containerSize.height,
-            zoom,
-        })
-
-        const overlayCenterX = containerSize.width / 2
-        const overlayCenterY = containerSize.height / 2
-        const maxOffsetX = Math.max(overlayCenterX - POINTER_EDGE_PADDING, 0)
-        const maxOffsetY = Math.max(overlayCenterY - POINTER_EDGE_PADDING, 0)
-
-        if (maxOffsetX === 0 || maxOffsetY === 0) return []
-
-        return effectiveCards.flatMap((card, index) => {
-            const cardRect = getRect(card.x, card.y, CARD_WIDTH, CARD_HEIGHT)
-
-            if (!isRectFullyOutsideRect(cardRect, viewport)) return []
-
-            const cardCenter = getRectCenter(cardRect)
-            const pointerPosition = projectVectorToEdge(
-                cardCenter.x - viewport.centerX,
-                cardCenter.y - viewport.centerY,
-                overlayCenterX,
-                overlayCenterY,
-                maxOffsetX,
-                maxOffsetY
-            )
-
-            if (!pointerPosition) return []
-
-            return [
-                {
-                    index,
-                    x: pointerPosition.x,
-                    y: pointerPosition.y,
-                    rotation:
-                        pointerPosition.edge === 'top'
-                            ? 0
-                            : pointerPosition.edge === 'right'
-                              ? 90
-                              : pointerPosition.edge === 'bottom'
-                                ? 180
-                                : -90,
-                    label: card.name?.trim() || `Card ${index + 1}`,
-                },
-            ]
-        })
-    }, [effectiveCards, pan, containerSize, zoom])
+    const offscreenPointers = useCanvasOffscreenPointers({
+        effectiveCards,
+        pan,
+        containerSize,
+        zoom,
+    })
 
     return (
         <div className="relative h-full w-full">
