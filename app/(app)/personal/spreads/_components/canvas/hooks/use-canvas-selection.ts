@@ -24,6 +24,65 @@ interface UseCanvasSelectionArgs {
     isMarqueeActiveRef: { current: boolean }
 }
 
+interface CanvasMarqueeState {
+    startX: number
+    startY: number
+    currentX: number
+    currentY: number
+}
+
+function getMarqueeSelectionRect(start: CanvasPoint, end: CanvasPoint) {
+    return {
+        left: Math.min(start.x, end.x),
+        right: Math.max(start.x, end.x),
+        top: Math.min(start.y, end.y),
+        bottom: Math.max(start.y, end.y),
+    }
+}
+
+function isClickLikeMarqueeDrag(
+    start: CanvasPoint,
+    end: CanvasPoint,
+    threshold = 5
+) {
+    const dx = end.x - start.x
+    const dy = end.y - start.y
+    return Math.sqrt(dx * dx + dy * dy) < threshold
+}
+
+function getMarqueeSelectedIndices(
+    effectiveCards: CanvasCard[],
+    start: CanvasPoint,
+    end: CanvasPoint
+) {
+    const selectionRect = getMarqueeSelectionRect(start, end)
+    const selected = new Set<number>()
+
+    effectiveCards.forEach((card, index) => {
+        if (
+            rectsIntersect(
+                getRect(card.x, card.y, CARD_WIDTH, CARD_HEIGHT),
+                selectionRect
+            )
+        ) {
+            selected.add(index)
+        }
+    })
+
+    return selected
+}
+
+function getMarqueeRect(marquee: CanvasMarqueeState | null) {
+    if (!marquee) return null
+
+    return {
+        x: Math.min(marquee.startX, marquee.currentX),
+        y: Math.min(marquee.startY, marquee.currentY),
+        width: Math.abs(marquee.currentX - marquee.startX),
+        height: Math.abs(marquee.currentY - marquee.startY),
+    }
+}
+
 export function useCanvasSelection({
     effectiveCards,
     onCardSelect,
@@ -36,12 +95,7 @@ export function useCanvasSelection({
     const [groupSelectedIndices, setGroupSelectedIndices] = useState<Set<number>>(
         new Set()
     )
-    const [marquee, setMarquee] = useState<{
-        startX: number
-        startY: number
-        currentX: number
-        currentY: number
-    } | null>(null)
+    const [marquee, setMarquee] = useState<CanvasMarqueeState | null>(null)
 
     const effectiveCardsRef = useLatestRef(effectiveCards)
     const marqueeStartRef = useRef<CanvasPoint>({ x: 0, y: 0 })
@@ -68,33 +122,18 @@ export function useCanvasSelection({
             isMarqueeActiveRef.current = false
 
             const endPt = clientToSVG(e.clientX, e.clientY)
-            const dx = endPt.x - marqueeStartRef.current.x
-            const dy = endPt.y - marqueeStartRef.current.y
-            const dist = Math.sqrt(dx * dx + dy * dy)
 
-            if (dist < 5) {
+            if (isClickLikeMarqueeDrag(marqueeStartRef.current, endPt)) {
                 updateGroupSelection(new Set())
                 onCardSelect(null)
             } else {
-                const left = Math.min(marqueeStartRef.current.x, endPt.x)
-                const right = Math.max(marqueeStartRef.current.x, endPt.x)
-                const top = Math.min(marqueeStartRef.current.y, endPt.y)
-                const bottom = Math.max(marqueeStartRef.current.y, endPt.y)
-                const selectionRect = { left, right, top, bottom }
-                const selected = new Set<number>()
-
-                effectiveCardsRef.current.forEach((card, index) => {
-                    if (
-                        rectsIntersect(
-                            getRect(card.x, card.y, CARD_WIDTH, CARD_HEIGHT),
-                            selectionRect
-                        )
-                    ) {
-                        selected.add(index)
-                    }
-                })
-
-                updateGroupSelection(selected)
+                updateGroupSelection(
+                    getMarqueeSelectedIndices(
+                        effectiveCardsRef.current,
+                        marqueeStartRef.current,
+                        endPt
+                    )
+                )
             }
 
             setMarquee(null)
@@ -143,13 +182,7 @@ export function useCanvasSelection({
     )
 
     const marqueeRect = useMemo(() => {
-        if (!marquee) return null
-        return {
-            x: Math.min(marquee.startX, marquee.currentX),
-            y: Math.min(marquee.startY, marquee.currentY),
-            width: Math.abs(marquee.currentX - marquee.startX),
-            height: Math.abs(marquee.currentY - marquee.startY),
-        }
+        return getMarqueeRect(marquee)
     }, [marquee])
 
     return {
@@ -158,4 +191,11 @@ export function useCanvasSelection({
         handleCardClick,
         marqueeRect,
     }
+}
+
+export {
+    getMarqueeRect,
+    getMarqueeSelectedIndices,
+    getMarqueeSelectionRect,
+    isClickLikeMarqueeDrag,
 }

@@ -24,6 +24,58 @@ function areTransientPositionsEqual(
     })
 }
 
+function getEffectiveCards(
+    cards: CanvasCard[],
+    transientPositions: TransientPositions
+) {
+    return cards.map((card, index) => {
+        const nextPosition = transientPositions[index]
+        return nextPosition
+            ? { ...card, x: nextPosition.x, y: nextPosition.y }
+            : card
+    })
+}
+
+function buildDragUpdates(
+    index: number,
+    x: number,
+    y: number,
+    groupDragOrigins: Map<number, CanvasPoint>,
+    dragStartPos: CanvasPoint | null,
+    bounds = CANVAS_BOUNDS,
+    gridSize = GRID_SIZE
+) {
+    const updates: TransientPositions = {
+        [index]: { x, y },
+    }
+
+    if (groupDragOrigins.size > 0 && dragStartPos) {
+        const dx = x - dragStartPos.x
+        const dy = y - dragStartPos.y
+
+        for (const [groupIndex, origin] of groupDragOrigins) {
+            const { x: clampedX, y: clampedY } = getSnappedClampedPosition(
+                origin.x + dx,
+                origin.y + dy,
+                bounds,
+                gridSize
+            )
+
+            updates[groupIndex] = { x: clampedX, y: clampedY }
+        }
+    }
+
+    return updates
+}
+
+function toPositionUpdates(updates: TransientPositions): SpreadCanvasPositionUpdate[] {
+    return Object.entries(updates).map(([key, value]) => ({
+        index: Number(key),
+        x: value.x,
+        y: value.y,
+    }))
+}
+
 interface UseCanvasDragArgs {
     cards: CanvasCard[]
     onPositionsCommit?: (updates: SpreadCanvasPositionUpdate[]) => void
@@ -51,13 +103,7 @@ export function useCanvasDrag({
     const groupDragOrigins = useRef<Map<number, CanvasPoint>>(new Map())
 
     const effectiveCards = useMemo(
-        () =>
-            cards.map((card, index) => {
-                const nextPosition = transientPositions[index]
-                return nextPosition
-                    ? { ...card, x: nextPosition.x, y: nextPosition.y }
-                    : card
-            }),
+        () => getEffectiveCards(cards, transientPositions),
         [cards, transientPositions]
     )
 
@@ -132,31 +178,15 @@ export function useCanvasDrag({
         [flushTransientPositions]
     )
 
-    const buildDragUpdates = useCallback(
-        (index: number, x: number, y: number) => {
-            const updates: TransientPositions = {
-                [index]: { x, y },
-            }
-
-            if (groupDragOrigins.current.size > 0 && dragStartPos.current) {
-                const dx = x - dragStartPos.current.x
-                const dy = y - dragStartPos.current.y
-
-                for (const [groupIndex, origin] of groupDragOrigins.current) {
-                    const { x: clampedX, y: clampedY } =
-                        getSnappedClampedPosition(
-                            origin.x + dx,
-                            origin.y + dy,
-                            CANVAS_BOUNDS,
-                            GRID_SIZE
-                        )
-
-                    updates[groupIndex] = { x: clampedX, y: clampedY }
-                }
-            }
-
-            return updates
-        },
+    const buildCurrentDragUpdates = useCallback(
+        (index: number, x: number, y: number) =>
+            buildDragUpdates(
+                index,
+                x,
+                y,
+                groupDragOrigins.current,
+                dragStartPos.current
+            ),
         []
     )
 
@@ -209,30 +239,24 @@ export function useCanvasDrag({
         (index: number, x: number, y: number) => {
             setDragging({ index, x, y })
             draggingRef.current = { index, x, y }
-            scheduleTransientPositions(buildDragUpdates(index, x, y))
+            scheduleTransientPositions(buildCurrentDragUpdates(index, x, y))
         },
-        [buildDragUpdates, scheduleTransientPositions]
+        [buildCurrentDragUpdates, scheduleTransientPositions]
     )
 
     const handleDragEnd = useCallback(
         (index: number, x: number, y: number) => {
-            const nextPositions = buildDragUpdates(index, x, y)
+            const nextPositions = buildCurrentDragUpdates(index, x, y)
             commitTransientPositions(nextPositions)
 
-            onPositionsCommit?.(
-                Object.entries(nextPositions).map(([key, value]) => ({
-                    index: Number(key),
-                    x: value.x,
-                    y: value.y,
-                }))
-            )
+            onPositionsCommit?.(toPositionUpdates(nextPositions))
 
             groupDragOrigins.current = new Map()
             dragStartPos.current = null
             draggingRef.current = null
             setDragging(null)
         },
-        [buildDragUpdates, commitTransientPositions, onPositionsCommit]
+        [buildCurrentDragUpdates, commitTransientPositions, onPositionsCommit]
     )
 
     return {
@@ -243,4 +267,11 @@ export function useCanvasDrag({
         handleDrag,
         handleDragEnd,
     }
+}
+
+export {
+    areTransientPositionsEqual,
+    buildDragUpdates,
+    getEffectiveCards,
+    toPositionUpdates,
 }

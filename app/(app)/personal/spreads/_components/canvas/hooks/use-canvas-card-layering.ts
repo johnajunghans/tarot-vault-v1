@@ -9,6 +9,34 @@ interface UseCardLayeringArgs {
     draggingIndex: number | null
 }
 
+function getBaseSortedCards(effectiveCards: CanvasCard[]) {
+    return effectiveCards
+        .map((card, index) => ({ card, index }))
+        .sort((a, b) => {
+            if (a.card.z !== b.card.z) return a.card.z - b.card.z
+            return a.index - b.index
+        })
+}
+
+function getLayeredCardIndices(
+    baseSortedCards: Array<{ card: CanvasCard; index: number }>,
+    selectedCardIndex: number | null,
+    draggingIndex: number | null
+) {
+    return baseSortedCards
+        .map(({ index }) => index)
+        .sort((a, b) => {
+            const aSelected = a === selectedCardIndex ? 1 : 0
+            const bSelected = b === selectedCardIndex ? 1 : 0
+            const aDragging = draggingIndex === a ? 1 : 0
+            const bDragging = draggingIndex === b ? 1 : 0
+
+            if (aDragging !== bDragging) return aDragging - bDragging
+            if (aSelected !== bSelected) return aSelected - bSelected
+            return 0
+        })
+}
+
 export function useCardLayering({
     effectiveCards,
     selectedCardIndex,
@@ -27,30 +55,17 @@ export function useCardLayering({
     }, [])
 
     const baseSortedCards = useMemo(
-        () =>
-            effectiveCards
-                .map((card, index) => ({ card, index }))
-                .sort((a, b) => {
-                    if (a.card.z !== b.card.z) return a.card.z - b.card.z
-                    return a.index - b.index
-                }),
+        () => getBaseSortedCards(effectiveCards),
         [effectiveCards]
     )
 
     const layeredCardIndices = useMemo(
         () =>
-            baseSortedCards
-                .map(({ index }) => index)
-                .sort((a, b) => {
-                    const aSelected = a === selectedCardIndex ? 1 : 0
-                    const bSelected = b === selectedCardIndex ? 1 : 0
-                    const aDragging = draggingIndex === a ? 1 : 0
-                    const bDragging = draggingIndex === b ? 1 : 0
-
-                    if (aDragging !== bDragging) return aDragging - bDragging
-                    if (aSelected !== bSelected) return aSelected - bSelected
-                    return 0
-                }),
+            getLayeredCardIndices(
+                baseSortedCards,
+                selectedCardIndex,
+                draggingIndex
+            ),
         [baseSortedCards, draggingIndex, selectedCardIndex]
     )
 
@@ -72,3 +87,5 @@ export function useCardLayering({
         baseSortedCards,
     }
 }
+
+export { getBaseSortedCards, getLayeredCardIndices }
