@@ -4,11 +4,9 @@ import {
     forwardRef,
     memo,
     useCallback,
-    useEffect,
     useImperativeHandle,
     useMemo,
     useRef,
-    useState,
 } from 'react'
 import SpreadCard, { type CanvasCard } from './components/card'
 import CanvasBackground from './components/background'
@@ -17,6 +15,7 @@ import CanvasPointerOverlay from './components/pointer-overlay'
 import CanvasScrollbars from './components/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
+import { useCanvasSelection } from './hooks/use-canvas-selection'
 import { useCanvasViewport } from './hooks/use-canvas-viewport'
 import { useTheme } from 'next-themes'
 import {
@@ -25,7 +24,6 @@ import {
     getRectCenter,
     isRectFullyOutsideRect,
     projectVectorToEdge,
-    rectsIntersect,
 } from './helpers/geometry'
 import { getCanvasViewportRect } from './helpers/viewport'
 import {
@@ -105,16 +103,6 @@ function SpreadCanvasComponent(
     const svgRef = useRef<SVGSVGElement>(null)
     const { resolvedTheme } = useTheme()
 
-    const [groupSelectedIndices, setGroupSelectedIndices] = useState<
-        Set<number>
-    >(new Set())
-    const [marquee, setMarquee] = useState<{
-        startX: number
-        startY: number
-        currentX: number
-        currentY: number
-    } | null>(null)
-
     const themeBasedStyles = useMemo(
         () => ({
             containerBg: 'bg-[var(--canvas-bg)]',
@@ -130,7 +118,6 @@ function SpreadCanvasComponent(
     const svgHeight = CANVAS_HEIGHT
 
     const isMarqueeActive = useRef(false)
-    const marqueeStart = useRef({ x: 0, y: 0 })
 
     const clientToSVG = useCallback((clientX: number, clientY: number) => {
         const svg = svgRef.current
@@ -187,8 +174,22 @@ function SpreadCanvasComponent(
 
     const updateGroupSelection = useCallback((next: Set<number>) => {
         updateDragSelection(next)
-        setGroupSelectedIndices(next)
     }, [updateDragSelection])
+
+    const {
+        groupSelectedIndices,
+        handleBackgroundMouseDown,
+        handleCardClick,
+        marqueeRect,
+    } = useCanvasSelection({
+        effectiveCards,
+        onCardSelect,
+        syncGroupSelection: updateGroupSelection,
+        clientToSVG,
+        isCardSelectionSuppressed,
+        isSpaceHeldRef,
+        isMarqueeActiveRef: isMarqueeActive,
+    })
 
     const { cardsLayerRef, registerCardRef, baseSortedCards } = useCardLayering({
         effectiveCards,
@@ -246,77 +247,6 @@ function SpreadCanvasComponent(
         })
     }, [effectiveCards, dragging, groupSelectedIndices, isViewMode])
 
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isMarqueeActive.current) return
-            const pt = clientToSVG(e.clientX, e.clientY)
-            setMarquee((prev) =>
-                prev ? { ...prev, currentX: pt.x, currentY: pt.y } : null
-            )
-        }
-
-        const handleMouseUp = (e: MouseEvent) => {
-            if (!isMarqueeActive.current) return
-            isMarqueeActive.current = false
-
-            const endPt = clientToSVG(e.clientX, e.clientY)
-            const dx = endPt.x - marqueeStart.current.x
-            const dy = endPt.y - marqueeStart.current.y
-            const dist = Math.sqrt(dx * dx + dy * dy)
-
-            if (dist < 5) {
-                updateGroupSelection(new Set())
-                onCardSelect(null)
-            } else {
-                const left = Math.min(marqueeStart.current.x, endPt.x)
-                const right = Math.max(marqueeStart.current.x, endPt.x)
-                const top = Math.min(marqueeStart.current.y, endPt.y)
-                const bottom = Math.max(marqueeStart.current.y, endPt.y)
-                const selectionRect = { left, right, top, bottom }
-                const selected = new Set<number>()
-
-                effectiveCards.forEach((card, index) => {
-                    if (
-                        rectsIntersect(
-                            getRect(card.x, card.y, CARD_WIDTH, CARD_HEIGHT),
-                            selectionRect
-                        )
-                    ) {
-                        selected.add(index)
-                    }
-                })
-
-                updateGroupSelection(selected)
-            }
-
-            setMarquee(null)
-        }
-
-        window.addEventListener('mousemove', handleMouseMove)
-        window.addEventListener('mouseup', handleMouseUp)
-
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove)
-            window.removeEventListener('mouseup', handleMouseUp)
-        }
-    }, [clientToSVG, effectiveCards, onCardSelect, updateGroupSelection])
-
-    const handleBackgroundMouseDown = useCallback(
-        (e: React.MouseEvent<SVGRectElement>) => {
-            if (isSpaceHeldRef.current) return
-            const pt = clientToSVG(e.clientX, e.clientY)
-            isMarqueeActive.current = true
-            marqueeStart.current = { x: pt.x, y: pt.y }
-            setMarquee({
-                startX: pt.x,
-                startY: pt.y,
-                currentX: pt.x,
-                currentY: pt.y,
-            })
-        },
-        [clientToSVG, isSpaceHeldRef]
-    )
-
     const handleBackgroundDoubleClick = useCallback(
         (e: React.MouseEvent<SVGRectElement>) => {
             if (isViewMode || !onCanvasDoubleClick) return
@@ -333,27 +263,6 @@ function SpreadCanvasComponent(
         },
         [clientToSVG, isViewMode, onCanvasDoubleClick]
     )
-
-    const handleCardClick = useCallback(
-        (index: number) => {
-            if (isCardSelectionSuppressed()) {
-                return
-            }
-            updateGroupSelection(new Set())
-            onCardSelect(index)
-        },
-        [isCardSelectionSuppressed, onCardSelect, updateGroupSelection]
-    )
-
-    const marqueeRect = useMemo(() => {
-        if (!marquee) return null
-        return {
-            x: Math.min(marquee.startX, marquee.currentX),
-            y: Math.min(marquee.startY, marquee.currentY),
-            width: Math.abs(marquee.currentX - marquee.startX),
-            height: Math.abs(marquee.currentY - marquee.startY),
-        }
-    }, [marquee])
 
     const showEmptyPrompt = !isViewMode && cards.length === 0
 
