@@ -33,6 +33,23 @@ Future considerations/recommendations/warnings
 ## 0.2_Recent_Entries
 *For context about what has recently been done. Most recent at the top.*
 
+**03/16/2026 -- Custom Canvas Scrollbars -- Claude Opus 4.6**
+Summary of actions taken:
+- Created `CanvasScrollbars` component (`_components/canvas/components/scrollbars.tsx`) — macOS-style overlay scrollbar thumbs for horizontal and vertical axes
+- Thumb size is proportional to the visible viewport fraction; thumb position tracks pan offset within canvas bounds
+- Draggable thumbs: mousedown captures track length, mousemove converts pixel delta to pan delta, calls `onPan` which clamps and schedules pan update
+- Auto-fade: thumbs appear on any pan/zoom activity (`isScrollbarActive` state in `index.tsx`) and fade out after 1.5s idle via timeout; hover/drag keeps them visible
+- Thumbs expand from 6px to 8px on hover for easier grab targeting
+- `pointer-events-none` on container, `pointer-events-auto` on thumb elements only — no interference with canvas interaction
+- Uses `bg-[var(--scrollbar)]` (pre-existing CSS variable with theme-appropriate transparency)
+- Integrated into `index.tsx`: `viewportDimensions` memo, `handleScrollbarPan` callback, `setScrollbarActiveForFrame` triggered from `flushViewportCommit` and `schedulePanUpdate`
+- Fixed React Compiler lint error: replaced ref reads during render (`hTrackRef.current?.clientWidth`) with CSS `minWidth`/`minHeight` on thumb elements
+
+Future considerations/recommendations/warnings
+- Scrollbar thumbs are mouse-only (no touch drag on the scrollbar itself) — this is intentional since touch devices pan via direct gesture
+- Track click-to-jump (clicking the track area to jump the thumb to that position) is not implemented — could be added if users expect it
+- The `--scrollbar` CSS variable should be verified in both light and dark themes for adequate contrast/visibility
+
 **03/16/2026 -- 1.4.6 -- Claude Opus 4.6**
 Summary of actions taken:
 - Replaced CSS `transform: scale(zoom)` + scroll container zoom with dynamic SVG `viewBox`-based zoom/pan

@@ -15,6 +15,7 @@ import SpreadCard, { type CanvasCard } from './components/card'
 import CanvasBackground from './components/background'
 import CanvasGuides, { type CanvasGuide } from './components/guides'
 import CanvasPointerOverlay from './components/pointer-overlay'
+import CanvasScrollbars from './components/scrollbars'
 import { useTheme } from 'next-themes'
 import {
     DEFAULT_ZOOM,
@@ -57,6 +58,7 @@ const VIEWPORT_FIT_PADDING = 48
 const ZOOM_INTERACTION_IDLE_MS = 120
 const CARD_INTERACTION_SELECTOR = '[data-spread-card-interactive="true"]'
 const CARD_SELECTION_SUPPRESS_MS = 250
+const SCROLLBAR_IDLE_MS = 1500
 
 export type SpreadCanvasViewportRequest =
     | {
@@ -154,6 +156,7 @@ function SpreadCanvasComponent(
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
     const [zoom, setZoom] = useState(DEFAULT_ZOOM)
     const [isZoomInteractionActive, setIsZoomInteractionActive] = useState(false)
+    const [isScrollbarActive, setIsScrollbarActive] = useState(false)
     const [dragging, setDragging] = useState<{
         index: number
         x: number
@@ -220,6 +223,7 @@ function SpreadCanvasComponent(
     const onZoomBoundsChangeRef = useRef(onZoomBoundsChange)
     const reportedMinZoomRef = useRef<number | null>(null)
     const suppressCardSelectionUntilRef = useRef(0)
+    const scrollbarIdleTimeoutRef = useRef<number | null>(null)
     const pinchStateRef = useRef<{
         distance: number
         midpointX: number
@@ -259,6 +263,19 @@ function SpreadCanvasComponent(
             setIsZoomInteractionActive(false)
             zoomInteractionTimeoutRef.current = null
         }, ZOOM_INTERACTION_IDLE_MS)
+    }, [])
+
+    const setScrollbarActiveForFrame = useCallback(() => {
+        setIsScrollbarActive(true)
+
+        if (scrollbarIdleTimeoutRef.current !== null) {
+            window.clearTimeout(scrollbarIdleTimeoutRef.current)
+        }
+
+        scrollbarIdleTimeoutRef.current = window.setTimeout(() => {
+            setIsScrollbarActive(false)
+            scrollbarIdleTimeoutRef.current = null
+        }, SCROLLBAR_IDLE_MS)
     }, [])
 
     const effectiveCards = useMemo(
@@ -312,6 +329,9 @@ function SpreadCanvasComponent(
             }
             if (zoomInteractionTimeoutRef.current !== null) {
                 window.clearTimeout(zoomInteractionTimeoutRef.current)
+            }
+            if (scrollbarIdleTimeoutRef.current !== null) {
+                window.clearTimeout(scrollbarIdleTimeoutRef.current)
             }
         }
     }, [])
@@ -617,7 +637,8 @@ function SpreadCanvasComponent(
         setPan(pending.pan)
         setZoom(pending.zoom)
         onZoomDisplayChangeRef.current?.(pending.zoom)
-    }, [setZoomInteractionActiveForFrame])
+        setScrollbarActiveForFrame()
+    }, [setZoomInteractionActiveForFrame, setScrollbarActiveForFrame])
 
     const scheduleViewportCommit = useCallback(
         (
@@ -837,13 +858,14 @@ function SpreadCanvasComponent(
         (nextPan: { x: number; y: number }) => {
             panRef.current = nextPan
             targetPanRef.current = nextPan
+            setScrollbarActiveForFrame()
             if (panFrameRef.current !== 0) return
             panFrameRef.current = window.requestAnimationFrame(() => {
                 panFrameRef.current = 0
                 setPan({ ...panRef.current })
             })
         },
-        []
+        [setScrollbarActiveForFrame]
     )
 
     const getClampedPan = useCallback(
@@ -863,6 +885,19 @@ function SpreadCanvasComponent(
             })
         },
         [getMinimumZoom, svgWidth, svgHeight]
+    )
+
+    const viewportDimensions = useMemo(() => ({
+        width: containerSize.width > 0 ? containerSize.width / zoom : svgWidth,
+        height: containerSize.height > 0 ? containerSize.height / zoom : svgHeight,
+    }), [containerSize.width, containerSize.height, zoom, svgWidth, svgHeight])
+
+    const handleScrollbarPan = useCallback(
+        (nextPan: { x: number; y: number }) => {
+            const clamped = getClampedPan(nextPan.x, nextPan.y)
+            schedulePanUpdate(clamped)
+        },
+        [getClampedPan, schedulePanUpdate]
     )
 
     useEffect(() => {
@@ -1594,6 +1629,17 @@ function SpreadCanvasComponent(
             <CanvasPointerOverlay
                 pointers={offscreenPointers}
                 iconSize={POINTER_ICON_SIZE}
+            />
+
+            <CanvasScrollbars
+                panX={pan.x}
+                panY={pan.y}
+                viewportWidth={viewportDimensions.width}
+                viewportHeight={viewportDimensions.height}
+                canvasWidth={svgWidth}
+                canvasHeight={svgHeight}
+                isActive={isScrollbarActive}
+                onPan={handleScrollbarPan}
             />
         </div>
     )
