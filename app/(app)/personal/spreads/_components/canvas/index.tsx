@@ -54,6 +54,8 @@ const POINTER_EDGE_PADDING = 18
 const POINTER_ICON_SIZE = 16
 const VIEWPORT_FIT_PADDING = 48
 const ZOOM_INTERACTION_IDLE_MS = 120
+const CARD_INTERACTION_SELECTOR = '[data-spread-card-interactive="true"]'
+const CARD_SELECTION_SUPPRESS_MS = 250
 
 export type SpreadCanvasViewportRequest =
     | {
@@ -212,6 +214,7 @@ function SpreadCanvasComponent(
     const appliedViewportRequestKeyRef = useRef<string | null>(null)
     const scheduledViewportRequestKeyRef = useRef<string | null>(null)
     const onZoomDisplayChangeRef = useRef(onZoomDisplayChange)
+    const suppressCardSelectionUntilRef = useRef(0)
     const pinchStateRef = useRef<{
         distance: number
         midpointX: number
@@ -351,6 +354,17 @@ function SpreadCanvasComponent(
         }
 
         cardGroupRefs.current.delete(index)
+    }, [])
+
+    const suppressCardSelection = useCallback(() => {
+        suppressCardSelectionUntilRef.current =
+            Date.now() + CARD_SELECTION_SUPPRESS_MS
+    }, [])
+
+    const isCardInteractionTarget = useCallback((target: EventTarget | null) => {
+        return target instanceof Element
+            ? target.closest(CARD_INTERACTION_SELECTOR) !== null
+            : false
     }, [])
 
     const baseSortedCards = useMemo(
@@ -808,6 +822,7 @@ function SpreadCanvasComponent(
             if (e.touches.length === 2) {
                 // Pinch zoom
                 e.preventDefault()
+                suppressCardSelection()
                 touchPanState = null
                 const touchA = e.touches[0]
                 const touchB = e.touches[1]
@@ -819,7 +834,11 @@ function SpreadCanvasComponent(
                     midpointX: (touchA.clientX + touchB.clientX) / 2,
                     midpointY: (touchA.clientY + touchB.clientY) / 2,
                 }
-            } else if (e.touches.length === 1 && !isMarqueeActive.current) {
+            } else if (
+                e.touches.length === 1 &&
+                !isMarqueeActive.current &&
+                !isCardInteractionTarget(e.target)
+            ) {
                 // Single-finger touch pan
                 const touch = e.touches[0]
                 touchPanState = {
@@ -835,6 +854,7 @@ function SpreadCanvasComponent(
             if (e.touches.length === 2 && pinchStateRef.current) {
                 // Pinch zoom
                 e.preventDefault()
+                suppressCardSelection()
                 touchPanState = null
                 const touchA = e.touches[0]
                 const touchB = e.touches[1]
@@ -881,6 +901,9 @@ function SpreadCanvasComponent(
         }
 
         const clearTouchState = () => {
+            if (pinchStateRef.current) {
+                suppressCardSelection()
+            }
             pinchStateRef.current = null
             touchPanState = null
         }
@@ -888,6 +911,7 @@ function SpreadCanvasComponent(
         const handleSafariGestureStart = (event: Event) => {
             const e = event as WebKitGestureEvent
             e.preventDefault()
+            suppressCardSelection()
 
             const rect = container.getBoundingClientRect()
             safariGestureStateRef.current = {
@@ -903,6 +927,7 @@ function SpreadCanvasComponent(
             if (!gesture) return
             if (!e.scale || e.scale <= 0) return
             e.preventDefault()
+            suppressCardSelection()
 
             const rect = container.getBoundingClientRect()
             const clientX = e.clientX ?? gesture.clientX
@@ -925,6 +950,7 @@ function SpreadCanvasComponent(
         }
 
         const clearSafariGestureState = () => {
+            suppressCardSelection()
             safariGestureStateRef.current = null
         }
 
@@ -954,7 +980,13 @@ function SpreadCanvasComponent(
             )
             container.removeEventListener('gestureend', clearSafariGestureState)
         }
-    }, [setZoomAroundViewportPoint, schedulePanUpdate, getClampedPan])
+    }, [
+        getClampedPan,
+        isCardInteractionTarget,
+        schedulePanUpdate,
+        setZoomAroundViewportPoint,
+        suppressCardSelection,
+    ])
 
     useImperativeHandle(
         ref,
@@ -1219,6 +1251,13 @@ function SpreadCanvasComponent(
 
     const handleCardClick = useCallback(
         (index: number) => {
+            if (
+                pinchStateRef.current ||
+                safariGestureStateRef.current ||
+                Date.now() < suppressCardSelectionUntilRef.current
+            ) {
+                return
+            }
             updateGroupSelection(new Set())
             onCardSelect(index)
         },

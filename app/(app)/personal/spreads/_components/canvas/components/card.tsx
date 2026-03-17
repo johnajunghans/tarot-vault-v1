@@ -376,6 +376,7 @@ function CanvasCard({
     return (
         <g
             ref={groupRef}
+            data-spread-card-interactive="true"
             onClick={isViewMode ? () => onClick(index) : undefined}
             style={{ cursor: 'pointer' }}
         >
