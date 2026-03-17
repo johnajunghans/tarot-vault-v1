@@ -108,6 +108,8 @@ export default function EditPanelWrapper({
         setSelectedCardIndex,
         zoomDisplay,
         setZoomDisplay,
+        minZoomDisplay,
+        setMinZoomDisplay,
         handleCardRotationChange,
         handleCanvasPositionsCommit,
     } = useSpreadForm();
@@ -356,6 +358,7 @@ export default function EditPanelWrapper({
                     isViewMode={isViewMode}
                     onPositionsCommit={handleCanvasPositionsCommit}
                     onZoomDisplayChange={setZoomDisplay}
+                    onZoomBoundsChange={setMinZoomDisplay}
                     viewportRequest={viewportRequest}
                 />
 
@@ -389,6 +392,7 @@ export default function EditPanelWrapper({
                         {/* Zoom Controls */}
                         <ZoomControls
                             zoom={zoomDisplay}
+                            minZoom={minZoomDisplay}
                             onZoomIn={() => canvasRef.current?.zoomIn()}
                             onZoomOut={() => canvasRef.current?.zoomOut()}
                             onResetZoom={() => canvasRef.current?.resetZoom()}
@@ -433,6 +437,7 @@ export default function EditPanelWrapper({
                         <div className="relative h-full">
                             <ZoomControls
                                 zoom={zoomDisplay}
+                                minZoom={minZoomDisplay}
                                 onZoomIn={() => canvasRef.current?.zoomIn()}
                                 onZoomOut={() => canvasRef.current?.zoomOut()}
                                 onResetZoom={() => canvasRef.current?.resetZoom()}

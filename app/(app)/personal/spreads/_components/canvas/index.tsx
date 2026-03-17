@@ -34,6 +34,7 @@ import {
 import {
     getCanvasViewportRect,
     getClampedPanForZoomAnchor,
+    getMinZoomForViewport,
     getPanForCanvasPoint,
     clampPan,
 } from './helpers/viewport'
@@ -95,6 +96,7 @@ interface SpreadCanvasProps {
     onCanvasDoubleClick?: (x: number, y: number) => void
     onPositionsCommit?: (updates: SpreadCanvasPositionUpdate[]) => void
     onZoomDisplayChange?: (zoom: number) => void
+    onZoomBoundsChange?: (minZoom: number) => void
     isViewMode?: boolean
     viewportRequest?: SpreadCanvasViewportRequest | null
 }
@@ -137,6 +139,7 @@ function SpreadCanvasComponent(
         onCanvasDoubleClick,
         onPositionsCommit,
         onZoomDisplayChange,
+        onZoomBoundsChange,
         isViewMode = false,
         viewportRequest,
     }: SpreadCanvasProps,
@@ -214,6 +217,8 @@ function SpreadCanvasComponent(
     const appliedViewportRequestKeyRef = useRef<string | null>(null)
     const scheduledViewportRequestKeyRef = useRef<string | null>(null)
     const onZoomDisplayChangeRef = useRef(onZoomDisplayChange)
+    const onZoomBoundsChangeRef = useRef(onZoomBoundsChange)
+    const reportedMinZoomRef = useRef<number | null>(null)
     const suppressCardSelectionUntilRef = useRef(0)
     const pinchStateRef = useRef<{
         distance: number
@@ -274,6 +279,10 @@ function SpreadCanvasComponent(
     useEffect(() => {
         onZoomDisplayChangeRef.current = onZoomDisplayChange
     }, [onZoomDisplayChange])
+
+    useEffect(() => {
+        onZoomBoundsChangeRef.current = onZoomBoundsChange
+    }, [onZoomBoundsChange])
 
     useEffect(() => {
         if (draggingRef.current) return
@@ -564,6 +573,27 @@ function SpreadCanvasComponent(
         }
     }, [])
 
+    const getMinimumZoom = useCallback(
+        (width = containerSizeRef.current.width, height = containerSizeRef.current.height) =>
+            getMinZoomForViewport({
+                canvasWidth: svgWidth,
+                canvasHeight: svgHeight,
+                clientWidth: width,
+                clientHeight: height,
+            }),
+        [svgHeight, svgWidth]
+    )
+
+    useEffect(() => {
+        if (containerSize.width <= 0 || containerSize.height <= 0) return
+
+        const minZoom = getMinimumZoom(containerSize.width, containerSize.height)
+        if (reportedMinZoomRef.current === minZoom) return
+
+        reportedMinZoomRef.current = minZoom
+        onZoomBoundsChangeRef.current?.(minZoom)
+    }, [containerSize.height, containerSize.width, getMinimumZoom])
+
     const flushViewportCommit = useCallback(() => {
         viewportFrameRef.current = 0
         const pending = pendingViewportCommitRef.current
@@ -635,8 +665,12 @@ function SpreadCanvasComponent(
             targetViewportY?: number
             shouldFlagInteraction: boolean
         }) => {
-            const normalizedZoom = normalizeZoom(nextZoom)
             const currentViewport = getViewportSnapshot()
+            const minimumZoom = getMinimumZoom(
+                currentViewport.clientWidth,
+                currentViewport.clientHeight
+            )
+            const normalizedZoom = normalizeZoom(nextZoom, minimumZoom)
 
             const nextPan = getClampedPanForZoomAnchor({
                 panX: currentViewport.panX,
@@ -663,7 +697,7 @@ function SpreadCanvasComponent(
 
             scheduleViewportCommit(normalizedZoom, nextPan, shouldFlagInteraction)
         },
-        [getViewportSnapshot, scheduleViewportCommit, svgHeight, svgWidth]
+        [getMinimumZoom, getViewportSnapshot, scheduleViewportCommit, svgHeight, svgWidth]
     )
 
     useLayoutEffect(() => {
@@ -682,6 +716,7 @@ function SpreadCanvasComponent(
         let nextZoom = renderedZoomRef.current || DEFAULT_ZOOM
         let contentX = CANVAS_CENTER.x
         let contentY = CANVAS_CENTER.y
+        const minimumZoom = getMinimumZoom(clientWidth, clientHeight)
 
         if (viewportRequest.type === 'fit-spread') {
             const padding = viewportRequest.padding ?? VIEWPORT_FIT_PADDING
@@ -695,17 +730,18 @@ function SpreadCanvasComponent(
             )
 
             nextZoom = normalizeZoom(
-                Math.min(viewportRequest.maxZoom ?? DEFAULT_ZOOM, fitZoom)
+                Math.min(viewportRequest.maxZoom ?? DEFAULT_ZOOM, fitZoom),
+                minimumZoom
             )
             contentX = viewportRequest.bounds.centerX
             contentY = viewportRequest.bounds.centerY
         } else {
-            nextZoom = normalizeZoom(viewportRequest.zoom ?? DEFAULT_ZOOM)
+            nextZoom = normalizeZoom(viewportRequest.zoom ?? DEFAULT_ZOOM, minimumZoom)
             contentX = viewportRequest.point.x
             contentY = viewportRequest.point.y
         }
 
-        const normalizedNextZoom = normalizeZoom(nextZoom)
+        const normalizedNextZoom = normalizeZoom(nextZoom, minimumZoom)
         const rawPan = getPanForCanvasPoint({
             contentX,
             contentY,
@@ -727,12 +763,74 @@ function SpreadCanvasComponent(
 
         scheduleViewportCommit(normalizedNextZoom, nextPan, false, viewportRequest.key)
     }, [
+        getMinimumZoom,
         scheduleViewportCommit,
         svgHeight,
         svgWidth,
         viewportRequest,
         containerSize.width,
         containerSize.height,
+    ])
+
+    useEffect(() => {
+        const { width, height } = containerSizeRef.current
+        if (width <= 0 || height <= 0) return
+
+        const currentViewport = getViewportSnapshot()
+        const minimumZoom = getMinimumZoom(width, height)
+        const nextZoom = normalizeZoom(currentViewport.zoom, minimumZoom)
+        let nextPan = clampPan({
+            panX: currentViewport.panX,
+            panY: currentViewport.panY,
+            canvasWidth: svgWidth,
+            canvasHeight: svgHeight,
+            viewportWidth: width / nextZoom,
+            viewportHeight: height / nextZoom,
+        })
+
+        if (nextZoom !== currentViewport.zoom) {
+            const viewportRect = getCanvasViewportRect({
+                panX: currentViewport.panX,
+                panY: currentViewport.panY,
+                clientWidth: width,
+                clientHeight: height,
+                zoom: currentViewport.zoom,
+            })
+            const centeredPan = getPanForCanvasPoint({
+                contentX: viewportRect.centerX,
+                contentY: viewportRect.centerY,
+                viewportX: width / 2,
+                viewportY: height / 2,
+                zoom: nextZoom,
+            })
+
+            nextPan = clampPan({
+                panX: centeredPan.x,
+                panY: centeredPan.y,
+                canvasWidth: svgWidth,
+                canvasHeight: svgHeight,
+                viewportWidth: width / nextZoom,
+                viewportHeight: height / nextZoom,
+            })
+        }
+
+        if (
+            nextZoom === currentViewport.zoom &&
+            nextPan.x === currentViewport.panX &&
+            nextPan.y === currentViewport.panY
+        ) {
+            return
+        }
+
+        scheduleViewportCommit(nextZoom, nextPan, false)
+    }, [
+        containerSize.width,
+        containerSize.height,
+        getMinimumZoom,
+        getViewportSnapshot,
+        scheduleViewportCommit,
+        svgHeight,
+        svgWidth,
     ])
 
     const schedulePanUpdate = useCallback(
@@ -751,7 +849,10 @@ function SpreadCanvasComponent(
     const getClampedPan = useCallback(
         (rawX: number, rawY: number) => {
             const size = containerSizeRef.current
-            const currentZoom = targetZoomRef.current
+            const currentZoom = Math.max(
+                targetZoomRef.current,
+                getMinimumZoom(size.width, size.height)
+            )
             return clampPan({
                 panX: rawX,
                 panY: rawY,
@@ -761,7 +862,7 @@ function SpreadCanvasComponent(
                 viewportHeight: size.height / currentZoom,
             })
         },
-        [svgWidth, svgHeight]
+        [getMinimumZoom, svgWidth, svgHeight]
     )
 
     useEffect(() => {
@@ -1013,7 +1114,11 @@ function SpreadCanvasComponent(
             zoomIn: () => {
                 const size = containerSizeRef.current
                 setZoomAroundViewportPoint({
-                    nextZoom: getSteppedZoom(targetZoomRef.current, 'in'),
+                    nextZoom: getSteppedZoom(
+                        targetZoomRef.current,
+                        'in',
+                        getMinimumZoom(size.width, size.height)
+                    ),
                     anchorViewportX: size.width / 2,
                     anchorViewportY: size.height / 2,
                     shouldFlagInteraction: true,
@@ -1022,14 +1127,18 @@ function SpreadCanvasComponent(
             zoomOut: () => {
                 const size = containerSizeRef.current
                 setZoomAroundViewportPoint({
-                    nextZoom: getSteppedZoom(targetZoomRef.current, 'out'),
+                    nextZoom: getSteppedZoom(
+                        targetZoomRef.current,
+                        'out',
+                        getMinimumZoom(size.width, size.height)
+                    ),
                     anchorViewportX: size.width / 2,
                     anchorViewportY: size.height / 2,
                     shouldFlagInteraction: true,
                 })
             },
         }),
-        [setZoomAroundViewportPoint]
+        [getMinimumZoom, setZoomAroundViewportPoint]
     )
 
     useEffect(() => {

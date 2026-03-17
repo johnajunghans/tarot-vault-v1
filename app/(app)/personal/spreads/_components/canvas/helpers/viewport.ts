@@ -1,6 +1,6 @@
 'use client'
 
-import { DEFAULT_ZOOM, normalizeZoom } from './zoom'
+import { DEFAULT_ZOOM, ZOOM_MAX, ZOOM_MIN, normalizeZoom } from './zoom'
 
 interface CanvasViewportInput {
     panX: number
@@ -94,6 +94,23 @@ function clampPan({
     }
 }
 
+function getMinZoomForViewport({
+    canvasWidth,
+    canvasHeight,
+    clientWidth,
+    clientHeight,
+}: {
+    canvasWidth: number
+    canvasHeight: number
+    clientWidth: number
+    clientHeight: number
+}) {
+    const widthZoom = canvasWidth > 0 ? clientWidth / canvasWidth : 0
+    const heightZoom = canvasHeight > 0 ? clientHeight / canvasHeight : 0
+
+    return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, widthZoom, heightZoom))
+}
+
 function getClampedPanForZoomAnchor({
     panX,
     panY,
@@ -176,6 +193,7 @@ export {
     clampPan,
     getClampedPanForZoomAnchor,
     getCanvasPointAtViewportPoint,
+    getMinZoomForViewport,
     getPanForCanvasPoint,
     getCanvasViewportRect,
 }

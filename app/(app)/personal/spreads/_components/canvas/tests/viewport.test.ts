@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getCanvasPointAtViewportPoint,
   getClampedPanForZoomAnchor,
+  getMinZoomForViewport,
 } from "../helpers/viewport";
 
 describe("getClampedPanForZoomAnchor", () => {
@@ -87,5 +88,29 @@ describe("getClampedPanForZoomAnchor", () => {
       x: 0,
       y: 0,
     });
+  });
+});
+
+describe("getMinZoomForViewport", () => {
+  it("raises the minimum zoom when the container would otherwise exceed the canvas", () => {
+    expect(
+      getMinZoomForViewport({
+        canvasWidth: 2400,
+        canvasHeight: 1800,
+        clientWidth: 1440,
+        clientHeight: 900,
+      })
+    ).toBeCloseTo(0.6, 5);
+  });
+
+  it("preserves the configured floor when the viewport already fits within the canvas", () => {
+    expect(
+      getMinZoomForViewport({
+        canvasWidth: 2400,
+        canvasHeight: 1800,
+        clientWidth: 900,
+        clientHeight: 700,
+      })
+    ).toBe(0.5);
   });
 });

@@ -8,6 +8,7 @@ import type {
     SpreadCanvasHandle,
     SpreadCanvasPositionUpdate,
 } from '..'
+import { ZOOM_MIN } from '../helpers/zoom'
 import {
     normalizeRotationForStorage,
     reconcileContinuousRotations,
@@ -30,6 +31,7 @@ export function useSpreadCanvasModel({
     const canvasRef = useRef<SpreadCanvasHandle>(null)
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
     const [zoomDisplay, setZoomDisplay] = useState(1)
+    const [minZoomDisplay, setMinZoomDisplay] = useState(ZOOM_MIN)
     const [cardRotations, setCardRotations] = useState<Record<string, number>>({})
     const cardRotationsRef = useRef<Record<string, number>>({})
 
@@ -139,6 +141,8 @@ export function useSpreadCanvasModel({
         setSelectedCardIndex,
         zoomDisplay,
         setZoomDisplay,
+        minZoomDisplay,
+        setMinZoomDisplay,
         handleCardRotationChange,
         handleCanvasPositionsCommit,
     }

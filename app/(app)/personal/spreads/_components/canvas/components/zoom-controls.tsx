@@ -19,6 +19,7 @@ const TOOLTIP_DELAY = 500
 
 interface ZoomControlsProps {
     zoom: number
+    minZoom?: number
     onZoomIn: () => void
     onZoomOut: () => void
     onResetZoom: () => void
@@ -27,13 +28,15 @@ interface ZoomControlsProps {
 
 export default function ZoomControls({
     zoom,
+    minZoom = ZOOM_MIN,
     onZoomIn,
     onZoomOut,
     onResetZoom,
     className,
 }: ZoomControlsProps) {
-    const normalizedZoom = normalizeZoom(zoom)
-    const isDefaultZoom = normalizedZoom === DEFAULT_ZOOM
+    const normalizedZoom = normalizeZoom(zoom, minZoom)
+    const defaultZoom = Math.max(DEFAULT_ZOOM, minZoom)
+    const isDefaultZoom = normalizedZoom === defaultZoom
 
     return (
         <div
@@ -65,7 +68,7 @@ export default function ZoomControls({
                             variant="ghost"
                             size="icon-sm"
                             onClick={onZoomOut}
-                            disabled={normalizedZoom <= ZOOM_MIN}
+                            disabled={normalizedZoom <= minZoom}
                         >
                             <MinusSignIcon />
                         </Button>
