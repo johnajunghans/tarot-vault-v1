@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import ConfirmDialog from "../../../../_components/confirm-dialog";
 import {
   FieldGroup,
   FieldSeparator,
@@ -11,8 +10,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { normalizeRotationForStorage } from "../_helpers/rotation";
-import { snapToGrid } from "../_helpers/layout";
+import { normalizeRotationForStorage } from "../../_lib/rotation";
+import { snapToGrid } from "../../_lib/layout";
 import {
   Cancel01Icon,
   Delete02Icon,
@@ -28,6 +27,7 @@ import TextareaField from "@/components/form/textarea-field";
 import SwitchField from "@/components/form/switch-field";
 import NumberField from "@/components/form/number-field";
 import { ResponsivePanel } from "@/app/(app)/_components/responsive-panel";
+import ConfirmDialog from "@/app/_components/confirm-dialog";
 
 const TOOLTIP_DELAY = 500;
 

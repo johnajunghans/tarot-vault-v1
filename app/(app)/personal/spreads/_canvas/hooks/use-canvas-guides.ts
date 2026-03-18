@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { getRect } from '../helpers/geometry'
 import type { CanvasCard, CanvasGuide } from '../types'
-import { CARD_HEIGHT, CARD_WIDTH } from '../../../_helpers/layout'
+import { CARD_HEIGHT, CARD_WIDTH } from '../../_lib/layout'
 
 interface CanvasDragState {
     index: number

@@ -9,7 +9,7 @@ import {
     projectVectorToEdge,
 } from '../helpers/geometry'
 import { getCanvasViewportRect } from '../helpers/viewport'
-import { CARD_HEIGHT, CARD_WIDTH } from '../../../_helpers/layout'
+import { CARD_HEIGHT, CARD_WIDTH } from '../../_lib/layout'
 
 const POINTER_EDGE_PADDING = 18
 

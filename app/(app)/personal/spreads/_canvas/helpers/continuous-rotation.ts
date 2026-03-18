@@ -1,4 +1,4 @@
-import { normalizeRotationForStorage } from '../../../_helpers/rotation'
+import { normalizeRotationForStorage } from '../../_lib/rotation'
 
 // ------------ CONTINUOUS ROTATION HELPERS ------------ //
 

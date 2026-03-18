@@ -1,6 +1,6 @@
 'use client'
 
-import { CARD_WIDTH, CARD_HEIGHT } from '../../../_helpers/layout'
+import { CARD_WIDTH, CARD_HEIGHT } from '../../_lib/layout'
 
 const CORNER_R = 8
 

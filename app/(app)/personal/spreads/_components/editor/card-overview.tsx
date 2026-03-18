@@ -16,9 +16,9 @@ import { UseFieldArrayMove, UseFieldArrayRemove } from "react-hook-form";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { Button } from "@/components/ui/button";
-import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { Delete02Icon, DragDropVerticalIcon, PlusSignIcon } from "hugeicons-react";
 import { CardForm } from "@/types/spreads";
+import ConfirmDialog from "@/app/_components/confirm-dialog";
 
 gsap.registerPlugin(Draggable);
 

@@ -12,10 +12,10 @@ import { ZOOM_MIN } from '../helpers/zoom'
 import {
     reconcileContinuousRotations,
     resolveContinuousRotation,
-} from '../helpers/rotation'
+} from '../helpers/continuous-rotation'
 import {
     normalizeRotationForStorage,
-} from '../../../_helpers/rotation'
+} from '../../_lib/rotation'
 
 interface UseSpreadCanvasModelArgs {
     cards: ReadonlyArray<{ id: string }>

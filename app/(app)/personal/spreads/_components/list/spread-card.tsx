@@ -8,7 +8,6 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import ConfirmDialog from "../../../../_components/confirm-dialog"
 import SpreadThumbnail from "./spread-thumbnail"
 import { CardDB, SpreadDraft } from "@/types/spreads"
 import { Button } from "@/components/ui/button"
@@ -20,6 +19,7 @@ import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import { routes } from "@/lib/routes"
 import Link from "next/link"
+import ConfirmDialog from "@/app/_components/confirm-dialog"
 
 interface SpreadCardProps {
     name: string

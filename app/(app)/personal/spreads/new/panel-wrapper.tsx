@@ -7,12 +7,12 @@ import { api } from "@/convex/_generated/api";
 import { routes } from "@/lib/routes";
 import { toast } from "sonner";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import SpreadSettingsPanel from "../_components/spread-settings-panel";
+import SpreadSettingsPanel from "../_components/editor/spread-settings-panel";
 import SpreadCanvas, {
     type SpreadCanvasViewportRequest,
-} from "../_components/canvas";
-import CardSettingsPanel from "../_components/card-settings-panel";
-import ZoomControls from "../_components/canvas/components/zoom-controls";
+} from "../_canvas";
+import CardSettingsPanel from "../_components/editor/card-settings-panel";
+import ZoomControls from "../_canvas/components/zoom-controls";
 import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
@@ -27,10 +27,10 @@ import {
     CANVAS_CENTER,
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
-} from "../_helpers/layout";
+} from "../_lib/layout";
 import { useSpreadForm } from "../_hooks/use-spread-form";
 import { useValidationErrorHandler } from "../_hooks/use-validation-error-handler";
-import { mapPositionsForApi } from "../_helpers/map-positions-for-api";
+import { mapPositionsForApi } from "../_lib/map-positions-for-api";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined

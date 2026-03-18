@@ -11,8 +11,8 @@ import {
     CARD_SPACING_X,
     CARD_WIDTH,
     generateCardAt,
-} from "../_helpers/layout"
-import { useSpreadCanvasModel } from "../_components/canvas/hooks/use-canvas-model"
+} from "../_lib/layout"
+import { useSpreadCanvasModel } from "../_canvas/hooks/use-canvas-model"
 
 interface UseSpreadFormOptions {
     defaultValues?: SpreadForm
