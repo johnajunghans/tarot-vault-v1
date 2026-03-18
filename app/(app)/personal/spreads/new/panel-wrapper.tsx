@@ -1,36 +1,24 @@
 "use client"
 
-import { FormProvider } from "react-hook-form";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { routes } from "@/lib/routes";
 import { toast } from "sonner";
-import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import SpreadSettingsPanel from "../_components/editor/spread-settings-panel";
-import SpreadCanvas, {
-    type SpreadCanvasViewportRequest,
-} from "../_canvas";
-import CardSettingsPanel from "../_components/editor/card-settings-panel";
-import ZoomControls from "../_canvas/components/zoom-controls";
-import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
-import { Button } from "@/components/ui/button";
+import { Layout } from "react-resizable-panels";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { PlusSignIcon, Settings02Icon } from "hugeicons-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { SpreadForm } from "@/types/spreads";
 import { useRouter } from "next/navigation";
 import { useLayoutDispatch } from "@/components/providers/layout-provider";
 import type { ActionDescriptor } from "@/types/layout";
 import {
-    CANVAS_CENTER,
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
 } from "../_lib/layout";
 import { useSpreadForm } from "../_hooks/use-spread-form";
-import { useValidationErrorHandler } from "../_hooks/use-validation-error-handler";
+import { useSpreadEditor } from "../_hooks/use-spread-editor";
 import { mapPositionsForApi } from "../_lib/map-positions-for-api";
+import SpreadEditorLayout from "../_components/editor/spread-editor-layout";
 
 interface PanelWrapperProps {
     defaultLayout: Layout | undefined
@@ -55,22 +43,11 @@ export default function PanelWrapper({
     groupId,
     loadedDraftDate,
 }: PanelWrapperProps) {
-    const emptyCanvasViewportRequest = useMemo<SpreadCanvasViewportRequest>(
-        () => ({
-            key: "new-spread-empty",
-            type: "center-canvas-point",
-            point: CANVAS_CENTER,
-            zoom: 1,
-        }),
-        []
-    );
     const router = useRouter();
-    const [viewportRequest, setViewportRequest] =
-        useState<SpreadCanvasViewportRequest | null>(null);
-    const isMobile = useIsMobile()
 
     // ------------ SPREAD FORM ------------ //
 
+    const spreadForm = useSpreadForm();
     const {
         form,
         cards,
@@ -87,13 +64,37 @@ export default function PanelWrapper({
         canvasRotationAngles,
         selectedCardIndex,
         setSelectedCardIndex,
+        handleCardRotationChange,
+        handleCanvasPositionsCommit,
         zoomDisplay,
         setZoomDisplay,
         minZoomDisplay,
         setMinZoomDisplay,
-        handleCardRotationChange,
-        handleCanvasPositionsCommit,
-    } = useSpreadForm();
+    } = spreadForm;
+
+    // ------------ EDITOR PLUMBING ------------ //
+
+    const editor = useSpreadEditor({
+        requestKey: "new-spread-empty",
+        spreadForm,
+    });
+    const {
+        isMobile,
+        emptyCanvasViewportRequest,
+        viewportRequest,
+        setViewportRequest,
+        spreadSheetOpen,
+        setSpreadSheetOpen,
+        isSaving,
+        setIsSaving,
+        spreadSettingsPanelRef,
+        onInvalid,
+        showDiscardDialog,
+        setShowDiscardDialog,
+        zoomIn,
+        zoomOut,
+        resetZoom,
+    } = editor;
 
     // ------------ SPREAD DRAFT LOGIC ------------ //
 
@@ -102,8 +103,7 @@ export default function PanelWrapper({
     const isDiscardingRef = useRef(false);
 
     useLayoutEffect(() => {
-        let nextViewportRequest: SpreadCanvasViewportRequest =
-            emptyCanvasViewportRequest;
+        let nextViewportRequest = emptyCanvasViewportRequest;
 
         if (!loadedDraftDate) {
             const frame = window.requestAnimationFrame(() => {
@@ -127,13 +127,7 @@ export default function PanelWrapper({
             const normalizedPositions = normalizeCardsToCanvasCenter(
                 (draft.positions ?? []).map(
                     ({ name, description, allowReverse, x, y, r, z }) => ({
-                        name,
-                        description,
-                        allowReverse,
-                        x,
-                        y,
-                        r,
-                        z,
+                        name, description, allowReverse, x, y, r, z,
                     })
                 )
             );
@@ -159,7 +153,7 @@ export default function PanelWrapper({
         });
 
         return () => window.cancelAnimationFrame(frame);
-    }, [emptyCanvasViewportRequest, form, loadedDraftDate]);
+    }, [emptyCanvasViewportRequest, form, loadedDraftDate, setViewportRequest]);
 
     useEffect(() => {
         if (isDiscardingRef.current) return;
@@ -174,21 +168,9 @@ export default function PanelWrapper({
         }
     }, [watchedValues, form.formState.isDirty, draftDate, draftKey]);
 
-    // ------------ MOBILE SHEET STATE ------------ //
-
-    const [spreadSheetOpen, setSpreadSheetOpen] = useState(false);
-
     // ------------ SAVE SPREAD LOGIC ------------ //
 
     const createSpread = useMutation(api.spreads.create);
-    const [isSaving, setIsSaving] = useState(false);
-    const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
-
-    const onInvalid = useValidationErrorHandler(
-        isMobile,
-        setSpreadSheetOpen,
-        spreadSettingsPanelRef,
-    );
 
     const handleSave = useCallback(() => {
         form.handleSubmit(async (data) => {
@@ -214,11 +196,9 @@ export default function PanelWrapper({
                 setIsSaving(false);
             }
         }, onInvalid)();
-    }, [form, createSpread, router, draftKey, onInvalid]);
+    }, [form, createSpread, router, draftKey, onInvalid, setIsSaving]);
 
     // ------------ DISCARD LOGIC ------------ //
-
-    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
     const handleDiscard = useCallback(() => {
         if (!form.formState.isDirty && !loadedDraftDate) {
@@ -227,7 +207,7 @@ export default function PanelWrapper({
             return;
         }
         setShowDiscardDialog(true);
-    }, [form.formState.isDirty, router, loadedDraftDate, draftKey]);
+    }, [form.formState.isDirty, router, loadedDraftDate, draftKey, setShowDiscardDialog]);
 
     const handleConfirmDiscard = useCallback(() => {
         const key = draftKey;
@@ -236,7 +216,7 @@ export default function PanelWrapper({
         form.reset();
         setShowDiscardDialog(false);
         router.push(routes.personal.spreads.root);
-    }, [form, router, draftKey]);
+    }, [form, router, draftKey, setShowDiscardDialog]);
 
     // ------------ LAYOUT DISPATCH ------------ //
 
@@ -284,141 +264,36 @@ export default function PanelWrapper({
 
     return (
         <>
-        {/* Main Content */}
-        <div className="relative h-full min-h-0 overflow-hidden">
-            <FormProvider {...form}>
-                <SpreadCanvas
-                    ref={canvasRef}
-                    cards={canvasCards}
-                    cardKeys={cardKeys}
-                    rotationAngles={canvasRotationAngles}
-                    selectedCardIndex={selectedCardIndex}
-                    onCardSelect={setSelectedCardIndex}
-                    onCanvasDoubleClick={addCardAt}
-                    onPositionsCommit={handleCanvasPositionsCommit}
-                    onZoomDisplayChange={setZoomDisplay}
-                    onZoomBoundsChange={setMinZoomDisplay}
-                    viewportRequest={viewportRequest}
-                />
-
-                {isMobile ? (
-                    <>
-                        {/* Floating Toolbar */}
-                        <Card className="absolute top-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50">
-                            <CardContent>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={() => setSpreadSheetOpen(true)}
-                                    >
-                                        <Settings02Icon />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={addCard}
-                                        disabled={cards.length >= 78}
-                                    >
-                                        <PlusSignIcon />
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Zoom Controls */}
-                        <ZoomControls
-                            zoom={zoomDisplay}
-                            minZoom={minZoomDisplay}
-                            onZoomIn={() => canvasRef.current?.zoomIn()}
-                            onZoomOut={() => canvasRef.current?.zoomOut()}
-                            onResetZoom={() => canvasRef.current?.resetZoom()}
-                        />
-
-                        {/* Spread Settings (Sheet on mobile via ResponsivePanel) */}
-                        <SpreadSettingsPanel
-                            isMobile={isMobile}
-                            open={spreadSheetOpen}
-                            onOpenChange={setSpreadSheetOpen}
-                            cards={cards}
-                            addCard={addCard}
-                            remove={remove}
-                            move={move}
-                            selectedCardIndex={selectedCardIndex}
-                            setSelectedCardIndex={setSelectedCardIndex}
-                            panelRef={spreadSettingsPanelRef}
-                        />
-
-                        {/* Card Settings (Sheet on mobile via ResponsivePanel) */}
-                        <CardSettingsPanel
-                            isMobile={isMobile}
-                            open={selectedCardIndex !== null}
-                            onOpenChange={(open) => {
-                                if (!open) setSelectedCardIndex(null);
-                            }}
-                            cards={cards}
-                            selectedCardIndex={selectedCardIndex}
-                            setSelectedCardIndex={setSelectedCardIndex}
-                            onRotationChange={handleCardRotationChange}
-                            remove={remove}
-                        />
-                    </>
-                ) : (
-                    <>
-                    {/* Layer 2: Panel group overlaid on canvas */}
-                    <ResizablePanelGroup
-                        id={groupId}
-                        orientation="horizontal"
-                        defaultLayout={defaultLayout}
-                        onLayoutChanged={(layout) => {
-                            document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
-                        }}
-                        className="absolute inset-0 pointer-events-none"
-                    >
-                    {/* Left Panel — Settings */}
-                    <SpreadSettingsPanel
-                        isMobile={isMobile}
-                        addCard={addCard}
-                        remove={remove}
-                        move={move}
-                        cards={cards}
-                        selectedCardIndex={selectedCardIndex}
-                        setSelectedCardIndex={setSelectedCardIndex}
-                        panelRef={spreadSettingsPanelRef}
-                    />
-
-                    {/* Center Spacer — transparent, passes events to canvas */}
-                    <ResizablePanel
-                        id="spread-canvas-spacer"
-                        style={{ pointerEvents: "none" }}
-                    >
-                        <div className="relative h-full">
-                            <ZoomControls
-                                zoom={zoomDisplay}
-                                minZoom={minZoomDisplay}
-                                onZoomIn={() => canvasRef.current?.zoomIn()}
-                                onZoomOut={() => canvasRef.current?.zoomOut()}
-                                onResetZoom={() => canvasRef.current?.resetZoom()}
-                                className="pointer-events-auto"
-                            />
-                        </div>
-                    </ResizablePanel>
-
-                    {/* Right Panel — Card Details */}
-                    <CardSettingsPanel
-                        isMobile={isMobile}
-                        cards={cards}
-                        selectedCardIndex={selectedCardIndex}
-                        setSelectedCardIndex={setSelectedCardIndex}
-                        onRotationChange={handleCardRotationChange}
-                        remove={remove}
-                    />
-
-                    </ResizablePanelGroup>
-                    </>
-                )}
-            </FormProvider>
-        </div>
+        <SpreadEditorLayout
+            form={form}
+            canvasRef={canvasRef}
+            canvasCards={canvasCards}
+            cardKeys={cardKeys}
+            canvasRotationAngles={canvasRotationAngles}
+            viewportRequest={viewportRequest}
+            cards={cards}
+            selectedCardIndex={selectedCardIndex}
+            setSelectedCardIndex={setSelectedCardIndex}
+            addCard={addCard}
+            addCardAt={addCardAt}
+            remove={remove}
+            move={move}
+            handleCardRotationChange={handleCardRotationChange}
+            handleCanvasPositionsCommit={handleCanvasPositionsCommit}
+            zoomDisplay={zoomDisplay}
+            minZoomDisplay={minZoomDisplay}
+            setZoomDisplay={setZoomDisplay}
+            setMinZoomDisplay={setMinZoomDisplay}
+            zoomIn={zoomIn}
+            zoomOut={zoomOut}
+            resetZoom={resetZoom}
+            groupId={groupId}
+            defaultLayout={defaultLayout}
+            spreadSettingsPanelRef={spreadSettingsPanelRef}
+            isMobile={isMobile}
+            spreadSheetOpen={spreadSheetOpen}
+            setSpreadSheetOpen={setSpreadSheetOpen}
+        />
 
         {/* Discard Spread Dialog */}
         <ConfirmDialog

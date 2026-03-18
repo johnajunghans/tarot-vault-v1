@@ -5,3 +5,4 @@ export {
     SpreadDetailsContent,
     SpreadSettingsContent,
 } from './spread-settings-panel'
+export { default as SpreadEditorLayout } from './spread-editor-layout'

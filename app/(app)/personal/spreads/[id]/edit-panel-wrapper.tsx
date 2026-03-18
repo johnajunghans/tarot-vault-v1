@@ -1,39 +1,28 @@
 "use client"
 
-import { FormProvider } from "react-hook-form";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { routes } from "@/lib/routes";
 import { toast } from "sonner";
-import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import SpreadSettingsPanel from "../_components/editor/spread-settings-panel";
-import SpreadCanvas, {
-    type SpreadCanvasViewportRequest,
-} from "../_canvas";
-import CardSettingsPanel from "../_components/editor/card-settings-panel";
-import ZoomControls from "../_canvas/components/zoom-controls";
-import { type PanelImperativeHandle, Layout } from "react-resizable-panels";
+import { Layout } from "react-resizable-panels";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { PlusSignIcon, Settings02Icon } from "hugeicons-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { SpreadDB, SpreadForm } from "@/types/spreads";
 import { useRouter } from "next/navigation";
 import { useLayoutDispatch } from "@/components/providers/layout-provider";
 import type { ActionDescriptor, BreadcrumbDescriptor } from "@/types/layout";
 import Link from "next/link";
 import {
-    CANVAS_CENTER,
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
 } from "../_lib/layout";
 import { useSpreadForm } from "../_hooks/use-spread-form";
-import { useValidationErrorHandler } from "../_hooks/use-validation-error-handler";
+import { useSpreadEditor } from "../_hooks/use-spread-editor";
 import { mapPositionsForApi } from "../_lib/map-positions-for-api";
+import SpreadEditorLayout from "../_components/editor/spread-editor-layout";
 
 interface EditPanelWrapperProps {
     spreadId: Id<"spreads">
@@ -70,20 +59,8 @@ export default function EditPanelWrapper({
     groupId,
     mode,
 }: EditPanelWrapperProps) {
-    const emptyCanvasViewportRequest = useMemo<SpreadCanvasViewportRequest>(
-        () => ({
-            key: `spread-${spreadId}-empty`,
-            type: "center-canvas-point",
-            point: CANVAS_CENTER,
-            zoom: 1,
-        }),
-        [spreadId]
-    );
     const isViewMode = mode === "view";
     const router = useRouter();
-    const [viewportRequest, setViewportRequest] =
-        useState<SpreadCanvasViewportRequest | null>(null);
-    const isMobile = useIsMobile()
 
     // ------------ FETCH SPREAD DATA ------------ //
 
@@ -91,6 +68,7 @@ export default function EditPanelWrapper({
 
     // ------------ SPREAD FORM ------------ //
 
+    const spreadForm = useSpreadForm();
     const {
         form,
         cards,
@@ -106,13 +84,37 @@ export default function EditPanelWrapper({
         canvasRotationAngles,
         selectedCardIndex,
         setSelectedCardIndex,
+        handleCardRotationChange,
+        handleCanvasPositionsCommit,
         zoomDisplay,
         setZoomDisplay,
         minZoomDisplay,
         setMinZoomDisplay,
-        handleCardRotationChange,
-        handleCanvasPositionsCommit,
-    } = useSpreadForm();
+    } = spreadForm;
+
+    // ------------ EDITOR PLUMBING ------------ //
+
+    const editor = useSpreadEditor({
+        requestKey: `spread-${spreadId}-empty`,
+        spreadForm,
+    });
+    const {
+        isMobile,
+        emptyCanvasViewportRequest,
+        viewportRequest,
+        setViewportRequest,
+        spreadSheetOpen,
+        setSpreadSheetOpen,
+        isSaving,
+        setIsSaving,
+        spreadSettingsPanelRef,
+        onInvalid,
+        showDiscardDialog,
+        setShowDiscardDialog,
+        zoomIn,
+        zoomOut,
+        resetZoom,
+    } = editor;
 
     // ------------ POPULATE FORM FROM DB ------------ //
 
@@ -143,23 +145,11 @@ export default function EditPanelWrapper({
                   }
                 : emptyCanvasViewportRequest
         );
-    }, [emptyCanvasViewportRequest, form, mode, spread, spreadId]);
-
-    // ------------ MOBILE SHEET STATE ------------ //
-
-    const [spreadSheetOpen, setSpreadSheetOpen] = useState(false);
+    }, [emptyCanvasViewportRequest, form, mode, spread, spreadId, setViewportRequest]);
 
     // ------------ SAVE SPREAD LOGIC ------------ //
 
     const updateSpread = useMutation(api.spreads.update);
-    const [isSaving, setIsSaving] = useState(false);
-    const spreadSettingsPanelRef = useRef<PanelImperativeHandle | null>(null);
-
-    const onInvalid = useValidationErrorHandler(
-        isMobile,
-        setSpreadSheetOpen,
-        spreadSettingsPanelRef,
-    );
 
     const handleSave = useCallback(() => {
         form.handleSubmit(async (data) => {
@@ -188,7 +178,7 @@ export default function EditPanelWrapper({
                 setIsSaving(false);
             }
         }, onInvalid)();
-    }, [form, updateSpread, spreadId, router, onInvalid]);
+    }, [form, updateSpread, spreadId, router, onInvalid, setIsSaving]);
 
     // ------------ DELETE SPREAD LOGIC ------------ //
 
@@ -212,8 +202,6 @@ export default function EditPanelWrapper({
 
     // ------------ CANCEL / DISCARD LOGIC ------------ //
 
-    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
-
     const viewUrl = routes.personal.spreads.id(spreadId, "view");
 
     const handleCancel = useCallback(() => {
@@ -222,7 +210,7 @@ export default function EditPanelWrapper({
             return;
         }
         setShowDiscardDialog(true);
-    }, [form.formState.isDirty, router, viewUrl]);
+    }, [form.formState.isDirty, router, viewUrl, setShowDiscardDialog]);
 
     const handleConfirmDiscard = useCallback(() => {
         form.reset(initialValuesRef.current ?? undefined);
@@ -230,7 +218,7 @@ export default function EditPanelWrapper({
         setSpreadSheetOpen(false);
         setShowDiscardDialog(false);
         router.push(viewUrl);
-    }, [form, router, setSelectedCardIndex, viewUrl]);
+    }, [form, router, setSelectedCardIndex, setSpreadSheetOpen, setShowDiscardDialog, viewUrl]);
 
     // ------------ LAYOUT DISPATCH ------------ //
 
@@ -321,141 +309,39 @@ export default function EditPanelWrapper({
         );
     }
 
-    // ------------ SHARED PANEL PROPS ------------ //
-
-    const spreadPanelProps = {
-        isMobile,
-        isViewMode,
-        cards,
-        selectedCardIndex,
-        setSelectedCardIndex,
-        panelRef: spreadSettingsPanelRef,
-        ...(isViewMode ? {} : { addCard, remove, move }),
-    };
-
-    const cardPanelProps = {
-        isMobile,
-        isViewMode,
-        cards,
-        selectedCardIndex,
-        setSelectedCardIndex,
-        ...(isViewMode ? {} : { remove, cardCount: cards.length }),
-    };
-
     return (
         <>
-        {/* Main Content */}
-        <div className="relative h-full min-h-0 overflow-hidden">
-            <FormProvider {...form}>
-                <SpreadCanvas
-                    ref={canvasRef}
-                    cards={canvasCards}
-                    cardKeys={cardKeys}
-                    rotationAngles={canvasRotationAngles}
-                    selectedCardIndex={selectedCardIndex}
-                    onCardSelect={setSelectedCardIndex}
-                    onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
-                    isViewMode={isViewMode}
-                    onPositionsCommit={handleCanvasPositionsCommit}
-                    onZoomDisplayChange={setZoomDisplay}
-                    onZoomBoundsChange={setMinZoomDisplay}
-                    viewportRequest={viewportRequest}
-                />
-
-                {isMobile ? (
-                    <>
-                        {/* Floating Toolbar */}
-                        <Card className="absolute top-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50 pointer-events-auto">
-                            <CardContent>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={() => setSpreadSheetOpen(true)}
-                                    >
-                                        <Settings02Icon />
-                                    </Button>
-                                    {!isViewMode && (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            onClick={addCard}
-                                            disabled={cards.length >= 78}
-                                        >
-                                            <PlusSignIcon />
-                                        </Button>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Zoom Controls */}
-                        <ZoomControls
-                            zoom={zoomDisplay}
-                            minZoom={minZoomDisplay}
-                            onZoomIn={() => canvasRef.current?.zoomIn()}
-                            onZoomOut={() => canvasRef.current?.zoomOut()}
-                            onResetZoom={() => canvasRef.current?.resetZoom()}
-                        />
-
-                        {/* Spread Settings */}
-                        <SpreadSettingsPanel
-                            {...spreadPanelProps}
-                            open={spreadSheetOpen}
-                            onOpenChange={setSpreadSheetOpen}
-                        />
-
-                        {/* Card Settings */}
-                        <CardSettingsPanel
-                            {...cardPanelProps}
-                            onRotationChange={handleCardRotationChange}
-                            open={selectedCardIndex !== null}
-                            onOpenChange={(open) => {
-                                if (!open) setSelectedCardIndex(null);
-                            }}
-                        />
-                    </>
-                ) : (
-                    <>
-                    {/* Layer 2: Panel group overlaid on canvas */}
-                    <ResizablePanelGroup
-                        id={groupId}
-                        orientation="horizontal"
-                        defaultLayout={defaultLayout}
-                        onLayoutChanged={(layout) => {
-                            document.cookie = `${groupId}=${JSON.stringify(layout)}; path=/;`
-                        }}
-                        className="absolute inset-0 pointer-events-none"
-                    >
-                    <SpreadSettingsPanel {...spreadPanelProps} />
-
-                    {/* Center Spacer — transparent, passes events to canvas */}
-                    <ResizablePanel
-                        id="spread-canvas-spacer"
-                        style={{ pointerEvents: "none" }}
-                    >
-                        <div className="relative h-full">
-                            <ZoomControls
-                                zoom={zoomDisplay}
-                                minZoom={minZoomDisplay}
-                                onZoomIn={() => canvasRef.current?.zoomIn()}
-                                onZoomOut={() => canvasRef.current?.zoomOut()}
-                                onResetZoom={() => canvasRef.current?.resetZoom()}
-                                className="pointer-events-auto"
-                            />
-                        </div>
-                    </ResizablePanel>
-
-                    <CardSettingsPanel
-                        {...cardPanelProps}
-                        onRotationChange={handleCardRotationChange}
-                    />
-
-                    </ResizablePanelGroup>
-                    </>
-                )}
-            </FormProvider>
-        </div>
+        <SpreadEditorLayout
+            form={form}
+            canvasRef={canvasRef}
+            canvasCards={canvasCards}
+            cardKeys={cardKeys}
+            canvasRotationAngles={canvasRotationAngles}
+            viewportRequest={viewportRequest}
+            cards={cards}
+            selectedCardIndex={selectedCardIndex}
+            setSelectedCardIndex={setSelectedCardIndex}
+            addCard={addCard}
+            addCardAt={isViewMode ? undefined : addCardAt}
+            remove={remove}
+            move={move}
+            handleCardRotationChange={handleCardRotationChange}
+            handleCanvasPositionsCommit={handleCanvasPositionsCommit}
+            zoomDisplay={zoomDisplay}
+            minZoomDisplay={minZoomDisplay}
+            setZoomDisplay={setZoomDisplay}
+            setMinZoomDisplay={setMinZoomDisplay}
+            zoomIn={zoomIn}
+            zoomOut={zoomOut}
+            resetZoom={resetZoom}
+            groupId={groupId}
+            defaultLayout={defaultLayout}
+            spreadSettingsPanelRef={spreadSettingsPanelRef}
+            isMobile={isMobile}
+            spreadSheetOpen={spreadSheetOpen}
+            setSpreadSheetOpen={setSpreadSheetOpen}
+            isViewMode={isViewMode}
+        />
 
         {/* Dialogs (edit mode only) */}
         {!isViewMode && (
