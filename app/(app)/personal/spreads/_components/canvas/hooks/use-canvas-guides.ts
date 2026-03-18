@@ -18,6 +18,9 @@ interface UseCanvasGuidesArgs {
     isViewMode: boolean
 }
 
+// Derive the temporary alignment guides shown while dragging a single card.
+// Guides are only shown in edit mode and are suppressed for multi-card drags
+// because the group movement already communicates the interaction clearly.
 export function useCanvasGuides({
     effectiveCards,
     dragging,
@@ -25,8 +28,10 @@ export function useCanvasGuides({
     isViewMode,
 }: UseCanvasGuidesArgs) {
     return useMemo<CanvasGuide[]>(() => {
+        // No guides while viewing or when nothing is actively being dragged.
         if (isViewMode || !dragging) return []
 
+        // Group drags intentionally skip guides to avoid noisy overlays.
         if (
             groupSelectedIndices.size > 1 &&
             groupSelectedIndices.has(dragging.index)
@@ -34,6 +39,8 @@ export function useCanvasGuides({
             return []
         }
 
+        // Measure the dragged card and compare its outer edges against every
+        // other card to find exact horizontal or vertical alignments.
         const draggedRect = getRect(
             dragging.x,
             dragging.y,
@@ -64,6 +71,8 @@ export function useCanvasGuides({
             }
         })
 
+        // Different cards can yield the same guide, so collapse duplicates
+        // before rendering the overlay.
         const seen = new Set<string>()
 
         return lines.filter((line) => {

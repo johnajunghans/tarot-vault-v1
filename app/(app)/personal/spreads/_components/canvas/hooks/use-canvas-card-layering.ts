@@ -9,6 +9,8 @@ interface UseCardLayeringArgs {
     draggingIndex: number | null
 }
 
+// Build the stable render order from persisted z-index first, then fall back to
+// original array order so ties remain deterministic.
 function getBaseSortedCards(effectiveCards: CanvasCard[]) {
     return effectiveCards
         .map((card, index) => ({ card, index }))
@@ -18,6 +20,8 @@ function getBaseSortedCards(effectiveCards: CanvasCard[]) {
         })
 }
 
+// Promote the selected and actively dragged cards to the top of the visual
+// stack without mutating the underlying card data.
 function getLayeredCardIndices(
     baseSortedCards: Array<{ card: CanvasCard; index: number }>,
     selectedCardIndex: number | null,
@@ -37,14 +41,24 @@ function getLayeredCardIndices(
         })
 }
 
+// Keeps SVG card groups stacked in the right visual order. The base order comes
+// from card z-values, then DOM order is adjusted so selected and dragged cards
+// are visually on top while interacting.
 export function useCardLayering({
     effectiveCards,
     selectedCardIndex,
     draggingIndex,
 }: UseCardLayeringArgs) {
+    // ------------ DOM REFS ------------ //
+
+    // The layer ref points at the shared `<g>` container that owns all cards.
     const cardsLayerRef = useRef<SVGGElement>(null)
+
+    // Each rendered card registers its SVG group here so the hook can reorder
+    // the actual DOM nodes after React renders them.
     const cardGroupRefs = useRef<Map<number, SVGGElement>>(new Map())
 
+    // Register or unregister a rendered card group by its current card index.
     const registerCardRef = useCallback((index: number, el: SVGGElement | null) => {
         if (el) {
             cardGroupRefs.current.set(index, el)
@@ -54,11 +68,15 @@ export function useCardLayering({
         cardGroupRefs.current.delete(index)
     }, [])
 
+    // ------------ DERIVED ORDER ------------ //
+
+    // Start from persisted z-order plus original array position.
     const baseSortedCards = useMemo(
         () => getBaseSortedCards(effectiveCards),
         [effectiveCards]
     )
 
+    // Then compute the temporary interactive stacking order for this frame.
     const layeredCardIndices = useMemo(
         () =>
             getLayeredCardIndices(
@@ -69,6 +87,10 @@ export function useCardLayering({
         [baseSortedCards, draggingIndex, selectedCardIndex]
     )
 
+    // ------------ DOM LAYER SYNC ------------ //
+
+    // Re-append card groups in the desired order so the SVG DOM stacking matches
+    // the current interaction state.
     useLayoutEffect(() => {
         const cardsLayer = cardsLayerRef.current
         if (!cardsLayer) return
@@ -80,6 +102,8 @@ export function useCardLayering({
             }
         }
     }, [layeredCardIndices])
+
+    // ------------ PUBLIC API ------------ //
 
     return {
         cardsLayerRef,

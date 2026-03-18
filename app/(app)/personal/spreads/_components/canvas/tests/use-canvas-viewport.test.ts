@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
-    reconcileViewportBounds,
     resolveViewportRequest,
     shouldApplyViewportRequest,
-} from '../hooks/use-canvas-viewport'
+} from '../helpers/viewport-request'
+import {
+    reconcileViewportBounds,
+} from '../helpers/viewport-state'
 
 describe('useCanvasViewport', () => {
     it('applies a viewport request once for a new request key', () => {

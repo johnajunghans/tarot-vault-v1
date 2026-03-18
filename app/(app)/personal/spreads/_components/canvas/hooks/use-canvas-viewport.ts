@@ -10,37 +10,30 @@ import {
 } from 'react'
 import {
     DEFAULT_ZOOM,
-    clampZoom,
     getSteppedZoom,
     normalizeZoom,
 } from '../helpers/zoom'
 import {
-    getCanvasViewportRect,
     getClampedPanForZoomAnchor,
     getMinZoomForViewport,
-    getPanForCanvasPoint,
     clampPan,
 } from '../helpers/viewport'
+import {
+    resolveViewportRequest,
+    shouldApplyViewportRequest,
+} from '../helpers/viewport-request'
+import { reconcileViewportBounds } from '../helpers/viewport-state'
 import { useLatestRef } from '@/hooks/use-latest-ref'
-import { CANVAS_CENTER } from '../../../_helpers/layout'
+import { useCanvasSpacePan } from './use-canvas-space-pan'
+import { useCanvasViewportGestures } from './use-canvas-viewport-gestures'
 import type {
     SpreadCanvasHandle,
     SpreadCanvasViewportRequest,
 } from '../types'
 
-const WHEEL_DELTA_LINE_PX = 16
-const WHEEL_ZOOM_SENSITIVITY = 0.005
-const VIEWPORT_FIT_PADDING = 48
 const ZOOM_INTERACTION_IDLE_MS = 120
 const CARD_SELECTION_SUPPRESS_MS = 250
 const SCROLLBAR_IDLE_MS = 1500
-const CARD_INTERACTION_SELECTOR = '[data-spread-card-interactive="true"]'
-
-interface WebKitGestureEvent extends Event {
-    scale?: number
-    clientX?: number
-    clientY?: number
-}
 
 interface UseCanvasViewportArgs {
     svgWidth: number
@@ -51,142 +44,9 @@ interface UseCanvasViewportArgs {
     isMarqueeActiveRef: { current: boolean }
 }
 
-function shouldApplyViewportRequest(
-    viewportRequest: SpreadCanvasViewportRequest | null | undefined,
-    appliedViewportRequestKey: string | null,
-    scheduledViewportRequestKey: string | null
-) {
-    if (!viewportRequest) return false
-    if (appliedViewportRequestKey === viewportRequest.key) return false
-    if (scheduledViewportRequestKey === viewportRequest.key) return false
-    return true
-}
-
-function resolveViewportRequest({
-    viewportRequest,
-    clientWidth,
-    clientHeight,
-    svgWidth,
-    svgHeight,
-    minimumZoom,
-}: {
-    viewportRequest: SpreadCanvasViewportRequest
-    clientWidth: number
-    clientHeight: number
-    svgWidth: number
-    svgHeight: number
-    minimumZoom: number
-}) {
-    let nextZoom = DEFAULT_ZOOM
-    let contentX = CANVAS_CENTER.x
-    let contentY = CANVAS_CENTER.y
-
-    if (viewportRequest.type === 'fit-spread') {
-        const padding = viewportRequest.padding ?? VIEWPORT_FIT_PADDING
-        const availableWidth = Math.max(clientWidth - padding * 2, 1)
-        const availableHeight = Math.max(clientHeight - padding * 2, 1)
-        const fitZoom = clampZoom(
-            Math.min(
-                availableWidth / Math.max(viewportRequest.bounds.width, 1),
-                availableHeight / Math.max(viewportRequest.bounds.height, 1)
-            )
-        )
-
-        nextZoom = normalizeZoom(
-            Math.min(viewportRequest.maxZoom ?? DEFAULT_ZOOM, fitZoom),
-            minimumZoom
-        )
-        contentX = viewportRequest.bounds.centerX
-        contentY = viewportRequest.bounds.centerY
-    } else {
-        nextZoom = normalizeZoom(viewportRequest.zoom ?? DEFAULT_ZOOM, minimumZoom)
-        contentX = viewportRequest.point.x
-        contentY = viewportRequest.point.y
-    }
-
-    const normalizedNextZoom = normalizeZoom(nextZoom, minimumZoom)
-    const rawPan = getPanForCanvasPoint({
-        contentX,
-        contentY,
-        viewportX: clientWidth / 2,
-        viewportY: clientHeight / 2,
-        zoom: normalizedNextZoom,
-    })
-
-    return {
-        zoom: normalizedNextZoom,
-        pan: clampPan({
-            panX: rawPan.x,
-            panY: rawPan.y,
-            canvasWidth: svgWidth,
-            canvasHeight: svgHeight,
-            viewportWidth: clientWidth / normalizedNextZoom,
-            viewportHeight: clientHeight / normalizedNextZoom,
-        }),
-    }
-}
-
-function reconcileViewportBounds({
-    panX,
-    panY,
-    zoom,
-    clientWidth,
-    clientHeight,
-    svgWidth,
-    svgHeight,
-    minimumZoom,
-}: {
-    panX: number
-    panY: number
-    zoom: number
-    clientWidth: number
-    clientHeight: number
-    svgWidth: number
-    svgHeight: number
-    minimumZoom: number
-}) {
-    const nextZoom = normalizeZoom(zoom, minimumZoom)
-    let nextPan = clampPan({
-        panX,
-        panY,
-        canvasWidth: svgWidth,
-        canvasHeight: svgHeight,
-        viewportWidth: clientWidth / nextZoom,
-        viewportHeight: clientHeight / nextZoom,
-    })
-
-    if (nextZoom !== zoom) {
-        const viewportRect = getCanvasViewportRect({
-            panX,
-            panY,
-            clientWidth,
-            clientHeight,
-            zoom,
-        })
-        const centeredPan = getPanForCanvasPoint({
-            contentX: viewportRect.centerX,
-            contentY: viewportRect.centerY,
-            viewportX: clientWidth / 2,
-            viewportY: clientHeight / 2,
-            zoom: nextZoom,
-        })
-
-        nextPan = clampPan({
-            panX: centeredPan.x,
-            panY: centeredPan.y,
-            canvasWidth: svgWidth,
-            canvasHeight: svgHeight,
-            viewportWidth: clientWidth / nextZoom,
-            viewportHeight: clientHeight / nextZoom,
-        })
-    }
-
-    return {
-        zoom: nextZoom,
-        pan: nextPan,
-    }
-}
-
+// Owns the canvas viewport state machine: pan/zoom state, container sizing,
+// viewport request application, and the imperative controls used by the canvas
+// toolbar. Lower-level input handling is delegated to focused sub-hooks.
 export function useCanvasViewport({
     svgWidth,
     svgHeight,
@@ -195,14 +55,20 @@ export function useCanvasViewport({
     onZoomBoundsChange,
     isMarqueeActiveRef,
 }: UseCanvasViewportArgs) {
+    // ------------ STATE AND REFS ------------ //
+
+    // The container ref anchors all viewport measurements and raw DOM listeners.
     const containerRef = useRef<HTMLDivElement>(null)
 
+    // React state drives rendering and viewport-adjacent UI.
     const [pan, setPan] = useState({ x: 0, y: 0 })
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
     const [zoom, setZoom] = useState(DEFAULT_ZOOM)
     const [isZoomInteractionActive, setIsZoomInteractionActive] = useState(false)
     const [isScrollbarActive, setIsScrollbarActive] = useState(false)
 
+    // Refs hold the current and target viewport values plus transient gesture
+    // metadata without rerendering on every frame.
     const containerSizeRef = useRef({ width: 0, height: 0 })
     const renderedZoomRef = useRef(DEFAULT_ZOOM)
     const targetZoomRef = useRef(DEFAULT_ZOOM)
@@ -234,16 +100,11 @@ export function useCanvasViewport({
         clientX: number
         clientY: number
     } | null>(null)
-    const isSpaceHeld = useRef(false)
-    const isPanning = useRef(false)
-    const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
 
-    const isCardInteractionTarget = useCallback((target: EventTarget | null) => {
-        return target instanceof Element
-            ? target.closest(CARD_INTERACTION_SELECTOR) !== null
-            : false
-    }, [])
+    // ------------ CONTAINER METRICS ------------ //
 
+    // Read the current container dimensions into both a ref and state so the
+    // viewport engine and render layer can consume them efficiently.
     const syncContainerSize = useCallback(() => {
         const container = containerRef.current
         if (!container) return
@@ -256,6 +117,8 @@ export function useCanvasViewport({
         )
     }, [])
 
+    // Zoom-heavy interactions temporarily disable expensive card effects so the
+    // canvas stays responsive.
     const setZoomInteractionActiveForFrame = useCallback(() => {
         setIsZoomInteractionActive(true)
 
@@ -269,6 +132,7 @@ export function useCanvasViewport({
         }, ZOOM_INTERACTION_IDLE_MS)
     }, [])
 
+    // Scrollbars remain visible briefly after any viewport movement.
     const setScrollbarActiveForFrame = useCallback(() => {
         setIsScrollbarActive(true)
 
@@ -282,11 +146,14 @@ export function useCanvasViewport({
         }, SCROLLBAR_IDLE_MS)
     }, [])
 
+    // Pinch and gesture zooms should suppress click selection briefly so the
+    // end of the gesture is not mistaken for a card click.
     const suppressCardSelection = useCallback(() => {
         suppressCardSelectionUntilRef.current =
             Date.now() + CARD_SELECTION_SUPPRESS_MS
     }, [])
 
+    // Clean up any queued animation frames or timers when the hook unmounts.
     useEffect(() => {
         return () => {
             if (viewportFrameRef.current !== 0) {
@@ -304,6 +171,8 @@ export function useCanvasViewport({
         }
     }, [])
 
+    // Track live container size changes so min zoom, bounds reconciliation, and
+    // viewBox calculations stay correct.
     useEffect(() => {
         const container = containerRef.current
         if (!container) return
@@ -332,6 +201,10 @@ export function useCanvasViewport({
         }
     }, [syncContainerSize])
 
+    // ------------ VIEWPORT CORE ------------ //
+
+    // Read a consistent snapshot of the viewport, preferring queued/target
+    // values when a commit is already in flight.
     const getViewportSnapshot = useCallback(() => {
         const size = containerSizeRef.current
 
@@ -357,6 +230,7 @@ export function useCanvasViewport({
         }
     }, [])
 
+    // The minimum zoom depends on canvas size and the measured container.
     const getMinimumZoom = useCallback(
         (width = containerSizeRef.current.width, height = containerSizeRef.current.height) =>
             getMinZoomForViewport({
@@ -368,6 +242,7 @@ export function useCanvasViewport({
         [svgHeight, svgWidth]
     )
 
+    // Notify the outer UI whenever the effective minimum zoom changes.
     useEffect(() => {
         if (containerSize.width <= 0 || containerSize.height <= 0) return
 
@@ -383,6 +258,7 @@ export function useCanvasViewport({
         onZoomBoundsChangeRef,
     ])
 
+    // Apply the latest queued viewport commit once per animation frame.
     const flushViewportCommit = useCallback(() => {
         viewportFrameRef.current = 0
         const pending = pendingViewportCommitRef.current
@@ -413,6 +289,7 @@ export function useCanvasViewport({
         setZoomInteractionActiveForFrame,
     ])
 
+    // Queue a pan/zoom update into the shared viewport commit pipeline.
     const scheduleViewportCommit = useCallback(
         (
             nextZoom: number,
@@ -443,6 +320,8 @@ export function useCanvasViewport({
         [flushViewportCommit]
     )
 
+    // Zoom around a specific viewport point while keeping that point anchored to
+    // the same canvas content whenever possible.
     const setZoomAroundViewportPoint = useCallback(
         ({
             nextZoom,
@@ -494,11 +373,16 @@ export function useCanvasViewport({
         [getMinimumZoom, getViewportSnapshot, scheduleViewportCommit, svgHeight, svgWidth]
     )
 
+    // Keep the render-time refs synchronized with committed React state.
     useLayoutEffect(() => {
         renderedZoomRef.current = zoom
         panRef.current = pan
     }, [zoom, pan])
 
+    // ------------ EXTERNAL VIEWPORT SYNC ------------ //
+
+    // Apply declarative viewport requests from parent components, such as
+    // fitting a loaded spread or centering the empty canvas.
     useEffect(() => {
         if (!viewportRequest) return
         const { width: clientWidth, height: clientHeight } = containerSizeRef.current
@@ -541,6 +425,8 @@ export function useCanvasViewport({
         viewportRequest,
     ])
 
+    // Reconcile the viewport whenever container geometry changes so pan/zoom
+    // remains valid after resize.
     useEffect(() => {
         const { width, height } = containerSizeRef.current
         if (width <= 0 || height <= 0) return
@@ -581,6 +467,10 @@ export function useCanvasViewport({
         svgWidth,
     ])
 
+    // ------------ PAN HELPERS ------------ //
+
+    // Scrollbar and gesture panning use a lightweight RAF path that only
+    // updates `pan`, not the full viewport commit pipeline.
     const schedulePanUpdate = useCallback(
         (nextPan: { x: number; y: number }) => {
             panRef.current = nextPan
@@ -595,6 +485,8 @@ export function useCanvasViewport({
         [setScrollbarActiveForFrame]
     )
 
+    // Clamp arbitrary pan values against the current container size and minimum
+    // zoom constraints.
     const getClampedPan = useCallback(
         (rawX: number, rawY: number) => {
             const size = containerSizeRef.current
@@ -614,6 +506,7 @@ export function useCanvasViewport({
         [getMinimumZoom, svgHeight, svgWidth]
     )
 
+    // The visible canvas dimensions in canvas-space coordinates.
     const viewportDimensions = useMemo(
         () => ({
             width: containerSize.width > 0 ? containerSize.width / zoom : svgWidth,
@@ -622,6 +515,8 @@ export function useCanvasViewport({
         [containerSize.height, containerSize.width, svgHeight, svgWidth, zoom]
     )
 
+    // Scrollbar drags feed through the same clamped pan update path as other
+    // viewport movement.
     const handleScrollbarPan = useCallback(
         (nextPan: { x: number; y: number }) => {
             const clamped = getClampedPan(nextPan.x, nextPan.y)
@@ -630,291 +525,37 @@ export function useCanvasViewport({
         [getClampedPan, schedulePanUpdate]
     )
 
-    useEffect(() => {
-        const container = containerRef.current
-        if (!container) return
+    // ------------ INPUT SUB-HOOKS ------------ //
 
-        let touchPanState: { x: number; y: number; panX: number; panY: number } | null =
-            null
-
-        const normalizeWheelDelta = (e: WheelEvent) => {
-            if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
-                return e.deltaY * WHEEL_DELTA_LINE_PX
-            }
-            if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
-                return e.deltaY * containerSizeRef.current.height
-            }
-            return e.deltaY
-        }
-
-        const normalizeWheelDeltaX = (e: WheelEvent) => {
-            if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
-                return e.deltaX * WHEEL_DELTA_LINE_PX
-            }
-            if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
-                return e.deltaX * containerSizeRef.current.width
-            }
-            return e.deltaX
-        }
-
-        const handleWheel = (e: WheelEvent) => {
-            if (safariGestureStateRef.current) return
-
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault()
-                const rect = container.getBoundingClientRect()
-                const delta = normalizeWheelDelta(e)
-                const scaleFactor = Math.exp(-delta * WHEEL_ZOOM_SENSITIVITY)
-
-                setZoomAroundViewportPoint({
-                    nextZoom: targetZoomRef.current * scaleFactor,
-                    anchorViewportX: e.clientX - rect.left,
-                    anchorViewportY: e.clientY - rect.top,
-                    shouldFlagInteraction: true,
-                })
-            } else {
-                e.preventDefault()
-                const currentZoom = targetZoomRef.current
-                const dx = normalizeWheelDeltaX(e) / currentZoom
-                const dy = normalizeWheelDelta(e) / currentZoom
-                const current = panRef.current
-                const next = getClampedPan(current.x + dx, current.y + dy)
-                schedulePanUpdate(next)
-            }
-        }
-
-        const handleTouchStart = (e: TouchEvent) => {
-            if (e.touches.length === 2) {
-                e.preventDefault()
-                suppressCardSelection()
-                touchPanState = null
-                const touchA = e.touches[0]
-                const touchB = e.touches[1]
-                pinchStateRef.current = {
-                    distance: Math.hypot(
-                        touchA.clientX - touchB.clientX,
-                        touchA.clientY - touchB.clientY
-                    ),
-                    midpointX: (touchA.clientX + touchB.clientX) / 2,
-                    midpointY: (touchA.clientY + touchB.clientY) / 2,
-                }
-            } else if (
-                e.touches.length === 1 &&
-                !isMarqueeActiveRef.current &&
-                !isCardInteractionTarget(e.target)
-            ) {
-                const touch = e.touches[0]
-                touchPanState = {
-                    x: touch.clientX,
-                    y: touch.clientY,
-                    panX: panRef.current.x,
-                    panY: panRef.current.y,
-                }
-            }
-        }
-
-        const handleTouchMove = (e: TouchEvent) => {
-            if (e.touches.length === 2 && pinchStateRef.current) {
-                e.preventDefault()
-                suppressCardSelection()
-                touchPanState = null
-                const touchA = e.touches[0]
-                const touchB = e.touches[1]
-                const distance = Math.hypot(
-                    touchA.clientX - touchB.clientX,
-                    touchA.clientY - touchB.clientY
-                )
-                const midpointX = (touchA.clientX + touchB.clientX) / 2
-                const midpointY = (touchA.clientY + touchB.clientY) / 2
-                const previousPinch = pinchStateRef.current
-                const rect = container.getBoundingClientRect()
-                const scale =
-                    previousPinch.distance === 0
-                        ? 1
-                        : distance / previousPinch.distance
-
-                setZoomAroundViewportPoint({
-                    nextZoom: targetZoomRef.current * scale,
-                    anchorViewportX: previousPinch.midpointX - rect.left,
-                    anchorViewportY: previousPinch.midpointY - rect.top,
-                    targetViewportX: midpointX - rect.left,
-                    targetViewportY: midpointY - rect.top,
-                    shouldFlagInteraction: true,
-                })
-
-                pinchStateRef.current = {
-                    distance,
-                    midpointX,
-                    midpointY,
-                }
-            } else if (e.touches.length === 1 && touchPanState) {
-                e.preventDefault()
-                const touch = e.touches[0]
-                const currentZoom = targetZoomRef.current
-                const dx = (touch.clientX - touchPanState.x) / currentZoom
-                const dy = (touch.clientY - touchPanState.y) / currentZoom
-                const next = getClampedPan(
-                    touchPanState.panX - dx,
-                    touchPanState.panY - dy
-                )
-                schedulePanUpdate(next)
-            }
-        }
-
-        const clearTouchState = () => {
-            if (pinchStateRef.current) {
-                suppressCardSelection()
-            }
-            pinchStateRef.current = null
-            touchPanState = null
-        }
-
-        const handleSafariGestureStart = (event: Event) => {
-            const e = event as WebKitGestureEvent
-            e.preventDefault()
-            suppressCardSelection()
-
-            const rect = container.getBoundingClientRect()
-            safariGestureStateRef.current = {
-                startZoom: targetZoomRef.current,
-                clientX: e.clientX ?? rect.left + rect.width / 2,
-                clientY: e.clientY ?? rect.top + rect.height / 2,
-            }
-        }
-
-        const handleSafariGestureChange = (event: Event) => {
-            const e = event as WebKitGestureEvent
-            const gesture = safariGestureStateRef.current
-            if (!gesture) return
-            if (!e.scale || e.scale <= 0) return
-            e.preventDefault()
-            suppressCardSelection()
-
-            const rect = container.getBoundingClientRect()
-            const clientX = e.clientX ?? gesture.clientX
-            const clientY = e.clientY ?? gesture.clientY
-
-            setZoomAroundViewportPoint({
-                nextZoom: gesture.startZoom * e.scale,
-                anchorViewportX: gesture.clientX - rect.left,
-                anchorViewportY: gesture.clientY - rect.top,
-                targetViewportX: clientX - rect.left,
-                targetViewportY: clientY - rect.top,
-                shouldFlagInteraction: true,
-            })
-
-            safariGestureStateRef.current = {
-                ...gesture,
-                clientX,
-                clientY,
-            }
-        }
-
-        const clearSafariGestureState = () => {
-            suppressCardSelection()
-            safariGestureStateRef.current = null
-        }
-
-        container.addEventListener('wheel', handleWheel, { passive: false })
-        container.addEventListener('touchstart', handleTouchStart, {
-            passive: false,
-        })
-        container.addEventListener('touchmove', handleTouchMove, {
-            passive: false,
-        })
-        container.addEventListener('touchend', clearTouchState)
-        container.addEventListener('touchcancel', clearTouchState)
-        container.addEventListener('gesturestart', handleSafariGestureStart)
-        container.addEventListener('gesturechange', handleSafariGestureChange)
-        container.addEventListener('gestureend', clearSafariGestureState)
-
-        return () => {
-            container.removeEventListener('wheel', handleWheel)
-            container.removeEventListener('touchstart', handleTouchStart)
-            container.removeEventListener('touchmove', handleTouchMove)
-            container.removeEventListener('touchend', clearTouchState)
-            container.removeEventListener('touchcancel', clearTouchState)
-            container.removeEventListener('gesturestart', handleSafariGestureStart)
-            container.removeEventListener(
-                'gesturechange',
-                handleSafariGestureChange
-            )
-            container.removeEventListener('gestureend', clearSafariGestureState)
-        }
-    }, [
-        getClampedPan,
-        isCardInteractionTarget,
+    // Native wheel/touch/pinch gestures update the shared viewport engine
+    // through this extracted hook.
+    useCanvasViewportGestures({
+        containerRef,
+        containerSizeRef,
+        targetZoomRef,
+        panRef,
         isMarqueeActiveRef,
+        pinchStateRef,
+        safariGestureStateRef,
+        getClampedPan,
         schedulePanUpdate,
         setZoomAroundViewportPoint,
         suppressCardSelection,
-    ])
+    })
 
-    useEffect(() => {
-        const container = containerRef.current
-        if (!container) return
+    // Spacebar + mouse drag panning stays separate from gesture handling.
+    const { isSpaceHeldRef } = useCanvasSpacePan({
+        containerRef,
+        targetZoomRef,
+        panRef,
+        getClampedPan,
+        schedulePanUpdate,
+    })
 
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.code !== 'Space') return
-            const tag = (e.target as HTMLElement).tagName
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
-            e.preventDefault()
-            isSpaceHeld.current = true
-            container.style.cursor = 'grab'
-        }
+    // ------------ IMPERATIVE CONTROLS ------------ //
 
-        const handleKeyUp = (e: KeyboardEvent) => {
-            if (e.code !== 'Space') return
-            isSpaceHeld.current = false
-            isPanning.current = false
-            container.style.cursor = ''
-        }
-
-        const handleMouseDown = (e: MouseEvent) => {
-            if (!isSpaceHeld.current) return
-            isPanning.current = true
-            container.style.cursor = 'grabbing'
-            panStart.current = {
-                x: e.clientX,
-                y: e.clientY,
-                panX: panRef.current.x,
-                panY: panRef.current.y,
-            }
-        }
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isPanning.current) return
-            const currentZoom = targetZoomRef.current
-            const dx = (e.clientX - panStart.current.x) / currentZoom
-            const dy = (e.clientY - panStart.current.y) / currentZoom
-            const next = getClampedPan(
-                panStart.current.panX - dx,
-                panStart.current.panY - dy
-            )
-            schedulePanUpdate(next)
-        }
-
-        const handleMouseUp = () => {
-            if (!isPanning.current) return
-            isPanning.current = false
-            container.style.cursor = isSpaceHeld.current ? 'grab' : ''
-        }
-
-        window.addEventListener('keydown', handleKeyDown)
-        window.addEventListener('keyup', handleKeyUp)
-        container.addEventListener('mousedown', handleMouseDown)
-        window.addEventListener('mousemove', handleMouseMove)
-        window.addEventListener('mouseup', handleMouseUp)
-
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown)
-            window.removeEventListener('keyup', handleKeyUp)
-            container.removeEventListener('mousedown', handleMouseDown)
-            window.removeEventListener('mousemove', handleMouseMove)
-            window.removeEventListener('mouseup', handleMouseUp)
-        }
-    }, [getClampedPan, schedulePanUpdate])
-
+    // The canvas toolbar controls talk to the viewport through this imperative
+    // handle, which always zooms relative to the current viewport center.
     const imperativeHandle = useMemo<SpreadCanvasHandle>(
         () => ({
             getZoom: () => targetZoomRef.current,
@@ -966,6 +607,8 @@ export function useCanvasViewport({
         [getMinimumZoom, setZoomAroundViewportPoint]
     )
 
+    // Selection hooks use this to ignore click selection while zoom gestures are
+    // active or immediately after they end.
     const isCardSelectionSuppressed = useCallback(
         () =>
             pinchStateRef.current !== null ||
@@ -974,6 +617,7 @@ export function useCanvasViewport({
         []
     )
 
+    // SVG `viewBox` derived from the committed pan/zoom state.
     const viewBox = useMemo(
         () =>
             `${pan.x} ${pan.y} ${
@@ -983,6 +627,8 @@ export function useCanvasViewport({
             }`,
         [containerSize.height, containerSize.width, pan.x, pan.y, svgHeight, svgWidth, zoom]
     )
+
+    // ------------ PUBLIC API ------------ //
 
     return {
         containerRef,
@@ -996,12 +642,6 @@ export function useCanvasViewport({
         handleScrollbarPan,
         imperativeHandle,
         isCardSelectionSuppressed,
-        isSpaceHeldRef: isSpaceHeld,
+        isSpaceHeldRef,
     }
-}
-
-export {
-    reconcileViewportBounds,
-    resolveViewportRequest,
-    shouldApplyViewportRequest,
 }

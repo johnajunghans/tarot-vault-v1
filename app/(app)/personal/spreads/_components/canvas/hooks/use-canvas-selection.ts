@@ -31,6 +31,8 @@ interface CanvasMarqueeState {
     currentY: number
 }
 
+// Convert two SVG points into a normalized selection rectangle regardless of
+// drag direction.
 function getMarqueeSelectionRect(start: CanvasPoint, end: CanvasPoint) {
     return {
         left: Math.min(start.x, end.x),
@@ -40,6 +42,8 @@ function getMarqueeSelectionRect(start: CanvasPoint, end: CanvasPoint) {
     }
 }
 
+// Treat very small marquee drags as simple background clicks so the user can
+// deselect without accidentally creating a tiny selection box.
 function isClickLikeMarqueeDrag(
     start: CanvasPoint,
     end: CanvasPoint,
@@ -50,6 +54,7 @@ function isClickLikeMarqueeDrag(
     return Math.sqrt(dx * dx + dy * dy) < threshold
 }
 
+// Select every card whose bounding rectangle intersects the marquee area.
 function getMarqueeSelectedIndices(
     effectiveCards: CanvasCard[],
     start: CanvasPoint,
@@ -72,6 +77,8 @@ function getMarqueeSelectedIndices(
     return selected
 }
 
+// Convert the marquee drag state into the rectangle shape expected by the
+// overlay component.
 function getMarqueeRect(marquee: CanvasMarqueeState | null) {
     if (!marquee) return null
 
@@ -83,6 +90,9 @@ function getMarqueeRect(marquee: CanvasMarqueeState | null) {
     }
 }
 
+// Coordinates single-card selection, background deselection, and marquee-based
+// multi-selection. Selection state is shared back to the drag hook so group
+// drags know which cards should move together.
 export function useCanvasSelection({
     effectiveCards,
     onCardSelect,
@@ -92,14 +102,25 @@ export function useCanvasSelection({
     isSpaceHeldRef,
     isMarqueeActiveRef,
 }: UseCanvasSelectionArgs) {
+    // ------------ LOCAL SELECTION STATE ------------ //
+
+    // Tracks the current marquee/group selection set used by canvas overlays and
+    // drag coordination.
     const [groupSelectedIndices, setGroupSelectedIndices] = useState<Set<number>>(
         new Set()
     )
+
+    // Holds the live marquee box while the user is dragging across the
+    // background.
     const [marquee, setMarquee] = useState<CanvasMarqueeState | null>(null)
 
+    // Refs provide the freshest card positions and marquee start point to the
+    // global mouse listeners.
     const effectiveCardsRef = useLatestRef(effectiveCards)
     const marqueeStartRef = useRef<CanvasPoint>({ x: 0, y: 0 })
 
+    // Keep local state and the sibling drag hook synchronized with the same set
+    // of group-selected indices.
     const updateGroupSelection = useCallback(
         (next: Set<number>) => {
             syncGroupSelection(next)
@@ -108,6 +129,10 @@ export function useCanvasSelection({
         [syncGroupSelection]
     )
 
+    // ------------ GLOBAL MARQUEE LISTENERS ------------ //
+
+    // Listen on `window` so marquee selection continues working even if the
+    // pointer leaves the SVG while dragging.
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!isMarqueeActiveRef.current) return
@@ -123,6 +148,8 @@ export function useCanvasSelection({
 
             const endPt = clientToSVG(e.clientX, e.clientY)
 
+            // A click-like drag clears selection; a real marquee drag selects
+            // every intersecting card.
             if (isClickLikeMarqueeDrag(marqueeStartRef.current, endPt)) {
                 updateGroupSelection(new Set())
                 onCardSelect(null)
@@ -154,6 +181,10 @@ export function useCanvasSelection({
         updateGroupSelection,
     ])
 
+    // ------------ EVENT HANDLERS ------------ //
+
+    // Start marquee selection from the background unless the viewport hook is
+    // currently using space-drag panning.
     const handleBackgroundMouseDown = useCallback(
         (e: ReactMouseEvent<SVGRectElement>) => {
             if (isSpaceHeldRef.current) return
@@ -170,6 +201,9 @@ export function useCanvasSelection({
         [clientToSVG, isMarqueeActiveRef, isSpaceHeldRef]
     )
 
+    // Card clicks collapse any existing group selection and promote one card to
+    // the focused selection, unless another interaction temporarily suppresses
+    // click-to-select.
     const handleCardClick = useCallback(
         (index: number) => {
             if (isCardSelectionSuppressed()) {
@@ -181,9 +215,12 @@ export function useCanvasSelection({
         [isCardSelectionSuppressed, onCardSelect, updateGroupSelection]
     )
 
+    // Derive the rendered marquee overlay rectangle from the live drag state.
     const marqueeRect = useMemo(() => {
         return getMarqueeRect(marquee)
     }, [marquee])
+
+    // ------------ PUBLIC API ------------ //
 
     return {
         groupSelectedIndices,
