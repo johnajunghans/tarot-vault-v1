@@ -34,6 +34,7 @@ const VIEWPORT_FIT_PADDING = 48
 const ZOOM_INTERACTION_IDLE_MS = 120
 const CARD_SELECTION_SUPPRESS_MS = 250
 const SCROLLBAR_IDLE_MS = 1500
+const CARD_INTERACTION_SELECTOR = '[data-spread-card-interactive="true"]'
 
 interface WebKitGestureEvent extends Event {
     scale?: number
@@ -47,7 +48,6 @@ interface UseCanvasViewportArgs {
     viewportRequest?: SpreadCanvasViewportRequest | null
     onZoomDisplayChange?: (zoom: number) => void
     onZoomBoundsChange?: (minZoom: number) => void
-    isCardInteractionTarget: (target: EventTarget | null) => boolean
     isMarqueeActiveRef: { current: boolean }
 }
 
@@ -193,7 +193,6 @@ export function useCanvasViewport({
     viewportRequest,
     onZoomDisplayChange,
     onZoomBoundsChange,
-    isCardInteractionTarget,
     isMarqueeActiveRef,
 }: UseCanvasViewportArgs) {
     const containerRef = useRef<HTMLDivElement>(null)
@@ -238,6 +237,12 @@ export function useCanvasViewport({
     const isSpaceHeld = useRef(false)
     const isPanning = useRef(false)
     const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 })
+
+    const isCardInteractionTarget = useCallback((target: EventTarget | null) => {
+        return target instanceof Element
+            ? target.closest(CARD_INTERACTION_SELECTOR) !== null
+            : false
+    }, [])
 
     const syncContainerSize = useCallback(() => {
         const container = containerRef.current

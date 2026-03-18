@@ -3,14 +3,14 @@
 import { ArrowUp01Icon } from 'hugeicons-react'
 import type { OffscreenPointer } from '../types'
 
+const POINTER_ICON_SIZE = 16
+
 interface CanvasPointerOverlayProps {
     pointers: OffscreenPointer[]
-    iconSize: number
 }
 
 export default function CanvasPointerOverlay({
     pointers,
-    iconSize,
 }: CanvasPointerOverlayProps) {
     if (pointers.length === 0) return null
 
@@ -26,7 +26,7 @@ export default function CanvasPointerOverlay({
                 >
                     <ArrowUp01Icon
                         className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]"
-                        size={iconSize}
+                        size={POINTER_ICON_SIZE}
                         strokeWidth={2.15}
                         style={{ transform: `rotate(${pointer.rotation}deg)` }}
                     />

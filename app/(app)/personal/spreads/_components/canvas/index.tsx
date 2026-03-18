@@ -42,9 +42,6 @@ import {
     GRID_SIZE,
 } from '../../spread-layout'
 
-const POINTER_ICON_SIZE = 16
-const CARD_INTERACTION_SELECTOR = '[data-spread-card-interactive="true"]'
-
 interface SpreadCanvasProps {
     cards: CanvasCard[]
     cardKeys?: string[]
@@ -106,12 +103,6 @@ function SpreadCanvasComponent(
         }
     }, [])
 
-    const isCardInteractionTarget = useCallback((target: EventTarget | null) => {
-        return target instanceof Element
-            ? target.closest(CARD_INTERACTION_SELECTOR) !== null
-            : false
-    }, [])
-
     const {
         containerRef,
         containerSize,
@@ -131,7 +122,6 @@ function SpreadCanvasComponent(
         viewportRequest,
         onZoomDisplayChange,
         onZoomBoundsChange,
-        isCardInteractionTarget,
         isMarqueeActiveRef: isMarqueeActive,
     })
 
@@ -345,7 +335,6 @@ function SpreadCanvasComponent(
 
             <CanvasPointerOverlay
                 pointers={offscreenPointers}
-                iconSize={POINTER_ICON_SIZE}
             />
 
             <CanvasScrollbars
