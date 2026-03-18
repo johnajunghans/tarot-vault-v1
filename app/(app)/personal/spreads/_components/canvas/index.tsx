@@ -13,11 +13,11 @@ import CanvasBackground from './components/background'
 import CanvasDefs from './components/defs'
 import CanvasEmptyPrompt from './components/empty-prompt'
 import CanvasGuides from './components/guides'
-import type { CanvasGuide } from './types'
 import CanvasMarquee from './components/marquee'
 import CanvasPointerOverlay from './components/pointer-overlay'
 import CanvasScrollbars from './components/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
+import { useCanvasGuides } from './hooks/use-canvas-guides'
 import { useCanvasOffscreenPointers } from './hooks/use-canvas-offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
 import { useCanvasSelection } from './hooks/use-canvas-selection'
@@ -31,7 +31,6 @@ import type {
 import { useTheme } from 'next-themes'
 import {
     getCenteredCardPlacement,
-    getRect,
 } from './helpers/geometry'
 import {
     CANVAS_BOUNDS,
@@ -56,6 +55,9 @@ interface SpreadCanvasProps {
     viewportRequest?: SpreadCanvasViewportRequest | null
 }
 
+// Main SVG canvas for viewing and editing a spread. This component coordinates
+// the specialized canvas hooks, then renders the background, cards, overlays,
+// and scrollbars from their combined state.
 function SpreadCanvasComponent(
     {
         cards,
@@ -72,9 +74,15 @@ function SpreadCanvasComponent(
     }: SpreadCanvasProps,
     ref: React.ForwardedRef<SpreadCanvasHandle>
 ) {
+    // ------------ CORE REFS AND THEME ------------ //
+
+    // The raw SVG element is needed to convert pointer coordinates into the
+    // current SVG coordinate space.
     const svgRef = useRef<SVGSVGElement>(null)
     const { resolvedTheme } = useTheme()
 
+    // Theme values are collected in one memoized object so child components can
+    // consume a small, stable styling contract.
     const themeBasedStyles = useMemo(
         () => ({
             containerBg: 'bg-[var(--canvas-bg)]',
@@ -89,8 +97,12 @@ function SpreadCanvasComponent(
     const svgWidth = CANVAS_WIDTH
     const svgHeight = CANVAS_HEIGHT
 
+    // Shared mutable flag used by viewport and selection logic while marquee
+    // selection is active.
     const isMarqueeActive = useRef(false)
 
+    // Convert browser client coordinates into the transformed SVG coordinate
+    // system so drag, select, and add-card interactions line up visually.
     const clientToSVG = useCallback((clientX: number, clientY: number) => {
         const svg = svgRef.current
         if (!svg) return { x: clientX, y: clientY }
@@ -103,6 +115,10 @@ function SpreadCanvasComponent(
         }
     }, [])
 
+    // ------------ VIEWPORT AND INPUT HOOKS ------------ //
+
+    // Owns pan/zoom, viewport fitting, scrollbar state, and the imperative API
+    // used by the external zoom controls.
     const {
         containerRef,
         containerSize,
@@ -125,6 +141,8 @@ function SpreadCanvasComponent(
         isMarqueeActiveRef: isMarqueeActive,
     })
 
+    // Owns drag state and produces the "effective" card positions while a drag
+    // is in progress before changes are committed back to the form.
     const {
         dragging,
         effectiveCards,
@@ -137,10 +155,13 @@ function SpreadCanvasComponent(
         onPositionsCommit,
     })
 
+    // Selection state also needs to update the drag hook so multi-select drags
+    // move the same set of cards.
     const updateGroupSelection = useCallback((next: Set<number>) => {
         updateDragSelection(next)
     }, [updateDragSelection])
 
+    // Handles click selection, marquee selection, and background deselection.
     const {
         groupSelectedIndices,
         handleBackgroundMouseDown,
@@ -156,62 +177,27 @@ function SpreadCanvasComponent(
         isMarqueeActiveRef: isMarqueeActive,
     })
 
+    // Determines DOM/card stacking order and keeps refs to rendered card groups
+    // for effects that depend on the actual SVG elements.
     const { cardsLayerRef, registerCardRef, baseSortedCards } = useCardLayering({
         effectiveCards,
         selectedCardIndex,
         draggingIndex: dragging?.index ?? null,
     })
 
+    // Expose the viewport's imperative methods to the parent via `ref`.
     useImperativeHandle(ref, () => imperativeHandle, [imperativeHandle])
 
-    const guides = useMemo<CanvasGuide[]>(() => {
-        if (isViewMode || !dragging) return []
+    // Derive alignment guides for the currently dragged card.
+    const guides = useCanvasGuides({
+        effectiveCards,
+        dragging,
+        groupSelectedIndices,
+        isViewMode,
+    })
 
-        if (
-            groupSelectedIndices.size > 1 &&
-            groupSelectedIndices.has(dragging.index)
-        ) {
-            return []
-        }
-
-        const draggedRect = getRect(
-            dragging.x,
-            dragging.y,
-            CARD_WIDTH,
-            CARD_HEIGHT
-        )
-        const lines: CanvasGuide[] = []
-
-        effectiveCards.forEach((card, index) => {
-            if (index === dragging.index) return
-            const otherRect = getRect(card.x, card.y, CARD_WIDTH, CARD_HEIGHT)
-
-            for (const draggedEdge of [draggedRect.left, draggedRect.right]) {
-                for (const otherEdge of [otherRect.left, otherRect.right]) {
-                    if (draggedEdge === otherEdge) {
-                        lines.push({ axis: 'v', pos: draggedEdge })
-                    }
-                }
-            }
-
-            for (const draggedEdge of [draggedRect.top, draggedRect.bottom]) {
-                for (const otherEdge of [otherRect.top, otherRect.bottom]) {
-                    if (draggedEdge === otherEdge) {
-                        lines.push({ axis: 'h', pos: draggedEdge })
-                    }
-                }
-            }
-        })
-
-        const seen = new Set<string>()
-        return lines.filter((line) => {
-            const key = `${line.axis}-${line.pos}`
-            if (seen.has(key)) return false
-            seen.add(key)
-            return true
-        })
-    }, [effectiveCards, dragging, groupSelectedIndices, isViewMode])
-
+    // Double-clicking the background creates a new card centered at the click
+    // position, snapped and clamped within canvas bounds.
     const handleBackgroundDoubleClick = useCallback(
         (e: React.MouseEvent<SVGRectElement>) => {
             if (isViewMode || !onCanvasDoubleClick) return
@@ -229,14 +215,18 @@ function SpreadCanvasComponent(
         [clientToSVG, isViewMode, onCanvasDoubleClick]
     )
 
+    // Show the onboarding prompt only when editing an empty spread.
     const showEmptyPrompt = !isViewMode && cards.length === 0
 
+    // Compute edge pointers for cards that are currently offscreen.
     const offscreenPointers = useCanvasOffscreenPointers({
         effectiveCards,
         pan,
         containerSize,
         zoom,
     })
+
+    // ------------ RENDER ------------ //
 
     return (
         <div className="relative h-full w-full">
@@ -253,6 +243,7 @@ function SpreadCanvasComponent(
                     xmlns="http://www.w3.org/2000/svg"
                     className="select-none"
                 >
+                        {/* SVG defs and reusable background layer. */}
                         <CanvasDefs />
 
                         <CanvasBackground
@@ -266,6 +257,7 @@ function SpreadCanvasComponent(
                             }
                         />
 
+                        {/* Transparent interaction layer for selection and add-card gestures. */}
                         <rect
                             width={svgWidth}
                             height={svgHeight}
@@ -286,12 +278,14 @@ function SpreadCanvasComponent(
                             />
                         )}
 
+                        {/* Drag-time overlays rendered behind the cards. */}
                         <CanvasGuides
                             guides={guides}
                             svgWidth={svgWidth}
                             svgHeight={svgHeight}
                         />
 
+                        {/* Main card layer. Order comes from the layering hook. */}
                         <g ref={cardsLayerRef}>
                             {baseSortedCards.map(({ card, index }) => {
                                 const isDraggingInGroup =
@@ -329,14 +323,17 @@ function SpreadCanvasComponent(
                             })}
                         </g>
 
+                        {/* Marquee rectangle sits above the card/content layers. */}
                         <CanvasMarquee rect={marqueeRect} />
                 </svg>
             </div>
 
+            {/* UI overlays positioned outside the SVG so they can ignore clipping. */}
             <CanvasPointerOverlay
                 pointers={offscreenPointers}
             />
 
+            {/* Custom scrollbars mirror viewport pan across the virtual canvas. */}
             <CanvasScrollbars
                 panX={pan.x}
                 panY={pan.y}
@@ -351,6 +348,8 @@ function SpreadCanvasComponent(
     )
 }
 
+// Memoization keeps the canvas from rerendering when parent props retain the
+// same identity, which matters because the component coordinates many hooks.
 const SpreadCanvas = memo(forwardRef(SpreadCanvasComponent))
 
 SpreadCanvas.displayName = 'SpreadCanvas'
