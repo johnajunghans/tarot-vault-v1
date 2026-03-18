@@ -52,13 +52,17 @@ app/                    # Next.js App Router
     ├── layout.tsx      # App group layout with sidebar and topbar
     ├── page.tsx        # Dashboard (redirects to /personal)
     ├── personal/       # Personal workspace
-    │   └── spreads/    # Spreads feature
+    │   └── spreads/    # Spreads feature (see Feature Directory Conventions below)
     │       ├── page.tsx              # List route
-    │       ├── _components/          # Shared feature components (canvas, card, panels, schema, etc.)
-    │       ├── new/                  # Create route + panel-wrapper
-    │       ├── [id]/                 # View/edit route + edit-panel-wrapper
-    │       ├── utils.ts              # Spread creation/editing helpers and utilities
-    │       └── schema.ts             # Zod schema and runtime validation for spreads
+    │       ├── new/                  # Create route
+    │       ├── [id]/                 # View/edit route
+    │       ├── _canvas/              # Subsystem: interactive canvas
+    │       ├── _panels/              # Subsystem: settings panels + panel hooks
+    │       ├── _components/          # Shared presentational/layout components
+    │       ├── _hooks/               # Feature-level shared hooks
+    │       ├── _lib/                 # Pure utility functions
+    │       ├── _tests/               # Tests for _lib/ utilities
+    │       └── schema.ts             # Zod schema and runtime validation
     └── collective/     # Collective workspace (future)
 
 components/
@@ -88,6 +92,28 @@ hooks/                  # Custom React hooks
 lib/                    # Utility functions and important constants (e.g. routes)
 proxy.ts                # Clerk middleware for route protection
 ```
+
+### Feature Directory Conventions
+
+Each feature directory (e.g. `spreads/`) uses underscore-prefixed subdirectories to organize non-route code. These conventions should be followed when building new features.
+
+**Directory types (in order of when to introduce them):**
+
+| Directory | Purpose | When to create |
+|---|---|---|
+| `_components/` | Shared presentational components and layout bridges | Default home for feature components |
+| `_lib/` | Pure utility functions (no React, no side effects) | When you have helpers that aren't components or hooks |
+| `_hooks/` | Feature-level shared hooks consumed by multiple route files | When two or more routes share stateful logic |
+| `_tests/` | Unit tests for `_lib/` utilities | Colocated with `_lib/`; subsystems own their tests internally |
+| `_subsystem/` (e.g. `_canvas/`, `_panels/`) | Promoted from `_components/` when a group of files forms a cohesive unit with its own internal structure (components, hooks, helpers, tests) | When a directory within `_components/` grows large enough to warrant subdirectories |
+
+**Rules:**
+
+1. **Barrel exports (`index.ts`)** — Add at module boundaries (directories consumed by outside code). Skip for internal subdirectories.
+2. **Hook ownership** — Hooks specific to a subsystem live inside that subsystem (e.g. `_panels/hooks/`). Hooks shared across the feature live in `_hooks/`.
+3. **Subsystem promotion** — Start components in `_components/`. If a group develops its own hooks, helpers, or tests, promote it to a sibling `_dir/` at the feature level.
+4. **Route files stay thin** — Route directories (`new/`, `[id]/`) contain page files and route-specific wrapper components. Shared logic lives in `_hooks/`, `_lib/`, or subsystem directories.
+5. **Tests** — Subsystems own their tests internally (e.g. `_canvas/tests/`). Feature-level `_tests/` covers `_lib/` utilities. Integration/E2E tests go in a centralized directory.
 
 ### Authentication Flow
 
