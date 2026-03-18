@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import PanelWrapper from "./panel-wrapper";
+import CreateSpread from "./create-spread";
 import { Layout } from "react-resizable-panels";
 
 interface NewSpreadPageProps {
@@ -21,5 +21,5 @@ export default async function NewSpreadPage({ searchParams }: NewSpreadPageProps
     ? Number(resolvedSearchParams.draft)
     : undefined
 
-  return <PanelWrapper defaultLayout={defaultLayout} groupId={groupId} loadedDraftDate={draftTimestamp} />
+  return <CreateSpread defaultLayout={defaultLayout} groupId={groupId} loadedDraftDate={draftTimestamp} />
 }

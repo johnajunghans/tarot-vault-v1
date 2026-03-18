@@ -10,8 +10,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { normalizeRotationForStorage } from "../../_lib/rotation";
-import { snapToGrid } from "../../_lib/layout";
+import { normalizeRotationForStorage } from "../_lib/rotation";
+import { snapToGrid } from "../_lib/layout";
 import {
   Cancel01Icon,
   Delete02Icon,

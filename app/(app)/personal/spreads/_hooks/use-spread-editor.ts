@@ -4,9 +4,9 @@ import { useCallback, useMemo, useRef, useState } from "react"
 import type { PanelImperativeHandle } from "react-resizable-panels"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { CANVAS_CENTER } from "../_lib/layout"
-import { useValidationErrorHandler } from "./use-validation-error-handler"
+import { useValidationErrorHandler } from "../_panels/hooks/use-validation-error-handler"
 import type { SpreadCanvasViewportRequest } from "../_canvas/types"
-import type { UseSpreadFormReturn } from "./use-spread-form"
+import type { UseSpreadFormReturn } from "../_panels/hooks/use-spread-form"
 
 interface UseSpreadEditorOptions {
     /** Unique key for the empty-canvas viewport request (e.g. "new-spread-empty"). */

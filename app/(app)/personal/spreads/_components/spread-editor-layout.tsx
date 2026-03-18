@@ -1,95 +1,65 @@
 "use client"
 
-import type { Dispatch, RefObject, SetStateAction } from "react"
-import { FormProvider, type UseFormReturn, type UseFieldArrayMove, type UseFieldArrayRemove, type FieldArrayWithId } from "react-hook-form"
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
-import { type PanelImperativeHandle, type Layout } from "react-resizable-panels"
+import { type Layout } from "react-resizable-panels"
+import { FormProvider } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PlusSignIcon, Settings02Icon } from "hugeicons-react"
-import SpreadCanvas from "../../_canvas"
-import ZoomControls from "../../_canvas/components/zoom-controls"
-import SpreadSettingsPanel from "./spread-settings-panel"
-import CardSettingsPanel from "./card-settings-panel"
-import type { SpreadForm } from "@/types/spreads"
-import type {
-    CanvasCard,
-    SpreadCanvasHandle,
-    SpreadCanvasPositionUpdate,
-    SpreadCanvasViewportRequest,
-} from "../../_canvas/types"
+import SpreadCanvas from "../_canvas"
+import ZoomControls from "../_canvas/components/zoom-controls"
+import SpreadSettingsPanel from "../_panels/spread-settings-panel"
+import CardSettingsPanel from "../_panels/card-settings-panel"
+import type { UseSpreadFormReturn } from "../_panels/hooks/use-spread-form"
+import type { UseSpreadEditorReturn } from "../_hooks/use-spread-editor"
 
 interface SpreadEditorLayoutProps {
-    // Form
-    form: UseFormReturn<SpreadForm>
-    // Canvas
-    canvasRef: RefObject<SpreadCanvasHandle | null>
-    canvasCards: CanvasCard[]
-    cardKeys: string[]
-    canvasRotationAngles: number[]
-    viewportRequest: SpreadCanvasViewportRequest | null
-    // Selection
-    cards: FieldArrayWithId<SpreadForm, "positions">[]
-    selectedCardIndex: number | null
-    setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
-    // Card actions
-    addCard: () => void
-    addCardAt?: (x: number, y: number) => void
-    remove: UseFieldArrayRemove
-    move: UseFieldArrayMove
-    handleCardRotationChange: (index: number, value: number) => void
-    handleCanvasPositionsCommit: (updates: SpreadCanvasPositionUpdate[]) => void
-    // Zoom
-    zoomDisplay: number
-    minZoomDisplay: number
-    setZoomDisplay: (zoom: number) => void
-    setMinZoomDisplay: (minZoom: number) => void
-    zoomIn: () => void
-    zoomOut: () => void
-    resetZoom: () => void
-    // Panel layout
+    spreadForm: UseSpreadFormReturn
+    editor: UseSpreadEditorReturn
     groupId: string
     defaultLayout: Layout | undefined
-    spreadSettingsPanelRef: RefObject<PanelImperativeHandle | null>
-    // Mobile
-    isMobile: boolean
-    spreadSheetOpen: boolean
-    setSpreadSheetOpen: (open: boolean) => void
-    // Mode
     isViewMode?: boolean
 }
 
 export default function SpreadEditorLayout({
-    form,
-    canvasRef,
-    canvasCards,
-    cardKeys,
-    canvasRotationAngles,
-    viewportRequest,
-    cards,
-    selectedCardIndex,
-    setSelectedCardIndex,
-    addCard,
-    addCardAt,
-    remove,
-    move,
-    handleCardRotationChange,
-    handleCanvasPositionsCommit,
-    zoomDisplay,
-    minZoomDisplay,
-    setZoomDisplay,
-    setMinZoomDisplay,
-    zoomIn,
-    zoomOut,
-    resetZoom,
+    spreadForm,
+    editor,
     groupId,
     defaultLayout,
-    spreadSettingsPanelRef,
-    isMobile,
-    spreadSheetOpen,
-    setSpreadSheetOpen,
     isViewMode,
 }: SpreadEditorLayoutProps) {
+    const {
+        form,
+        canvasRef,
+        canvasCards,
+        cardKeys,
+        canvasRotationAngles,
+        cards,
+        selectedCardIndex,
+        setSelectedCardIndex,
+        addCard,
+        addCardAt,
+        remove,
+        move,
+        handleCardRotationChange,
+        handleCanvasPositionsCommit,
+        zoomDisplay,
+        setZoomDisplay,
+        minZoomDisplay,
+        setMinZoomDisplay,
+    } = spreadForm
+
+    const {
+        isMobile,
+        viewportRequest,
+        spreadSheetOpen,
+        setSpreadSheetOpen,
+        spreadSettingsPanelRef,
+        zoomIn,
+        zoomOut,
+        resetZoom,
+    } = editor
+
     return (
         <div className="relative h-full min-h-0 overflow-hidden">
             <FormProvider {...form}>

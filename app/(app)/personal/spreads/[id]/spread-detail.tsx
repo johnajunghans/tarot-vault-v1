@@ -19,12 +19,12 @@ import {
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
 } from "../_lib/layout";
-import { useSpreadForm } from "../_hooks/use-spread-form";
+import { useSpreadForm } from "../_panels/hooks/use-spread-form";
 import { useSpreadEditor } from "../_hooks/use-spread-editor";
 import { mapPositionsForApi } from "../_lib/map-positions-for-api";
-import SpreadEditorLayout from "../_components/editor/spread-editor-layout";
+import SpreadEditorLayout from "../_components/spread-editor-layout";
 
-interface EditPanelWrapperProps {
+interface SpreadDetailProps {
     spreadId: Id<"spreads">
     defaultLayout: Layout | undefined
     groupId: string
@@ -53,12 +53,12 @@ function toSpreadFormValues(spread: Pick<SpreadDB, "name" | "description" | "pos
     };
 }
 
-export default function EditPanelWrapper({
+export default function SpreadDetail({
     spreadId,
     defaultLayout,
     groupId,
     mode,
-}: EditPanelWrapperProps) {
+}: SpreadDetailProps) {
     const isViewMode = mode === "view";
     const router = useRouter();
 
@@ -71,25 +71,9 @@ export default function EditPanelWrapper({
     const spreadForm = useSpreadForm();
     const {
         form,
-        cards,
-        remove,
-        move,
         watchedName,
         watchedPositions,
-        addCard,
-        addCardAt,
-        canvasRef,
-        cardKeys,
-        canvasCards,
-        canvasRotationAngles,
-        selectedCardIndex,
         setSelectedCardIndex,
-        handleCardRotationChange,
-        handleCanvasPositionsCommit,
-        zoomDisplay,
-        setZoomDisplay,
-        minZoomDisplay,
-        setMinZoomDisplay,
     } = spreadForm;
 
     // ------------ EDITOR PLUMBING ------------ //
@@ -99,21 +83,14 @@ export default function EditPanelWrapper({
         spreadForm,
     });
     const {
-        isMobile,
         emptyCanvasViewportRequest,
-        viewportRequest,
         setViewportRequest,
-        spreadSheetOpen,
         setSpreadSheetOpen,
         isSaving,
         setIsSaving,
-        spreadSettingsPanelRef,
         onInvalid,
         showDiscardDialog,
         setShowDiscardDialog,
-        zoomIn,
-        zoomOut,
-        resetZoom,
     } = editor;
 
     // ------------ POPULATE FORM FROM DB ------------ //
@@ -312,34 +289,10 @@ export default function EditPanelWrapper({
     return (
         <>
         <SpreadEditorLayout
-            form={form}
-            canvasRef={canvasRef}
-            canvasCards={canvasCards}
-            cardKeys={cardKeys}
-            canvasRotationAngles={canvasRotationAngles}
-            viewportRequest={viewportRequest}
-            cards={cards}
-            selectedCardIndex={selectedCardIndex}
-            setSelectedCardIndex={setSelectedCardIndex}
-            addCard={addCard}
-            addCardAt={isViewMode ? undefined : addCardAt}
-            remove={remove}
-            move={move}
-            handleCardRotationChange={handleCardRotationChange}
-            handleCanvasPositionsCommit={handleCanvasPositionsCommit}
-            zoomDisplay={zoomDisplay}
-            minZoomDisplay={minZoomDisplay}
-            setZoomDisplay={setZoomDisplay}
-            setMinZoomDisplay={setMinZoomDisplay}
-            zoomIn={zoomIn}
-            zoomOut={zoomOut}
-            resetZoom={resetZoom}
+            spreadForm={spreadForm}
+            editor={editor}
             groupId={groupId}
             defaultLayout={defaultLayout}
-            spreadSettingsPanelRef={spreadSettingsPanelRef}
-            isMobile={isMobile}
-            spreadSheetOpen={spreadSheetOpen}
-            setSpreadSheetOpen={setSpreadSheetOpen}
             isViewMode={isViewMode}
         />
 

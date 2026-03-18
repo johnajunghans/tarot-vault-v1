@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import EditPanelWrapper from "./edit-panel-wrapper";
+import SpreadDetail from "./spread-detail";
 import { Layout } from "react-resizable-panels";
 import { Id } from "@/convex/_generated/dataModel";
 
@@ -22,7 +22,7 @@ export default async function EditSpreadPage({ params, searchParams }: EditSprea
     : undefined
 
   return (
-    <EditPanelWrapper
+    <SpreadDetail
       spreadId={resolvedParams.id as Id<"spreads">}
       defaultLayout={defaultLayout}
       groupId={groupId}
