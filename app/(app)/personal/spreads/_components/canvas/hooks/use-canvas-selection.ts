@@ -11,7 +11,7 @@ import {
 import { useLatestRef } from '@/hooks/use-latest-ref'
 import type { CanvasCard } from '../types'
 import { getRect, rectsIntersect } from '../helpers/geometry'
-import { CARD_HEIGHT, CARD_WIDTH } from '../../../spread-layout'
+import { CARD_HEIGHT, CARD_WIDTH } from '../../../_helpers/layout'
 import type { CanvasPoint } from '../types'
 
 interface UseCanvasSelectionArgs {

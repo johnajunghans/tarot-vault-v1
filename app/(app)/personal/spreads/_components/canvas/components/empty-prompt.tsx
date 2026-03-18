@@ -4,7 +4,7 @@ import {
     CANVAS_CENTER,
     CARD_HEIGHT,
     CARD_WIDTH,
-} from '../../../spread-layout'
+} from '../../../_helpers/layout'
 
 interface CanvasEmptyPromptProps {
     strokeOpacity: string

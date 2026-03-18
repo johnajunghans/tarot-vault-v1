@@ -30,7 +30,7 @@ import {
     CANVAS_CENTER,
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
-} from "../spread-layout";
+} from "../_helpers/layout";
 import { useSpreadForm } from "../_hooks/use-spread-form";
 import { useValidationErrorHandler } from "../_hooks/use-validation-error-handler";
 import { mapPositionsForApi } from "../_helpers/map-positions-for-api";

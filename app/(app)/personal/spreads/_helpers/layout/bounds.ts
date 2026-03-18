@@ -1,28 +1,9 @@
 import type { CardDB, CardForm } from '@/types/spreads'
+import { CARD_HEIGHT, CARD_WIDTH } from './constants'
 
-export const CARD_WIDTH = 90
-export const CARD_HEIGHT = 150
-export const GRID_SIZE = 15
+// ------------ SHARED TYPES ------------ //
 
-export const CANVAS_WIDTH = 2400
-export const CANVAS_HEIGHT = 1800
-
-export const CANVAS_BOUNDS = {
-    minX: 0,
-    minY: 0,
-    maxX: CANVAS_WIDTH - CARD_WIDTH,
-    maxY: CANVAS_HEIGHT - CARD_HEIGHT,
-}
-
-export const CANVAS_CENTER = {
-    x: CANVAS_WIDTH / 2,
-    y: CANVAS_HEIGHT / 2,
-}
-
-const CARDS_PER_ROW = 10
-export const CARD_SPACING_X = 105
-const CARD_SPACING_Y = 165
-
+// Bounding box information for a single rotated card or an entire spread.
 export interface SpreadBounds {
     left: number
     top: number
@@ -35,12 +16,10 @@ export interface SpreadBounds {
 }
 
 type PositionedCard = Pick<CardForm, 'x' | 'y' | 'r'>
-type TranslatableCard = Pick<CardForm, 'x' | 'y'>
 
-function snapToGrid(value: number) {
-    return Math.round(value / GRID_SIZE) * GRID_SIZE
-}
+// ------------ BOUNDS HELPERS ------------ //
 
+// Measure the axis-aligned bounding box of one rotated card on the canvas.
 function getRotatedCardBounds(card: PositionedCard): SpreadBounds {
     const cx = card.x + CARD_WIDTH / 2
     const cy = card.y + CARD_HEIGHT / 2
@@ -80,13 +59,14 @@ function getRotatedCardBounds(card: PositionedCard): SpreadBounds {
     }
 }
 
+// Measure the outer bounds that contain every card in a spread.
 function getSpreadBounds<T extends PositionedCard>(cards: T[]): SpreadBounds | null {
     if (cards.length === 0) return null
 
     const [first, ...rest] = cards
     const initialBounds = getRotatedCardBounds(first)
 
-    const bounds = rest.reduce((acc, card) => {
+    return rest.reduce((acc, card) => {
         const cardBounds = getRotatedCardBounds(card)
         const left = Math.min(acc.left, cardBounds.left)
         const top = Math.min(acc.top, cardBounds.top)
@@ -104,48 +84,12 @@ function getSpreadBounds<T extends PositionedCard>(cards: T[]): SpreadBounds | n
             centerY: (top + bottom) / 2,
         }
     }, initialBounds)
-
-    return bounds
 }
 
-function getSpreadCenteringDelta(bounds: SpreadBounds) {
-    return {
-        dx: snapToGrid(CANVAS_CENTER.x - bounds.centerX),
-        dy: snapToGrid(CANVAS_CENTER.y - bounds.centerY),
-    }
-}
-
-function translateCards<T extends TranslatableCard>(
-    cards: T[],
-    dx: number,
-    dy: number
-): T[] {
-    return cards.map((card) => ({
-        ...card,
-        x: card.x + dx,
-        y: card.y + dy,
-    }))
-}
-
-function normalizeCardsToCanvasCenter<T extends PositionedCard & TranslatableCard>(
-    cards: T[]
-): T[] {
-    const bounds = getSpreadBounds(cards)
-    if (!bounds) return cards
-
-    const { dx, dy } = getSpreadCenteringDelta(bounds)
-    return translateCards(cards, dx, dy)
-}
-
-function getGeneratedCardPosition(index: number) {
-    return {
-        x: GRID_SIZE + (index % CARDS_PER_ROW) * CARD_SPACING_X,
-        y: GRID_SIZE + Math.floor(index / CARDS_PER_ROW) * CARD_SPACING_Y,
-    }
-}
-
+// Convert spread bounds into the min/max coordinates needed by thumbnails.
 function calcSpreadDimensions(cards: CardDB[]) {
     const bounds = getSpreadBounds(cards)
+
     if (!bounds) {
         return {
             xMin: 0,
@@ -163,25 +107,4 @@ function calcSpreadDimensions(cards: CardDB[]) {
     }
 }
 
-function generateCardAt(x: number, y: number): CardForm {
-    return {
-        name: "",
-        description: "",
-        allowReverse: true,
-        x,
-        y,
-        r: 0,
-        z: 0,
-    }
-}
-
-export {
-    calcSpreadDimensions,
-    generateCardAt,
-    getGeneratedCardPosition,
-    getSpreadBounds,
-    getSpreadCenteringDelta,
-    normalizeCardsToCanvasCenter,
-    snapToGrid,
-    translateCards,
-}
+export { calcSpreadDimensions, getSpreadBounds }

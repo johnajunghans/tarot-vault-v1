@@ -1,27 +1,26 @@
-const FULL_ROTATION = 360
-export const ROTATION_STEP = 45
+import { normalizeRotationForStorage } from '../../../_helpers/rotation'
 
-export function normalizeRotationForStorage(value: number): number {
-    const snapped = Math.round(value / ROTATION_STEP) * ROTATION_STEP
-    const wrapped =
-        ((snapped % FULL_ROTATION) + FULL_ROTATION) % FULL_ROTATION
+// ------------ CONTINUOUS ROTATION HELPERS ------------ //
 
-    return wrapped === FULL_ROTATION ? 0 : wrapped
-}
-
-export function resolveContinuousRotation(
+// Resolve a snapped rotation value to the nearest continuous angle relative to
+// the previous rendered angle so repeated turns animate in the expected
+// direction instead of wrapping backward at 360 degrees.
+function resolveContinuousRotation(
     value: number,
     previousActualRotation: number
 ): number {
+    const fullRotation = 360
     const normalized = normalizeRotationForStorage(value)
     const turns = Math.round(
-        (previousActualRotation - normalized) / FULL_ROTATION
+        (previousActualRotation - normalized) / fullRotation
     )
 
-    return normalized + turns * FULL_ROTATION
+    return normalized + turns * fullRotation
 }
 
-export function reconcileContinuousRotations(
+// Rebuild the canvas rotation cache using stable card ids. This preserves each
+// card's continuous rendered angle even if the field array is reordered.
+function reconcileContinuousRotations(
     cardIds: string[],
     normalizedRotations: number[],
     previousRotations: Record<string, number>
@@ -50,3 +49,5 @@ export function reconcileContinuousRotations(
         })
     )
 }
+
+export { reconcileContinuousRotations, resolveContinuousRotation }

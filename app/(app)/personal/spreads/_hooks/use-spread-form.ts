@@ -11,14 +11,19 @@ import {
     CARD_SPACING_X,
     CARD_WIDTH,
     generateCardAt,
-} from "../spread-layout"
+} from "../_helpers/layout"
 import { useSpreadCanvasModel } from "../_components/canvas/hooks/use-canvas-model"
 
 interface UseSpreadFormOptions {
     defaultValues?: SpreadForm
 }
 
+// Central hook for spread editing. It owns the form state, the positions field
+// array, and the higher-level actions shared by both create and edit screens.
 export function useSpreadForm(options?: UseSpreadFormOptions) {
+    // ------------ FORM STATE ------------ //
+
+    // Build the RHF form once, using either supplied values or a blank spread.
     const form = useForm<SpreadForm>({
         resolver: zodResolver(spreadSchema),
         defaultValues: options?.defaultValues ?? {
@@ -28,15 +33,20 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         },
     })
 
+    // `positions` is the editable card list. `useFieldArray` gives us stable ids
+    // for rendering plus helpers for insert/remove/reorder operations.
     const { fields: cards, append, remove, move } = useFieldArray({
         control: form.control,
         name: "positions",
     })
 
+    // Watch the live form so the canvas and page chrome react immediately to
+    // field edits made in panels or on the canvas.
     const watchedValues = useWatch({ control: form.control })
     const watchedName = watchedValues?.name
     const watchedPositions = watchedValues?.positions
 
+    // Adapt form data into canvas-friendly state and callbacks.
     const canvasModel = useSpreadCanvasModel({
         cards,
         form,
@@ -45,6 +55,10 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
 
     const { setSelectedCardIndex } = canvasModel
 
+    // ------------ CARD CREATION ------------ //
+
+    // Add a card beside the last one when possible; otherwise place the first
+    // card in the visual center of the canvas and focus its name field.
     const addCard = useCallback(() => {
         const nextIndex = cards.length
         const lastCard = nextIndex > 0 ? form.getValues(`positions.${nextIndex - 1}`) : null
@@ -58,6 +72,8 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         setSelectedCardIndex(nextIndex)
     }, [append, cards.length, form, setSelectedCardIndex])
 
+    // Add a card at an explicit canvas coordinate, used by double-clicking the
+    // canvas. The 78-card cap matches the domain limit for a tarot deck.
     const addCardAt = useCallback(
         (x: number, y: number) => {
             if (cards.length >= 78) return
@@ -67,6 +83,8 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         },
         [cards.length, append, setSelectedCardIndex]
     )
+
+    // ------------ PUBLIC API ------------ //
 
     return {
         form,

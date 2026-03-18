@@ -10,10 +10,12 @@ import type {
 } from '../types'
 import { ZOOM_MIN } from '../helpers/zoom'
 import {
-    normalizeRotationForStorage,
     reconcileContinuousRotations,
     resolveContinuousRotation,
-} from '../../../rotation'
+} from '../helpers/rotation'
+import {
+    normalizeRotationForStorage,
+} from '../../../_helpers/rotation'
 
 interface UseSpreadCanvasModelArgs {
     cards: ReadonlyArray<{ id: string }>
@@ -23,20 +25,39 @@ interface UseSpreadCanvasModelArgs {
         | undefined
 }
 
+// Keeps canvas-specific UI state in sync with the spread form. The form remains
+// the source of truth for persisted values, while this hook handles selection,
+// zoom display, and rotation behavior needed for smooth canvas interactions.
 export function useSpreadCanvasModel({
     cards,
     form,
     watchedPositions,
 }: UseSpreadCanvasModelArgs) {
+    // ------------ UI STATE ------------ //
+
+    // Imperative canvas methods are exposed through this ref so wrapper
+    // components can trigger zoom and reset actions from external controls.
     const canvasRef = useRef<SpreadCanvasHandle>(null)
+
+    // Selection and zoom display live outside the form because they are view
+    // concerns rather than persisted spread data.
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
     const [zoomDisplay, setZoomDisplay] = useState(1)
     const [minZoomDisplay, setMinZoomDisplay] = useState(ZOOM_MIN)
+
+    // Rotations are tracked by field-array id so a card keeps its continuous
+    // visual rotation even if cards are reordered or removed.
     const [cardRotations, setCardRotations] = useState<Record<string, number>>({})
     const cardRotationsRef = useRef<Record<string, number>>({})
 
+    // ------------ DERIVED CANVAS DATA ------------ //
+
+    // Stable keys from `useFieldArray` preserve card identity for React and GSAP
+    // as cards move through the list.
     const cardKeys = useMemo(() => cards.map(({ id }) => id), [cards])
 
+    // Convert partially watched form values into the simpler shape expected by
+    // the canvas render layer.
     const canvasCards = useMemo<CanvasCard[]>(
         () =>
             (watchedPositions ?? []).map((card) => ({
@@ -51,6 +72,8 @@ export function useSpreadCanvasModel({
         [watchedPositions]
     )
 
+    // Map id-based rotation state back into render order so each canvas card
+    // receives the right angle for its current index.
     const canvasRotationAngles = useMemo(
         () =>
             cards.map(
@@ -59,6 +82,11 @@ export function useSpreadCanvasModel({
         [canvasCards, cardRotations, cards]
     )
 
+    // ------------ EFFECTS ------------ //
+
+    // Reconcile stored rotations with the id-based rotation cache. This keeps
+    // rotation animation continuous across reorders while still storing a
+    // normalized angle in the form.
     useEffect(() => {
         const nextRotations = reconcileContinuousRotations(
             cardKeys,
@@ -80,6 +108,8 @@ export function useSpreadCanvasModel({
         setCardRotations(nextRotations)
     }, [cardKeys, watchedPositions])
 
+    // If a selected card is removed, clamp the selection to the new list size
+    // on the next frame so dependent UI never points past the end of the array.
     useEffect(() => {
         const frame = window.requestAnimationFrame(() => {
             setSelectedCardIndex((prev) => {
@@ -94,6 +124,11 @@ export function useSpreadCanvasModel({
         }
     }, [cards.length])
 
+    // ------------ FORM WRITE-BACKS ------------ //
+
+    // Update rotation from the card settings UI. We store a normalized 0-359
+    // value in the form, but keep a continuous angle in local state so repeated
+    // turns animate in the expected direction instead of snapping backward.
     const handleCardRotationChange = useCallback(
         (index: number, nextValue: number) => {
             const cardId = cards[index]?.id
@@ -122,6 +157,8 @@ export function useSpreadCanvasModel({
         [cards, form]
     )
 
+    // Commit drag results back into the form after the canvas finishes moving
+    // one or more cards.
     const handleCanvasPositionsCommit = useCallback(
         (updates: SpreadCanvasPositionUpdate[]) => {
             updates.forEach(({ index, x, y }) => {
@@ -131,6 +168,8 @@ export function useSpreadCanvasModel({
         },
         [form]
     )
+
+    // ------------ PUBLIC API ------------ //
 
     return {
         canvasRef,

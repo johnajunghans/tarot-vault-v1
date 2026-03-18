@@ -9,11 +9,11 @@ import {
     CARD_HEIGHT,
     CARD_WIDTH,
     GRID_SIZE,
-} from '../../../spread-layout'
+} from '../../../_helpers/layout'
 
 gsap.registerPlugin(Draggable)
 
-export { CARD_WIDTH, CARD_HEIGHT } from '../../../spread-layout'
+export { CARD_WIDTH, CARD_HEIGHT } from '../../../_helpers/layout'
 import { CardBack } from './card-back'
 
 const CORNER_R = 8

@@ -11,11 +11,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { normalizeRotationForStorage } from "../rotation";
-import { snapToGrid } from "../spread-layout";
+import { normalizeRotationForStorage } from "../_helpers/rotation";
+import { snapToGrid } from "../_helpers/layout";
 import {
-  ArrowDown01Icon,
-  ArrowUp01Icon,
   Cancel01Icon,
   Delete02Icon,
   LayerBringToFrontIcon,

@@ -22,7 +22,7 @@ import {
     clampPan,
 } from '../helpers/viewport'
 import { useLatestRef } from '@/hooks/use-latest-ref'
-import { CANVAS_CENTER } from '../../../spread-layout'
+import { CANVAS_CENTER } from '../../../_helpers/layout'
 import type {
     SpreadCanvasHandle,
     SpreadCanvasViewportRequest,

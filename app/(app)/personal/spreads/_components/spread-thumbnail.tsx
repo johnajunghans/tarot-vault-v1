@@ -1,5 +1,5 @@
 import { CardDB } from "@/types/spreads";
-import { calcSpreadDimensions, CARD_HEIGHT, CARD_WIDTH } from "../spread-layout";
+import { calcSpreadDimensions, CARD_HEIGHT, CARD_WIDTH } from "../_helpers/layout";
 
 interface SpreadThumbnailProps {
     width: number;

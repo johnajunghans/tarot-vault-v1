@@ -40,7 +40,7 @@ import {
     CARD_HEIGHT,
     CARD_WIDTH,
     GRID_SIZE,
-} from '../../spread-layout'
+} from '../../_helpers/layout'
 
 interface SpreadCanvasProps {
     cards: CanvasCard[]
