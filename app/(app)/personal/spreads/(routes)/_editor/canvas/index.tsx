@@ -31,7 +31,7 @@ import type {
 import { useTheme } from 'next-themes'
 import {
     getCenteredCardPlacement,
-} from './helpers/geometry'
+} from './lib/geometry'
 import {
     CANVAS_BOUNDS,
     CANVAS_HEIGHT,

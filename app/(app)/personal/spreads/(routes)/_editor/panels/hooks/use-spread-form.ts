@@ -3,7 +3,7 @@
 import { useCallback } from "react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { spreadSchema } from "../../../schema"
+import { spreadSchema } from "../schema"
 import type { SpreadForm } from "@/types/spreads"
 import {
     CANVAS_CENTER,
@@ -13,6 +13,7 @@ import {
     generateCardAt,
 } from "../../lib"
 import { useSpreadCanvasModel } from "../../canvas/hooks/use-canvas-model"
+import z from "zod"
 
 interface UseSpreadFormOptions {
     defaultValues?: SpreadForm

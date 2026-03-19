@@ -12,17 +12,17 @@ import {
     DEFAULT_ZOOM,
     getSteppedZoom,
     normalizeZoom,
-} from '../helpers/zoom'
+} from '../lib/zoom'
 import {
     getClampedPanForZoomAnchor,
     getMinZoomForViewport,
     clampPan,
-} from '../helpers/viewport/viewport'
+} from '../lib/viewport/viewport'
 import {
     resolveViewportRequest,
     shouldApplyViewportRequest,
-} from '../helpers/viewport/viewport-request'
-import { reconcileViewportBounds } from '../helpers/viewport/viewport-state'
+} from '../lib/viewport/viewport-request'
+import { reconcileViewportBounds } from '../lib/viewport/viewport-state'
 import { useLatestRef } from '@/hooks/use-latest-ref'
 import { useCanvasSpacePan } from './use-canvas-space-pan'
 import { useCanvasViewportGestures } from './use-canvas-viewport-gestures'

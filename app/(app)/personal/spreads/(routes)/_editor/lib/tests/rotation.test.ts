@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeRotationForStorage, ROTATION_STEP } from '../../lib'
+import { normalizeRotationForStorage, ROTATION_STEP } from '..'
 
 describe('normalizeRotationForStorage', () => {
     it('snaps to the nearest 45-degree increment', () => {

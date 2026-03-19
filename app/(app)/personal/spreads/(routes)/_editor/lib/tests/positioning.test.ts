@@ -9,7 +9,7 @@ import {
     CARD_SPACING_X, 
     CARD_SPACING_Y, 
     GRID_SIZE
-} from '../../lib'
+} from '..'
 
 describe('snapToGrid', () => {
     it('snaps to the nearest grid line', () => {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLatestRef } from '@/hooks/use-latest-ref'
-import { getSnappedClampedPosition } from '../helpers/geometry'
+import { getSnappedClampedPosition } from '../lib/geometry'
 import { CANVAS_BOUNDS, GRID_SIZE } from '../../lib'
 import type { CanvasCard } from '../types'
 import type { CanvasPoint, SpreadCanvasPositionUpdate } from '../types'

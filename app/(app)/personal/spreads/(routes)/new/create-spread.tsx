@@ -16,7 +16,7 @@ import {
     useSpreadDraft,
     mapPositionsForApi,
     SpreadEditorLayout,
-} from "../../_editor";
+} from "../_editor";
 
 interface CreateSpreadProps {
     defaultLayout: Layout | undefined

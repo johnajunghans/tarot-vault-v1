@@ -22,7 +22,7 @@ import {
     useSpreadEditor,
     mapPositionsForApi,
     SpreadEditorLayout,
-} from "../../_editor";
+} from "../_editor";
 
 interface SpreadDetailProps {
     spreadId: Id<"spreads">

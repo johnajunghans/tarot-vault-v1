@@ -10,8 +10,7 @@ export const cardSchema = z.object({
     z: z.number().min(0),
   })
   
-  // Form validation schema
- export const spreadSchema = z.object({
+export const spreadSchema = z.object({
     name: z.string().min(3).max(50),
     description: z.string().max(1000).optional(),
     positions: z.array(cardSchema)

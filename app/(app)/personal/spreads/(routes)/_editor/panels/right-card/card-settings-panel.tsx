@@ -10,7 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { normalizeRotationForStorage, snapToGrid } from "@spreads/_editor/lib";
+import { normalizeRotationForStorage, snapToGrid } from "@/app/(app)/personal/spreads/(routes)/_editor/lib";
 import {
   Cancel01Icon,
   Delete02Icon,

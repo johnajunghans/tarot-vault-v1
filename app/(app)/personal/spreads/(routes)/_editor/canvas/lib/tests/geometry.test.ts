@@ -7,7 +7,7 @@ import {
     projectVectorToEdge,
     rectsIntersect,
     snapToGrid,
-} from '../helpers/geometry'
+} from '../geometry'
 
 describe('geometry helpers', () => {
     it('snaps values to the configured grid size', () => {

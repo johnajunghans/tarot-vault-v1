@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { getRect } from '../helpers/geometry'
+import { getRect } from '../lib/geometry'
 import type { CanvasCard, CanvasGuide } from '../types'
 import { CARD_HEIGHT, CARD_WIDTH } from '../../lib'
 
