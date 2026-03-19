@@ -5,7 +5,7 @@ import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import SpreadCard from "./_components/list/spread-card"
+import SpreadCard from "./_list/components/spread-card"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CardDB, SpreadDB, SpreadDraft } from "@/types/spreads"
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { PlusSignIcon } from "hugeicons-react"
 import { routes } from "@/lib/routes"
 import { useLayoutDispatch } from "@/components/providers/layout-provider"
-import SpreadsToolbar, { type SpreadFilter } from "./_components/list/spreads-toolbar"
+import SpreadsToolbar, { type SpreadFilter } from "./_list/components/spreads-toolbar"
 
 type SpreadListItem =
     | {
