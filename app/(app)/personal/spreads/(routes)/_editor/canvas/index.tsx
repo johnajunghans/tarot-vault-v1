@@ -7,8 +7,10 @@ import {
     useImperativeHandle,
     useMemo,
     useRef,
+    useState,
 } from 'react'
 import SpreadCard from './components/card'
+import CardButtonFrame from './components/card-button-frame'
 import CanvasBackground from './components/background'
 import CanvasDefs from './components/defs'
 import CanvasEmptyPrompt from './components/empty-prompt'
@@ -29,6 +31,7 @@ import type {
     SpreadCanvasViewportRequest,
 } from './types'
 import { useTheme } from 'next-themes'
+import { useIsMobile } from '@/hooks/use-mobile'
 import {
     getCenteredCardPlacement,
 } from './lib/geometry'
@@ -39,6 +42,10 @@ import {
     CARD_HEIGHT,
     CARD_WIDTH,
     GRID_SIZE,
+    getNextKeyAngle,
+    clampLayer,
+    getLayersWithFrontCard,
+    getLayersWithBackCard,
 } from '../lib'
 
 interface SpreadCanvasProps {
@@ -49,6 +56,8 @@ interface SpreadCanvasProps {
     onCardSelect: (index: number | null) => void
     onCanvasDoubleClick?: (x: number, y: number) => void
     onPositionsCommit?: (updates: SpreadCanvasPositionUpdate[]) => void
+    onRotationChange?: (index: number, value: number) => void
+    onLayerChange?: (updates: { index: number; z: number }[]) => void
     onZoomDisplayChange?: (zoom: number) => void
     onZoomBoundsChange?: (minZoom: number) => void
     isViewMode?: boolean
@@ -67,6 +76,8 @@ function SpreadCanvasComponent(
         onCardSelect,
         onCanvasDoubleClick,
         onPositionsCommit,
+        onRotationChange,
+        onLayerChange,
         onZoomDisplayChange,
         onZoomBoundsChange,
         isViewMode = false,
@@ -79,6 +90,7 @@ function SpreadCanvasComponent(
     // The raw SVG element is needed to convert pointer coordinates into the
     // current SVG coordinate space.
     const svgRef = useRef<SVGSVGElement>(null)
+    const isMobile = useIsMobile()
     const { resolvedTheme } = useTheme()
 
     // Theme values are collected in one memoized object so child components can
@@ -226,6 +238,72 @@ function SpreadCanvasComponent(
         zoom,
     })
 
+    // ------------ CARD BUTTON FRAME ------------ //
+
+    const [hoveredCardIndex, setHoveredCardIndex] = useState<number | null>(null)
+
+    const showButtonFrame =
+        hoveredCardIndex !== null &&
+        !isMobile &&
+        !isViewMode &&
+        dragging === null
+
+    const handleCardMouseEnter = useCallback(
+        (index: number) => setHoveredCardIndex(index),
+        []
+    )
+
+    const handleCardMouseLeave = useCallback(
+        () => setHoveredCardIndex(null),
+        []
+    )
+
+    const handleRotateStep = useCallback(
+        (index: number, direction: 1 | -1) => {
+            if (!onRotationChange) return
+            const currentAngle = rotationAngles?.[index] ?? effectiveCards[index]?.r ?? 0
+            onRotationChange(index, getNextKeyAngle(currentAngle, direction))
+        },
+        [onRotationChange, rotationAngles, effectiveCards]
+    )
+
+    const handleButtonRotationChange = useCallback(
+        (index: number, value: number) => {
+            onRotationChange?.(index, value)
+        },
+        [onRotationChange]
+    )
+
+    const handleBringToFront = useCallback(
+        (index: number) => {
+            if (!onLayerChange) return
+            const layers = effectiveCards.map((c) => clampLayer(c.z))
+            const next = getLayersWithFrontCard(layers, index)
+            onLayerChange(next.map((z, i) => ({ index: i, z })))
+        },
+        [onLayerChange, effectiveCards]
+    )
+
+    const handleSendToBack = useCallback(
+        (index: number) => {
+            if (!onLayerChange) return
+            const layers = effectiveCards.map((c) => clampLayer(c.z))
+            const next = getLayersWithBackCard(layers, index)
+            onLayerChange(next.map((z, i) => ({ index: i, z })))
+        },
+        [onLayerChange, effectiveCards]
+    )
+
+    const hoveredCard = hoveredCardIndex !== null ? effectiveCards[hoveredCardIndex] : null
+    const buttonFrameLayerInfo = useMemo(() => {
+        if (hoveredCardIndex === null) return { isAtFront: true, isAtBack: true }
+        const layers = effectiveCards.map((c) => clampLayer(c.z))
+        const hovered = layers[hoveredCardIndex] ?? 0
+        const max = layers.length > 0 ? Math.max(...layers) : 0
+        const min = layers.length > 0 ? Math.min(...layers) : 0
+        return { isAtFront: hovered >= max, isAtBack: hovered <= min }
+    }, [hoveredCardIndex, effectiveCards])
+
     // ------------ RENDER ------------ //
 
     return (
@@ -317,11 +395,37 @@ function SpreadCanvasComponent(
                                         onDragEnd={handleDragEnd}
                                         onDrag={handleDrag}
                                         onClick={handleCardClick}
+                                        onMouseEnter={
+                                            !isMobile && !isViewMode
+                                                ? handleCardMouseEnter
+                                                : undefined
+                                        }
+                                        onMouseLeave={
+                                            !isMobile && !isViewMode
+                                                ? handleCardMouseLeave
+                                                : undefined
+                                        }
                                         registerRef={registerCardRef}
                                     />
                                 )
                             })}
                         </g>
+
+                        {/* Button frame overlay — always above all cards. */}
+                        {showButtonFrame && hoveredCard && (
+                            <CardButtonFrame
+                                card={hoveredCard}
+                                cardIndex={hoveredCardIndex}
+                                zoom={zoom}
+                                totalCards={effectiveCards.length}
+                                onRotateStep={handleRotateStep}
+                                onRotationChange={handleButtonRotationChange}
+                                onBringToFront={handleBringToFront}
+                                onSendToBack={handleSendToBack}
+                                isAtFront={buttonFrameLayerInfo.isAtFront}
+                                isAtBack={buttonFrameLayerInfo.isAtBack}
+                            />
+                        )}
 
                         {/* Marquee rectangle sits above the card/content layers. */}
                         <CanvasMarquee rect={marqueeRect} />

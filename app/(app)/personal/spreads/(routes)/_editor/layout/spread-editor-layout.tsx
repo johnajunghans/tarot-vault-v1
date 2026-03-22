@@ -1,5 +1,6 @@
 "use client"
 
+import { useCallback } from "react"
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { type Layout } from "react-resizable-panels"
 import { FormProvider } from "react-hook-form"
@@ -58,6 +59,15 @@ export default function SpreadEditorLayout({
         resetZoom,
     } = editor
 
+    const handleCanvasLayerChange = useCallback(
+        (updates: { index: number; z: number }[]) => {
+            updates.forEach(({ index, z }) => {
+                form.setValue(`positions.${index}.z`, z, { shouldDirty: true })
+            })
+        },
+        [form]
+    )
+
     return (
         <div className="relative h-full min-h-0 overflow-hidden">
             <FormProvider {...form}>
@@ -71,6 +81,8 @@ export default function SpreadEditorLayout({
                     onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
                     isViewMode={isViewMode}
                     onPositionsCommit={handleCanvasPositionsCommit}
+                    onRotationChange={handleCardRotationChange}
+                    onLayerChange={handleCanvasLayerChange}
                     onZoomDisplayChange={setZoomDisplay}
                     onZoomBoundsChange={setMinZoomDisplay}
                     viewportRequest={viewportRequest}

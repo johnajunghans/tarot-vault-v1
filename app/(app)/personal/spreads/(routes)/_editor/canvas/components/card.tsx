@@ -98,6 +98,8 @@ interface CanvasCardProps {
     onDragEnd: (index: number, x: number, y: number) => void
     onDrag: (index: number, x: number, y: number) => void
     onClick: (index: number) => void
+    onMouseEnter?: (index: number) => void
+    onMouseLeave?: (index: number) => void
     registerRef: (index: number, el: SVGGElement | null) => void
 }
 
@@ -114,6 +116,8 @@ function CanvasCard({
     onDragEnd,
     onDrag,
     onClick,
+    onMouseEnter,
+    onMouseLeave,
     registerRef,
 }: CanvasCardProps) {
     const [isDraggingState, setIsDraggingState] = useState(false)
@@ -255,6 +259,8 @@ function CanvasCard({
             ref={groupRef}
             data-spread-card-interactive="true"
             onClick={isViewMode ? () => onClick(index) : undefined}
+            onMouseEnter={onMouseEnter ? () => onMouseEnter(index) : undefined}
+            onMouseLeave={onMouseLeave ? () => onMouseLeave(index) : undefined}
             style={{ cursor: 'pointer' }}
         >
             <g
@@ -363,6 +369,8 @@ function arePropsEqual(prev: CanvasCardProps, next: CanvasCardProps): boolean {
         prev.onDragEnd === next.onDragEnd &&
         prev.onDrag === next.onDrag &&
         prev.onClick === next.onClick &&
+        prev.onMouseEnter === next.onMouseEnter &&
+        prev.onMouseLeave === next.onMouseLeave &&
         prev.registerRef === next.registerRef
     )
 }

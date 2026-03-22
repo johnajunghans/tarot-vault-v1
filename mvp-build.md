@@ -33,6 +33,28 @@ Future considerations/recommendations/warnings
 ## 0.2_Recent_Entries
 *For context about what has recently been done. Most recent at the top.*
 
+**03/22/2026 -- 1.4.7 -- Claude Opus 4.6**
+Summary of actions taken:
+- Created `CardButtonFrame` component (`canvas/components/card-button-frame.tsx`) — single shared SVG overlay rendered above all cards, positioned at hovered card's coordinates
+	- Top-left/right: 45-degree step rotation buttons (RotateLeft01Icon/RotateRight01Icon) with snap-to-next-key-angle logic
+	- Top-center: continuous rotation drag handle (Rotate01Icon) with pointer capture, angle tooltip during drag, and snap-to-key-angle within configurable threshold (5deg)
+	- Bottom-center: send-to-back/bring-to-front layer buttons (only visible when >1 card), with disabled state when already at front/back
+- Button frame is desktop-only (gated by `useIsMobile`), hover-triggered, hidden during active drag, non-rotating (positioned at card translation, not inside rotation group), and fixed screen-size via `scale(1/zoom)` per button anchor
+- GSAP entrance animation on mount — buttons scale from 0.7 with opacity fade-in, 120ms with 20ms stagger
+- Updated `rotation.ts`: `normalizeRotationForStorage` now rounds to integer and wraps to [0, 359] without 45-degree snapping; added `KEY_ANGLES`, `SNAP_THRESHOLD`, `getNextKeyAngle()`, `snapToKeyAngle()` helpers
+- Updated Zod schema `r` max from 315 to 359; Convex `spreadPositionValidator` uses `v.number()` so no backend change needed
+- Extracted `clampLayer`, `getLayersWithFrontCard`, `getLayersWithBackCard` from `card-settings-panel.tsx` to shared `_editor/lib/layering.ts`; both canvas and panel import from shared lib
+- Added `onRotationChange` and `onLayerChange` callback props to `SpreadCanvas`; wired through `spread-editor-layout.tsx` to `handleCardRotationChange` and a new `handleCanvasLayerChange`
+- Added `onMouseEnter`/`onMouseLeave` optional props to canvas card component; canvas tracks `hoveredCardIndex` state
+- Card settings panel: placement section (x, y, rotation, layer) is now collapsed by default with ArrowRight01/ArrowDown01 toggle; rotation input step changed from 45 to 1
+- Tests: rewrote rotation tests for new behavior (17 tests); added layering tests (10 tests); all 160 tests pass
+
+Future considerations/recommendations/warnings
+- The continuous rotation drag sensitivity (`ROTATION_SENSITIVITY = 1.2`) may need tuning after manual testing — adjust the constant in `card-button-frame.tsx`
+- `foreignObject` is used to embed hugeicons inside SVG — some older browsers have quirks with `foreignObject` rendering; if icon rendering is unreliable, consider switching to raw SVG path icons
+- The hover-to-show pattern means buttons flash briefly when moving the mouse quickly across cards — could add a small delay (50-100ms) before showing if this feels jittery
+- Manual testing recommended: rotation buttons at various zoom levels, continuous rotation with snapping, layer buttons updating card stacking order, button frame positioning on rotated cards, collapsible placement section toggle
+
 **03/16/2026 -- Custom Canvas Scrollbars -- Claude Opus 4.6**
 Summary of actions taken:
 - Created `CanvasScrollbars` component (`_components/canvas/components/scrollbars.tsx`) — macOS-style overlay scrollbar thumbs for horizontal and vertical axes
@@ -161,3 +183,22 @@ Audited all spreads route files. Created shared `useSpreadForm` hook to DRY up d
 ### ~~1.4.6_ViewBox-Based Zoom~~ ~~Complete~~
 Replaced CSS `scale()` zoom with dynamic SVG `viewBox`-based zoom/pan. SVG fills container with `width="100%" height="100%"` and a dynamic `viewBox` that acts as a movable window into the canvas. Eliminated native scroll in favor of wheel/touch/spacebar pan via viewBox origin manipulation. Simplified viewport commit system. GSAP Draggable and `clientToSVG()` work unchanged since `getScreenCTM()` includes viewBox transforms. Card component required no changes.
 
+### 1.4.7_Canvas Card Buttons
+1. The purpose of this task is to create helper buttons on the canvas cards themselves to make rotation and z-index changes more accessible. Here are the following buttons that should be added to the canvas cards. Here are the buttons:
+	1. RotateTopLeftIcon and RotateTopRightIcon in top left and right which rotate in increments of 45 degrees. 
+		1. Should go to key values first (e.g. if card is at 25deg, rotate right button should go to 45 degrees and rotate left should go to 0)
+	2. Rotate01Icon in top middle which allows for continuous, smooth rotate when clicked and held
+		1. Dragging up or left rotates clockwise
+		2. Dragging down or right rotates counterclockwise
+		3. Should snap to key values (0, 45, 90, 135, 180, 225, 270, and 315) when within 5 degrees of the value on either side (create a variable for this 5 deg amount for easy tweaking if needed)
+	3. SendToBackIcon/BringToFrontIcon button group in bottom middle
+		1. Should only appear when there is more than one card in the reading
+2. Concurrent with the addition of these helper buttons on the canvas card, I would like to make some small changes to the card-settings-form:
+	1. Make the entire placement section hidden by default. This is to reduce the initial visible complexity when a user is new and creating their first spread. This section should be able to be revealed on click with clear show/hide buttons.
+	2. Alter rotation input to allow for all integers from 0-359 (360 loops back to 0)
+3. Final Specifications
+	1. The canvas card buttons should be structured inline with an invisible rect that is slightly larger than the card rect itself. Importantly, this button frame should NOT rotate as the card rotates. For example, if a card is rotated (either with these card buttons or in card settings panel), the frame with buttons should remain upright. If the frame did rotate, it would make for very frustrating UI. 
+	2. The canvas card buttons should remain fixed in size as the canvas zooms. This ideally should be a lightweight solution rather than a complex increase/decrease in size to maintain a relatively fixed button size. 
+	3. IMPORTANT: These buttons should NOT be present in mobile, only desktop. 
+	4. IMPORTANT: These buttons should be revealed on HOVER.
+	5. These buttons should be layered above all other cards. This is to prevent a card with higher layering to overlap another card's buttons, requiring the user to move the card in order to use the buttons rendering them effectively useless as quick, convenient buttons. Similarly, buttons need to be carefully structured so that they consume the click event rather than a card that is underneath.

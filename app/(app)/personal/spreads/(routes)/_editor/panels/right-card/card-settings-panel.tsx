@@ -10,8 +10,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { normalizeRotationForStorage, snapToGrid } from "@/app/(app)/personal/spreads/(routes)/_editor/lib";
+import { normalizeRotationForStorage, snapToGrid, clampLayer, getLayersWithFrontCard, getLayersWithBackCard } from "@/app/(app)/personal/spreads/(routes)/_editor/lib";
 import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
   Cancel01Icon,
   Delete02Icon,
   LayerBringToFrontIcon,
@@ -29,33 +31,6 @@ import { ResponsivePanel } from "@/app/(app)/_components/responsive-panel";
 import ConfirmDialog from "@/app/_components/confirm-dialog";
 
 const TOOLTIP_DELAY = 500;
-
-function clampLayer(value: number): number {
-  return Math.max(0, Math.round(value));
-}
-
-function getLayersWithFrontCard(layers: number[], selectedIndex: number): number[] {
-  const maxLayer = layers.reduce((max, layer) => Math.max(max, layer), 0);
-  const nextLayers = [...layers];
-  nextLayers[selectedIndex] = maxLayer + 1;
-  return nextLayers;
-}
-
-function getLayersWithBackCard(layers: number[], selectedIndex: number): number[] {
-  if (layers.length === 0) return layers;
-
-  const minLayer = layers.reduce((min, layer) => Math.min(min, layer), layers[0] ?? 0);
-  const nextLayers = [...layers];
-
-  if (minLayer > 0) {
-    nextLayers[selectedIndex] = minLayer - 1;
-    return nextLayers;
-  }
-
-  return nextLayers.map((layer, index) =>
-    index === selectedIndex ? 0 : layer + 1
-  );
-}
 
 // ------------ Read-Only Content Component ------------ //
 
@@ -154,6 +129,7 @@ export function CardSettingsContent({
     });
     const selectedCard = selectedCardIndex !== null ? cards[selectedCardIndex] : null
     const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+    const [placementOpen, setPlacementOpen] = useState(false);
     const layers = useMemo(
       () => (positions ?? []).map((card) => clampLayer(card.z ?? 0)),
       [positions]
@@ -273,119 +249,133 @@ export function CardSettingsContent({
           <FieldSeparator />
 
           <div>
-            <span className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-medium mb-3 block">Placement</span>
-            <FieldSet>
-              <FieldGroup className="gap-2">
-                <Controller
-                  name={`positions.${selectedCardIndex}.x`}
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <NumberField
-                      label="Horizontal"
-                      id={field.name}
-                      value={field.value}
-                      onChangeValue={field.onChange}
-                      onBlurTransform={snapToGrid}
-                      onBlur={field.onBlur}
-                      step={15}
-                      min={0}
-                      error={fieldState.error}
-                      showStepper={!isMobile}
-                    />
-                  )}
-                />
-                <Controller
-                  name={`positions.${selectedCardIndex}.y`}
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <NumberField
-                      label="Vertical"
-                      id={field.name}
-                      value={field.value}
-                      onChangeValue={field.onChange}
-                      onBlurTransform={snapToGrid}
-                      onBlur={field.onBlur}
-                      step={15}
-                      min={0}
-                      error={fieldState.error}
-                      showStepper={!isMobile}
-                    />
-                  )}
-                />
-              </FieldGroup>
+            <button
+              type="button"
+              className="flex w-full items-center gap-1.5 text-[11px] text-muted-foreground/60 uppercase tracking-wider font-medium mb-1 hover:text-muted-foreground transition-colors"
+              onClick={() => setPlacementOpen((prev) => !prev)}
+            >
+              {placementOpen ? (
+                <ArrowDown01Icon className="w-3.5 h-3.5" />
+              ) : (
+                <ArrowRight01Icon className="w-3.5 h-3.5" />
+              )}
+              Placement
+            </button>
 
-              <FieldGroup className="gap-2">
-                <Controller
-                  name={`positions.${selectedCardIndex}.r`}
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <NumberField
-                      label="Rotation"
-                      id={field.name}
-                      value={field.value}
-                      onChangeValue={(value) => onRotationChange(selectedCardIndex, value)}
-                      onBlurTransform={normalizeRotationForStorage}
-                      onBlur={field.onBlur}
-                      step={45}
-                      error={fieldState.error}
-                      showStepper={!isMobile}
-                    />
-                  )}
-                />
-                <Controller
-                  name={`positions.${selectedCardIndex}.z`}
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <NumberField
-                      label="Layer"
-                      id={field.name}
-                      value={field.value}
-                      onChangeValue={(value) => field.onChange(clampLayer(value))}
-                      onBlurTransform={clampLayer}
-                      onBlur={field.onBlur}
-                      step={1}
-                      min={0}
-                      error={fieldState.error}
-                      showStepper={!isMobile}
-                      trailingControls={
-                        <ButtonGroup>
-                          <Tooltip delay={TOOLTIP_DELAY}>
-                            <Button
-                              render={<TooltipTrigger />}
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              aria-label="Move position to back"
-                              aria-disabled={isAtBack || undefined}
-                              className="aria-disabled:opacity-50"
-                              onClick={handleMoveToBack}
-                            >
-                              <LayerSendToBackIcon />
-                            </Button>
-                            <TooltipContent>Move to Back</TooltipContent>
-                          </Tooltip>
-                          <Tooltip delay={TOOLTIP_DELAY}>
-                            <Button
-                              render={<TooltipTrigger />}
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              aria-label="Bring position to front"
-                              aria-disabled={isAtFront || undefined}
-                              className="aria-disabled:opacity-50"
-                              onClick={handleBringToFront}
-                            >
-                              <LayerBringToFrontIcon />
-                            </Button>
-                            <TooltipContent>Bring to Front</TooltipContent>
-                          </Tooltip>
-                        </ButtonGroup>
-                      }
-                    />
-                  )}
-                />
-              </FieldGroup>
-            </FieldSet>
+            {placementOpen && (
+              <FieldSet className="mt-2">
+                <FieldGroup className="gap-2">
+                  <Controller
+                    name={`positions.${selectedCardIndex}.x`}
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <NumberField
+                        label="Horizontal"
+                        id={field.name}
+                        value={field.value}
+                        onChangeValue={field.onChange}
+                        onBlurTransform={snapToGrid}
+                        onBlur={field.onBlur}
+                        step={15}
+                        min={0}
+                        error={fieldState.error}
+                        showStepper={!isMobile}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name={`positions.${selectedCardIndex}.y`}
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <NumberField
+                        label="Vertical"
+                        id={field.name}
+                        value={field.value}
+                        onChangeValue={field.onChange}
+                        onBlurTransform={snapToGrid}
+                        onBlur={field.onBlur}
+                        step={15}
+                        min={0}
+                        error={fieldState.error}
+                        showStepper={!isMobile}
+                      />
+                    )}
+                  />
+                </FieldGroup>
+
+                <FieldGroup className="gap-2">
+                  <Controller
+                    name={`positions.${selectedCardIndex}.r`}
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <NumberField
+                        label="Rotation"
+                        id={field.name}
+                        value={field.value}
+                        onChangeValue={(value) => onRotationChange(selectedCardIndex, value)}
+                        onBlurTransform={normalizeRotationForStorage}
+                        onBlur={field.onBlur}
+                        step={1}
+                        error={fieldState.error}
+                        showStepper={!isMobile}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name={`positions.${selectedCardIndex}.z`}
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <NumberField
+                        label="Layer"
+                        id={field.name}
+                        value={field.value}
+                        onChangeValue={(value) => field.onChange(clampLayer(value))}
+                        onBlurTransform={clampLayer}
+                        onBlur={field.onBlur}
+                        step={1}
+                        min={0}
+                        error={fieldState.error}
+                        showStepper={!isMobile}
+                        trailingControls={
+                          <ButtonGroup>
+                            <Tooltip delay={TOOLTIP_DELAY}>
+                              <Button
+                                render={<TooltipTrigger />}
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                aria-label="Move position to back"
+                                aria-disabled={isAtBack || undefined}
+                                className="aria-disabled:opacity-50"
+                                onClick={handleMoveToBack}
+                              >
+                                <LayerSendToBackIcon />
+                              </Button>
+                              <TooltipContent>Move to Back</TooltipContent>
+                            </Tooltip>
+                            <Tooltip delay={TOOLTIP_DELAY}>
+                              <Button
+                                render={<TooltipTrigger />}
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                aria-label="Bring position to front"
+                                aria-disabled={isAtFront || undefined}
+                                className="aria-disabled:opacity-50"
+                                onClick={handleBringToFront}
+                              >
+                                <LayerBringToFrontIcon />
+                              </Button>
+                              <TooltipContent>Bring to Front</TooltipContent>
+                            </Tooltip>
+                          </ButtonGroup>
+                        }
+                      />
+                    )}
+                  />
+                </FieldGroup>
+              </FieldSet>
+            )}
           </div>
 
           <FieldSeparator />

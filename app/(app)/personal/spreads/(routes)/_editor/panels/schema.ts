@@ -6,7 +6,7 @@ export const cardSchema = z.object({
     allowReverse: z.boolean().optional(),
     x: z.number(),
     y: z.number(),
-    r: z.number().min(0).max(315),
+    r: z.number().min(0).max(359),
     z: z.number().min(0),
   })
   
