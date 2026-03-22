@@ -241,6 +241,7 @@ function SpreadCanvasComponent(
     // ------------ CARD BUTTON FRAME ------------ //
 
     const [hoveredCardIndex, setHoveredCardIndex] = useState<number | null>(null)
+    const hoverLeaveTimeoutRef = useRef<number | null>(null)
 
     const showButtonFrame =
         hoveredCardIndex !== null &&
@@ -248,15 +249,43 @@ function SpreadCanvasComponent(
         !isViewMode &&
         dragging === null
 
+    const cancelHoverLeaveTimeout = useCallback(() => {
+        if (hoverLeaveTimeoutRef.current !== null) {
+            window.clearTimeout(hoverLeaveTimeoutRef.current)
+            hoverLeaveTimeoutRef.current = null
+        }
+    }, [])
+
     const handleCardMouseEnter = useCallback(
-        (index: number) => setHoveredCardIndex(index),
-        []
+        (index: number) => {
+            cancelHoverLeaveTimeout()
+            setHoveredCardIndex(index)
+        },
+        [cancelHoverLeaveTimeout]
     )
 
     const handleCardMouseLeave = useCallback(
-        () => setHoveredCardIndex(null),
-        []
+        () => {
+            cancelHoverLeaveTimeout()
+            hoverLeaveTimeoutRef.current = window.setTimeout(() => {
+                setHoveredCardIndex(null)
+                hoverLeaveTimeoutRef.current = null
+            }, 120)
+        },
+        [cancelHoverLeaveTimeout]
     )
+
+    const handleButtonFrameMouseEnter = useCallback(() => {
+        cancelHoverLeaveTimeout()
+    }, [cancelHoverLeaveTimeout])
+
+    const handleButtonFrameMouseLeave = useCallback(() => {
+        cancelHoverLeaveTimeout()
+        hoverLeaveTimeoutRef.current = window.setTimeout(() => {
+            setHoveredCardIndex(null)
+            hoverLeaveTimeoutRef.current = null
+        }, 120)
+    }, [cancelHoverLeaveTimeout])
 
     const handleRotateStep = useCallback(
         (index: number, direction: 1 | -1) => {
@@ -424,6 +453,8 @@ function SpreadCanvasComponent(
                                 onSendToBack={handleSendToBack}
                                 isAtFront={buttonFrameLayerInfo.isAtFront}
                                 isAtBack={buttonFrameLayerInfo.isAtBack}
+                                onFrameMouseEnter={handleButtonFrameMouseEnter}
+                                onFrameMouseLeave={handleButtonFrameMouseLeave}
                             />
                         )}
 

@@ -30,6 +30,8 @@ interface CardButtonFrameProps {
     onSendToBack: (index: number) => void
     isAtFront: boolean
     isAtBack: boolean
+    onFrameMouseEnter: () => void
+    onFrameMouseLeave: () => void
 }
 
 function SvgIconButton({
@@ -105,6 +107,8 @@ function CardButtonFrame({
     onSendToBack,
     isAtFront,
     isAtBack,
+    onFrameMouseEnter,
+    onFrameMouseLeave,
 }: CardButtonFrameProps) {
     const rootRef = useRef<SVGGElement>(null)
     const tooltipRef = useRef<SVGGElement>(null)
@@ -194,6 +198,8 @@ function CardButtonFrame({
             ref={rootRef}
             transform={`translate(${card.x}, ${card.y})`}
             style={{ pointerEvents: 'none' }}
+            onMouseEnter={onFrameMouseEnter}
+            onMouseLeave={onFrameMouseLeave}
         >
             {/* Top-left: Rotate CCW */}
             <g data-btn transform={`translate(${leftX}, ${topY}) scale(${scale})`}>
