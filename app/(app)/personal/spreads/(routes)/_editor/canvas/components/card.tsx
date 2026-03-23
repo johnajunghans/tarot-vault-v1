@@ -18,6 +18,7 @@ export { CARD_WIDTH, CARD_HEIGHT } from '../../lib'
 import { CardBack } from './card-back'
 
 const CORNER_R = 8
+const FULL_ROTATION = 360
 
 function getCardNameFontSize(name: string): number {
     const length = name.trim().length
@@ -84,6 +85,10 @@ function splitCardNameIntoLines(name: string): string[] {
     return lines
 }
 
+function normalizeRotationForDisplay(rotation: number): number {
+    return ((rotation % FULL_ROTATION) + FULL_ROTATION) % FULL_ROTATION
+}
+
 import type { CanvasCard } from '../types'
 
 interface CanvasCardProps {
@@ -145,7 +150,6 @@ function CanvasCard({
                     svgOrigin: '15 15',
                 })
             }
-
             if (isViewMode) return
 
             const [instance] = Draggable.create(group, {
@@ -222,7 +226,6 @@ function CanvasCard({
                 overwrite: true,
             })
         }
-
         if (badgeRef.current) {
             gsap.to(badgeRef.current, {
                 rotation: -renderRotation,
@@ -247,6 +250,17 @@ function CanvasCard({
     const displayName = hasCardName ? cardName : 'Untitled'
     const cardNameFontSize = getCardNameFontSize(displayName)
     const cardNameLines = splitCardNameIntoLines(displayName)
+    const normalizedRenderRotation = normalizeRotationForDisplay(renderRotation)
+    const shouldFlipCardName =
+        normalizedRenderRotation > 90 && normalizedRenderRotation < 270
+    const cardNameLineHeight = cardNameFontSize * 1.05
+    const cardNameBaseY =
+        CARD_HEIGHT - (cardNameLines.length === 1 ? 24 : 31)
+    const cardNameCenterY =
+        cardNameBaseY + ((cardNameLines.length - 1) * cardNameLineHeight) / 2
+    const cardNameTransform = shouldFlipCardName
+        ? `rotate(180 ${CARD_WIDTH / 2} ${cardNameCenterY})`
+        : undefined
     const shadowFilter = disableHeavyEffects
         ? undefined
         : isActiveDrag
@@ -326,37 +340,33 @@ function CanvasCard({
                     </g>
 
                     {cardNameLines.length > 0 && (
-                        <text
-                            x={CARD_WIDTH / 2}
-                            y={
-                                CARD_HEIGHT -
-                                (cardNameLines.length === 1 ? 24 : 31)
-                            }
-                            textAnchor="middle"
-                            fill="var(--foreground)"
-                            fillOpacity={hasCardName ? 0.78 : 0.48}
-                            fontSize={cardNameFontSize}
-                            fontStyle={hasCardName ? undefined : 'italic'}
-                            fontWeight={hasCardName ? 600 : 500}
-                            style={{
-                                pointerEvents: 'none',
-                                userSelect: 'none',
-                            }}
-                        >
+                        <g transform={cardNameTransform}>
                             {cardNameLines.map((line, lineIndex) => (
-                                <tspan
+                                <text
                                     key={`${index}-name-${lineIndex}`}
                                     x={CARD_WIDTH / 2}
-                                    dy={
-                                        lineIndex === 0
-                                            ? 0
-                                            : cardNameFontSize * 1.05
+                                    y={
+                                        cardNameCenterY +
+                                        (lineIndex -
+                                            (cardNameLines.length - 1) / 2) *
+                                            cardNameLineHeight
                                     }
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    fill="var(--foreground)"
+                                    fillOpacity={hasCardName ? 0.78 : 0.48}
+                                    fontSize={cardNameFontSize}
+                                    fontStyle={hasCardName ? undefined : 'italic'}
+                                    fontWeight={hasCardName ? 600 : 500}
+                                    style={{
+                                        pointerEvents: 'none',
+                                        userSelect: 'none',
+                                    }}
                                 >
                                     {line}
-                                </tspan>
+                                </text>
                             ))}
-                        </text>
+                        </g>
                     )}
                 </g>
             </g>

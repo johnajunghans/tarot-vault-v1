@@ -7,7 +7,7 @@ export const CARD_HEIGHT = 150
 // Axis-aligned padding around the card face in SVG space for drag + toolbar hover
 // hit-testing (matches the invisible rect in `card.tsx`). Must cover the top-left
 // toolbar (see `BUTTON_OFFSET` + `BUTTON_R` in `card-button-frame.tsx`).
-export const CARD_HOVER_HIT_PADDING = 20
+export const CARD_HOVER_HIT_PADDING = 25
 
 // Canvas interactions snap to this unit so dragging and manual edits align.
 export const GRID_SIZE = 15
