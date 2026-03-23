@@ -347,6 +347,10 @@ function SpreadCanvasComponent(
                                         renderRotation={
                                             rotationAngles?.[index] ?? card.r
                                         }
+                                        isButtonHoverActive={
+                                            showButtonFrame &&
+                                            hoveredCardIndex === index
+                                        }
                                         selected={index === selectedCardIndex}
                                         groupSelected={
                                             isViewMode

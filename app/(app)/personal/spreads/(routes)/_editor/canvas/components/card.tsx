@@ -95,6 +95,7 @@ interface CanvasCardProps {
     card: CanvasCard
     index: number
     renderRotation: number
+    isButtonHoverActive: boolean
     selected: boolean
     groupSelected: boolean
     isDraggingInGroup: boolean
@@ -112,6 +113,7 @@ function CanvasCard({
     card,
     index,
     renderRotation,
+    isButtonHoverActive,
     selected,
     groupSelected,
     isDraggingInGroup,
@@ -310,6 +312,26 @@ function CanvasCard({
                         />
                     )}
 
+                    {isButtonHoverActive && (
+                        <>
+                            <rect
+                                x={-5}
+                                y={-5}
+                                width={CARD_WIDTH + 10}
+                                height={CARD_HEIGHT + 10}
+                                rx={CORNER_R + 3}
+                                fill="none"
+                                stroke="var(--gold)"
+                                strokeOpacity={0.16}
+                                strokeWidth={1}
+                                style={{
+                                    pointerEvents: 'none',
+                                    transition: 'stroke-opacity 140ms ease',
+                                }}
+                            />
+                        </>
+                    )}
+
                     <CardBack
                         selected={selected}
                         groupSelected={groupSelected}
@@ -379,6 +401,7 @@ function arePropsEqual(prev: CanvasCardProps, next: CanvasCardProps): boolean {
         prev.card === next.card &&
         prev.index === next.index &&
         prev.renderRotation === next.renderRotation &&
+        prev.isButtonHoverActive === next.isButtonHoverActive &&
         prev.selected === next.selected &&
         prev.groupSelected === next.groupSelected &&
         prev.isDraggingInGroup === next.isDraggingInGroup &&
