@@ -1,37 +1,69 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { PointerEvent } from 'react'
 import {
+    CARD_HEIGHT,
+    CARD_HOVER_HIT_PADDING,
+    CARD_WIDTH,
     clampLayer,
     getLayersWithBackCard,
     getLayersWithFrontCard,
     getNextKeyAngle,
 } from '../../lib'
+import {
+    pickCardIndexForToolbarHoverDefault,
+    pointInAxisAlignedCardPadding,
+} from '../lib/card-hover-hit'
 import type { CanvasCard } from '../types'
+import {
+    getBaseSortedCards,
+    getLayeredCardIndices,
+} from './use-canvas-card-layering'
 
 interface UseCanvasCardButtonsParams {
     effectiveCards: CanvasCard[]
     rotationAngles?: number[]
     draggingIndex: number | null
+    selectedCardIndex: number | null
     isMobile: boolean
     isViewMode: boolean
+    clientToSVG: (clientX: number, clientY: number) => { x: number; y: number }
     onRotationChange?: (index: number, value: number) => void
     onLayerChange?: (updates: { index: number; z: number }[]) => void
 }
 
-const UNMOUNT_DELAY = 120 // delay for buttons to hide after mouse leaves card
+const UNMOUNT_DELAY = 0 // delay for buttons to hide after mouse leaves card
 
 export function useCanvasCardButtons({
     effectiveCards,
     rotationAngles,
     draggingIndex,
+    selectedCardIndex,
     isMobile,
     isViewMode,
+    clientToSVG,
     onRotationChange,
     onLayerChange,
 }: UseCanvasCardButtonsParams) {
     const [hoveredCardIndex, setHoveredCardIndex] = useState<number | null>(null)
     const hoverLeaveTimeoutRef = useRef<number | null>(null)
+    const isButtonFrameHoveredRef = useRef(false)
+
+    const baseSortedCards = useMemo(
+        () => getBaseSortedCards(effectiveCards),
+        [effectiveCards]
+    )
+
+    const layeredCardIndices = useMemo(
+        () =>
+            getLayeredCardIndices(
+                baseSortedCards,
+                selectedCardIndex,
+                draggingIndex
+            ),
+        [baseSortedCards, draggingIndex, selectedCardIndex]
+    )
 
     const cancelHoverLeaveTimeout = useCallback(() => {
         if (hoverLeaveTimeoutRef.current !== null) {
@@ -42,7 +74,19 @@ export function useCanvasCardButtons({
 
     useEffect(() => cancelHoverLeaveTimeout, [cancelHoverLeaveTimeout])
 
+    useEffect(() => {
+        if (
+            hoveredCardIndex === null ||
+            draggingIndex !== null ||
+            isMobile ||
+            isViewMode
+        ) {
+            isButtonFrameHoveredRef.current = false
+        }
+    }, [draggingIndex, hoveredCardIndex, isMobile, isViewMode])
+
     const clearHoveredCard = useCallback(() => {
+        isButtonFrameHoveredRef.current = false
         setHoveredCardIndex(null)
         hoverLeaveTimeoutRef.current = null
     }, [])
@@ -52,23 +96,69 @@ export function useCanvasCardButtons({
         hoverLeaveTimeoutRef.current = window.setTimeout(clearHoveredCard, UNMOUNT_DELAY)
     }, [cancelHoverLeaveTimeout, clearHoveredCard])
 
-    const handleCardMouseEnter = useCallback(
-        (index: number) => {
+    const handleSvgPointerMove = useCallback(
+        (e: PointerEvent<SVGSVGElement>) => {
+            if (isMobile || isViewMode || draggingIndex !== null) return
+
+            const { x, y } = clientToSVG(e.clientX, e.clientY)
             cancelHoverLeaveTimeout()
-            setHoveredCardIndex(index)
+
+            if (isButtonFrameHoveredRef.current) {
+                return
+            }
+
+            if (hoveredCardIndex !== null) {
+                const hoveredCard = effectiveCards[hoveredCardIndex]
+
+                if (
+                    hoveredCard &&
+                    pointInAxisAlignedCardPadding(
+                        x,
+                        y,
+                        hoveredCard.x,
+                        hoveredCard.y,
+                        CARD_WIDTH,
+                        CARD_HEIGHT,
+                        CARD_HOVER_HIT_PADDING
+                    )
+                ) {
+                    return
+                }
+            }
+
+            const next = pickCardIndexForToolbarHoverDefault(
+                x,
+                y,
+                layeredCardIndices,
+                effectiveCards,
+                rotationAngles
+            )
+            setHoveredCardIndex((current) => (current === next ? current : next))
         },
-        [cancelHoverLeaveTimeout]
+        [
+            cancelHoverLeaveTimeout,
+            clientToSVG,
+            draggingIndex,
+            effectiveCards,
+            hoveredCardIndex,
+            isMobile,
+            isViewMode,
+            layeredCardIndices,
+            rotationAngles,
+        ]
     )
 
-    const handleCardMouseLeave = useCallback(() => {
+    const handleSvgPointerLeave = useCallback(() => {
         scheduleHoverLeave()
     }, [scheduleHoverLeave])
 
     const handleButtonFrameMouseEnter = useCallback(() => {
+        isButtonFrameHoveredRef.current = true
         cancelHoverLeaveTimeout()
     }, [cancelHoverLeaveTimeout])
 
     const handleButtonFrameMouseLeave = useCallback(() => {
+        isButtonFrameHoveredRef.current = false
         scheduleHoverLeave()
     }, [scheduleHoverLeave])
 
@@ -146,8 +236,8 @@ export function useCanvasCardButtons({
         hoveredCardIndex: activeHoveredCardIndex,
         showButtonFrame,
         buttonFrameLayerInfo,
-        handleCardMouseEnter,
-        handleCardMouseLeave,
+        handleSvgPointerMove,
+        handleSvgPointerLeave,
         handleButtonFrameMouseEnter,
         handleButtonFrameMouseLeave,
         handleRotateStep,

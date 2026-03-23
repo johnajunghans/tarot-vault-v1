@@ -241,8 +241,8 @@ function SpreadCanvasComponent(
         hoveredCardIndex,
         showButtonFrame,
         buttonFrameLayerInfo,
-        handleCardMouseEnter,
-        handleCardMouseLeave,
+        handleSvgPointerMove,
+        handleSvgPointerLeave,
         handleButtonFrameMouseEnter,
         handleButtonFrameMouseLeave,
         handleRotateStep,
@@ -253,8 +253,10 @@ function SpreadCanvasComponent(
         effectiveCards,
         rotationAngles,
         draggingIndex: dragging?.index ?? null,
+        selectedCardIndex,
         isMobile,
         isViewMode,
+        clientToSVG,
         onRotationChange,
         onLayerChange,
     })
@@ -275,6 +277,16 @@ function SpreadCanvasComponent(
                     viewBox={viewBox}
                     xmlns="http://www.w3.org/2000/svg"
                     className="select-none"
+                    onPointerMove={
+                        !isMobile && !isViewMode
+                            ? handleSvgPointerMove
+                            : undefined
+                    }
+                    onPointerLeave={
+                        !isMobile && !isViewMode
+                            ? handleSvgPointerLeave
+                            : undefined
+                    }
                 >
                         {/* SVG defs and reusable background layer. */}
                         <CanvasDefs />
@@ -345,21 +357,12 @@ function SpreadCanvasComponent(
                                             isViewMode ? false : isDraggingInGroup
                                         }
                                         isViewMode={isViewMode}
+                                        isMobile={isMobile}
                                         disableHeavyEffects={isZoomInteractionActive}
                                         onDragStart={handleDragStart}
                                         onDragEnd={handleDragEnd}
                                         onDrag={handleDrag}
                                         onClick={handleCardClick}
-                                        onMouseEnter={
-                                            !isMobile && !isViewMode
-                                                ? handleCardMouseEnter
-                                                : undefined
-                                        }
-                                        onMouseLeave={
-                                            !isMobile && !isViewMode
-                                                ? handleCardMouseLeave
-                                                : undefined
-                                        }
                                         registerRef={registerCardRef}
                                     />
                                 )

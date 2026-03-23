@@ -7,6 +7,7 @@ import { useGSAP } from '@gsap/react'
 import {
     CANVAS_BOUNDS,
     CARD_HEIGHT,
+    CARD_HOVER_HIT_PADDING,
     CARD_WIDTH,
     GRID_SIZE,
 } from '../../lib'
@@ -93,13 +94,12 @@ interface CanvasCardProps {
     groupSelected: boolean
     isDraggingInGroup: boolean
     isViewMode: boolean
+    isMobile: boolean
     disableHeavyEffects: boolean
     onDragStart: (index: number, x: number, y: number) => void
     onDragEnd: (index: number, x: number, y: number) => void
     onDrag: (index: number, x: number, y: number) => void
     onClick: (index: number) => void
-    onMouseEnter?: (index: number) => void
-    onMouseLeave?: (index: number) => void
     registerRef: (index: number, el: SVGGElement | null) => void
 }
 
@@ -111,13 +111,12 @@ function CanvasCard({
     groupSelected,
     isDraggingInGroup,
     isViewMode,
+    isMobile,
     disableHeavyEffects,
     onDragStart,
     onDragEnd,
     onDrag,
     onClick,
-    onMouseEnter,
-    onMouseLeave,
     registerRef,
 }: CanvasCardProps) {
     const [isDraggingState, setIsDraggingState] = useState(false)
@@ -259,10 +258,20 @@ function CanvasCard({
             ref={groupRef}
             data-spread-card-interactive="true"
             onClick={isViewMode ? () => onClick(index) : undefined}
-            onMouseEnter={onMouseEnter ? () => onMouseEnter(index) : undefined}
-            onMouseLeave={onMouseLeave ? () => onMouseLeave(index) : undefined}
             style={{ cursor: 'pointer' }}
         >
+            {!isViewMode && !isMobile && (
+                <rect
+                    aria-hidden
+                    x={-CARD_HOVER_HIT_PADDING}
+                    y={-CARD_HOVER_HIT_PADDING}
+                    width={CARD_WIDTH + 2 * CARD_HOVER_HIT_PADDING}
+                    height={CARD_HEIGHT + 2 * CARD_HOVER_HIT_PADDING}
+                    rx={CORNER_R + CARD_HOVER_HIT_PADDING}
+                    fill="none"
+                    pointerEvents="all"
+                />
+            )}
             <g
                 filter={shadowFilter}
                 style={{
@@ -364,13 +373,12 @@ function arePropsEqual(prev: CanvasCardProps, next: CanvasCardProps): boolean {
         prev.groupSelected === next.groupSelected &&
         prev.isDraggingInGroup === next.isDraggingInGroup &&
         prev.isViewMode === next.isViewMode &&
+        prev.isMobile === next.isMobile &&
         prev.disableHeavyEffects === next.disableHeavyEffects &&
         prev.onDragStart === next.onDragStart &&
         prev.onDragEnd === next.onDragEnd &&
         prev.onDrag === next.onDrag &&
         prev.onClick === next.onClick &&
-        prev.onMouseEnter === next.onMouseEnter &&
-        prev.onMouseLeave === next.onMouseLeave &&
         prev.registerRef === next.registerRef
     )
 }
