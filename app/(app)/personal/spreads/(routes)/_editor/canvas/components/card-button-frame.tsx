@@ -1,5 +1,6 @@
 'use client'
 
+import type { ComponentType, PointerEvent as ReactPointerEvent } from 'react'
 import { memo, useCallback, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { useGSAP } from '@gsap/react'
@@ -10,13 +11,17 @@ import {
     LayerSendToBackIcon,
     LayerBringToFrontIcon,
 } from 'hugeicons-react'
+import { Button } from '@/components/ui/button'
+import { ButtonGroup } from '@/components/ui/button-group'
+import { cn } from '@/lib/utils'
 import { CARD_WIDTH, CARD_HEIGHT } from '../../lib'
 import { snapToKeyAngle, normalizeRotationForStorage } from '../../lib/rotation'
 import type { CanvasCard } from '../types'
 
 const BUTTON_R = 14
 const BUTTON_ICON_SIZE = 14
-const BUTTON_OFFSET = 10
+const BUTTON_SIZE = BUTTON_R * 2
+const BUTTON_OFFSET = 5
 const ROTATION_SENSITIVITY = 1.2
 
 interface CardButtonFrameProps {
@@ -34,65 +39,153 @@ interface CardButtonFrameProps {
     onFrameMouseLeave: () => void
 }
 
-function SvgIconButton({
-    cx,
-    cy,
+function HtmlIconButton({
+    x,
+    y,
     icon: Icon,
     onClick,
     disabled,
     label,
+    isActive = false,
 }: {
-    cx: number
-    cy: number
-    icon: React.ComponentType<{ size?: number; className?: string }>
+    x: number
+    y: number
+    icon: ComponentType<{ size?: number; className?: string }>
     onClick: () => void
     disabled?: boolean
     label: string
+    isActive?: boolean
 }) {
     return (
-        <g
-            style={{
-                cursor: disabled ? 'default' : 'pointer',
-                pointerEvents: 'auto',
-            }}
-            onClick={(e) => {
-                e.stopPropagation()
-                if (!disabled) onClick()
-            }}
-            role="button"
-            aria-label={label}
-            aria-disabled={disabled || undefined}
+        <foreignObject
+            x={x}
+            y={y}
+            width={BUTTON_SIZE}
+            height={BUTTON_SIZE}
+            style={{ pointerEvents: 'auto', overflow: 'visible' }}
         >
-            <circle
-                cx={cx}
-                cy={cy}
-                r={BUTTON_R}
-                fill="var(--background)"
-                fillOpacity={0.92}
-                stroke="var(--border)"
-                strokeWidth={1}
-            />
-            <foreignObject
-                x={cx - BUTTON_ICON_SIZE / 2}
-                y={cy - BUTTON_ICON_SIZE / 2}
-                width={BUTTON_ICON_SIZE}
-                height={BUTTON_ICON_SIZE}
-                style={{ pointerEvents: 'none', overflow: 'visible' }}
-            >
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '100%',
-                        height: '100%',
-                        opacity: disabled ? 0.35 : 0.8,
+            <div className="flex size-full items-center justify-center">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label={label}
+                    disabled={disabled}
+                    className={cn(
+                        'bg-background/90 shadow-sm backdrop-blur-sm',
+                        isActive && 'border-gold text-foreground'
+                    )}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        onClick()
                     }}
                 >
-                    <Icon size={BUTTON_ICON_SIZE} />
-                </div>
-            </foreignObject>
-        </g>
+                    <Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                </Button>
+            </div>
+        </foreignObject>
+    )
+}
+
+function LayerButtonGroup({
+    x,
+    y,
+    onSendToBack,
+    onBringToFront,
+    isAtBack,
+    isAtFront,
+}: {
+    x: number
+    y: number
+    onSendToBack: () => void
+    onBringToFront: () => void
+    isAtBack: boolean
+    isAtFront: boolean
+}) {
+    return (
+        <foreignObject
+            x={x}
+            y={y}
+            width={BUTTON_SIZE * 2}
+            height={BUTTON_SIZE}
+            style={{ pointerEvents: 'auto', overflow: 'visible' }}
+        >
+            <div className="flex size-full items-center justify-center">
+                <ButtonGroup>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label="Send to back"
+                        disabled={isAtBack}
+                        className="bg-background/90 shadow-sm backdrop-blur-sm"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onSendToBack()
+                        }}
+                    >
+                        <LayerSendToBackIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label="Bring to front"
+                        disabled={isAtFront}
+                        className="bg-background/90 shadow-sm backdrop-blur-sm"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onBringToFront()
+                        }}
+                    >
+                        <LayerBringToFrontIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                    </Button>
+                </ButtonGroup>
+            </div>
+        </foreignObject>
+    )
+}
+
+function RotationDragButton({
+    isDraggingRotation,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+}: {
+    isDraggingRotation: boolean
+    onPointerDown: (e: ReactPointerEvent<HTMLButtonElement>) => void
+    onPointerMove: (e: ReactPointerEvent<HTMLButtonElement>) => void
+    onPointerUp: (e: ReactPointerEvent<HTMLButtonElement>) => void
+}) {
+    return (
+        <foreignObject
+            x={-BUTTON_R}
+            y={-BUTTON_R}
+            width={BUTTON_SIZE}
+            height={BUTTON_SIZE}
+            style={{ pointerEvents: 'auto', overflow: 'visible' }}
+        >
+            <div className="flex size-full items-center justify-center">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    aria-label="Drag to rotate"
+                    className={cn(
+                        'h-7 w-7 rounded-full bg-background/90 shadow-sm backdrop-blur-sm',
+                        isDraggingRotation && 'border-gold text-foreground'
+                    )}
+                    style={{
+                        cursor: isDraggingRotation ? 'grabbing' : 'grab',
+                    }}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                >
+                    <Rotate01Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                </Button>
+            </div>
+        </foreignObject>
     )
 }
 
@@ -135,10 +228,10 @@ function CardButtonFrame({
     )
 
     const handleContinuousPointerDown = useCallback(
-        (e: React.PointerEvent) => {
+        (e: ReactPointerEvent<HTMLButtonElement>) => {
             e.stopPropagation()
             e.preventDefault()
-            ;(e.target as Element).setPointerCapture(e.pointerId)
+            e.currentTarget.setPointerCapture(e.pointerId)
             dragStartRef.current = { x: e.clientX, y: e.clientY, startAngle: card.r }
             accumulatedAngleRef.current = 0
             setIsDraggingRotation(true)
@@ -148,7 +241,7 @@ function CardButtonFrame({
     )
 
     const handleContinuousPointerMove = useCallback(
-        (e: React.PointerEvent) => {
+        (e: ReactPointerEvent<HTMLButtonElement>) => {
             if (!dragStartRef.current) return
             e.stopPropagation()
 
@@ -166,10 +259,10 @@ function CardButtonFrame({
     )
 
     const handleContinuousPointerUp = useCallback(
-        (e: React.PointerEvent) => {
+        (e: ReactPointerEvent<HTMLButtonElement>) => {
             if (!dragStartRef.current) return
             e.stopPropagation()
-            ;(e.target as Element).releasePointerCapture(e.pointerId)
+            e.currentTarget.releasePointerCapture(e.pointerId)
 
             const currentAngle = normalizeRotationForStorage(
                 dragStartRef.current.startAngle + accumulatedAngleRef.current * ROTATION_SENSITIVITY
@@ -203,9 +296,9 @@ function CardButtonFrame({
         >
             {/* Top-left: Rotate CCW */}
             <g data-btn transform={`translate(${leftX}, ${topY}) scale(${scale})`}>
-                <SvgIconButton
-                    cx={0}
-                    cy={0}
+                <HtmlIconButton
+                    x={-BUTTON_R}
+                    y={-BUTTON_R}
                     icon={RotateLeft01Icon}
                     onClick={() => onRotateStep(cardIndex, -1)}
                     label="Rotate counter-clockwise"
@@ -214,47 +307,12 @@ function CardButtonFrame({
 
             {/* Top-center: Continuous rotation drag handle */}
             <g data-btn transform={`translate(${centerX}, ${topY}) scale(${scale})`}>
-                <g
-                    style={{
-                        cursor: isDraggingRotation ? 'grabbing' : 'grab',
-                        pointerEvents: 'auto',
-                    }}
+                <RotationDragButton
+                    isDraggingRotation={isDraggingRotation}
                     onPointerDown={handleContinuousPointerDown}
                     onPointerMove={handleContinuousPointerMove}
                     onPointerUp={handleContinuousPointerUp}
-                    role="button"
-                    aria-label="Drag to rotate"
-                >
-                    <circle
-                        cx={0}
-                        cy={0}
-                        r={BUTTON_R}
-                        fill="var(--background)"
-                        fillOpacity={0.92}
-                        stroke={isDraggingRotation ? 'var(--gold)' : 'var(--border)'}
-                        strokeWidth={isDraggingRotation ? 1.5 : 1}
-                    />
-                    <foreignObject
-                        x={-BUTTON_ICON_SIZE / 2}
-                        y={-BUTTON_ICON_SIZE / 2}
-                        width={BUTTON_ICON_SIZE}
-                        height={BUTTON_ICON_SIZE}
-                        style={{ pointerEvents: 'none', overflow: 'visible' }}
-                    >
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '100%',
-                                height: '100%',
-                                opacity: 0.8,
-                            }}
-                        >
-                            <Rotate01Icon size={BUTTON_ICON_SIZE} />
-                        </div>
-                    </foreignObject>
-                </g>
+                />
 
                 {/* Angle tooltip during continuous rotation */}
                 {isDraggingRotation && tooltipAngle !== null && (
@@ -286,9 +344,9 @@ function CardButtonFrame({
 
             {/* Top-right: Rotate CW */}
             <g data-btn transform={`translate(${rightX}, ${topY}) scale(${scale})`}>
-                <SvgIconButton
-                    cx={0}
-                    cy={0}
+                <HtmlIconButton
+                    x={-BUTTON_R}
+                    y={-BUTTON_R}
                     icon={RotateRight01Icon}
                     onClick={() => onRotateStep(cardIndex, 1)}
                     label="Rotate clockwise"
@@ -298,21 +356,13 @@ function CardButtonFrame({
             {/* Bottom-center: Layer controls */}
             {showLayerButtons && (
                 <g data-btn transform={`translate(${centerX}, ${bottomY}) scale(${scale})`}>
-                    <SvgIconButton
-                        cx={-BUTTON_R - 1}
-                        cy={0}
-                        icon={LayerSendToBackIcon}
-                        onClick={() => onSendToBack(cardIndex)}
-                        disabled={isAtBack}
-                        label="Send to back"
-                    />
-                    <SvgIconButton
-                        cx={BUTTON_R + 1}
-                        cy={0}
-                        icon={LayerBringToFrontIcon}
-                        onClick={() => onBringToFront(cardIndex)}
-                        disabled={isAtFront}
-                        label="Bring to front"
+                    <LayerButtonGroup
+                        x={-BUTTON_SIZE}
+                        y={-BUTTON_R}
+                        onSendToBack={() => onSendToBack(cardIndex)}
+                        onBringToFront={() => onBringToFront(cardIndex)}
+                        isAtBack={isAtBack}
+                        isAtFront={isAtFront}
                     />
                 </g>
             )}

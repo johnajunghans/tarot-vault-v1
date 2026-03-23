@@ -7,7 +7,6 @@ import {
     useImperativeHandle,
     useMemo,
     useRef,
-    useState,
 } from 'react'
 import SpreadCard from './components/card'
 import CardButtonFrame from './components/card-button-frame'
@@ -22,6 +21,7 @@ import { useCanvasDrag } from './hooks/use-canvas-drag'
 import { useCanvasGuides } from './hooks/use-canvas-guides'
 import { useCanvasOffscreenPointers } from './hooks/use-canvas-offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
+import { useCanvasCardButtons } from './hooks/use-canvas-card-buttons'
 import { useCanvasSelection } from './hooks/use-canvas-selection'
 import { useCanvasViewport } from './hooks/use-canvas-viewport'
 import type {
@@ -42,10 +42,6 @@ import {
     CARD_HEIGHT,
     CARD_WIDTH,
     GRID_SIZE,
-    getNextKeyAngle,
-    clampLayer,
-    getLayersWithFrontCard,
-    getLayersWithBackCard,
 } from '../lib'
 
 interface SpreadCanvasProps {
@@ -240,98 +236,28 @@ function SpreadCanvasComponent(
 
     // ------------ CARD BUTTON FRAME ------------ //
 
-    const [hoveredCardIndex, setHoveredCardIndex] = useState<number | null>(null)
-    const hoverLeaveTimeoutRef = useRef<number | null>(null)
-
-    const showButtonFrame =
-        hoveredCardIndex !== null &&
-        !isMobile &&
-        !isViewMode &&
-        dragging === null
-
-    const cancelHoverLeaveTimeout = useCallback(() => {
-        if (hoverLeaveTimeoutRef.current !== null) {
-            window.clearTimeout(hoverLeaveTimeoutRef.current)
-            hoverLeaveTimeoutRef.current = null
-        }
-    }, [])
-
-    const handleCardMouseEnter = useCallback(
-        (index: number) => {
-            cancelHoverLeaveTimeout()
-            setHoveredCardIndex(index)
-        },
-        [cancelHoverLeaveTimeout]
-    )
-
-    const handleCardMouseLeave = useCallback(
-        () => {
-            cancelHoverLeaveTimeout()
-            hoverLeaveTimeoutRef.current = window.setTimeout(() => {
-                setHoveredCardIndex(null)
-                hoverLeaveTimeoutRef.current = null
-            }, 120)
-        },
-        [cancelHoverLeaveTimeout]
-    )
-
-    const handleButtonFrameMouseEnter = useCallback(() => {
-        cancelHoverLeaveTimeout()
-    }, [cancelHoverLeaveTimeout])
-
-    const handleButtonFrameMouseLeave = useCallback(() => {
-        cancelHoverLeaveTimeout()
-        hoverLeaveTimeoutRef.current = window.setTimeout(() => {
-            setHoveredCardIndex(null)
-            hoverLeaveTimeoutRef.current = null
-        }, 120)
-    }, [cancelHoverLeaveTimeout])
-
-    const handleRotateStep = useCallback(
-        (index: number, direction: 1 | -1) => {
-            if (!onRotationChange) return
-            const currentAngle = rotationAngles?.[index] ?? effectiveCards[index]?.r ?? 0
-            onRotationChange(index, getNextKeyAngle(currentAngle, direction))
-        },
-        [onRotationChange, rotationAngles, effectiveCards]
-    )
-
-    const handleButtonRotationChange = useCallback(
-        (index: number, value: number) => {
-            onRotationChange?.(index, value)
-        },
-        [onRotationChange]
-    )
-
-    const handleBringToFront = useCallback(
-        (index: number) => {
-            if (!onLayerChange) return
-            const layers = effectiveCards.map((c) => clampLayer(c.z))
-            const next = getLayersWithFrontCard(layers, index)
-            onLayerChange(next.map((z, i) => ({ index: i, z })))
-        },
-        [onLayerChange, effectiveCards]
-    )
-
-    const handleSendToBack = useCallback(
-        (index: number) => {
-            if (!onLayerChange) return
-            const layers = effectiveCards.map((c) => clampLayer(c.z))
-            const next = getLayersWithBackCard(layers, index)
-            onLayerChange(next.map((z, i) => ({ index: i, z })))
-        },
-        [onLayerChange, effectiveCards]
-    )
-
-    const hoveredCard = hoveredCardIndex !== null ? effectiveCards[hoveredCardIndex] : null
-    const buttonFrameLayerInfo = useMemo(() => {
-        if (hoveredCardIndex === null) return { isAtFront: true, isAtBack: true }
-        const layers = effectiveCards.map((c) => clampLayer(c.z))
-        const hovered = layers[hoveredCardIndex] ?? 0
-        const max = layers.length > 0 ? Math.max(...layers) : 0
-        const min = layers.length > 0 ? Math.min(...layers) : 0
-        return { isAtFront: hovered >= max, isAtBack: hovered <= min }
-    }, [hoveredCardIndex, effectiveCards])
+    const {
+        hoveredCard,
+        hoveredCardIndex,
+        showButtonFrame,
+        buttonFrameLayerInfo,
+        handleCardMouseEnter,
+        handleCardMouseLeave,
+        handleButtonFrameMouseEnter,
+        handleButtonFrameMouseLeave,
+        handleRotateStep,
+        handleButtonRotationChange,
+        handleBringToFront,
+        handleSendToBack,
+    } = useCanvasCardButtons({
+        effectiveCards,
+        rotationAngles,
+        draggingIndex: dragging?.index ?? null,
+        isMobile,
+        isViewMode,
+        onRotationChange,
+        onLayerChange,
+    })
 
     // ------------ RENDER ------------ //
 
@@ -441,7 +367,7 @@ function SpreadCanvasComponent(
                         </g>
 
                         {/* Button frame overlay — always above all cards. */}
-                        {showButtonFrame && hoveredCard && (
+                        {showButtonFrame && hoveredCard && hoveredCardIndex !== null && (
                             <CardButtonFrame
                                 card={hoveredCard}
                                 cardIndex={hoveredCardIndex}
