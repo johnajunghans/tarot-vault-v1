@@ -23,6 +23,8 @@ const BUTTON_ICON_SIZE = 14
 const BUTTON_SIZE = BUTTON_R * 2
 const BUTTON_OFFSET = 5
 const ROTATION_SENSITIVITY = 1.2
+/** 1 = full 1/zoom compensation; lower = softer (less shrink at max zoom, less growth at min zoom). */
+const BUTTON_ZOOM_COMPENSATION = 0.72
 
 interface CardButtonFrameProps {
     card: CanvasCard
@@ -277,7 +279,7 @@ function CardButtonFrame({
         [cardIndex, onRotationChange]
     )
 
-    const scale = 1 / zoom
+    const scale = zoom ** -BUTTON_ZOOM_COMPENSATION
     const showLayerButtons = totalCards > 1
 
     const topY = -BUTTON_OFFSET
