@@ -15,7 +15,7 @@ import { ButtonGroup } from '@/components/ui/button-group'
 import { TooltipProvider, TooltipRoot, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { CARD_WIDTH, CARD_HEIGHT } from '../../lib'
-import { snapToKeyAngle, normalizeRotationForStorage } from '../../lib/rotation'
+import { getNextKeyAngle, normalizeRotationForStorage } from '../../lib/rotation'
 import type { CanvasCard } from '../types'
 
 const BUTTON_R = 14
@@ -318,22 +318,7 @@ function CardButtonFrame({
 
     const dragStartRef = useRef<{ x: number; y: number; startAngle: number } | null>(null)
     const accumulatedAngleRef = useRef(0)
-
-    // useGSAP(
-    //     () => {
-    //         if (!rootRef.current) return
-    //         const buttons = rootRef.current.querySelectorAll('[data-btn]')
-    //         gsap.from(buttons, {
-    //             // scale: 0.7,
-    //             opacity: 0,
-    //             duration: 0.12,
-    //             // stagger: 0.02,
-    //             ease: 'power2.out',
-    //             overwrite: true,
-    //         })
-    //     },
-    //     { scope: rootRef, dependencies: [cardIndex] }
-    // )
+    const stepTooltipTimeoutRef = useRef<number | null>(null)
 
     const handleContinuousPointerDown = useCallback(
         (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -357,11 +342,11 @@ function CardButtonFrame({
             const deltaY = e.clientY - dragStartRef.current.y
             const rawDelta = (-deltaX + -deltaY) * ROTATION_SENSITIVITY
             const rawAngle = dragStartRef.current.startAngle + rawDelta
-            const snapped = snapToKeyAngle(rawAngle)
+            const normalized = normalizeRotationForStorage(rawAngle)
 
             accumulatedAngleRef.current = rawDelta
-            setTooltipAngle(snapped)
-            onRotationChange(cardIndex, snapped)
+            setTooltipAngle(normalized)
+            onRotationChange(cardIndex, normalized)
         },
         [cardIndex, onRotationChange]
     )
@@ -375,7 +360,7 @@ function CardButtonFrame({
             const currentAngle = normalizeRotationForStorage(
                 dragStartRef.current.startAngle + accumulatedAngleRef.current * ROTATION_SENSITIVITY
             )
-            onRotationChange(cardIndex, snapToKeyAngle(currentAngle))
+            onRotationChange(cardIndex, currentAngle)
 
             dragStartRef.current = null
             accumulatedAngleRef.current = 0
@@ -383,6 +368,27 @@ function CardButtonFrame({
             setTooltipAngle(null)
         },
         [cardIndex, onRotationChange]
+    )
+
+    const STEP_TOOLTIP_DURATION = 800
+
+    const handleStepRotate = useCallback(
+        (direction: 1 | -1) => {
+            // Show the resulting angle in the tooltip briefly
+            const nextAngle = getNextKeyAngle(card.r, direction)
+            setTooltipAngle(nextAngle)
+
+            if (stepTooltipTimeoutRef.current !== null) {
+                window.clearTimeout(stepTooltipTimeoutRef.current)
+            }
+            stepTooltipTimeoutRef.current = window.setTimeout(() => {
+                setTooltipAngle(null)
+                stepTooltipTimeoutRef.current = null
+            }, STEP_TOOLTIP_DURATION)
+
+            onRotateStep(cardIndex, direction)
+        },
+        [card.r, cardIndex, onRotateStep]
     )
 
     const scale = zoom ** -BUTTON_ZOOM_COMPENSATION
@@ -406,15 +412,15 @@ function CardButtonFrame({
                     x={-(BUTTON_SIZE * 3) / 2}
                     y={-BUTTON_R}
                     isDraggingRotation={isDraggingRotation}
-                    onRotateCCW={() => onRotateStep(cardIndex, -1)}
-                    onRotateCW={() => onRotateStep(cardIndex, 1)}
+                    onRotateCCW={() => handleStepRotate(-1)}
+                    onRotateCW={() => handleStepRotate(1)}
                     onPointerDown={handleContinuousPointerDown}
                     onPointerMove={handleContinuousPointerMove}
                     onPointerUp={handleContinuousPointerUp}
                 />
 
-                {/* Angle tooltip during continuous rotation */}
-                {isDraggingRotation && tooltipAngle !== null && (
+                {/* Angle tooltip during rotation (drag or step buttons) */}
+                {tooltipAngle !== null && (
                     <g ref={tooltipRef}>
                         <rect
                             x={-20}
