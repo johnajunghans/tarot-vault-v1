@@ -7,7 +7,8 @@ import { useGSAP } from '@gsap/react'
 import {
     CANVAS_BOUNDS,
     CARD_HEIGHT,
-    CARD_HOVER_HIT_PADDING,
+    CARD_HOVER_HIT_PADDING_X,
+    CARD_HOVER_HIT_PADDING_Y,
     CARD_WIDTH,
     GRID_SIZE,
 } from '../../lib'
@@ -279,11 +280,12 @@ function CanvasCard({
             {!isViewMode && !isMobile && (
                 <rect
                     aria-hidden
-                    x={-CARD_HOVER_HIT_PADDING}
-                    y={-CARD_HOVER_HIT_PADDING}
-                    width={CARD_WIDTH + 2 * CARD_HOVER_HIT_PADDING}
-                    height={CARD_HEIGHT + 2 * CARD_HOVER_HIT_PADDING}
-                    rx={CORNER_R + CARD_HOVER_HIT_PADDING}
+                    x={-CARD_HOVER_HIT_PADDING_X}
+                    y={-CARD_HOVER_HIT_PADDING_Y}
+                    width={CARD_WIDTH + 2 * CARD_HOVER_HIT_PADDING_X}
+                    height={CARD_HEIGHT + 2 * CARD_HOVER_HIT_PADDING_Y}
+                    rx={CORNER_R + CARD_HOVER_HIT_PADDING_X}
+                    ry={CORNER_R + CARD_HOVER_HIT_PADDING_Y}
                     fill="none"
                     pointerEvents="all"
                 />

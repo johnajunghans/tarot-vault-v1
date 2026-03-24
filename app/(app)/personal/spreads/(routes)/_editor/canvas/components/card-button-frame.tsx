@@ -22,7 +22,7 @@ import type { CanvasCard } from '../types'
 const BUTTON_R = 14
 const BUTTON_ICON_SIZE = 14
 const BUTTON_SIZE = BUTTON_R * 2
-const BUTTON_OFFSET = 5
+const BUTTON_OFFSET = 10
 const ROTATION_SENSITIVITY = 1.2
 /** 1 = full 1/zoom compensation; lower = softer (less shrink at max zoom, less growth at min zoom). */
 const BUTTON_ZOOM_COMPENSATION = 0.72

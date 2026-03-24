@@ -1,7 +1,8 @@
 import type { CanvasCard } from '../types'
 import {
     CARD_HEIGHT,
-    CARD_HOVER_HIT_PADDING,
+    CARD_HOVER_HIT_PADDING_X,
+    CARD_HOVER_HIT_PADDING_Y,
     CARD_WIDTH,
 } from '../../lib'
 
@@ -41,15 +42,16 @@ export function pointInAxisAlignedCardPadding(
     cardY: number,
     cw: number,
     ch: number,
-    pad: number
+    padX: number,
+    padY: number
 ): boolean {
     const lx = svgX - cardX
     const ly = svgY - cardY
     return (
-        lx >= -pad &&
-        lx <= cw + pad &&
-        ly >= -pad &&
-        ly <= ch + pad
+        lx >= -padX &&
+        lx <= cw + padX &&
+        ly >= -padY &&
+        ly <= ch + padY
     )
 }
 
@@ -67,7 +69,8 @@ export function pickCardIndexForToolbarHover(
     rotationAngles: number[] | undefined,
     cw: number,
     ch: number,
-    pad: number
+    padX: number,
+    padY: number
 ): number | null {
     const topFirst = [...layeredCardIndices].reverse()
 
@@ -91,7 +94,8 @@ export function pickCardIndexForToolbarHover(
                 card.y,
                 cw,
                 ch,
-                pad
+                padX,
+                padY
             )
         ) {
             return index
@@ -116,6 +120,7 @@ export function pickCardIndexForToolbarHoverDefault(
         rotationAngles,
         CARD_WIDTH,
         CARD_HEIGHT,
-        CARD_HOVER_HIT_PADDING
+        CARD_HOVER_HIT_PADDING_X,
+        CARD_HOVER_HIT_PADDING_Y
     )
 }

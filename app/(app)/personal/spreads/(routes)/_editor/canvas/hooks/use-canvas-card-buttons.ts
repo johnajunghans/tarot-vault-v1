@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PointerEvent } from 'react'
 import {
     CARD_HEIGHT,
-    CARD_HOVER_HIT_PADDING,
+    CARD_HOVER_HIT_PADDING_X,
+    CARD_HOVER_HIT_PADDING_Y,
     CARD_WIDTH,
     clampLayer,
     getLayersWithBackCard,
@@ -119,7 +120,8 @@ export function useCanvasCardButtons({
                         hoveredCard.y,
                         CARD_WIDTH,
                         CARD_HEIGHT,
-                        CARD_HOVER_HIT_PADDING
+                        CARD_HOVER_HIT_PADDING_X,
+                        CARD_HOVER_HIT_PADDING_Y
                     )
                 ) {
                     return

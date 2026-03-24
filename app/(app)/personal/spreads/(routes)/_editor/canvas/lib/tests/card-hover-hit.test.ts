@@ -5,7 +5,12 @@ import {
     pointInRotatedCardCore,
 } from '../card-hover-hit'
 import type { CanvasCard } from '../../types'
-import { CARD_HEIGHT, CARD_HOVER_HIT_PADDING, CARD_WIDTH } from '../../../lib'
+import {
+    CARD_HEIGHT,
+    CARD_HOVER_HIT_PADDING_X,
+    CARD_HOVER_HIT_PADDING_Y,
+    CARD_WIDTH,
+} from '../../../lib'
 
 function card(overrides: Partial<CanvasCard> & { x: number; y: number }): CanvasCard {
     const { x, y, r, z, ...rest } = overrides
@@ -40,17 +45,19 @@ describe('pointInRotatedCardCore', () => {
 })
 
 describe('pointInAxisAlignedCardPadding', () => {
-    test('includes padding band', () => {
-        const pad = CARD_HOVER_HIT_PADDING
+    test('includes asymmetric padding bands', () => {
+        const padX = CARD_HOVER_HIT_PADDING_X
+        const padY = CARD_HOVER_HIT_PADDING_Y
         expect(
             pointInAxisAlignedCardPadding(
-                100 - pad,
-                200 - pad,
+                100 - padX,
+                200 - padY,
                 100,
                 200,
                 CARD_WIDTH,
                 CARD_HEIGHT,
-                pad
+                padX,
+                padY
             )
         ).toBe(true)
     })
@@ -58,14 +65,14 @@ describe('pointInAxisAlignedCardPadding', () => {
 
 describe('pickCardIndexForToolbarHover', () => {
     test('prefers lower card face over higher card padding-only overlap', () => {
-        const pad = CARD_HOVER_HIT_PADDING
+        const padX = CARD_HOVER_HIT_PADDING_X
         // Left card higher z (on top); right card lower z — flush horizontal spacing 0.
         const cards: CanvasCard[] = [
             card({ x: 0, y: 0, z: 1, name: 'LeftTop' }),
             card({ x: CARD_WIDTH, y: 0, z: 0, name: 'RightBelow' }),
         ]
         const layered = [1, 0]
-        const px = CARD_WIDTH + pad / 2
+        const px = CARD_WIDTH + padX / 2
         const py = CARD_HEIGHT / 2
 
         const hit = pickCardIndexForToolbarHover(
@@ -76,7 +83,8 @@ describe('pickCardIndexForToolbarHover', () => {
             [0, 0],
             CARD_WIDTH,
             CARD_HEIGHT,
-            pad
+            padX,
+            CARD_HOVER_HIT_PADDING_Y
         )
         expect(hit).toBe(1)
     })
@@ -95,7 +103,8 @@ describe('pickCardIndexForToolbarHover', () => {
             [0, 0],
             CARD_WIDTH,
             CARD_HEIGHT,
-            CARD_HOVER_HIT_PADDING
+            CARD_HOVER_HIT_PADDING_X,
+            CARD_HOVER_HIT_PADDING_Y
         )
         expect(hit).toBe(1)
     })
