@@ -2,8 +2,6 @@
 
 import type { ComponentType, PointerEvent as ReactPointerEvent } from 'react'
 import { memo, useCallback, useRef, useState } from 'react'
-import { gsap } from 'gsap'
-import { useGSAP } from '@gsap/react'
 import {
     Rotate01Icon,
     LayerSendToBackIcon,
@@ -14,6 +12,7 @@ import {
 } from 'hugeicons-react'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
+import { TooltipProvider, TooltipRoot, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { CARD_WIDTH, CARD_HEIGHT } from '../../lib'
 import { snapToKeyAngle, normalizeRotationForStorage } from '../../lib/rotation'
@@ -23,6 +22,7 @@ const BUTTON_R = 14
 const BUTTON_ICON_SIZE = 14
 const BUTTON_SIZE = BUTTON_R * 2
 const BUTTON_OFFSET = 10
+const TOOLTIP_DELAY = 1000
 const ROTATION_SENSITIVITY = 1.2
 /** 1 = full 1/zoom compensation; lower = softer (less shrink at max zoom, less growth at min zoom). */
 const BUTTON_ZOOM_COMPENSATION = 0.72
@@ -121,53 +121,76 @@ function BottomButtonGroup({
             style={{ pointerEvents: 'auto', overflow: 'visible' }}
         >
             <div className="flex size-full items-center justify-center">
+                <TooltipProvider delay={TOOLTIP_DELAY}>
                 <ButtonGroup>
                     {showLayerButtons && (
                         <>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="icon-sm"
-                                aria-label="Send to back"
-                                disabled={isAtBack}
-                                className="bg-background/25 shadow-sm backdrop-blur-xs"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    onSendToBack()
-                                }}
-                            >
-                                <LayerSendToBackIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="icon-sm"
-                                aria-label="Bring to front"
-                                disabled={isAtFront}
-                                className="bg-background/25 shadow-sm backdrop-blur-xs"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    onBringToFront()
-                                }}
-                            >
-                                <LayerBringToFrontIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
-                            </Button>
+                            <TooltipRoot>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon-sm"
+                                            aria-label="Send to back"
+                                            disabled={isAtBack}
+                                            className="bg-background/25 shadow-sm backdrop-blur-xs"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onSendToBack()
+                                            }}
+                                        >
+                                            <LayerSendToBackIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                        </Button>
+                                    }
+                                />
+                                <TooltipContent side="bottom">Send to back</TooltipContent>
+                            </TooltipRoot>
+                            <TooltipRoot>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon-sm"
+                                            aria-label="Bring to front"
+                                            disabled={isAtFront}
+                                            className="bg-background/25 shadow-sm backdrop-blur-xs"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onBringToFront()
+                                            }}
+                                        >
+                                            <LayerBringToFrontIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                        </Button>
+                                    }
+                                />
+                                <TooltipContent side="bottom">Bring to front</TooltipContent>
+                            </TooltipRoot>
                         </>
                     )}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        aria-label="Delete card"
-                        className="bg-background/25 shadow-sm backdrop-blur-xs text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onDelete()
-                        }}
-                    >
-                        <Delete02Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
-                    </Button>
+                    <TooltipRoot>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    aria-label="Delete card"
+                                    className="bg-background/25 shadow-sm backdrop-blur-xs text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        onDelete()
+                                    }}
+                                >
+                                    <Delete02Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                </Button>
+                            }
+                        />
+                        <TooltipContent side="bottom">Remove position</TooltipContent>
+                    </TooltipRoot>
                 </ButtonGroup>
+                </TooltipProvider>
             </div>
         </foreignObject>
     )
@@ -201,50 +224,73 @@ function RotationButtonGroup({
             style={{ pointerEvents: 'auto', overflow: 'visible' }}
         >
             <div className="flex size-full items-center justify-center">
+                <TooltipProvider delay={TOOLTIP_DELAY}>
                 <ButtonGroup>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        aria-label="Rotate counter-clockwise"
-                        className="bg-background/25 shadow-sm backdrop-blur-xs"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onRotateCCW()
-                        }}
-                    >
-                        <RotateTopLeftIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        aria-label="Drag to rotate"
-                        className={cn(
-                            'bg-background/25 shadow-sm backdrop-blur-xs',
-                            isDraggingRotation && 'border-gold text-foreground'
-                        )}
-                        style={{ cursor: isDraggingRotation ? 'grabbing' : 'grab' }}
-                        onPointerDown={onPointerDown}
-                        onPointerMove={onPointerMove}
-                        onPointerUp={onPointerUp}
-                    >
-                        <Rotate01Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        aria-label="Rotate clockwise"
-                        className="bg-background/25 shadow-sm backdrop-blur-xs"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onRotateCW()
-                        }}
-                    >
-                        <RotateTopRightIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
-                    </Button>
+                        <TooltipRoot>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon-sm"
+                                        aria-label="Rotate counter-clockwise"
+                                        className="bg-background/25 shadow-sm backdrop-blur-xs"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onRotateCCW()
+                                        }}
+                                    >
+                                        <RotateTopLeftIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                    </Button>
+                                }
+                            />
+                            <TooltipContent side="top">Rotate left</TooltipContent>
+                        </TooltipRoot>
+                        <TooltipRoot>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon-sm"
+                                        aria-label="Drag to rotate"
+                                        className={cn(
+                                            'bg-background/25 shadow-sm backdrop-blur-xs',
+                                            isDraggingRotation && 'border-gold text-foreground'
+                                        )}
+                                        style={{ cursor: isDraggingRotation ? 'grabbing' : 'grab' }}
+                                        onPointerDown={onPointerDown}
+                                        onPointerMove={onPointerMove}
+                                        onPointerUp={onPointerUp}
+                                    >
+                                        <Rotate01Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                    </Button>
+                                }
+                            />
+                            <TooltipContent side="top">Drag to rotate</TooltipContent>
+                        </TooltipRoot>
+                        <TooltipRoot>
+                            <TooltipTrigger
+                                render={
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon-sm"
+                                        aria-label="Rotate clockwise"
+                                        className="bg-background/25 shadow-sm backdrop-blur-xs"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onRotateCW()
+                                        }}
+                                    >
+                                        <RotateTopRightIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                    </Button>
+                                }
+                            />
+                            <TooltipContent side="top">Rotate right</TooltipContent>
+                        </TooltipRoot>
                 </ButtonGroup>
+                </TooltipProvider>
             </div>
         </foreignObject>
     )

@@ -11,7 +11,7 @@ import {
 import SpreadThumbnail from "./spread-thumbnail"
 import { CardDB, SpreadDraft } from "@/types/spreads"
 import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { TooltipContent, TooltipRoot, TooltipTrigger } from "@/components/ui/tooltip"
 import { Delete02Icon, StarIcon } from "hugeicons-react"
 import { Dispatch, SetStateAction, useState } from "react"
 import { useMutation } from "convex/react"
@@ -91,7 +91,7 @@ export default function SpreadCard({
                         </Button>
                     )}
                     {!isDraft && id !== undefined && (
-                        <Tooltip>
+                        <TooltipRoot>
                             <TooltipTrigger
                                 render={
                                     <Button
@@ -111,7 +111,7 @@ export default function SpreadCard({
                                 }
                             />
                             <TooltipContent>{favorite ? "Unfavorite" : "Favorite"}</TooltipContent>
-                        </Tooltip>
+                        </TooltipRoot>
                     )}
                 </CardFooter>
             </Card>

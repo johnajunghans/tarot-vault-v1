@@ -51,7 +51,7 @@ export default function RootLayout({
           enableSystem
         >
           <ConvexClientProvider>
-            <TooltipProvider>
+            <TooltipProvider delay={1000}>
               {children}
             </TooltipProvider>
           </ConvexClientProvider>

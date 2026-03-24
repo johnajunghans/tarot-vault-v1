@@ -29,6 +29,11 @@ function Tooltip({ delay = 0, ...props }: TooltipProps) {
   )
 }
 
+/** Tooltip root without its own provider — use inside a shared `TooltipProvider` for group behavior. */
+function TooltipRoot({ ...props }: TooltipPrimitive.Root.Props) {
+  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+}
+
 function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
 }
@@ -71,4 +76,4 @@ function TooltipContent({
   )
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export { Tooltip, TooltipRoot, TooltipTrigger, TooltipContent, TooltipProvider }
