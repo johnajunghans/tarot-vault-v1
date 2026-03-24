@@ -322,15 +322,15 @@ function CanvasCard({
 
                     <g ref={badgeRef}>
                         <circle
-                            cx={15}
-                            cy={15}
+                            cx={16}
+                            cy={16}
                             r={10}
                             fill={badgeColor}
-                            fillOpacity={0.9}
+                            fillOpacity={isButtonHoverActive || isHighlighted ? 0.9 : 0.7}
                         />
                         <text
-                            x={15}
-                            y={19}
+                            x={15.75}
+                            y={19.75}
                             textAnchor="middle"
                             fontSize={10}
                             fill="var(--background)"
@@ -338,7 +338,7 @@ function CanvasCard({
                                 pointerEvents: 'none',
                                 userSelect: 'none',
                             }}
-                            className="font-medium font-mono"
+                            className="font-bold font-mono"
                         >
                             {index + 1}
                         </text>
@@ -359,13 +359,14 @@ function CanvasCard({
                                     textAnchor="middle"
                                     dominantBaseline="middle"
                                     fill="var(--foreground)"
-                                    fillOpacity={hasCardName ? 0.78 : 0.48}
+                                    fillOpacity={hasCardName ? (isButtonHoverActive || isHighlighted ? 0.9 : 0.7) : 0.5}
                                     fontSize={cardNameFontSize}
                                     fontStyle={hasCardName ? undefined : 'italic'}
                                     fontWeight={hasCardName ? 600 : 500}
                                     style={{
                                         pointerEvents: 'none',
                                         userSelect: 'none',
+                                        fontFamily: 'var(--font-philosopher)'
                                     }}
                                 >
                                     {line}
