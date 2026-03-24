@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { type Layout } from "react-resizable-panels"
 import { FormProvider } from "react-hook-form"
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PlusSignIcon, Settings02Icon } from "hugeicons-react"
 import SpreadCanvas, { ZoomControls } from "../canvas"
 import { SpreadSettingsPanel, CardSettingsPanel } from "../panels"
+import ConfirmDialog from "@/app/_components/confirm-dialog"
 import type { UseSpreadFormReturn } from "../panels/hooks/use-spread-form"
 import type { UseSpreadEditorReturn } from "./hooks/use-spread-editor"
 
@@ -59,6 +60,23 @@ export default function SpreadEditorLayout({
         resetZoom,
     } = editor
 
+    const [canvasDeleteIndex, setCanvasDeleteIndex] = useState<number | null>(null)
+
+    const handleCanvasDeleteConfirm = useCallback(() => {
+        if (canvasDeleteIndex === null) return
+
+        if (selectedCardIndex !== null) {
+            if (selectedCardIndex === canvasDeleteIndex) {
+                setSelectedCardIndex(null)
+            } else if (selectedCardIndex > canvasDeleteIndex) {
+                setSelectedCardIndex(selectedCardIndex - 1)
+            }
+        }
+
+        remove(canvasDeleteIndex)
+        setCanvasDeleteIndex(null)
+    }, [canvasDeleteIndex, selectedCardIndex, setSelectedCardIndex, remove])
+
     const handleCanvasLayerChange = useCallback(
         (updates: { index: number; z: number }[]) => {
             updates.forEach(({ index, z }) => {
@@ -83,6 +101,7 @@ export default function SpreadEditorLayout({
                     onPositionsCommit={handleCanvasPositionsCommit}
                     onRotationChange={handleCardRotationChange}
                     onLayerChange={handleCanvasLayerChange}
+                    onDeleteCard={isViewMode ? undefined : setCanvasDeleteIndex}
                     onZoomDisplayChange={setZoomDisplay}
                     onZoomBoundsChange={setMinZoomDisplay}
                     viewportRequest={viewportRequest}
@@ -211,6 +230,22 @@ export default function SpreadEditorLayout({
                     </>
                 )}
             </FormProvider>
+
+            <ConfirmDialog
+                open={canvasDeleteIndex !== null}
+                onOpenChange={(open) => {
+                    if (!open) setCanvasDeleteIndex(null)
+                }}
+                title={
+                    canvasDeleteIndex !== null
+                        ? `Remove Position ${canvasDeleteIndex + 1}?`
+                        : ""
+                }
+                description="This position will be removed from the spread. This cannot be undone."
+                cancelLabel="Keep it"
+                confirmLabel="Remove"
+                onConfirm={handleCanvasDeleteConfirm}
+            />
         </div>
     )
 }

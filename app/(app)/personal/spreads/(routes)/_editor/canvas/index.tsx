@@ -54,6 +54,7 @@ interface SpreadCanvasProps {
     onPositionsCommit?: (updates: SpreadCanvasPositionUpdate[]) => void
     onRotationChange?: (index: number, value: number) => void
     onLayerChange?: (updates: { index: number; z: number }[]) => void
+    onDeleteCard?: (index: number) => void
     onZoomDisplayChange?: (zoom: number) => void
     onZoomBoundsChange?: (minZoom: number) => void
     isViewMode?: boolean
@@ -74,6 +75,7 @@ function SpreadCanvasComponent(
         onPositionsCommit,
         onRotationChange,
         onLayerChange,
+        onDeleteCard,
         onZoomDisplayChange,
         onZoomBoundsChange,
         isViewMode = false,
@@ -384,6 +386,7 @@ function SpreadCanvasComponent(
                                 onRotationChange={handleButtonRotationChange}
                                 onBringToFront={handleBringToFront}
                                 onSendToBack={handleSendToBack}
+                                onDeleteCard={onDeleteCard ?? (() => {})}
                                 isAtFront={buttonFrameLayerInfo.isAtFront}
                                 isAtBack={buttonFrameLayerInfo.isAtBack}
                                 onFrameMouseEnter={handleButtonFrameMouseEnter}

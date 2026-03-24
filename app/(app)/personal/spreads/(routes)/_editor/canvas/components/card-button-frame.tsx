@@ -10,6 +10,7 @@ import {
     LayerBringToFrontIcon,
     RotateTopLeftIcon,
     RotateTopRightIcon,
+    Delete02Icon,
 } from 'hugeicons-react'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
@@ -35,6 +36,7 @@ interface CardButtonFrameProps {
     onRotationChange: (index: number, value: number) => void
     onBringToFront: (index: number) => void
     onSendToBack: (index: number) => void
+    onDeleteCard: (index: number) => void
     isAtFront: boolean
     isAtBack: boolean
     onFrameMouseEnter: () => void
@@ -89,58 +91,81 @@ function HtmlIconButton({
     )
 }
 
-function LayerButtonGroup({
+function BottomButtonGroup({
     x,
     y,
     onSendToBack,
     onBringToFront,
+    onDelete,
     isAtBack,
     isAtFront,
+    showLayerButtons,
 }: {
     x: number
     y: number
     onSendToBack: () => void
     onBringToFront: () => void
+    onDelete: () => void
     isAtBack: boolean
     isAtFront: boolean
+    showLayerButtons: boolean
 }) {
+    const buttonCount = showLayerButtons ? 3 : 1
+
     return (
         <foreignObject
             x={x}
             y={y}
-            width={BUTTON_SIZE * 2}
+            width={BUTTON_SIZE * buttonCount}
             height={BUTTON_SIZE}
             style={{ pointerEvents: 'auto', overflow: 'visible' }}
         >
             <div className="flex size-full items-center justify-center">
                 <ButtonGroup>
+                    {showLayerButtons && (
+                        <>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                aria-label="Send to back"
+                                disabled={isAtBack}
+                                className="bg-background/25 shadow-sm backdrop-blur-xs"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onSendToBack()
+                                }}
+                            >
+                                <LayerSendToBackIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                aria-label="Bring to front"
+                                disabled={isAtFront}
+                                className="bg-background/25 shadow-sm backdrop-blur-xs"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onBringToFront()
+                                }}
+                            >
+                                <LayerBringToFrontIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                            </Button>
+                        </>
+                    )}
                     <Button
                         type="button"
                         variant="outline"
                         size="icon-sm"
-                        aria-label="Send to back"
-                        disabled={isAtBack}
-                        className="bg-background/25 shadow-sm backdrop-blur-xs"
+                        aria-label="Delete card"
+                        className="bg-background/25 shadow-sm backdrop-blur-xs text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
                         onClick={(e) => {
                             e.stopPropagation()
-                            onSendToBack()
+                            onDelete()
                         }}
                     >
-                        <LayerSendToBackIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        aria-label="Bring to front"
-                        disabled={isAtFront}
-                        className="bg-background/25 shadow-sm backdrop-blur-xs"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onBringToFront()
-                        }}
-                    >
-                        <LayerBringToFrontIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                        <Delete02Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
                     </Button>
                 </ButtonGroup>
             </div>
@@ -234,6 +259,7 @@ function CardButtonFrame({
     onRotationChange,
     onBringToFront,
     onSendToBack,
+    onDeleteCard,
     isAtFront,
     isAtBack,
     onFrameMouseEnter,
@@ -369,19 +395,19 @@ function CardButtonFrame({
                 )}
             </g>
 
-            {/* Bottom-center: Layer controls */}
-            {showLayerButtons && (
-                <g data-btn transform={`translate(${centerX}, ${bottomY}) scale(${scale})`}>
-                    <LayerButtonGroup
-                        x={-BUTTON_SIZE}
-                        y={-BUTTON_R}
-                        onSendToBack={() => onSendToBack(cardIndex)}
-                        onBringToFront={() => onBringToFront(cardIndex)}
-                        isAtBack={isAtBack}
-                        isAtFront={isAtFront}
-                    />
-                </g>
-            )}
+            {/* Bottom-center: Layer controls + delete */}
+            <g data-btn transform={`translate(${centerX}, ${bottomY}) scale(${scale})`}>
+                <BottomButtonGroup
+                    x={-(BUTTON_SIZE * (showLayerButtons ? 3 : 1)) / 2}
+                    y={-BUTTON_R}
+                    onSendToBack={() => onSendToBack(cardIndex)}
+                    onBringToFront={() => onBringToFront(cardIndex)}
+                    onDelete={() => onDeleteCard(cardIndex)}
+                    isAtBack={isAtBack}
+                    isAtFront={isAtFront}
+                    showLayerButtons={showLayerButtons}
+                />
+            </g>
         </g>
     )
 }
