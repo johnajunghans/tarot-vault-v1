@@ -4,15 +4,28 @@ import { CARD_WIDTH, CARD_HEIGHT } from '../../lib'
 
 const CORNER_R = 8
 
+/** Added to outer rect `strokeOpacity` when card button rail is hovered. */
+const BUTTON_HOVER_STROKE_OPACITY_BOOST = 0.18
+
 interface CardBackProps {
     selected: boolean
     groupSelected: boolean
+    isButtonHoverActive?: boolean
 }
 
-export function CardBack({ selected, groupSelected }: CardBackProps) {
+export function CardBack({
+    selected,
+    groupSelected,
+    isButtonHoverActive = false,
+}: CardBackProps) {
     const isHighlighted = selected || groupSelected
     const borderColor = isHighlighted ? 'var(--gold)' : 'var(--gold-muted)'
     const borderOpacity = isHighlighted ? 0.9 : 0.5
+    const outerStrokeOpacity = Math.min(
+        1,
+        borderOpacity +
+            (isButtonHoverActive ? BUTTON_HOVER_STROKE_OPACITY_BOOST : 0)
+    )
     const fillOpacity = isHighlighted ? 0.18 : 0.1
     const accentOpacity = isHighlighted ? 0.5 : 0.2
     const cx = CARD_WIDTH / 2
@@ -29,7 +42,7 @@ export function CardBack({ selected, groupSelected }: CardBackProps) {
                 fill="var(--card)"
                 stroke={borderColor}
                 strokeWidth={1.5}
-                strokeOpacity={borderOpacity}
+                strokeOpacity={outerStrokeOpacity}
             />
             <rect
                 x={5}

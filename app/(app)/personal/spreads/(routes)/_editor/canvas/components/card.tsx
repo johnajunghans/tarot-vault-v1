@@ -312,29 +312,10 @@ function CanvasCard({
                         />
                     )}
 
-                    {isButtonHoverActive && (
-                        <>
-                            <rect
-                                x={-5}
-                                y={-5}
-                                width={CARD_WIDTH + 10}
-                                height={CARD_HEIGHT + 10}
-                                rx={CORNER_R + 3}
-                                fill="none"
-                                stroke="var(--gold)"
-                                strokeOpacity={0.16}
-                                strokeWidth={1}
-                                style={{
-                                    pointerEvents: 'none',
-                                    transition: 'stroke-opacity 140ms ease',
-                                }}
-                            />
-                        </>
-                    )}
-
                     <CardBack
                         selected={selected}
                         groupSelected={groupSelected}
+                        isButtonHoverActive={isButtonHoverActive}
                     />
 
                     <g ref={badgeRef}>

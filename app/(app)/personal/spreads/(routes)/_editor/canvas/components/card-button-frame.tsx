@@ -5,11 +5,11 @@ import { memo, useCallback, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { useGSAP } from '@gsap/react'
 import {
-    RotateLeft01Icon,
-    RotateRight01Icon,
     Rotate01Icon,
     LayerSendToBackIcon,
     LayerBringToFrontIcon,
+    RotateTopLeftIcon,
+    RotateTopRightIcon,
 } from 'hugeicons-react'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
@@ -21,7 +21,7 @@ import type { CanvasCard } from '../types'
 const BUTTON_R = 14
 const BUTTON_ICON_SIZE = 14
 const BUTTON_SIZE = BUTTON_R * 2
-const BUTTON_OFFSET = 5
+const BUTTON_OFFSET = 0
 const ROTATION_SENSITIVITY = 1.2
 /** 1 = full 1/zoom compensation; lower = softer (less shrink at max zoom, less growth at min zoom). */
 const BUTTON_ZOOM_COMPENSATION = 0.72
@@ -74,7 +74,7 @@ function HtmlIconButton({
                     aria-label={label}
                     disabled={disabled}
                     className={cn(
-                        'bg-background/90 shadow-sm backdrop-blur-sm',
+                        'bg-background/50 shadow-sm backdrop-blur-sm',
                         isActive && 'border-gold text-foreground'
                     )}
                     onClick={(e) => {
@@ -120,7 +120,7 @@ function LayerButtonGroup({
                         size="icon-sm"
                         aria-label="Send to back"
                         disabled={isAtBack}
-                        className="bg-background/90 shadow-sm backdrop-blur-sm"
+                        className="bg-background/50 shadow-sm backdrop-blur-sm"
                         onClick={(e) => {
                             e.stopPropagation()
                             onSendToBack()
@@ -134,7 +134,7 @@ function LayerButtonGroup({
                         size="icon-sm"
                         aria-label="Bring to front"
                         disabled={isAtFront}
-                        className="bg-background/90 shadow-sm backdrop-blur-sm"
+                        className="bg-background/50 shadow-sm backdrop-blur-sm"
                         onClick={(e) => {
                             e.stopPropagation()
                             onBringToFront()
@@ -148,44 +148,78 @@ function LayerButtonGroup({
     )
 }
 
-function RotationDragButton({
+function RotationButtonGroup({
+    x,
+    y,
     isDraggingRotation,
+    onRotateCCW,
+    onRotateCW,
     onPointerDown,
     onPointerMove,
     onPointerUp,
 }: {
+    x: number
+    y: number
     isDraggingRotation: boolean
+    onRotateCCW: () => void
+    onRotateCW: () => void
     onPointerDown: (e: ReactPointerEvent<HTMLButtonElement>) => void
     onPointerMove: (e: ReactPointerEvent<HTMLButtonElement>) => void
     onPointerUp: (e: ReactPointerEvent<HTMLButtonElement>) => void
 }) {
     return (
         <foreignObject
-            x={-BUTTON_R}
-            y={-BUTTON_R}
-            width={BUTTON_SIZE}
+            x={x}
+            y={y}
+            width={BUTTON_SIZE * 3}
             height={BUTTON_SIZE}
             style={{ pointerEvents: 'auto', overflow: 'visible' }}
         >
             <div className="flex size-full items-center justify-center">
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    aria-label="Drag to rotate"
-                    className={cn(
-                        'h-7 w-7 rounded-full bg-background/90 shadow-sm backdrop-blur-sm',
-                        isDraggingRotation && 'border-gold text-foreground'
-                    )}
-                    style={{
-                        cursor: isDraggingRotation ? 'grabbing' : 'grab',
-                    }}
-                    onPointerDown={onPointerDown}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
-                >
-                    <Rotate01Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
-                </Button>
+                <ButtonGroup>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label="Rotate counter-clockwise"
+                        className="bg-background/50 shadow-sm backdrop-blur-sm"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onRotateCCW()
+                        }}
+                    >
+                        <RotateTopLeftIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label="Drag to rotate"
+                        className={cn(
+                            'bg-background/50 shadow-sm backdrop-blur-sm',
+                            isDraggingRotation && 'border-gold text-foreground'
+                        )}
+                        style={{ cursor: isDraggingRotation ? 'grabbing' : 'grab' }}
+                        onPointerDown={onPointerDown}
+                        onPointerMove={onPointerMove}
+                        onPointerUp={onPointerUp}
+                    >
+                        <Rotate01Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label="Rotate clockwise"
+                        className="bg-background/50 shadow-sm backdrop-blur-sm"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onRotateCW()
+                        }}
+                    >
+                        <RotateTopRightIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                    </Button>
+                </ButtonGroup>
             </div>
         </foreignObject>
     )
@@ -213,21 +247,21 @@ function CardButtonFrame({
     const dragStartRef = useRef<{ x: number; y: number; startAngle: number } | null>(null)
     const accumulatedAngleRef = useRef(0)
 
-    useGSAP(
-        () => {
-            if (!rootRef.current) return
-            const buttons = rootRef.current.querySelectorAll('[data-btn]')
-            gsap.from(buttons, {
-                scale: 0.7,
-                opacity: 0,
-                duration: 0.12,
-                stagger: 0.02,
-                ease: 'power2.out',
-                overwrite: true,
-            })
-        },
-        { scope: rootRef, dependencies: [cardIndex] }
-    )
+    // useGSAP(
+    //     () => {
+    //         if (!rootRef.current) return
+    //         const buttons = rootRef.current.querySelectorAll('[data-btn]')
+    //         gsap.from(buttons, {
+    //             // scale: 0.7,
+    //             opacity: 0,
+    //             duration: 0.12,
+    //             // stagger: 0.02,
+    //             ease: 'power2.out',
+    //             overwrite: true,
+    //         })
+    //     },
+    //     { scope: rootRef, dependencies: [cardIndex] }
+    // )
 
     const handleContinuousPointerDown = useCallback(
         (e: ReactPointerEvent<HTMLButtonElement>) => {
@@ -284,8 +318,6 @@ function CardButtonFrame({
 
     const topY = -BUTTON_OFFSET
     const bottomY = CARD_HEIGHT + BUTTON_OFFSET
-    const leftX = -BUTTON_OFFSET
-    const rightX = CARD_WIDTH + BUTTON_OFFSET
     const centerX = CARD_WIDTH / 2
 
     return (
@@ -296,21 +328,14 @@ function CardButtonFrame({
             onMouseEnter={onFrameMouseEnter}
             onMouseLeave={onFrameMouseLeave}
         >
-            {/* Top-left: Rotate CCW */}
-            <g data-btn transform={`translate(${leftX}, ${topY}) scale(${scale})`}>
-                <HtmlIconButton
-                    x={-BUTTON_R}
-                    y={-BUTTON_R}
-                    icon={RotateLeft01Icon}
-                    onClick={() => onRotateStep(cardIndex, -1)}
-                    label="Rotate counter-clockwise"
-                />
-            </g>
-
-            {/* Top-center: Continuous rotation drag handle */}
+            {/* Top-center: Rotation button group */}
             <g data-btn transform={`translate(${centerX}, ${topY}) scale(${scale})`}>
-                <RotationDragButton
+                <RotationButtonGroup
+                    x={-(BUTTON_SIZE * 3) / 2}
+                    y={-BUTTON_R}
                     isDraggingRotation={isDraggingRotation}
+                    onRotateCCW={() => onRotateStep(cardIndex, -1)}
+                    onRotateCW={() => onRotateStep(cardIndex, 1)}
                     onPointerDown={handleContinuousPointerDown}
                     onPointerMove={handleContinuousPointerMove}
                     onPointerUp={handleContinuousPointerUp}
@@ -342,17 +367,6 @@ function CardButtonFrame({
                         </text>
                     </g>
                 )}
-            </g>
-
-            {/* Top-right: Rotate CW */}
-            <g data-btn transform={`translate(${rightX}, ${topY}) scale(${scale})`}>
-                <HtmlIconButton
-                    x={-BUTTON_R}
-                    y={-BUTTON_R}
-                    icon={RotateRight01Icon}
-                    onClick={() => onRotateStep(cardIndex, 1)}
-                    label="Rotate clockwise"
-                />
             </g>
 
             {/* Bottom-center: Layer controls */}
