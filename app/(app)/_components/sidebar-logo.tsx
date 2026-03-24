@@ -102,13 +102,13 @@ export function SidebarLogo() {
     >
       {/* Row 1: T ▲ ROT */}
       <div
-        className={`flex items-center transition-all duration-300 ${open ? "-translate-x-3" : "translate-x-0"}`}
+        className={`flex items-center transition-all duration-300 ${open ? "-translate-x-[13px]" : "-translate-x-[11px]"}`}
         style={{ height: open ? 22 : TRI_H }}
       >
         <span
           className={cn(
             textBase,
-            open ? "max-w-[20px] opacity-100 pr-0.5" : "max-w-0 opacity-0 pr-0",
+            open ? "opacity-100 pr-0.5" : "opacity-0 pr-0",
           )}
         >
           T
