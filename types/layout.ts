@@ -23,7 +23,7 @@ export type ActionDescriptor =
 
 export type TitleDescriptor =
   | { variant: "page"; label: string; icon?: string }
-  | { variant: "spread"; name: string; count: number; countUnit?: "card" | "position"; badge?: string }
+  | { variant: "spread"; name: string | undefined; nameFallback: string; count: number; countUnit?: "card" | "position"; badge?: string }
 
 // ─── Breadcrumb Types ──────────────────────────────────────────────────────
 

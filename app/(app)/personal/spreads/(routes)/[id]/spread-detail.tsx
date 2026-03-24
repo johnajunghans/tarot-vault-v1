@@ -212,7 +212,8 @@ export default function SpreadDetail({
     useEffect(() => {
         setTitle({
             variant: "spread",
-            name: watchedName || "Untitled Spread",
+            name: watchedName,
+            nameFallback: "Untitled Spread",
             count: watchedPositions?.length ?? 0,
             countUnit: "position",
         })

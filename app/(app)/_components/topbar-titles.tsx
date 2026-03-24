@@ -38,11 +38,12 @@ export default function TopbarTitle({ title, isMobile }: TopbarTitleProps) {
   if (title.variant === "spread") {
     const unit = title.countUnit ?? "card"
     const countLabel = `${title.count} ${title.count !== 1 ? `${unit}s` : unit}`
+    const showFallback = !title.name || title.name.length === 0
 
     return (
       <>
-        <span className="font-display font-bold text-foreground text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]">
-          {title.name}
+        <span className={`font-display ${showFallback ? "text-foreground/75 italic font-medium overflow-visible" : "text-foreground font-bold"} text-sm md:text-base lg:text-lg truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]`}>
+          {showFallback ? title.nameFallback : title.name}
         </span>
         {!isMobile && (
           <>

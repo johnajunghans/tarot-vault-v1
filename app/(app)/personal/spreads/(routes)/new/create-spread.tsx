@@ -101,7 +101,8 @@ export default function CreateSpread({
     useEffect(() => {
         setTitle({
             variant: "spread",
-            name: watchedName || "New Spread",
+            name: watchedName,
+            nameFallback: "Untitled Spread",
             count: watchedPositions?.length ?? 0,
             countUnit: "card",
             badge: "DRAFT",
