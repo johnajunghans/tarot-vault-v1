@@ -3,7 +3,6 @@
 import {
   Cards01Icon,
   ConstellationIcon,
-  Diamond01Icon,
   Layout01Icon,
   LayoutLeftIcon,
   LibraryIcon,
@@ -37,6 +36,7 @@ import ThemeToggle from "./theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useLayoutMode, useLayoutContent } from "@/components/providers/layout-provider"
 import { SidebarActions, SidebarActionsSkeleton, DefaultSidebarActions } from "./sidebar-actions"
+import { SidebarLogo } from "./sidebar-logo"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -208,29 +208,23 @@ export default function AppSidebar() {
       {/* Header — brand */}
       <SidebarHeader className="h-[57px] justify-center border-b border-border/80">
         <div className="flex items-center justify-between">
-          <div className="flex items-center justify-start gap-2.5 pl-0 text-left group/brand">
-            {/* Diamond icon — swaps to panel open icon on sidebar hover when collapsed + no topbar */}
-            <div className="shrink-0 relative group-data-[collapsible=icon]:translate-x-2.5 duration-150">
-              <HugeiconsIcon
-                icon={Diamond01Icon}
-                color="var(--gold)"
-                fill="var(--gold)"
-                className={`drop-shadow-[0_0_4px_var(--gold-muted)] transition-all duration-300 group-hover/brand:scale-125 group-hover/brand:drop-shadow-[0_0_8px_var(--gold)] ${
-                  showSidebarToggle && !open && sidebarHovered ? "opacity-0 scale-75" : ""
-                }`}
-                style={{ borderRadius: 4 }}
-              />
-              {showSidebarToggle && !open && (
-                <SidebarToggle
-                  className={`absolute inset-0 -translate-x-[1px] transition-all duration-300 hover:bg-sidebar-accent ${
-                    sidebarHovered ? "scale-100" : "scale-0"
-                  }`}
-                />
+          <div className="relative shrink-0 group-data-[collapsible=icon]:translate-x-3 duration-150">
+            <div
+              className={cn(
+                "transition-all duration-300",
+                showSidebarToggle && !open && sidebarHovered && "opacity-0 scale-75",
               )}
+            >
+              <SidebarLogo />
             </div>
-            <span className="text-nowrap group-data-[collapsible=icon]:scale-0 group-data-[collapsible=icon]:pointer-events-none transition-scale duration-150 font-display font-bold tracking-tight">
-              Tarot Vault
-            </span>
+            {showSidebarToggle && !open && (
+              <SidebarToggle
+                className={cn(
+                  "absolute inset-0 transition-all duration-300 hover:bg-sidebar-accent",
+                  sidebarHovered ? "scale-100" : "scale-0",
+                )}
+              />
+            )}
           </div>
 
           {/* Panel close icon — shown when expanded + no topbar */}
