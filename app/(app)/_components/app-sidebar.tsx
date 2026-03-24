@@ -208,7 +208,7 @@ export default function AppSidebar() {
       {/* Header — brand */}
       <SidebarHeader className="h-[57px] justify-center border-b border-border/80">
         <div className="flex items-center justify-between">
-          <div className="relative shrink-0 group-data-[collapsible=icon]:translate-x-3 duration-150">
+          <div className="relative shrink-0 translate-x-3 duration-150">
             <div
               className={cn(
                 "transition-all duration-300",
