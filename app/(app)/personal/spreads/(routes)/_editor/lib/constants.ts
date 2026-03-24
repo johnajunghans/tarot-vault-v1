@@ -10,7 +10,7 @@ export const CARD_HEIGHT = 150
 export const CARD_HOVER_HIT_PADDING = 15
 
 // Canvas interactions snap to this unit so dragging and manual edits align.
-export const GRID_SIZE = 15
+export const GRID_SIZE = 20
 
 // ------------ CANVAS DIMENSIONS ------------ //
 

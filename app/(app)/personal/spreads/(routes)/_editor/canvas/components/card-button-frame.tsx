@@ -21,7 +21,7 @@ import type { CanvasCard } from '../types'
 const BUTTON_R = 14
 const BUTTON_ICON_SIZE = 14
 const BUTTON_SIZE = BUTTON_R * 2
-const BUTTON_OFFSET = 0
+const BUTTON_OFFSET = 5
 const ROTATION_SENSITIVITY = 1.2
 /** 1 = full 1/zoom compensation; lower = softer (less shrink at max zoom, less growth at min zoom). */
 const BUTTON_ZOOM_COMPENSATION = 0.72
@@ -74,7 +74,7 @@ function HtmlIconButton({
                     aria-label={label}
                     disabled={disabled}
                     className={cn(
-                        'bg-background/50 shadow-sm backdrop-blur-sm',
+                        'bg-background/25 shadow-sm backdrop-blur-xs',
                         isActive && 'border-gold text-foreground'
                     )}
                     onClick={(e) => {
@@ -120,7 +120,7 @@ function LayerButtonGroup({
                         size="icon-sm"
                         aria-label="Send to back"
                         disabled={isAtBack}
-                        className="bg-background/50 shadow-sm backdrop-blur-sm"
+                        className="bg-background/25 shadow-sm backdrop-blur-xs"
                         onClick={(e) => {
                             e.stopPropagation()
                             onSendToBack()
@@ -134,7 +134,7 @@ function LayerButtonGroup({
                         size="icon-sm"
                         aria-label="Bring to front"
                         disabled={isAtFront}
-                        className="bg-background/50 shadow-sm backdrop-blur-sm"
+                        className="bg-background/25 shadow-sm backdrop-blur-xs"
                         onClick={(e) => {
                             e.stopPropagation()
                             onBringToFront()
@@ -182,7 +182,7 @@ function RotationButtonGroup({
                         variant="outline"
                         size="icon-sm"
                         aria-label="Rotate counter-clockwise"
-                        className="bg-background/50 shadow-sm backdrop-blur-sm"
+                        className="bg-background/25 shadow-sm backdrop-blur-xs"
                         onClick={(e) => {
                             e.stopPropagation()
                             onRotateCCW()
@@ -196,7 +196,7 @@ function RotationButtonGroup({
                         size="icon-sm"
                         aria-label="Drag to rotate"
                         className={cn(
-                            'bg-background/50 shadow-sm backdrop-blur-sm',
+                            'bg-background/25 shadow-sm backdrop-blur-xs',
                             isDraggingRotation && 'border-gold text-foreground'
                         )}
                         style={{ cursor: isDraggingRotation ? 'grabbing' : 'grab' }}
@@ -211,7 +211,7 @@ function RotationButtonGroup({
                         variant="outline"
                         size="icon-sm"
                         aria-label="Rotate clockwise"
-                        className="bg-background/50 shadow-sm backdrop-blur-sm"
+                        className="bg-background/25 shadow-sm backdrop-blur-xs"
                         onClick={(e) => {
                             e.stopPropagation()
                             onRotateCW()
