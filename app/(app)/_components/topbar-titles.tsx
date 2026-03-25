@@ -42,9 +42,9 @@ export default function TopbarTitle({ title, isMobile }: TopbarTitleProps) {
 
     return (
       <>
-        <span className={`font-display ${showFallback ? "text-foreground/75 italic font-medium overflow-visible" : "text-foreground font-bold"} text-sm md:text-base lg:text-lg truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]`}>
+        <h1 className={`${showFallback ? "text-foreground/50 italic font-medium overflow-visible" : "text-foreground font-bold"} text-sm lg:text-base truncate max-w-[120px] sm:max-w-[280px] md:max-w-[160px] lg:max-w-[280px]`}>
           {showFallback ? title.nameFallback : title.name}
-        </span>
+        </h1>
         {!isMobile && (
           <>
             <Separator orientation="vertical" />

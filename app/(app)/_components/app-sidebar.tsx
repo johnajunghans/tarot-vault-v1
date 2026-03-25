@@ -220,7 +220,7 @@ export default function AppSidebar() {
             {showSidebarToggle && !open && (
               <SidebarToggle
                 className={cn(
-                  "absolute inset-0 transition-all duration-300 hover:bg-sidebar-accent",
+                  "absolute inset-0  transition-all duration-300 -translate-1 hover:bg-sidebar-accent",
                   sidebarHovered ? "scale-100" : "scale-0",
                 )}
               />
