@@ -84,9 +84,7 @@ function DownArrow({
 // height). Each arrow translates half that distance to close the gap.
 const COLLAPSE_Y = 0
 
-export function SidebarLogo() {
-  const { open } = useSidebar()
-
+function LogoMark({ open }: { open: boolean }) {
   const textBase = "font-display font-bold text-base leading-none tracking-[2px] overflow-hidden whitespace-nowrap transition-all duration-300 select-none"
   const arrowBase = "shrink-0 transition-all duration-300"
 
@@ -102,7 +100,7 @@ export function SidebarLogo() {
     >
       {/* Row 1: T ▲ ROT */}
       <div
-        className={`flex items-center transition-all duration-300 ${open ? "-translate-x-[13px]" : "-translate-x-[11px]"}`}
+        className={`flex items-center transition-all duration-300 ${open ? "-translate-x-0" : "-translate-x-[11px]"}`}
         style={{ height: open ? 22 : TRI_H }}
       >
         <span
@@ -132,7 +130,7 @@ export function SidebarLogo() {
 
       {/* Row 2: ▼ AULT */}
       <div
-        className={`flex items-center transition-all duration-300 ${open ? "translate-x-0" : "translate-x-0"}`}
+        className={`flex items-center transition-all duration-300 ${open ? "translate-x-[13px]" : "translate-x-0"}`}
         style={{ height: open ? 22 : TRI_H }}
       >
         <DownArrow
@@ -153,4 +151,21 @@ export function SidebarLogo() {
       </div>
     </div>
   )
+}
+
+export function SidebarLogo({ mobile = false }: { mobile?: boolean }) {
+  const { open } = useSidebar()
+
+  if (mobile) {
+    return (
+      <div className="flex items-center gap-1">
+        <LogoMark open={false} />
+        <span className="font-display text-base font-bold tracking-normal text-foreground whitespace-nowrap">
+          Tarot Vault
+        </span>
+      </div>
+    )
+  }
+
+  return <LogoMark open={open} />
 }

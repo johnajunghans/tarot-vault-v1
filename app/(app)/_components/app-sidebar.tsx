@@ -208,14 +208,14 @@ export default function AppSidebar() {
       {/* Header — brand */}
       <SidebarHeader className="h-[57px] justify-center border-b border-border/80">
         <div className="flex items-center justify-between">
-          <div className="relative shrink-0 translate-x-3 duration-150">
+          <div className={cn("relative shrink-0 duration-150", !isMobile && "translate-x-3")}>
             <div
               className={cn(
                 "transition-all duration-300",
                 showSidebarToggle && !open && sidebarHovered && "opacity-0 scale-75",
               )}
             >
-              <SidebarLogo />
+              <SidebarLogo mobile={isMobile} />
             </div>
             {showSidebarToggle && !open && (
               <SidebarToggle
