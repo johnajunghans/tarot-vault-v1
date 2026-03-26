@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -39,6 +40,34 @@ export default function ZoomControls({
     const defaultZoom = Math.max(DEFAULT_ZOOM, minZoom)
     const isDefaultZoom = normalizedZoom === defaultZoom
 
+    // Keyboard shortcuts: ⇧⌘+ (zoom in), ⇧⌘- (zoom out), ⇧⌘0 (reset).
+    // Uses Shift+Meta/Ctrl to avoid conflicting with browser zoom (⌘+/⌘-/⌘0).
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const tag = (e.target as HTMLElement).tagName
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+
+            const isCtrlOrMeta = e.ctrlKey || e.metaKey
+            if (!isCtrlOrMeta || !e.shiftKey) return
+
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault()
+                onZoomIn()
+            } else if (e.key === '-' || e.key === '_') {
+                e.preventDefault()
+                onZoomOut()
+            } else if (e.key === '0' || e.key === ')') {
+                e.preventDefault()
+                onResetZoom()
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [onZoomIn, onZoomOut, onResetZoom])
+
     return (
         <TooltipProvider delay={TOOLTIP_DELAY}>
             <div
@@ -58,7 +87,7 @@ export default function ZoomControls({
                                     </Button>
                                 }
                             />
-                            <TooltipContent>Reset zoom</TooltipContent>
+                            <TooltipContent>Reset zoom <span className="text-background/60">⇧⌘0</span></TooltipContent>
                         </TooltipRoot>
                         <Separator orientation="vertical" className="my-2" />
                     </>
@@ -76,7 +105,7 @@ export default function ZoomControls({
                             </Button>
                         }
                     />
-                    <TooltipContent>Zoom out</TooltipContent>
+                    <TooltipContent>Zoom out <span className="text-background/60">⇧⌘-</span></TooltipContent>
                 </TooltipRoot>
                 <span className="min-w-12 select-none text-center font-mono text-sm text-muted-foreground">
                     {Math.round(normalizedZoom * 100)}%
@@ -94,7 +123,7 @@ export default function ZoomControls({
                             </Button>
                         }
                     />
-                    <TooltipContent>Zoom in</TooltipContent>
+                    <TooltipContent>Zoom in <span className="text-background/60">⇧⌘+</span></TooltipContent>
                 </TooltipRoot>
             </div>
         </TooltipProvider>
