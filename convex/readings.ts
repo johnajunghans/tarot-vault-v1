@@ -135,7 +135,7 @@ export const create = mutation({
 
 /**
  * Update an existing reading.
- * If the spread reference changes, adjusts readingCount on both old and new spreads.
+ * The spread reference is immutable after creation so readings remain historical records.
  */
 export const update = mutation({
   args: readingsUpdateArgs,
@@ -153,34 +153,8 @@ export const update = mutation({
       throw new Error("Not authorized to update this reading");
     }
 
-    // Validate spread exists if being updated
     if (args.spread) {
-      const newSpread = await ctx.db.get(args.spread.id);
-      if (!newSpread) {
-        throw new Error("Spread not found");
-      }
-
-      // If spread reference is changing, adjust readingCount on both spreads
-      if (args.spread.id !== reading.spread.id) {
-        // Decrement old spread's readingCount
-        const oldSpread = await ctx.db.get(reading.spread.id);
-        if (oldSpread) {
-          await ctx.db.patch(oldSpread._id, {
-            readingCount: Math.max(0, oldSpread.readingCount - 1),
-          });
-        }
-
-        // Increment new spread's readingCount
-        await ctx.db.patch(newSpread._id, {
-          readingCount: newSpread.readingCount + 1,
-        });
-
-        // Server-enforce the new spread's current version
-        args.spread = {
-          id: args.spread.id,
-          version: newSpread.version,
-        };
-      }
+      throw new Error("Reading spread cannot be changed after creation");
     }
 
     // Validate parent reading exists if being updated
@@ -201,7 +175,6 @@ export const update = mutation({
     if (args.drawMethod !== undefined) updates.drawMethod = args.drawMethod;
     if (args.digitalDrawRandomness !== undefined)
       updates.digitalDrawRandomness = args.digitalDrawRandomness;
-    if (args.spread !== undefined) updates.spread = args.spread;
     if (args.useReverseMeanings !== undefined)
       updates.useReverseMeanings = args.useReverseMeanings;
     if (args.useSignifierCard !== undefined)

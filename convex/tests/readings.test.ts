@@ -482,7 +482,7 @@ describe("readings", () => {
       expect(reading?.notes).toBe("Added some notes");
     });
 
-    it("adjusts readingCount on both spreads when spread reference changes", async () => {
+    it("rejects attempts to change a reading's spread", async () => {
       const t = convexTest(schema, modules);
       const { userId, asUser } = await setupAuthenticatedUser(t);
 
@@ -525,13 +525,14 @@ describe("readings", () => {
         return { spreadIdA, spreadIdB, readingId };
       });
 
-      // Update reading to reference Spread B
-      await asUser.mutation(api.readings.update, {
-        _id: readingId,
-        spread: { id: spreadIdB, version: 1 }, // Client version doesn't matter, server enforces
-      });
+      await expect(
+        asUser.mutation(api.readings.update, {
+          _id: readingId,
+          spread: { id: spreadIdB, version: 1 },
+        })
+      ).rejects.toThrowError("Reading spread cannot be changed after creation");
 
-      // Verify counts adjusted
+      // Verify nothing changed
       const [spreadA, spreadB, reading] = await t.run(async (ctx) => {
         return [
           await ctx.db.get(spreadIdA),
@@ -540,9 +541,10 @@ describe("readings", () => {
         ] as const;
       });
 
-      expect(spreadA?.readingCount).toBe(0); // Decremented
-      expect(spreadB?.readingCount).toBe(1); // Incremented
-      expect(reading?.spread.version).toBe(2); // Server-enforced to Spread B's current version
+      expect(spreadA?.readingCount).toBe(1);
+      expect(spreadB?.readingCount).toBe(0);
+      expect(reading?.spread.id).toEqual(spreadIdA);
+      expect(reading?.spread.version).toBe(1);
     });
 
     it("throws error when reading does not exist", async () => {
