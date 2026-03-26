@@ -84,7 +84,7 @@ function DownArrow({
 // height). Each arrow translates half that distance to close the gap.
 const COLLAPSE_Y = 0
 
-function LogoMark({ open }: { open: boolean }) {
+function LogoMarkVisual({ open }: { open: boolean }) {
   const textBase = "font-display font-bold text-base leading-none tracking-[2px] overflow-hidden whitespace-nowrap transition-all duration-300 select-none"
   const arrowBase = "shrink-0 transition-all duration-300"
 
@@ -159,7 +159,9 @@ export function SidebarLogo({ mobile = false }: { mobile?: boolean }) {
   if (mobile) {
     return (
       <div className="flex items-center gap-1">
-        <LogoMark open={false} />
+        <div aria-hidden="true">
+          <LogoMarkVisual open={false} />
+        </div>
         <span className="font-display text-base font-bold tracking-normal text-foreground whitespace-nowrap">
           Tarot Vault
         </span>
@@ -167,5 +169,12 @@ export function SidebarLogo({ mobile = false }: { mobile?: boolean }) {
     )
   }
 
-  return <LogoMark open={open} />
+  return (
+    <div>
+      <span className="sr-only">Tarot Vault</span>
+      <div aria-hidden="true">
+        <LogoMarkVisual open={open} />
+      </div>
+    </div>
+  )
 }
