@@ -88,8 +88,12 @@ export const getByVersion = query({
     v.null()
   ),
   handler: async (ctx, args) => {
+    const user = await getCurrentUserOrThrow(ctx);
     const spread = await ctx.db.get(args.spreadId);
     if (!spread) return null;
+    if (spread.userId !== user._id) {
+      throw new Error("Not authorized to view this spread");
+    }
 
     // If version matches current, return live spread data
     if (args.version === spread.version) {

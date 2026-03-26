@@ -488,6 +488,112 @@ describe("readings", () => {
       expect(spread?.readingCount).toBe(1);
       expect(readings).toHaveLength(0);
     });
+
+    it("throws error when user does not own the spread", async () => {
+      const t = convexTest(schema, modules);
+      const { asUser } = await setupAuthenticatedUser(t);
+
+      const otherUserSpreadId = await t.run(async (ctx) => {
+        const otherUserId = await ctx.db.insert("users", {
+          authId: "other_user",
+          tokenIdentifier: "https://clerk.test|other_user",
+          updatedAt: Date.now(),
+          lastSignedIn: Date.now(),
+          name: "Other User",
+          email: "other@example.com",
+          settings: {
+            appearance: { theme: "system" },
+            preferences: { useReverseMeanings: "auto" },
+            notifications: { private: { showToasts: true } },
+          },
+        });
+
+        return await ctx.db.insert("spreads", {
+          userId: otherUserId,
+          updatedAt: Date.now(),
+          name: "Other User Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 1,
+          readingCount: 0,
+          deleted: false,
+        });
+      });
+
+      await expect(
+        asUser.mutation(api.readings.create, {
+          question: "Should fail",
+          date: Date.now(),
+          drawMethod: "digital",
+          spread: { id: otherUserSpreadId, version: 1 },
+          useReverseMeanings: true,
+          useSignifierCard: false,
+          results: { cards: [] },
+          starred: false,
+        })
+      ).rejects.toThrowError("Not authorized to create reading for this spread");
+    });
+
+    it("throws error when parent reading belongs to another user", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+      const spreadId = await createTestSpread(t, userId);
+
+      const otherUserReadingId = await t.run(async (ctx) => {
+        const otherUserId = await ctx.db.insert("users", {
+          authId: "other_user",
+          tokenIdentifier: "https://clerk.test|other_user",
+          updatedAt: Date.now(),
+          lastSignedIn: Date.now(),
+          name: "Other User",
+          email: "other@example.com",
+          settings: {
+            appearance: { theme: "system" },
+            preferences: { useReverseMeanings: "auto" },
+            notifications: { private: { showToasts: true } },
+          },
+        });
+        const otherSpreadId = await ctx.db.insert("spreads", {
+          userId: otherUserId,
+          updatedAt: Date.now(),
+          name: "Other Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 1,
+          readingCount: 0,
+          deleted: false,
+        });
+
+        return await ctx.db.insert("readings", {
+          userId: otherUserId,
+          updatedAt: Date.now(),
+          question: "Other parent",
+          date: Date.now(),
+          drawMethod: "digital",
+          spread: { id: otherSpreadId, version: 1 },
+          useReverseMeanings: true,
+          useSignifierCard: false,
+          results: { cards: [] },
+          starred: false,
+        });
+      });
+
+      await expect(
+        asUser.mutation(api.readings.create, {
+          question: "Should fail",
+          date: Date.now(),
+          drawMethod: "digital",
+          spread: { id: spreadId, version: 1 },
+          parent: { type: "reading", id: otherUserReadingId },
+          useReverseMeanings: true,
+          useSignifierCard: false,
+          results: { cards: [] },
+          starred: false,
+        })
+      ).rejects.toThrowError("Not authorized to use this parent reading");
+    });
   });
 
   describe("update", () => {
@@ -679,6 +785,73 @@ describe("readings", () => {
           question: "Trying to update",
         })
       ).rejects.toThrowError("Not authorized to update this reading");
+    });
+
+    it("throws error when parent reading belongs to another user", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+      const spreadId = await createTestSpread(t, userId);
+
+      const { readingId, otherUserReadingId } = await t.run(async (ctx) => {
+        const readingId = await ctx.db.insert("readings", {
+          userId,
+          updatedAt: Date.now(),
+          question: "My reading",
+          date: Date.now(),
+          drawMethod: "digital",
+          spread: { id: spreadId, version: 1 },
+          useReverseMeanings: true,
+          useSignifierCard: false,
+          results: { cards: [] },
+          starred: false,
+        });
+
+        const otherUserId = await ctx.db.insert("users", {
+          authId: "other_user_2",
+          tokenIdentifier: "https://clerk.test|other_user_2",
+          updatedAt: Date.now(),
+          lastSignedIn: Date.now(),
+          name: "Other User",
+          email: "other2@example.com",
+          settings: {
+            appearance: { theme: "system" },
+            preferences: { useReverseMeanings: "auto" },
+            notifications: { private: { showToasts: true } },
+          },
+        });
+        const otherSpreadId = await ctx.db.insert("spreads", {
+          userId: otherUserId,
+          updatedAt: Date.now(),
+          name: "Other Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 1,
+          readingCount: 0,
+          deleted: false,
+        });
+        const otherUserReadingId = await ctx.db.insert("readings", {
+          userId: otherUserId,
+          updatedAt: Date.now(),
+          question: "Other parent",
+          date: Date.now(),
+          drawMethod: "digital",
+          spread: { id: otherSpreadId, version: 1 },
+          useReverseMeanings: true,
+          useSignifierCard: false,
+          results: { cards: [] },
+          starred: false,
+        });
+
+        return { readingId, otherUserReadingId };
+      });
+
+      await expect(
+        asUser.mutation(api.readings.update, {
+          _id: readingId,
+          parent: { type: "reading", id: otherUserReadingId },
+        })
+      ).rejects.toThrowError("Not authorized to use this parent reading");
     });
   });
 

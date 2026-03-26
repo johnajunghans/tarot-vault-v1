@@ -937,6 +937,46 @@ describe("spreads", () => {
       expect(result?.name).toBe("Deleted Spread");
       expect(result?.isCurrent).toBe(true);
     });
+
+    it("throws error when user does not own the spread", async () => {
+      const t = convexTest(schema, modules);
+      const { asUser } = await setupAuthenticatedUser(t);
+
+      const spreadId = await t.run(async (ctx) => {
+        const otherUserId = await ctx.db.insert("users", {
+          authId: "other_user",
+          tokenIdentifier: "https://clerk.test|other_user",
+          updatedAt: Date.now(),
+          lastSignedIn: Date.now(),
+          name: "Other User",
+          email: "other@example.com",
+          settings: {
+            appearance: { theme: "system" },
+            preferences: { useReverseMeanings: "auto" },
+            notifications: { private: { showToasts: true } },
+          },
+        });
+
+        return await ctx.db.insert("spreads", {
+          userId: otherUserId,
+          updatedAt: Date.now(),
+          name: "Other Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 1,
+          readingCount: 0,
+          deleted: false,
+        });
+      });
+
+      await expect(
+        asUser.query(api.spreads.getByVersion, {
+          spreadId,
+          version: 1,
+        })
+      ).rejects.toThrowError("Not authorized to view this spread");
+    });
   });
 
   describe("toggleFavorite", () => {

@@ -70,6 +70,9 @@ export const create = mutation({
     if (!spread) {
       throw new Error("Spread not found");
     }
+    if (spread.userId !== user._id) {
+      throw new Error("Not authorized to create reading for this spread");
+    }
     if (spread.deleted) {
       throw new Error("Cannot create reading with a deleted spread");
     }
@@ -79,6 +82,9 @@ export const create = mutation({
       const parentReading = await ctx.db.get(args.parent?.id);
       if (!parentReading) {
         throw new Error("Parent reading not found");
+      }
+      if (parentReading.userId !== user._id) {
+        throw new Error("Not authorized to use this parent reading");
       }
     }
 
@@ -165,6 +171,9 @@ export const update = mutation({
       const parentReading = await ctx.db.get(args.parent.id);
       if (!parentReading) {
         throw new Error("Parent reading not found");
+      }
+      if (parentReading.userId !== user._id) {
+        throw new Error("Not authorized to use this parent reading");
       }
     }
 
