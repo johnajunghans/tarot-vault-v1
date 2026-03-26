@@ -70,6 +70,9 @@ export const create = mutation({
     if (!spread) {
       throw new Error("Spread not found");
     }
+    if (spread.deleted) {
+      throw new Error("Cannot create reading with a deleted spread");
+    }
 
     // Validate parent reading exists if provided
     if (args.parent?.id) {

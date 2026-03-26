@@ -443,6 +443,51 @@ describe("readings", () => {
         })
       ).rejects.toThrowError("Spread not found");
     });
+
+    it("throws error when spread is soft-deleted", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      const spreadId = await t.run(async (ctx) => {
+        return await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Deleted Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 2,
+          readingCount: 1,
+          deleted: true,
+        });
+      });
+
+      await expect(
+        asUser.mutation(api.readings.create, {
+          question: "Should fail",
+          date: Date.now(),
+          drawMethod: "digital",
+          spread: { id: spreadId, version: 1 },
+          useReverseMeanings: true,
+          useSignifierCard: false,
+          results: { cards: [] },
+          starred: false,
+        })
+      ).rejects.toThrowError("Cannot create reading with a deleted spread");
+
+      const [spread, readings] = await t.run(async (ctx) => {
+        return [
+          await ctx.db.get(spreadId),
+          await ctx.db
+            .query("readings")
+            .withIndex("by_spreadId", (q) => q.eq("spread.id", spreadId))
+            .collect(),
+        ] as const;
+      });
+
+      expect(spread?.readingCount).toBe(1);
+      expect(readings).toHaveLength(0);
+    });
   });
 
   describe("update", () => {
