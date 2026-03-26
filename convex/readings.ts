@@ -84,6 +84,28 @@ export const create = mutation({
       readingCount: spread.readingCount + 1,
     });
 
+    // Archive the spread's current state if no snapshot exists for this version yet.
+    // This ensures only versions that readings actually reference get archived —
+    // edits between readings don't create orphan snapshots.
+    const existingSnapshot = await ctx.db
+      .query("spread_versions")
+      .withIndex("by_spreadId_and_version", (q) =>
+        q.eq("spreadId", args.spread.id).eq("version", spread.version)
+      )
+      .unique();
+
+    if (!existingSnapshot) {
+      await ctx.db.insert("spread_versions", {
+        spreadId: args.spread.id,
+        version: spread.version,
+        name: spread.name,
+        description: spread.description,
+        numberOfCards: spread.numberOfCards,
+        positions: spread.positions,
+        archivedAt: Date.now(),
+      });
+    }
+
     // Server-enforce the spread's current version
     const readingId = await ctx.db.insert("readings", {
       userId: user._id,

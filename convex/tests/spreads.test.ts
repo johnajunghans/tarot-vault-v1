@@ -419,7 +419,7 @@ describe("spreads", () => {
       expect(versions).toHaveLength(0);
     });
 
-    it("archives current state and bumps version when readingCount > 0", async () => {
+    it("bumps version but does not archive when readingCount > 0", async () => {
       const t = convexTest(schema, modules);
       const { userId, asUser } = await setupAuthenticatedUser(t);
 
@@ -450,19 +450,14 @@ describe("spreads", () => {
       expect(spread?.name).toBe("Updated Name");
       expect(spread?.version).toBe(2); // Version bumped
 
-      // Verify archived version was created
+      // Verify NO archived version was created (archiving happens in readings.create)
       const versions = await t.run(async (ctx) => {
         return await ctx.db
           .query("spread_versions")
-          .withIndex("by_spreadId_and_version", (q) =>
-            q.eq("spreadId", spreadId).eq("version", 1)
-          )
+          .withIndex("by_spreadId_and_version", (q) => q.eq("spreadId", spreadId))
           .collect();
       });
-      expect(versions).toHaveLength(1);
-      expect(versions[0].name).toBe("Original Name");
-      expect(versions[0].description).toBe("Original description");
-      expect(versions[0].version).toBe(1);
+      expect(versions).toHaveLength(0);
     });
 
     it("updates numberOfCards and positions together", async () => {

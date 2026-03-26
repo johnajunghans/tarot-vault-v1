@@ -41,15 +41,15 @@ Summary of actions taken:
 - Added `SpreadVersionDB` type to `types/spreads.ts`
 - Created backfill migration (`convex/migrations/backfillSpreadVersions.ts`) — internal mutation that patches existing spreads with new fields and counts existing readings per spread
 - Updated `spreads.create` to set `version: 1, readingCount: 0, deleted: false`; updated `spreadsCreateArgs` and `spreadsUpdateArgs` to omit the server-managed fields
-- Updated `spreads.update` to auto-archive current state into `spread_versions` and bump version when `readingCount > 0`; no-op on version when no readings exist
+- Updated `spreads.update` to bump version when `readingCount > 0` (no archiving — snapshots are created lazily in `readings.create`); no-op on version when no readings exist
 - Updated `spreads.remove` with three flows: hard-delete (readingCount === 0), soft-delete (readingCount > 0, cascade false), cascade delete (readingCount > 0, cascade true — deletes all readings + versions + spread)
 - Updated `spreads.list` and `spreads.listFavorited` to filter out soft-deleted spreads
 - Added `spreads.getByVersion` query: returns live spread for current version, archived snapshot for older versions; works on soft-deleted spreads (readings still need layout)
-- Updated `readings.create` to increment spread's `readingCount` and server-enforce the spread's current version
+- Updated `readings.create` to increment spread's `readingCount`, server-enforce the spread's current version, and lazily archive the spread's current state to `spread_versions` if no snapshot exists for that version (only versions that readings actually reference get archived — edits between readings produce zero orphan rows)
 - Updated `readings.remove` to decrement spread's `readingCount` and auto-cleanup soft-deleted spreads when count hits 0
 - Updated `readings.update` to adjust `readingCount` on both old and new spreads when spread reference changes, and server-enforce the new spread's current version
 - Updated delete dialog in `spread-detail.tsx`: when `readingCount > 0`, shows three options via ConfirmDialog's secondary button — "Keep it" (cancel), "Delete spread only" (soft-delete), "Delete spread and all X readings" (cascade delete)
-- Added 16 new versioning tests across spreads.test.ts (versioning, archiving, soft-delete, cascade delete, getByVersion, list/listFavorited exclusion) and readings.test.ts (readingCount increment/decrement, version enforcement, auto-cleanup, spread change count adjustment)
+- Added 18 new versioning tests across spreads.test.ts (versioning, soft-delete, cascade delete, getByVersion, list/listFavorited exclusion) and readings.test.ts (readingCount increment/decrement, version enforcement, lazy snapshot creation, snapshot deduplication, auto-cleanup, spread change count adjustment)
 - Updated all existing test spread inserts across spreads.test.ts, readings.test.ts, and interpretations.test.ts to include new required fields
 
 Future considerations/recommendations/warnings
@@ -151,9 +151,9 @@ Future considerations/recommendations/warnings
 ### ~~1.4.8_Spread Versioning~~
 1. Add `version` (int, starts at 1), `readingCount` (int, starts at 0), and `deleted` (boolean, default false) fields to `spreadValidator`. Create `spreadVersionValidator` and `spread_versions` table with `by_spreadId_and_version` index. Add `by_spreadId` index to readings table.
 2. Create backfill migration (`convex/migrations/backfillSpreadVersions.ts`) to patch existing spreads with `version: 1, readingCount: 0, deleted: false`.
-3. Update spread mutations: `create` sets new fields; `update` auto-archives to `spread_versions` and bumps version when `readingCount > 0`; `remove` supports soft-delete (when readings exist) and cascade delete. Filter soft-deleted spreads from `list`/`listFavorited`.
+3. Update spread mutations: `create` sets new fields; `update` bumps version when `readingCount > 0` (no archiving — snapshots are created lazily in `readings.create`); `remove` supports soft-delete (when readings exist) and cascade delete. Filter soft-deleted spreads from `list`/`listFavorited`.
 4. New `getByVersion` query: returns live spread if version matches current, otherwise fetches from `spread_versions`.
-5. Update reading mutations: `create` increments `readingCount` and server-enforces version; `remove` decrements `readingCount` and auto-cleans soft-deleted spreads when count hits 0; `update` adjusts counts when spread reference changes.
+5. Update reading mutations: `create` increments `readingCount`, server-enforces version, and lazily archives the spread's current state to `spread_versions` if no snapshot exists for that version (deduplicates across multiple readings for the same version); `remove` decrements `readingCount` and auto-cleans soft-deleted spreads when count hits 0; `update` adjusts counts when spread reference changes.
 6. Update delete modal in spread detail page: when `readingCount > 0`, offer "Delete spread only" (soft-delete) and "Delete spread and all X readings" (cascade).
 7. Tests for versioning, archiving, soft-delete, cascade delete, auto-cleanup, readingCount management.
 

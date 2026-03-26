@@ -164,8 +164,9 @@ export const create = mutation({
 
 /**
  * Update an existing spread.
- * If the spread has readings (readingCount > 0), the current state is archived
- * to spread_versions and the version is bumped.
+ * Always bumps version when readingCount > 0 so readings can distinguish
+ * which layout they were created with. The actual snapshot is created lazily
+ * in readings.create (only when a reading pins a version).
  */
 export const update = mutation({
   args: spreadsUpdateArgs,
@@ -209,17 +210,8 @@ export const update = mutation({
       updates.numberOfCards = args.numberOfCards;
     if (args.positions !== undefined) updates.positions = args.positions;
 
-    // If spread has readings, archive current state and bump version
+    // Bump version when readings exist so future readings get a new version number
     if (spread.readingCount > 0) {
-      await ctx.db.insert("spread_versions", {
-        spreadId: spread._id,
-        version: spread.version,
-        name: spread.name,
-        description: spread.description,
-        numberOfCards: spread.numberOfCards,
-        positions: spread.positions,
-        archivedAt: Date.now(),
-      });
       updates.version = spread.version + 1;
     }
 

@@ -343,6 +343,74 @@ describe("readings", () => {
       expect(reading?.results.signifier).toBeDefined();
     });
 
+    it("archives spread snapshot on first reading creation for a version", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+      const spreadId = await createTestSpread(t, userId);
+
+      await asUser.mutation(api.readings.create, {
+        question: "First reading",
+        date: Date.now(),
+        drawMethod: "digital",
+        spread: { id: spreadId, version: 1 },
+        useReverseMeanings: true,
+        useSignifierCard: false,
+        results: { cards: [] },
+        starred: false,
+      });
+
+      // Verify a spread_versions snapshot was created
+      const versions = await t.run(async (ctx) => {
+        return await ctx.db
+          .query("spread_versions")
+          .withIndex("by_spreadId_and_version", (q) =>
+            q.eq("spreadId", spreadId).eq("version", 1)
+          )
+          .collect();
+      });
+      expect(versions).toHaveLength(1);
+      expect(versions[0].name).toBe("Test Spread");
+    });
+
+    it("does not duplicate snapshot when multiple readings use the same version", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+      const spreadId = await createTestSpread(t, userId);
+
+      // Create two readings against the same spread version
+      await asUser.mutation(api.readings.create, {
+        question: "First reading",
+        date: Date.now(),
+        drawMethod: "digital",
+        spread: { id: spreadId, version: 1 },
+        useReverseMeanings: true,
+        useSignifierCard: false,
+        results: { cards: [] },
+        starred: false,
+      });
+      await asUser.mutation(api.readings.create, {
+        question: "Second reading",
+        date: Date.now(),
+        drawMethod: "digital",
+        spread: { id: spreadId, version: 1 },
+        useReverseMeanings: true,
+        useSignifierCard: false,
+        results: { cards: [] },
+        starred: false,
+      });
+
+      // Should still be exactly one snapshot for version 1
+      const versions = await t.run(async (ctx) => {
+        return await ctx.db
+          .query("spread_versions")
+          .withIndex("by_spreadId_and_version", (q) =>
+            q.eq("spreadId", spreadId).eq("version", 1)
+          )
+          .collect();
+      });
+      expect(versions).toHaveLength(1);
+    });
+
     it("throws error when spread does not exist", async () => {
       const t = convexTest(schema, modules);
       const { asUser } = await setupAuthenticatedUser(t);
