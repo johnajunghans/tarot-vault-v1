@@ -166,8 +166,22 @@ export default function SpreadDetail({
     const handleConfirmDelete = useCallback(async () => {
         setIsDeleting(true);
         try {
-            await removeSpread({ _id: spreadId });
+            await removeSpread({ _id: spreadId, cascade: false });
             toast.success("Spread deleted");
+            router.push(routes.personal.spreads.root);
+        } catch (error) {
+            toast.error(
+                `Failed to delete spread: ${error instanceof Error ? error.message : "Unknown error"}`
+            );
+            setIsDeleting(false);
+        }
+    }, [removeSpread, spreadId, router]);
+
+    const handleCascadeDelete = useCallback(async () => {
+        setIsDeleting(true);
+        try {
+            await removeSpread({ _id: spreadId, cascade: true });
+            toast.success("Spread and all readings deleted");
             router.push(routes.personal.spreads.root);
         } catch (error) {
             toast.error(
@@ -309,16 +323,32 @@ export default function SpreadDetail({
                     confirmLabel="Discard"
                     onConfirm={handleConfirmDiscard}
                 />
-                <ConfirmDialog
-                    open={showDeleteDialog}
-                    onOpenChange={setShowDeleteDialog}
-                    title="Delete this spread?"
-                    description="This spread and all its positions will be permanently deleted. This cannot be undone."
-                    cancelLabel="Keep it"
-                    confirmLabel="Delete"
-                    onConfirm={handleConfirmDelete}
-                    isConfirming={isDeleting}
-                />
+                {spread.readingCount > 0 ? (
+                    <ConfirmDialog
+                        open={showDeleteDialog}
+                        onOpenChange={setShowDeleteDialog}
+                        title="Delete this spread?"
+                        description={`This spread is referenced by ${spread.readingCount} reading${spread.readingCount === 1 ? "" : "s"}. You can delete just the spread (readings will keep their layout) or delete the spread and all its readings.`}
+                        cancelLabel="Keep it"
+                        confirmLabel={`Delete spread and ${spread.readingCount} reading${spread.readingCount === 1 ? "" : "s"}`}
+                        onConfirm={handleCascadeDelete}
+                        secondaryLabel="Delete spread only"
+                        onSecondary={handleConfirmDelete}
+                        secondaryVariant="secondary"
+                        isConfirming={isDeleting}
+                    />
+                ) : (
+                    <ConfirmDialog
+                        open={showDeleteDialog}
+                        onOpenChange={setShowDeleteDialog}
+                        title="Delete this spread?"
+                        description="This spread and all its positions will be permanently deleted. This cannot be undone."
+                        cancelLabel="Keep it"
+                        confirmLabel="Delete"
+                        onConfirm={handleConfirmDelete}
+                        isConfirming={isDeleting}
+                    />
+                )}
             </>
         )}
         </>

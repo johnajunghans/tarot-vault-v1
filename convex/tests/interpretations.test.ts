@@ -44,6 +44,9 @@ async function createTestReading(
       numberOfCards: 1,
       positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 }],
       favorite: false,
+      version: 1,
+      readingCount: 0,
+      deleted: false,
     });
 
     return await ctx.db.insert("readings", {
@@ -154,6 +157,9 @@ describe("interpretations", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          version: 1,
+          readingCount: 0,
+          deleted: false,
         });
         const otherReadingId = await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -278,6 +284,9 @@ describe("interpretations", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          version: 1,
+          readingCount: 0,
+          deleted: false,
         });
         return await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -496,6 +505,9 @@ describe("interpretations", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          version: 1,
+          readingCount: 0,
+          deleted: false,
         });
         return await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -603,6 +615,9 @@ describe("interpretations", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          version: 1,
+          readingCount: 0,
+          deleted: false,
         });
         const readingId = await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -710,6 +725,9 @@ describe("interpretations", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          version: 1,
+          readingCount: 0,
+          deleted: false,
         });
         const readingId = await ctx.db.insert("readings", {
           userId: otherUserId,

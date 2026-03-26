@@ -8,6 +8,8 @@ export type CardDB = Infer<typeof spreadPositionValidator>
 
 export type SpreadDB = Doc<"spreads">
 
+export type SpreadVersionDB = Doc<"spread_versions">
+
 export type SpreadInput = Omit<SpreadDB, "_id" | "_creationTime" | "userId" | "updatedAt">
 
 export type CardForm = z.infer<typeof cardSchema>

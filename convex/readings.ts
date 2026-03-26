@@ -57,6 +57,7 @@ export const listStarred = query({
 
 /**
  * Create a new reading for the current user.
+ * Increments the spread's readingCount and server-enforces the current version.
  */
 export const create = mutation({
   args: readingsCreateArgs,
@@ -78,6 +79,12 @@ export const create = mutation({
       }
     }
 
+    // Increment spread's readingCount
+    await ctx.db.patch(args.spread.id, {
+      readingCount: spread.readingCount + 1,
+    });
+
+    // Server-enforce the spread's current version
     const readingId = await ctx.db.insert("readings", {
       userId: user._id,
       updatedAt: Date.now(),
@@ -85,7 +92,10 @@ export const create = mutation({
       date: args.date,
       drawMethod: args.drawMethod,
       digitalDrawRandomness: args.digitalDrawRandomness,
-      spread: args.spread,
+      spread: {
+        id: args.spread.id,
+        version: spread.version, // Server-enforced: always use current version
+      },
       useReverseMeanings: args.useReverseMeanings,
       useSignifierCard: args.useSignifierCard,
       results: args.results,
@@ -103,6 +113,7 @@ export const create = mutation({
 
 /**
  * Update an existing reading.
+ * If the spread reference changes, adjusts readingCount on both old and new spreads.
  */
 export const update = mutation({
   args: readingsUpdateArgs,
@@ -122,9 +133,31 @@ export const update = mutation({
 
     // Validate spread exists if being updated
     if (args.spread) {
-      const spread = await ctx.db.get(args.spread.id);
-      if (!spread) {
+      const newSpread = await ctx.db.get(args.spread.id);
+      if (!newSpread) {
         throw new Error("Spread not found");
+      }
+
+      // If spread reference is changing, adjust readingCount on both spreads
+      if (args.spread.id !== reading.spread.id) {
+        // Decrement old spread's readingCount
+        const oldSpread = await ctx.db.get(reading.spread.id);
+        if (oldSpread) {
+          await ctx.db.patch(oldSpread._id, {
+            readingCount: Math.max(0, oldSpread.readingCount - 1),
+          });
+        }
+
+        // Increment new spread's readingCount
+        await ctx.db.patch(newSpread._id, {
+          readingCount: newSpread.readingCount + 1,
+        });
+
+        // Server-enforce the new spread's current version
+        args.spread = {
+          id: args.spread.id,
+          version: newSpread.version,
+        };
       }
     }
 
@@ -168,6 +201,8 @@ export const update = mutation({
 
 /**
  * Delete a reading.
+ * Decrements the spread's readingCount. If the spread was soft-deleted and
+ * readingCount hits 0, auto-cleans the spread and its versions.
  */
 export const remove = mutation({
   args: {
@@ -188,6 +223,28 @@ export const remove = mutation({
     }
 
     await ctx.db.delete(args._id);
+
+    // Decrement spread's readingCount (if spread still exists)
+    const spread = await ctx.db.get(reading.spread.id);
+    if (spread) {
+      const newCount = Math.max(0, spread.readingCount - 1);
+      await ctx.db.patch(spread._id, { readingCount: newCount });
+
+      // Auto-cleanup: if spread was soft-deleted and no readings remain, hard-delete it
+      if (spread.deleted && newCount === 0) {
+        const versions = await ctx.db
+          .query("spread_versions")
+          .withIndex("by_spreadId_and_version", (q) =>
+            q.eq("spreadId", spread._id)
+          )
+          .collect();
+        for (const v of versions) {
+          await ctx.db.delete(v._id);
+        }
+        await ctx.db.delete(spread._id);
+      }
+    }
+
     return null;
   },
 });

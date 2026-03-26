@@ -31,6 +31,13 @@ async function setupAuthenticatedUser(t: ReturnType<typeof convexTest>) {
   return { userId, asUser };
 }
 
+// Default spread fields for versioning
+const SPREAD_DEFAULTS = {
+  version: 1,
+  readingCount: 0,
+  deleted: false,
+};
+
 // Helper to create a spread for testing readings
 async function createTestSpread(
   t: ReturnType<typeof convexTest>,
@@ -49,6 +56,7 @@ async function createTestSpread(
         { position: 3, name: "Future", description: "Future outcome", x: 200, y: 0, r: 0, z: 2 },
       ],
       favorite: false,
+      ...SPREAD_DEFAULTS,
     });
   });
 }
@@ -222,7 +230,7 @@ describe("readings", () => {
   });
 
   describe("create", () => {
-    it("creates a new reading successfully", async () => {
+    it("creates a new reading and increments spread readingCount", async () => {
       const t = convexTest(schema, modules);
       const { userId, asUser } = await setupAuthenticatedUser(t);
       const spreadId = await createTestSpread(t, userId);
@@ -255,6 +263,51 @@ describe("readings", () => {
       expect(reading?.question).toBe("What does the future hold?");
       expect(reading?.userId).toEqual(userId);
       expect(reading?.results.cards).toHaveLength(3);
+
+      // Verify spread's readingCount was incremented
+      const spread = await t.run(async (ctx) => {
+        return await ctx.db.get(spreadId);
+      });
+      expect(spread?.readingCount).toBe(1);
+    });
+
+    it("server-enforces the spread's current version", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      // Create a spread at version 3
+      const spreadId = await t.run(async (ctx) => {
+        return await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Versioned Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 3,
+          readingCount: 0,
+          deleted: false,
+        });
+      });
+
+      // Client passes version 1, but server should enforce version 3
+      const readingId = await asUser.mutation(api.readings.create, {
+        question: "Test version enforcement",
+        date: Date.now(),
+        drawMethod: "digital",
+        spread: { id: spreadId, version: 1 }, // Client says v1
+        useReverseMeanings: true,
+        useSignifierCard: false,
+        results: { cards: [] },
+        starred: false,
+      });
+
+      const reading = await t.run(async (ctx) => {
+        return await ctx.db.get(readingId);
+      });
+
+      // Server should have enforced version 3
+      expect(reading?.spread.version).toBe(3);
     });
 
     it("creates a reading with optional fields", async () => {
@@ -303,6 +356,7 @@ describe("readings", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Temp", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          ...SPREAD_DEFAULTS,
         });
         await ctx.db.delete(tempId);
         return tempId;
@@ -360,6 +414,69 @@ describe("readings", () => {
       expect(reading?.notes).toBe("Added some notes");
     });
 
+    it("adjusts readingCount on both spreads when spread reference changes", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      // Create two spreads
+      const { spreadIdA, spreadIdB, readingId } = await t.run(async (ctx) => {
+        const spreadIdA = await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Spread A",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 1,
+          readingCount: 1, // Has one reading
+          deleted: false,
+        });
+        const spreadIdB = await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Spread B",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 2,
+          readingCount: 0,
+          deleted: false,
+        });
+        const readingId = await ctx.db.insert("readings", {
+          userId,
+          updatedAt: Date.now(),
+          question: "Switchable reading",
+          date: Date.now(),
+          drawMethod: "digital",
+          spread: { id: spreadIdA, version: 1 },
+          useReverseMeanings: true,
+          useSignifierCard: false,
+          results: { cards: [] },
+          starred: false,
+        });
+        return { spreadIdA, spreadIdB, readingId };
+      });
+
+      // Update reading to reference Spread B
+      await asUser.mutation(api.readings.update, {
+        _id: readingId,
+        spread: { id: spreadIdB, version: 1 }, // Client version doesn't matter, server enforces
+      });
+
+      // Verify counts adjusted
+      const [spreadA, spreadB, reading] = await t.run(async (ctx) => {
+        return [
+          await ctx.db.get(spreadIdA),
+          await ctx.db.get(spreadIdB),
+          await ctx.db.get(readingId),
+        ] as const;
+      });
+
+      expect(spreadA?.readingCount).toBe(0); // Decremented
+      expect(spreadB?.readingCount).toBe(1); // Incremented
+      expect(reading?.spread.version).toBe(2); // Server-enforced to Spread B's current version
+    });
+
     it("throws error when reading does not exist", async () => {
       const t = convexTest(schema, modules);
       const { userId, asUser } = await setupAuthenticatedUser(t);
@@ -372,6 +489,7 @@ describe("readings", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Temp", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          ...SPREAD_DEFAULTS,
         });
         const tempId = await ctx.db.insert("readings", {
           userId,
@@ -423,6 +541,7 @@ describe("readings", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Pos", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          ...SPREAD_DEFAULTS,
         });
         const readingId = await ctx.db.insert("readings", {
           userId: otherUserId,
@@ -449,13 +568,23 @@ describe("readings", () => {
   });
 
   describe("remove", () => {
-    it("deletes a reading successfully", async () => {
+    it("deletes a reading and decrements spread readingCount", async () => {
       const t = convexTest(schema, modules);
       const { userId, asUser } = await setupAuthenticatedUser(t);
-      const spreadId = await createTestSpread(t, userId);
 
-      const readingId = await t.run(async (ctx) => {
-        return await ctx.db.insert("readings", {
+      const { spreadId, readingId } = await t.run(async (ctx) => {
+        const spreadId = await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Test Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 1,
+          readingCount: 2, // Two readings
+          deleted: false,
+        });
+        const readingId = await ctx.db.insert("readings", {
           userId,
           updatedAt: Date.now(),
           question: "To be deleted",
@@ -467,15 +596,116 @@ describe("readings", () => {
           results: { cards: [] },
           starred: false,
         });
+        return { spreadId, readingId };
       });
 
       await asUser.mutation(api.readings.remove, { _id: readingId });
 
-      const reading = await t.run(async (ctx) => {
-        return await ctx.db.get(readingId);
+      const [reading, spread] = await t.run(async (ctx) => {
+        return [
+          await ctx.db.get(readingId),
+          await ctx.db.get(spreadId),
+        ] as const;
       });
 
       expect(reading).toBeNull();
+      expect(spread?.readingCount).toBe(1); // Decremented from 2 to 1
+    });
+
+    it("auto-cleans soft-deleted spread when readingCount hits 0", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      const { spreadId, readingId, versionId } = await t.run(async (ctx) => {
+        const spreadId = await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Soft-deleted Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 2,
+          readingCount: 1, // Last reading
+          deleted: true, // Soft-deleted
+        });
+        const versionId = await ctx.db.insert("spread_versions", {
+          spreadId,
+          version: 1,
+          name: "Old Name",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          archivedAt: Date.now(),
+        });
+        const readingId = await ctx.db.insert("readings", {
+          userId,
+          updatedAt: Date.now(),
+          question: "Last reading",
+          date: Date.now(),
+          drawMethod: "digital",
+          spread: { id: spreadId, version: 1 },
+          useReverseMeanings: true,
+          useSignifierCard: false,
+          results: { cards: [] },
+          starred: false,
+        });
+        return { spreadId, readingId, versionId };
+      });
+
+      // Delete the last reading
+      await asUser.mutation(api.readings.remove, { _id: readingId });
+
+      // Verify spread and version were auto-cleaned
+      const [spread, version] = await t.run(async (ctx) => {
+        return [
+          await ctx.db.get(spreadId),
+          await ctx.db.get(versionId),
+        ] as const;
+      });
+
+      expect(spread).toBeNull(); // Spread hard-deleted
+      expect(version).toBeNull(); // Version hard-deleted
+    });
+
+    it("does not auto-clean non-deleted spread when readingCount hits 0", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      const { spreadId, readingId } = await t.run(async (ctx) => {
+        const spreadId = await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Active Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 }],
+          favorite: false,
+          version: 1,
+          readingCount: 1,
+          deleted: false, // NOT soft-deleted
+        });
+        const readingId = await ctx.db.insert("readings", {
+          userId,
+          updatedAt: Date.now(),
+          question: "Only reading",
+          date: Date.now(),
+          drawMethod: "digital",
+          spread: { id: spreadId, version: 1 },
+          useReverseMeanings: true,
+          useSignifierCard: false,
+          results: { cards: [] },
+          starred: false,
+        });
+        return { spreadId, readingId };
+      });
+
+      await asUser.mutation(api.readings.remove, { _id: readingId });
+
+      // Spread should still exist (not soft-deleted, so no auto-cleanup)
+      const spread = await t.run(async (ctx) => {
+        return await ctx.db.get(spreadId);
+      });
+
+      expect(spread).not.toBeNull();
+      expect(spread?.readingCount).toBe(0);
     });
 
     it("throws error when reading does not exist", async () => {
@@ -490,6 +720,7 @@ describe("readings", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Temp", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          ...SPREAD_DEFAULTS,
         });
         const tempId = await ctx.db.insert("readings", {
           userId,
@@ -538,6 +769,7 @@ describe("readings", () => {
           numberOfCards: 1,
           positions: [{ position: 1, name: "Pos", x: 0, y: 0, r: 0, z: 0 }],
           favorite: false,
+          ...SPREAD_DEFAULTS,
         });
         return await ctx.db.insert("readings", {
           userId: otherUserId,

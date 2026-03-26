@@ -117,6 +117,20 @@ export const spreadValidator = v.object({
   numberOfCards: v.number(), // 1-78
   positions: v.array(spreadPositionValidator),
   favorite: v.boolean(), // default: false
+  version: v.number(), // integer, starts at 1
+  readingCount: v.number(), // integer, starts at 0
+  deleted: v.boolean(), // default: false — soft-delete flag
+});
+
+// Spread versions table validator (archived snapshots)
+export const spreadVersionValidator = v.object({
+  spreadId: v.id("spreads"),
+  version: v.number(),
+  name: v.string(),
+  description: v.optional(v.string()),
+  numberOfCards: v.number(),
+  positions: v.array(spreadPositionValidator),
+  archivedAt: v.number(), // milliseconds since epoch
 });
 
 export default defineSchema({
@@ -126,7 +140,8 @@ export default defineSchema({
   // Readings table - stores tarot reading sessions
   readings: defineTable(readingValidator)
     .index("by_userId_and_updatedAt", ["userId", "updatedAt"])
-    .index("by_userId_and_starred", ["userId", "starred"]),
+    .index("by_userId_and_starred", ["userId", "starred"])
+    .index("by_spreadId", ["spread.id"]),
 
   // Interpretations table - stores user and AI interpretations of readings
   interpretations: defineTable(interpretationValidator)
@@ -138,4 +153,8 @@ export default defineSchema({
   spreads: defineTable(spreadValidator)
     .index("by_userId_and_updatedAt", ["userId", "updatedAt"])
     .index("by_userId_and_favorite", ["userId", "favorite"]),
+
+  // Spread versions table - archived snapshots of spreads for readings
+  spread_versions: defineTable(spreadVersionValidator)
+    .index("by_spreadId_and_version", ["spreadId", "version"]),
 });
