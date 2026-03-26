@@ -42,6 +42,9 @@ Summary of actions taken:
 - Created `UndoRedoControls` component matching `ZoomControls` styling (same container classes, ghost icon buttons with `Undo03Icon`/`Redo03Icon`, disabled states, tooltips with shortcut hints)
 - Wrapped `UndoRedoControls` + `ZoomControls` in a shared `absolute top-2 right-2 z-10 flex` container in both mobile and desktop layouts; made `ZoomControls` positioning class-driven via `className` prop (defaults to `absolute top-2 right-2 z-10` when no className provided, accepts `static` override)
 - Exported `UndoRedoControls` from canvas barrel index
+- Refactored both `UndoRedoControls` and `ZoomControls` to use shared `TooltipProvider` + `TooltipRoot` pattern instead of individual `Tooltip` wrappers
+- Added keyboard shortcuts for zoom: ⇧⌘+ (zoom in), ⇧⌘- (zoom out), ⇧⌘0 (reset) — uses Shift modifier to avoid conflicting with browser zoom (⌘+/⌘-/⌘0)
+- Updated all tooltip contents to show keyboard shortcuts as lighter text with Mac symbols (⌘, ⇧)
 
 Future considerations/recommendations/warnings
 - History stores full snapshots of all card positions — memory usage is bounded by MAX_HISTORY (50) but could be optimized to delta-based storage if spreads grow very large
@@ -189,3 +192,4 @@ Future considerations/recommendations/warnings
 5. Create `UndoRedoControls` component matching `ZoomControls` styling (same container, ghost icon buttons, tooltips with shortcut hints).
 6. Wire controls into `spread-editor-layout.tsx`: wrap both `UndoRedoControls` and `ZoomControls` in a shared flex container; make ZoomControls positioning class-driven via `className` prop; only render undo/redo when not in view mode. Applied to both mobile and desktop layouts.
 7. Export `UndoRedoControls` from canvas barrel.
+8. Refactor both components to use `TooltipProvider` + `TooltipRoot` pattern for grouped tooltip behavior. Add zoom keyboard shortcuts (⇧⌘+, ⇧⌘-, ⇧⌘0) with input guard. Show shortcuts in tooltips as lighter text with Mac symbols.
