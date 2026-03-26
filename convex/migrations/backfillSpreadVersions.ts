@@ -5,6 +5,8 @@ import { internalMutation } from "../_generated/server";
  * Run once from the Convex dashboard after deploying the schema changes.
  *
  * Usage: Run via dashboard → Functions → migrations/backfillSpreadVersions:default
+ * 
+ * MIGRATION RUN SUCCESSFULLY ON 3/26/26 — KEPT FOR REFERENCE
  */
 export default internalMutation({
   args: {},
