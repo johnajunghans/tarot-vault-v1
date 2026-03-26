@@ -17,6 +17,7 @@ import z from "zod"
 
 interface UseSpreadFormOptions {
     defaultValues?: SpreadForm
+    isViewMode?: boolean
 }
 
 // Central hook for spread editing. It owns the form state, the positions field
@@ -52,6 +53,7 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         cards,
         form,
         watchedPositions,
+        enabled: !options?.isViewMode,
     })
 
     const { setSelectedCardIndex } = canvasModel

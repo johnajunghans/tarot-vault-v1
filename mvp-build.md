@@ -33,6 +33,21 @@ Future considerations/recommendations/warnings
 ## 0.2_Recent_Entries
 *For context about what has recently been done. Most recent at the top.*
 
+**03/26/2026 -- 1.4.12 Undo/Redo for Card Canvas Placement -- Claude Opus 4.6**
+Summary of actions taken:
+- Created `use-canvas-history.ts` — ref-based undo/redo stacks (max 50 entries) with `PlacementSnapshot` type, keyboard shortcuts (Ctrl+Z undo, Ctrl+Shift+Z/Ctrl+Y redo), input/textarea/select guard, `enabled` flag for view mode, auto-clear on card count change
+- Moved `handleCanvasLayerChange` from `spread-editor-layout.tsx` into `use-canvas-model.ts` to centralize all three form write-back paths (drag, rotation, layer)
+- Added `pushSnapshot()` call at the start of `handleCanvasPositionsCommit`, `handleCardRotationChange`, and `handleCanvasLayerChange` to capture state before each mutation
+- Threaded `isViewMode` through `useSpreadForm({ isViewMode })` → `useSpreadCanvasModel({ enabled })` → `useCanvasHistory({ enabled })` so history is disabled in view mode
+- Created `UndoRedoControls` component matching `ZoomControls` styling (same container classes, ghost icon buttons with `Undo03Icon`/`Redo03Icon`, disabled states, tooltips with shortcut hints)
+- Wrapped `UndoRedoControls` + `ZoomControls` in a shared `absolute top-2 right-2 z-10 flex` container in both mobile and desktop layouts; made `ZoomControls` positioning class-driven via `className` prop (defaults to `absolute top-2 right-2 z-10` when no className provided, accepts `static` override)
+- Exported `UndoRedoControls` from canvas barrel index
+
+Future considerations/recommendations/warnings
+- History stores full snapshots of all card positions — memory usage is bounded by MAX_HISTORY (50) but could be optimized to delta-based storage if spreads grow very large
+- Undo/redo for rotation doesn't restore continuous rotation state (the visual angle cache in `cardRotationsRef`), only the stored 0-359 form value — this means undone rotations may take a different visual path but end at the correct angle
+- If card add/remove undo is added later, the snapshot format would need to include card identity (field-array IDs) rather than just positional arrays
+
 **03/26/2026 -- 1.4.8 Spread Versioning -- Claude Opus 4.6**
 Summary of actions taken:
 - Added `version` (int, starts at 1), `readingCount` (int, starts at 0), and `deleted` (boolean, default false) fields to `spreadValidator` in `convex/schema.ts`
@@ -166,5 +181,11 @@ Future considerations/recommendations/warnings
 ### 1.4.11_Search/Sort
 1. Users should be able to search for a given spread and sort existing spreads by name, date, etc.
 
-### 1.4.12_Undo/Redo for card canvas placement
-1. Users should be able to undo/redo actions specifically regarding the tranformation of cards (x,y,r,z).
+### ~~1.4.12_Undo/Redo for card canvas placement~~
+1. Create `use-canvas-history.ts` hook with ref-based undo/redo stacks (max 50), snapshot capture, keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y) with input/textarea/select guard, `enabled` flag for view mode, and auto-clear on card count change.
+2. Move `handleCanvasLayerChange` from layout into `use-canvas-model.ts` alongside other form write-back handlers.
+3. Integrate history: call `pushSnapshot()` at the start of `handleCanvasPositionsCommit` (drag), `handleCardRotationChange` (rotation), and `handleCanvasLayerChange` (z-order). Export `canUndo`, `canRedo`, `undo`, `redo` through the hook chain.
+4. Pass `isViewMode` through `useSpreadForm` → `useSpreadCanvasModel` → `useCanvasHistory` via `enabled` flag.
+5. Create `UndoRedoControls` component matching `ZoomControls` styling (same container, ghost icon buttons, tooltips with shortcut hints).
+6. Wire controls into `spread-editor-layout.tsx`: wrap both `UndoRedoControls` and `ZoomControls` in a shared flex container; make ZoomControls positioning class-driven via `className` prop; only render undo/redo when not in view mode. Applied to both mobile and desktop layouts.
+7. Export `UndoRedoControls` from canvas barrel.

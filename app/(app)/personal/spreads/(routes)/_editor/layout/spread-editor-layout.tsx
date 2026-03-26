@@ -7,7 +7,7 @@ import { FormProvider } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PlusSignIcon, Settings02Icon } from "hugeicons-react"
-import SpreadCanvas, { ZoomControls } from "../canvas"
+import SpreadCanvas, { ZoomControls, UndoRedoControls } from "../canvas"
 import { SpreadSettingsPanel, CardSettingsPanel } from "../panels"
 import ConfirmDialog from "@/app/_components/confirm-dialog"
 import type { UseSpreadFormReturn } from "../panels/hooks/use-spread-form"
@@ -43,10 +43,15 @@ export default function SpreadEditorLayout({
         move,
         handleCardRotationChange,
         handleCanvasPositionsCommit,
+        handleCanvasLayerChange,
         zoomDisplay,
         setZoomDisplay,
         minZoomDisplay,
         setMinZoomDisplay,
+        canUndo,
+        canRedo,
+        undo,
+        redo,
     } = spreadForm
 
     const {
@@ -76,15 +81,6 @@ export default function SpreadEditorLayout({
         remove(canvasDeleteIndex)
         setCanvasDeleteIndex(null)
     }, [canvasDeleteIndex, selectedCardIndex, setSelectedCardIndex, remove])
-
-    const handleCanvasLayerChange = useCallback(
-        (updates: { index: number; z: number }[]) => {
-            updates.forEach(({ index, z }) => {
-                form.setValue(`positions.${index}.z`, z, { shouldDirty: true })
-            })
-        },
-        [form]
-    )
 
     return (
         <div className="relative h-full min-h-0 overflow-hidden">
@@ -134,14 +130,25 @@ export default function SpreadEditorLayout({
                             </CardContent>
                         </Card>
 
-                        {/* Zoom Controls */}
-                        <ZoomControls
-                            zoom={zoomDisplay}
-                            minZoom={minZoomDisplay}
-                            onZoomIn={zoomIn}
-                            onZoomOut={zoomOut}
-                            onResetZoom={resetZoom}
-                        />
+                        {/* Canvas Controls */}
+                        <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+                            {!isViewMode && (
+                                <UndoRedoControls
+                                    canUndo={canUndo}
+                                    canRedo={canRedo}
+                                    onUndo={undo}
+                                    onRedo={redo}
+                                />
+                            )}
+                            <ZoomControls
+                                zoom={zoomDisplay}
+                                minZoom={minZoomDisplay}
+                                onZoomIn={zoomIn}
+                                onZoomOut={zoomOut}
+                                onResetZoom={resetZoom}
+                                className="static"
+                            />
+                        </div>
 
                         {/* Spread Settings (Sheet on mobile) */}
                         <SpreadSettingsPanel
@@ -204,14 +211,24 @@ export default function SpreadEditorLayout({
                         style={{ pointerEvents: "none" }}
                     >
                         <div className="relative h-full">
-                            <ZoomControls
-                                zoom={zoomDisplay}
-                                minZoom={minZoomDisplay}
-                                onZoomIn={zoomIn}
-                                onZoomOut={zoomOut}
-                                onResetZoom={resetZoom}
-                                className="pointer-events-auto"
-                            />
+                            <div className="absolute top-2 right-2 z-10 flex items-center gap-2 pointer-events-auto">
+                                {!isViewMode && (
+                                    <UndoRedoControls
+                                        canUndo={canUndo}
+                                        canRedo={canRedo}
+                                        onUndo={undo}
+                                        onRedo={redo}
+                                    />
+                                )}
+                                <ZoomControls
+                                    zoom={zoomDisplay}
+                                    minZoom={minZoomDisplay}
+                                    onZoomIn={zoomIn}
+                                    onZoomOut={zoomOut}
+                                    onResetZoom={resetZoom}
+                                    className="static"
+                                />
+                            </div>
                         </div>
                     </ResizablePanel>
 

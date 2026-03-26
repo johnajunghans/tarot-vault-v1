@@ -427,6 +427,7 @@ SpreadCanvas.displayName = 'SpreadCanvas'
 
 export default SpreadCanvas
 export { default as ZoomControls } from './components/zoom-controls'
+export { default as UndoRedoControls } from './components/undo-redo-controls'
 export type {
     CanvasCard,
     SpreadCanvasHandle,

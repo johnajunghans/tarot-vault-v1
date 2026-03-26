@@ -68,7 +68,7 @@ export default function SpreadDetail({
 
     // ------------ SPREAD FORM ------------ //
 
-    const spreadForm = useSpreadForm();
+    const spreadForm = useSpreadForm({ isViewMode });
     const {
         form,
         watchedName,

@@ -40,7 +40,7 @@ export default function ZoomControls({
 
     return (
         <div
-            className={`flex h-11 absolute top-2 right-2 z-10 items-center gap-1 rounded-xl border border-border/50 bg-background/90 px-1.5 shadow-md backdrop-blur-sm ${className ?? ''}`}
+            className={`flex h-11 items-center gap-1 rounded-xl border border-border/50 bg-background/90 px-1.5 shadow-md backdrop-blur-sm ${className ?? 'absolute top-2 right-2 z-10'}`}
         >
             {!isDefaultZoom && (
                 <>
