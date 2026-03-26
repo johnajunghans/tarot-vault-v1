@@ -45,7 +45,7 @@ export default function UndoRedoControls({
                             </Button>
                         }
                     />
-                    <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
+                    <TooltipContent>Undo <span className="text-background/60">⌘Z</span></TooltipContent>
                 </TooltipRoot>
                 <Separator orientation="vertical" className="my-2" />
                 <TooltipRoot>
@@ -61,7 +61,7 @@ export default function UndoRedoControls({
                             </Button>
                         }
                     />
-                    <TooltipContent>Redo (Ctrl+Shift+Z)</TooltipContent>
+                    <TooltipContent>Redo <span className="text-background/60">⇧⌘Z</span></TooltipContent>
                 </TooltipRoot>
             </div>
         </TooltipProvider>
