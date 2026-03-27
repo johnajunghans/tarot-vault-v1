@@ -33,7 +33,7 @@ export default function UndoRedoControls({
     return (
         <TooltipProvider delay={TOOLTIP_DELAY}>
             <div
-                className={`flex h-9 items-center gap-1 rounded-xl border border-border/50 bg-background/90 px-1.5 shadow-md backdrop-blur-sm ${className ?? ''}`}
+                className={`flex h-9 items-center gap-0.5 md:gap-1 rounded-xl border border-border/50 bg-background/90 px-1 md:px-1.5 shadow-md backdrop-blur-sm ${className ?? ''}`}
             >
                 <TooltipRoot>
                     <TooltipTrigger

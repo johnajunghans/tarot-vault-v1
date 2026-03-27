@@ -17,8 +17,8 @@ export default function MobileSpreadToolbar({
 }: MobileSpreadToolbarProps) {
     return (
         <Card className="absolute top-2 left-2 z-10 py-0 items-center shadow-md border-border/50 bg-background/90 backdrop-blur-sm pointer-events-auto">
-            <CardContent className="px-2">
-                <div className="flex h-9 items-center gap-2">
+            <CardContent className="px-1">
+                <div className="flex h-8.5 items-center gap-1">
                     <Button
                         variant="ghost"
                         size="icon-sm"
