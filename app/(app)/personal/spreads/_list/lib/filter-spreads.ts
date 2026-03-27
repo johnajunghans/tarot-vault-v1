@@ -1,12 +1,16 @@
 import type { CardDB, SpreadDB, SpreadDraft } from "@/types/spreads"
 import type { SpreadFilter } from "../components/spreads-toolbar"
 
+export type SpreadSortField = "date" | "name" | "cards"
+export type SpreadSortDir = "asc" | "desc"
+
 export type SpreadListItem =
     | {
         kind: "draft"
         key: number
         timestamp: number
         name: string
+        description?: string
         cards: CardDB[]
       }
     | {
@@ -14,6 +18,7 @@ export type SpreadListItem =
         key: SpreadDB["_id"]
         timestamp: number
         name: string
+        description?: string
         cards: CardDB[]
         id: SpreadDB["_id"]
         favorite: boolean | undefined
@@ -28,19 +33,43 @@ export function getFilter(value: string | null): SpreadFilter {
     return "all"
 }
 
+/** Parse a search param value into a valid SpreadSortField, defaulting to "date". */
+export function getSort(value: string | null): SpreadSortField {
+    if (value === "date" || value === "name" || value === "cards") {
+        return value
+    }
+
+    return "date"
+}
+
+/** Parse a search param value into a valid SpreadSortDir, defaulting to "desc". */
+export function getSortDir(value: string | null): SpreadSortDir {
+    if (value === "asc" || value === "desc") {
+        return value
+    }
+
+    return "desc"
+}
+
 /** Merge drafts and saved spreads into a single sorted, filtered list. */
 export function buildSpreadList(
     spreads: SpreadDB[] | undefined,
     drafts: SpreadDraft[],
     filter: SpreadFilter,
     favoritesOnly: boolean,
+    search: string,
+    sortField: SpreadSortField,
+    sortDir: SpreadSortDir,
 ): SpreadListItem[] {
+    const lowerSearch = search.toLowerCase().trim()
+
     return [
         ...drafts.map((draft) => ({
             kind: "draft" as const,
             key: draft.date,
             timestamp: draft.date,
             name: draft.name,
+            description: draft.description,
             cards: draft.positions,
         })),
         ...(spreads?.map((spread) => ({
@@ -48,6 +77,7 @@ export function buildSpreadList(
             key: spread._id,
             timestamp: spread._creationTime,
             name: spread.name,
+            description: spread.description,
             cards: spread.positions,
             id: spread._id,
             favorite: spread.favorite,
@@ -62,5 +92,27 @@ export function buildSpreadList(
             if (!favoritesOnly) return true
             return item.kind === "saved" && item.favorite
         })
-        .sort((a, b) => b.timestamp - a.timestamp)
+        .filter((item) => {
+            if (!lowerSearch) return true
+            return (
+                item.name.toLowerCase().includes(lowerSearch) ||
+                (item.description?.toLowerCase().includes(lowerSearch) ?? false)
+            )
+        })
+        .sort((a, b) => {
+            let cmp: number
+            switch (sortField) {
+                case "name":
+                    cmp = a.name.localeCompare(b.name)
+                    break
+                case "cards":
+                    cmp = a.cards.length - b.cards.length
+                    break
+                case "date":
+                default:
+                    cmp = a.timestamp - b.timestamp
+                    break
+            }
+            return sortDir === "asc" ? cmp : -cmp
+        })
 }

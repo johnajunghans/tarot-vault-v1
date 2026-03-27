@@ -7,8 +7,8 @@ export { default as EmptyState } from './components/empty-state'
 
 // Types
 export type { SpreadFilter } from './components/spreads-toolbar'
-export type { SpreadListItem } from './lib/filter-spreads'
+export type { SpreadListItem, SpreadSortField, SpreadSortDir } from './lib/filter-spreads'
 
 // Lib
 export { loadDrafts } from './lib/load-drafts'
-export { getFilter, buildSpreadList } from './lib/filter-spreads'
+export { getFilter, getSort, getSortDir, buildSpreadList } from './lib/filter-spreads'

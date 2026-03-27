@@ -33,6 +33,19 @@ Future considerations/recommendations/warnings
 ## 0.2_Recent_Entries
 *For context about what has recently been done. Most recent at the top.*
 
+**03/26/2026 -- 1.4.11 Search/Sort for Spreads List -- Claude Opus 4.6**
+Summary of actions taken:
+- Extended `SpreadListItem` with `description` field and added `SpreadSortField`/`SpreadSortDir` types with URL param parsers in `filter-spreads.ts`
+- Updated `buildSpreadList()` with client-side search filtering (name + description, case-insensitive) and dynamic sort comparator (date/name/cards, asc/desc)
+- Added search `InputGroup` with `Search01Icon` addon and sort `DropdownMenu` with `RadioGroup` field selection + direction toggle to `SpreadsToolbar`
+- Wired search as local `useState` in `page.tsx`; sort field/direction as URL search params via existing `updateParams` pattern
+- Updated `_list/index.ts` barrel exports
+
+Future considerations/recommendations/warnings
+- Search is client-side only — sufficient for current scale but will need backend search if spread counts grow significantly
+- `readingCount` sort option deliberately skipped — makes more sense for shared/collective spreads feature
+- No "no results" empty state for search yet — grid is simply empty when search yields no matches; consider adding a distinct message in a follow-up
+
 **03/26/2026 -- 1.4.12 Undo/Redo for Card Canvas Placement -- Claude Opus 4.6**
 Summary of actions taken:
 - Created `use-canvas-history.ts` — ref-based undo/redo stacks (max 50 entries) with `PlacementSnapshot` type, keyboard shortcuts (Ctrl+Z undo, Ctrl+Shift+Z/Ctrl+Y redo), input/textarea/select guard, `enabled` flag for view mode, auto-clear on card count change
@@ -181,8 +194,12 @@ Future considerations/recommendations/warnings
 ### 1.4.10_Pagination/"Load More"
 1. This feature is fundamental. Allows users to either load more spreads (more than the default 10) via a "Load More button at the bottom" or via pagination.
 
-### 1.4.11_Search/Sort
-1. Users should be able to search for a given spread and sort existing spreads by name, date, etc.
+### ~~1.4.11_Search/Sort~~
+1. Extend `SpreadListItem` with `description?: string` field. Add `SpreadSortField` (`"date" | "name" | "cards"`) and `SpreadSortDir` (`"asc" | "desc"`) types with URL param parsers (`getSort`, `getSortDir`) in `filter-spreads.ts`.
+2. Extend `buildSpreadList()` to accept `search`, `sortField`, `sortDir` params. Add client-side search filter matching against `name` and `description` (case-insensitive `includes`). Replace hardcoded timestamp sort with dynamic comparator (date=numeric, name=localeCompare, cards=length).
+3. Expand `SpreadsToolbar` with search input (`InputGroup` + `Search01Icon` addon, local state) on the right side and sort `DropdownMenu` button (outline, `SortByDown01Icon`/`SortByUp01Icon`) with `RadioGroup` for field selection and direction toggle item.
+4. Wire search as local `useState` in `page.tsx`; wire sort field/direction as URL search params (`sort`, `dir`) via existing `updateParams` pattern. Defaults omitted from URL (`date` + `desc`).
+5. Update `_list/index.ts` barrel exports with new types and parsers.
 
 ### ~~1.4.12_Undo/Redo for card canvas placement~~
 1. Create `use-canvas-history.ts` hook with ref-based undo/redo stacks (max 50), snapshot capture, keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y) with input/textarea/select guard, `enabled` flag for view mode, and auto-clear on card count change.

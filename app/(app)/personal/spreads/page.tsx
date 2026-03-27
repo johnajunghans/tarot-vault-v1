@@ -14,6 +14,8 @@ import {
     EmptyState,
     loadDrafts,
     getFilter,
+    getSort,
+    getSortDir,
     buildSpreadList,
 } from "./_list"
 
@@ -24,8 +26,11 @@ export default function Spreads() {
         typeof window === "undefined" ? [] : loadDrafts()
     ))
     const { setTitle, setActions, reset } = useLayoutDispatch()
+    const [search, setSearch] = useState("")
     const filter = getFilter(searchParams.get("view"))
     const favoritesOnly = searchParams.get("fav") === "1"
+    const sortField = getSort(searchParams.get("sort"))
+    const sortDir = getSortDir(searchParams.get("dir"))
 
     useEffect(() => {
         return () => reset()
@@ -45,12 +50,19 @@ export default function Spreads() {
 
     const isEmpty = spreads !== undefined && spreads.length === 0 && drafts.length === 0
     const isLoading = spreads === undefined
-    const spreadItems = buildSpreadList(spreads, drafts, filter, favoritesOnly)
+    const spreadItems = buildSpreadList(spreads, drafts, filter, favoritesOnly, search, sortField, sortDir)
 
     return (
         <div className="h-full min-h-0 overflow-y-auto p-4 pt-3">
             <div className="">
-                <SpreadsToolbar filter={filter} favoritesOnly={favoritesOnly} />
+                <SpreadsToolbar
+                    filter={filter}
+                    favoritesOnly={favoritesOnly}
+                    sortField={sortField}
+                    sortDir={sortDir}
+                    search={search}
+                    onSearchChange={setSearch}
+                />
             </div>
             {isLoading ? (
                 <LoadingGrid />
