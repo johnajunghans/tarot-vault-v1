@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { gsap } from 'gsap'
 import { Draggable } from 'gsap/Draggable'
 import { useGSAP } from '@gsap/react'
@@ -270,11 +270,26 @@ function CanvasCard({
           ? 'url(#canvas-card-shadow-active)'
           : undefined
 
+    function handleKeyDown(event: KeyboardEvent<SVGGElement>) {
+        if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') {
+            return
+        }
+
+        event.preventDefault()
+        onClick(index)
+    }
+
     return (
         <g
             ref={groupRef}
             data-spread-card-interactive="true"
+            tabIndex={0}
+            focusable="true"
+            role="button"
+            aria-label={`Select card ${index + 1}: ${displayName}`}
             onClick={isViewMode ? () => onClick(index) : undefined}
+            onKeyDown={handleKeyDown}
+            className="outline-none focus-visible:[&_[data-focus-ring]]:opacity-100"
             style={{ cursor: 'pointer' }}
         >
             {!isViewMode && !isMobile && (
@@ -299,6 +314,20 @@ function CanvasCard({
                 }}
             >
                 <g ref={rotationRef}>
+                    <rect
+                        data-focus-ring
+                        x={-8}
+                        y={-8}
+                        width={CARD_WIDTH + 16}
+                        height={CARD_HEIGHT + 16}
+                        rx={CORNER_R + 8}
+                        fill="none"
+                        stroke="var(--gold)"
+                        strokeOpacity={0.55}
+                        strokeWidth={3}
+                        className="pointer-events-none opacity-0 transition-opacity duration-150"
+                    />
+
                     {selected && !groupSelected && (
                         <rect
                             x={-4}
