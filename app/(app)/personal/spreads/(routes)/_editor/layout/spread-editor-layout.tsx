@@ -10,6 +10,7 @@ import { PlusSignIcon, Settings02Icon } from "hugeicons-react"
 import SpreadCanvas, { ZoomControls, UndoRedoControls } from "../canvas"
 import { SpreadSettingsPanel, CardSettingsPanel } from "../panels"
 import ConfirmDialog from "@/app/_components/confirm-dialog"
+import { useAppHotkey } from "@/hooks/use-app-hotkey"
 import type { UseSpreadFormReturn } from "../panels/hooks/use-spread-form"
 import type { UseSpreadEditorReturn } from "./hooks/use-spread-editor"
 
@@ -66,6 +67,7 @@ export default function SpreadEditorLayout({
     } = editor
 
     const [canvasDeleteIndex, setCanvasDeleteIndex] = useState<number | null>(null)
+    const canAddCard = !isViewMode && cards.length < 78
 
     const handleCanvasDeleteConfirm = useCallback(() => {
         if (canvasDeleteIndex === null) return
@@ -81,6 +83,32 @@ export default function SpreadEditorLayout({
         remove(canvasDeleteIndex)
         setCanvasDeleteIndex(null)
     }, [canvasDeleteIndex, selectedCardIndex, setSelectedCardIndex, remove])
+
+    const toggleLeftPanel = useCallback(() => {
+        if (isMobile) {
+            setSpreadSheetOpen((open) => !open)
+            return
+        }
+
+        const panel = spreadSettingsPanelRef.current
+        if (!panel) return
+
+        if (panel.isCollapsed()) {
+            panel.expand()
+            return
+        }
+
+        panel.collapse()
+    }, [isMobile, setSpreadSheetOpen, spreadSettingsPanelRef])
+
+    useAppHotkey("Mod+H", toggleLeftPanel, {
+        ignoreInputs: false,
+    })
+
+    useAppHotkey("Mod+J", addCard, {
+        enabled: canAddCard,
+        ignoreInputs: false,
+    })
 
     return (
         <div className="relative h-full min-h-0 overflow-hidden">

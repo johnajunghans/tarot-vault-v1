@@ -63,6 +63,8 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
     // Add a card beside the last one when possible; otherwise place the first
     // card in the visual center of the canvas and focus its name field.
     const addCard = useCallback(() => {
+        if (cards.length >= 78) return
+
         const nextIndex = cards.length
         const lastCard = nextIndex > 0 ? form.getValues(`positions.${nextIndex - 1}`) : null
         const newCard = lastCard

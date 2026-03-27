@@ -1,16 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { FieldSeparator, FieldSet } from "@/components/ui/field";
+import { Kbd } from "@/components/ui/kbd";
 import { PanelLeftIcon, PlusSignIcon } from "hugeicons-react";
 import { Dispatch, type RefObject, SetStateAction, useState } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 import { UseFieldArrayMove, UseFieldArrayRemove, useFormContext, useWatch } from "react-hook-form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipContent, TooltipProvider, TooltipRoot, TooltipTrigger } from "@/components/ui/tooltip";
 import CardOverview, { CardOverviewReadOnly } from "./card-overview";
 import { SpreadForm } from "@/types/spreads";
 import TextField from "@/components/form/text-field";
 import TextareaField from "@/components/form/textarea-field";
 import { ResponsivePanel } from "@/app/(app)/_components/responsive-panel";
+
+const TOOLTIP_DELAY = 500;
 
 // ------------ Read-Only Content Component ------------ //
 
@@ -158,6 +161,7 @@ export default function SpreadSettingsPanel({
 }: SpreadSettingsPanelProps) {
     const spreadSettingsPanelRef = panelRef
     const [hideSettings, setHideSettings] = useState(false)
+    const shortcutClassName = "ml-1"
 
     function handleResize() {
       if (spreadSettingsPanelRef.current) {
@@ -165,23 +169,39 @@ export default function SpreadSettingsPanel({
       }
     }
 
+    function handleTogglePanel() {
+      if (!spreadSettingsPanelRef.current) return
+
+      if (spreadSettingsPanelRef.current.isCollapsed()) {
+        spreadSettingsPanelRef.current.expand()
+        return
+      }
+
+      spreadSettingsPanelRef.current.collapse()
+    }
+
     const panelTitle = isViewMode ? "Spread Details" : "Spread Settings";
+    const panelToggleLabel = hideSettings ? "Show Panel" : "Hide Panel";
+    const panelToggleButton = (
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={handleTogglePanel}
+      >
+        <PanelLeftIcon />
+      </Button>
+    );
 
     const panelToggleIcon = !isMobile && (
-      <Tooltip delay={500}>
-        <TooltipTrigger
-          render={
-            <Button 
-              variant="ghost" 
-              size="icon-sm" 
-              onClick={() => spreadSettingsPanelRef.current?.isCollapsed() ? spreadSettingsPanelRef.current?.expand() : spreadSettingsPanelRef.current?.collapse()}
-            >
-              <PanelLeftIcon />
-            </Button>
-          }
-        />
-        <TooltipContent>Hide Panel</TooltipContent>
-      </Tooltip>
+      <TooltipProvider delay={TOOLTIP_DELAY}>
+        <TooltipRoot>
+          <TooltipTrigger render={panelToggleButton} />
+          <TooltipContent>
+            {panelToggleLabel}
+            <Kbd className={shortcutClassName}>⌘ H</Kbd>
+          </TooltipContent>
+        </TooltipRoot>
+      </TooltipProvider>
     );
 
     return (
@@ -194,26 +214,37 @@ export default function SpreadSettingsPanel({
             <CardContent className="px-2">
               <div className="flex w-full justify-between items-center gap-8">
                 <h3 className="font-display text-sm font-bold tracking-tight">{panelTitle}</h3>
-                <div className="flex items-center gap-1">
-                  {!isViewMode && addCard && (
-                    <Tooltip delay={500}>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={addCard}
-                            disabled={cards.length >= 78}
-                          >
-                            <PlusSignIcon />
-                          </Button>
-                        }
-                      />
-                      <TooltipContent>Add Position</TooltipContent>
-                    </Tooltip>
-                  )}
-                  { panelToggleIcon }
-                </div>
+                <TooltipProvider delay={TOOLTIP_DELAY}>
+                  <div className="flex items-center gap-1">
+                    {!isViewMode && addCard && (
+                      <TooltipRoot>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={addCard}
+                              disabled={cards.length >= 78}
+                            >
+                              <PlusSignIcon />
+                            </Button>
+                          }
+                        />
+                        <TooltipContent>
+                          Add Position
+                          <Kbd className={shortcutClassName}>⌘ J</Kbd>
+                        </TooltipContent>
+                      </TooltipRoot>
+                    )}
+                    <TooltipRoot>
+                      <TooltipTrigger render={panelToggleButton} />
+                      <TooltipContent>
+                        {panelToggleLabel}
+                        <Kbd className={shortcutClassName}>⌘ H</Kbd>
+                      </TooltipContent>
+                    </TooltipRoot>
+                  </div>
+                </TooltipProvider>
               </div>
             </CardContent>
           </Card>

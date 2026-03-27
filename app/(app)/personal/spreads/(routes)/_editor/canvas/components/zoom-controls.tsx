@@ -18,7 +18,7 @@ import {
     normalizeZoom,
 } from '../lib/zoom'
 
-const TOOLTIP_DELAY = 1000
+const TOOLTIP_DELAY = 500
 
 interface ZoomControlsProps {
     zoom: number

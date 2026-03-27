@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { Kbd } from "@/components/ui/kbd";
 import {
   FieldGroup,
   FieldSeparator,
@@ -8,9 +9,12 @@ import {
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
+  TooltipRoot,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { normalizeRotationForStorage, snapToGrid, clampLayer, getLayersWithFrontCard, getLayersWithBackCard } from "@/app/(app)/personal/spreads/(routes)/_editor/lib";
+import { useAppHotkey } from "@/hooks/use-app-hotkey";
 import {
   ArrowDown01Icon,
   ArrowRight01Icon,
@@ -449,6 +453,14 @@ export default function CardSettingsPanel({
 }: CardSettingsPanelProps) {
     const cardDetailsPanelRef = usePanelRef();
 
+    const handleClosePanel = useCallback(() => {
+      if (selectedCardIndex === null) return;
+
+      setSelectedCardIndex(null);
+      cardDetailsPanelRef.current?.collapse();
+      onOpenChange?.(false);
+    }, [cardDetailsPanelRef, onOpenChange, selectedCardIndex, setSelectedCardIndex]);
+
     function handleResize() {
       if (!cardDetailsPanelRef.current) return;
 
@@ -479,19 +491,33 @@ export default function CardSettingsPanel({
       }
     }, [cards, selectedCardIndex, setSelectedCardIndex]);
 
+    useAppHotkey("Mod+K", handleClosePanel, {
+      enabled: selectedCardIndex !== null,
+      ignoreInputs: false,
+    });
+
     const panelTitle = isViewMode ? "Position Details" : "Position Settings";
 
     const closeHeaderAction = !isMobile && (
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={() => {
-          setSelectedCardIndex(null)
-          cardDetailsPanelRef.current?.collapse()
-        }}
-      >
-        <Cancel01Icon />
-      </Button>
+      <TooltipProvider delay={TOOLTIP_DELAY}>
+        <TooltipRoot>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleClosePanel}
+              >
+                <Cancel01Icon />
+              </Button>
+            }
+          />
+          <TooltipContent>
+            Close Panel
+            <Kbd className="ml-1">⌘ K</Kbd>
+          </TooltipContent>
+        </TooltipRoot>
+      </TooltipProvider>
     );
 
     return (
