@@ -3,6 +3,7 @@
 import type { SpreadForm } from '@/types/spreads'
 import type { UseFormReturn } from 'react-hook-form'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAppHotkey } from '@/hooks/use-app-hotkey'
 
 type PlacementSnapshot = { x: number; y: number; r: number; z: number }[]
 
@@ -113,38 +114,20 @@ export function useCanvasHistory({ form, cards, enabled }: UseCanvasHistoryArgs)
 
     // ------------ KEYBOARD SHORTCUTS ------------ //
 
-    useEffect(() => {
-        if (!enabled) return
+    useAppHotkey('Mod+Shift+Z', redo, {
+        enabled,
+        ignoreInputs: true,
+    })
 
-        const handleKeyDown = (e: KeyboardEvent) => {
-            const tag = (e.target as HTMLElement).tagName
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+    useAppHotkey('Mod+Z', undo, {
+        enabled,
+        ignoreInputs: true,
+    })
 
-            const isCtrlOrMeta = e.ctrlKey || e.metaKey
-
-            if (isCtrlOrMeta && e.shiftKey && e.key === 'z') {
-                e.preventDefault()
-                redo()
-                return
-            }
-
-            if (isCtrlOrMeta && e.key === 'z') {
-                e.preventDefault()
-                undo()
-                return
-            }
-
-            if (isCtrlOrMeta && e.key === 'y') {
-                e.preventDefault()
-                redo()
-            }
-        }
-
-        window.addEventListener('keydown', handleKeyDown)
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown)
-        }
-    }, [enabled, undo, redo])
+    useAppHotkey('Mod+Y', redo, {
+        enabled,
+        ignoreInputs: true,
+    })
 
     // ------------ CLEAR ON CARD COUNT CHANGE ------------ //
 

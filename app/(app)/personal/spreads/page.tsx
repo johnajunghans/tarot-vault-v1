@@ -6,7 +6,9 @@ import { api } from "@/convex/_generated/api"
 import { useSearchParams } from "next/navigation"
 import { routes } from "@/lib/routes"
 import { useLayoutDispatch } from "@/components/providers/layout-provider"
+import { useAppHotkey } from "@/hooks/use-app-hotkey"
 import type { SpreadDraft } from "@/types/spreads"
+import { shouldFocusSpreadsSearchHotkey } from "./lib/hotkeys"
 import {
     SpreadCard,
     SpreadsToolbar,
@@ -47,38 +49,18 @@ export default function Spreads() {
             label: "New Spread",
             href: routes.personal.spreads.new.root
         }])
-    }, [])
+    }, [setActions])
 
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.defaultPrevented) return
-            if (event.key.toLowerCase() !== "k") return
-            if (!event.metaKey && !event.ctrlKey) return
-            if (event.altKey || event.shiftKey) return
-
-            const target = event.target
-
-            if (target instanceof HTMLElement) {
-                const isEditable = (
-                    target.tagName === "INPUT" ||
-                    target.tagName === "TEXTAREA" ||
-                    target.tagName === "SELECT" ||
-                    target.isContentEditable
-                )
-
-                if (isEditable && target !== searchInputRef.current) {
-                    return
-                }
-            }
-
-            event.preventDefault()
-            searchInputRef.current?.focus()
-            searchInputRef.current?.select()
+    useAppHotkey("Mod+K", (event) => {
+        if (!shouldFocusSpreadsSearchHotkey(event.target, searchInputRef.current)) {
+            return
         }
 
-        window.addEventListener("keydown", handleKeyDown)
-        return () => window.removeEventListener("keydown", handleKeyDown)
-    }, [])
+        searchInputRef.current?.focus()
+        searchInputRef.current?.select()
+    }, {
+        ignoreInputs: false,
+    })
 
     const isEmpty = spreads !== undefined && spreads.length === 0 && drafts.length === 0
     const isLoading = spreads === undefined

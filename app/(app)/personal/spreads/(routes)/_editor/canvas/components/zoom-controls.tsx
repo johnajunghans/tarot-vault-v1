@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { useAppHotkey } from '@/hooks/use-app-hotkey'
 import {
     TooltipProvider,
     TooltipRoot,
@@ -40,33 +40,17 @@ export default function ZoomControls({
     const defaultZoom = Math.max(DEFAULT_ZOOM, minZoom)
     const isDefaultZoom = normalizedZoom === defaultZoom
 
-    // Keyboard shortcuts: ⇧⌘+ (zoom in), ⇧⌘- (zoom out), ⇧⌘0 (reset).
-    // Uses Shift+Meta/Ctrl to avoid conflicting with browser zoom (⌘+/⌘-/⌘0).
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            const tag = (e.target as HTMLElement).tagName
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+    useAppHotkey('Mod+Shift+=', onZoomIn, {
+        ignoreInputs: true,
+    })
 
-            const isCtrlOrMeta = e.ctrlKey || e.metaKey
-            if (!isCtrlOrMeta || !e.shiftKey) return
+    useAppHotkey('Mod+Shift+-', onZoomOut, {
+        ignoreInputs: true,
+    })
 
-            if (e.key === '+' || e.key === '=') {
-                e.preventDefault()
-                onZoomIn()
-            } else if (e.key === '-' || e.key === '_') {
-                e.preventDefault()
-                onZoomOut()
-            } else if (e.key === '0' || e.key === ')') {
-                e.preventDefault()
-                onResetZoom()
-            }
-        }
-
-        window.addEventListener('keydown', handleKeyDown)
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown)
-        }
-    }, [onZoomIn, onZoomOut, onResetZoom])
+    useAppHotkey('Mod+Shift+0', onResetZoom, {
+        ignoreInputs: true,
+    })
 
     return (
         <TooltipProvider delay={TOOLTIP_DELAY}>
