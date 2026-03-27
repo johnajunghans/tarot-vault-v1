@@ -1,5 +1,6 @@
 "use client"
 
+import type { RefObject } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import FilterToggleGroup from "./components/filter-toggle-group"
 import FavoritesToggle from "./components/favorites-toggle"
@@ -14,6 +15,7 @@ interface SpreadsToolbarProps {
     sortDir: SpreadSortDir
     search: string
     onSearchChange: (value: string) => void
+    searchInputRef?: RefObject<HTMLInputElement | null>
 }
 
 export default function SpreadsToolbar({
@@ -23,6 +25,7 @@ export default function SpreadsToolbar({
     sortDir,
     search,
     onSearchChange,
+    searchInputRef,
 }: SpreadsToolbarProps) {
     const pathname = usePathname()
     const router = useRouter()
@@ -79,6 +82,7 @@ export default function SpreadsToolbar({
                 <SearchInput
                     search={search}
                     onSearchChange={onSearchChange}
+                    inputRef={searchInputRef}
                 />
             </div>
         </div>

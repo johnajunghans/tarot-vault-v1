@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { useSearchParams } from "next/navigation"
@@ -22,6 +22,7 @@ import {
 export default function Spreads() {
     const spreads = useQuery(api.spreads.list)
     const searchParams = useSearchParams()
+    const searchInputRef = useRef<HTMLInputElement>(null)
     const [drafts, setDrafts] = useState<SpreadDraft[]>(() => (
         typeof window === "undefined" ? [] : loadDrafts()
     ))
@@ -48,6 +49,37 @@ export default function Spreads() {
         }])
     }, [])
 
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.defaultPrevented) return
+            if (event.key.toLowerCase() !== "k") return
+            if (!event.metaKey && !event.ctrlKey) return
+            if (event.altKey || event.shiftKey) return
+
+            const target = event.target
+
+            if (target instanceof HTMLElement) {
+                const isEditable = (
+                    target.tagName === "INPUT" ||
+                    target.tagName === "TEXTAREA" ||
+                    target.tagName === "SELECT" ||
+                    target.isContentEditable
+                )
+
+                if (isEditable && target !== searchInputRef.current) {
+                    return
+                }
+            }
+
+            event.preventDefault()
+            searchInputRef.current?.focus()
+            searchInputRef.current?.select()
+        }
+
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [])
+
     const isEmpty = spreads !== undefined && spreads.length === 0 && drafts.length === 0
     const isLoading = spreads === undefined
     const spreadItems = buildSpreadList(spreads, drafts, filter, favoritesOnly, search, sortField, sortDir)
@@ -62,6 +94,7 @@ export default function Spreads() {
                     sortDir={sortDir}
                     search={search}
                     onSearchChange={setSearch}
+                    searchInputRef={searchInputRef}
                 />
             </div>
             {isLoading ? (
