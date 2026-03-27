@@ -1,29 +1,33 @@
-import { CardDB } from "@/types/spreads";
-import { calcSpreadDimensions, CARD_HEIGHT, CARD_WIDTH } from "../../(routes)/_editor";
+import type { CardDB } from "@/types/spreads"
+import { calcSpreadDimensions, CARD_HEIGHT, CARD_WIDTH } from "../../../(routes)/_editor"
 
 interface SpreadThumbnailProps {
-    width: number;
-    height: number;
-    cards: CardDB[];
+    width: number
+    height: number
+    cards: CardDB[]
 }
 
 function ThumbnailCard({ x, y, r }: { x: number; y: number; r: number }) {
-    const cx = x + CARD_WIDTH / 2;
-    const cy = y + CARD_HEIGHT / 2;
+    const cx = x + CARD_WIDTH / 2
+    const cy = y + CARD_HEIGHT / 2
 
     return (
         <g transform={r ? `rotate(${r}, ${cx}, ${cy})` : undefined}>
             <rect
-                x={x} y={y}
-                width={CARD_WIDTH} height={CARD_HEIGHT}
+                x={x}
+                y={y}
+                width={CARD_WIDTH}
+                height={CARD_HEIGHT}
                 rx={6}
                 className="fill-card stroke-gold"
                 strokeWidth={1}
                 strokeOpacity={0.4}
             />
             <rect
-                x={x + 4} y={y + 4}
-                width={CARD_WIDTH - 8} height={CARD_HEIGHT - 8}
+                x={x + 4}
+                y={y + 4}
+                width={CARD_WIDTH - 8}
+                height={CARD_HEIGHT - 8}
                 rx={3}
                 fill="none"
                 className="stroke-gold"
@@ -31,14 +35,15 @@ function ThumbnailCard({ x, y, r }: { x: number; y: number; r: number }) {
                 strokeOpacity={0.2}
             />
             <rect
-                x={x + 7} y={y + 7}
-                width={CARD_WIDTH - 14} height={CARD_HEIGHT - 14}
+                x={x + 7}
+                y={y + 7}
+                width={CARD_WIDTH - 14}
+                height={CARD_HEIGHT - 14}
                 rx={2}
                 className="fill-gold"
                 fillOpacity={0.06}
                 stroke="none"
             />
-            {/* Mini diamond */}
             <polygon
                 points={`${cx},${cy - 8} ${cx + 5},${cy} ${cx},${cy + 8} ${cx - 5},${cy}`}
                 fill="none"
@@ -47,19 +52,16 @@ function ThumbnailCard({ x, y, r }: { x: number; y: number; r: number }) {
                 strokeOpacity={0.25}
             />
         </g>
-    );
+    )
 }
 
-export default function SpreadThumbnail({
-    cards,
-    width,
-    height
-}: SpreadThumbnailProps) {
-
+export default function SpreadThumbnail({ cards, width, height }: SpreadThumbnailProps) {
     const bounds = calcSpreadDimensions(cards)
-    const cardDataAtOrigin = cards.map(c => {
-        return { ...c, x: c.x - bounds.xMin, y: c.y - bounds.yMin }
-    })
+    const cardDataAtOrigin = cards.map((card) => ({
+        ...card,
+        x: card.x - bounds.xMin,
+        y: card.y - bounds.yMin,
+    }))
 
     return (
         <svg
@@ -70,15 +72,14 @@ export default function SpreadThumbnail({
         >
             {cardDataAtOrigin
                 .sort((a, b) => a.z - b.z)
-                .map(card => (
+                .map((card) => (
                     <ThumbnailCard
                         key={card.position}
                         x={card.x}
                         y={card.y}
                         r={card.r}
                     />
-                ))
-            }
+                ))}
         </svg>
     )
 }

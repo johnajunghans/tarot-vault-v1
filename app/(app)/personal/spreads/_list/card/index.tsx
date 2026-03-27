@@ -1,5 +1,9 @@
 "use client"
 
+import type { Dispatch, SetStateAction } from "react"
+import { useState } from "react"
+import { useMutation } from "convex/react"
+import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import {
     Card,
@@ -8,18 +12,13 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import SpreadThumbnail from "./spread-thumbnail"
-import { CardDB, SpreadDraft } from "@/types/spreads"
-import { Button } from "@/components/ui/button"
-import { TooltipContent, TooltipRoot, TooltipTrigger } from "@/components/ui/tooltip"
-import { Delete02Icon, StarIcon } from "hugeicons-react"
-import { Dispatch, SetStateAction, useState } from "react"
-import { useMutation } from "convex/react"
-import { api } from "@/convex/_generated/api"
-import { Id } from "@/convex/_generated/dataModel"
-import { routes } from "@/lib/routes"
-import Link from "next/link"
 import ConfirmDialog from "@/app/_components/confirm-dialog"
+import { api } from "@/convex/_generated/api"
+import type { Id } from "@/convex/_generated/dataModel"
+import { routes } from "@/lib/routes"
+import type { CardDB, SpreadDraft } from "@/types/spreads"
+import SpreadCardActions from "./components/spread-card-actions"
+import SpreadThumbnail from "./components/spread-thumbnail"
 
 interface SpreadCardProps {
     name: string
@@ -50,7 +49,7 @@ export default function SpreadCard({
 
     function handleDeleteDraft(draftDate: number) {
         localStorage.removeItem(`spread-draft-${draftDate}`)
-        setDrafts(prevDrafts => prevDrafts.filter(d => d.date !== draftDate))
+        setDrafts((prevDrafts) => prevDrafts.filter((draft) => draft.date !== draftDate))
         setShowDeleteDialog(false)
     }
 
@@ -67,7 +66,9 @@ export default function SpreadCard({
                     <div className="flex items-start justify-between gap-3">
                         <CardTitle className="font-display text-base tracking-tight">{name}</CardTitle>
                         {isDraft && (
-                            <Badge variant="secondary" className="text-[10px] font-medium">DRAFT</Badge>
+                            <Badge variant="secondary" className="text-[10px] font-medium">
+                                DRAFT
+                            </Badge>
                         )}
                     </div>
                 </CardHeader>
@@ -77,42 +78,14 @@ export default function SpreadCard({
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground/70 font-medium">
-                        {cards.length} {cards.length === 1 ? "card" : "cards"}
-                    </span>
-                    {isDraft && (
-                        <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="relative z-20 text-muted-foreground hover:text-destructive"
-                            onClick={() => setShowDeleteDialog(true)}
-                        >
-                            <Delete02Icon className="w-4 h-4" />
-                        </Button>
-                    )}
-                    {!isDraft && id !== undefined && (
-                        <TooltipRoot>
-                            <TooltipTrigger
-                                render={
-                                    <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        className="relative z-20"
-                                        onClick={() => {
-                                            toggleFavorite({ _id: id })
-                                        }}
-                                    >
-                                        <StarIcon
-                                            className="w-4 h-4"
-                                            color="var(--gold)"
-                                            fill={favorite ? "var(--gold)" : "none"}
-                                        />
-                                    </Button>
-                                }
-                            />
-                            <TooltipContent>{favorite ? "Unfavorite" : "Favorite"}</TooltipContent>
-                        </TooltipRoot>
-                    )}
+                    <SpreadCardActions
+                        isDraft={isDraft}
+                        cardsCount={cards.length}
+                        favorite={favorite}
+                        onDeleteDraft={() => setShowDeleteDialog(true)}
+                        onToggleFavorite={id ? () => toggleFavorite({ _id: id }) : undefined}
+                        showFavorite={id !== undefined}
+                    />
                 </CardFooter>
             </Card>
 
