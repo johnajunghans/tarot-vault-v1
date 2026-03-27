@@ -20,7 +20,7 @@ import type { CardDB, SpreadDraft } from "@/types/spreads"
 import SpreadCardActions from "./components/spread-card-actions"
 import SpreadThumbnail from "./components/spread-thumbnail"
 
-interface SpreadCardProps {
+export interface SpreadCardProps {
     name: string
     date: number
     isDraft?: boolean
@@ -55,11 +55,23 @@ export default function SpreadCard({
 
     return (
         <>
-            <Card className="group relative hover:shadow-sm shadow-gold-muted/25 -translate-y-0 hover:-translate-y-0.5 border-border/50 hover:border-gold/30 transition-all duration-300 cursor-pointer overflow-hidden">
+            <Card 
+                className="
+                    group relative cursor-pointer overflow-hidden
+                    border-border/50 hover:border-gold/30
+                    shadow-gold-muted/25 hover:shadow-sm
+                    -translate-y-0 hover:-translate-y-0.5
+                    transition-all duration-300
+                    has-[:focus-visible]:ring-2
+                    has-[:focus-visible]:ring-gold/50
+                    has-[:focus-visible]:ring-offset-2
+                    has-[:focus-visible]:ring-offset-background
+                "
+            >
                 <Link
                     href={href}
                     aria-label={`Open spread ${name}`}
-                    className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="absolute inset-0 z-10 !focus-visible:outline-none"
                 />
 
                 <CardHeader className="pb-2">
