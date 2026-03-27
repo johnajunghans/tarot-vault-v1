@@ -66,12 +66,11 @@ export default function SpreadsToolbar({
                 filter={filter}
                 onChange={handleFilterChange}
             />
-            {filter !== "drafts" && (
-                <FavoritesToggle
-                    favoritesOnly={favoritesOnly}
-                    onToggle={(pressed) => updateParams({ fav: pressed ? "1" : null })}
-                />
-            )}
+            <FavoritesToggle
+                favoritesOnly={favoritesOnly}
+                onToggle={(pressed) => updateParams({ fav: pressed ? "1" : null })}
+                disabled={filter === "drafts"}
+            />
             <SortMenu
                     sortField={sortField}
                     sortDir={sortDir}

@@ -4,11 +4,13 @@ import { Toggle } from "@/components/ui/toggle"
 interface FavoritesToggleProps {
     favoritesOnly: boolean
     onToggle: (pressed: boolean) => void
+    disabled?: boolean
 }
 
 export default function FavoritesToggle({
     favoritesOnly,
     onToggle,
+    disabled=false
 }: FavoritesToggleProps) {
     return (
         <Toggle
@@ -17,6 +19,7 @@ export default function FavoritesToggle({
             onPressedChange={onToggle}
             aria-label="Show favorites only"
             className="h-9"
+            disabled={disabled}
         >
             <StarIcon
                 className="w-4 h-4"

@@ -19,6 +19,7 @@ export default function FilterToggleGroup({
         <ToggleGroup
             value={[filter]}
             onValueChange={handleValueChange}
+            aria-label="Filter spreads by status"
             size="sm"
             spacing={1}
             className="h-9 px-1"
