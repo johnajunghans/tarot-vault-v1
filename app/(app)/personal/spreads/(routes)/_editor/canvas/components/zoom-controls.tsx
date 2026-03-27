@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Kbd } from '@/components/ui/kbd'
 import { Separator } from '@/components/ui/separator'
 import { useAppHotkey } from '@/hooks/use-app-hotkey'
 import {
@@ -52,6 +53,8 @@ export default function ZoomControls({
         ignoreInputs: true,
     })
 
+    const zoomShortcutClassName = 'ml-1'
+
     return (
         <TooltipProvider delay={TOOLTIP_DELAY}>
             <div
@@ -71,7 +74,10 @@ export default function ZoomControls({
                                     </Button>
                                 }
                             />
-                            <TooltipContent>Reset zoom <span className="text-background/60">⇧⌘0</span></TooltipContent>
+                            <TooltipContent>
+                                Reset zoom
+                                <Kbd className={zoomShortcutClassName}>⇧⌘ 0</Kbd>
+                            </TooltipContent>
                         </TooltipRoot>
                         <Separator orientation="vertical" className="my-2" />
                     </>
@@ -89,7 +95,10 @@ export default function ZoomControls({
                             </Button>
                         }
                     />
-                    <TooltipContent>Zoom out <span className="text-background/60">⇧⌘-</span></TooltipContent>
+                    <TooltipContent>
+                        Zoom out
+                        <Kbd className={zoomShortcutClassName}>⇧⌘ -</Kbd>
+                    </TooltipContent>
                 </TooltipRoot>
                 <span className="min-w-12 select-none text-center font-mono text-sm text-muted-foreground">
                     {Math.round(normalizedZoom * 100)}%
@@ -107,7 +116,10 @@ export default function ZoomControls({
                             </Button>
                         }
                     />
-                    <TooltipContent>Zoom in <span className="text-background/60">⇧⌘+</span></TooltipContent>
+                    <TooltipContent>
+                        Zoom in
+                        <Kbd className={zoomShortcutClassName}>⇧⌘ +</Kbd>
+                    </TooltipContent>
                 </TooltipRoot>
             </div>
         </TooltipProvider>

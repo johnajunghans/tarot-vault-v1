@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Kbd } from '@/components/ui/kbd'
 import { Separator } from '@/components/ui/separator'
 import {
     TooltipProvider,
@@ -27,6 +28,8 @@ export default function UndoRedoControls({
     onRedo,
     className,
 }: UndoRedoControlsProps) {
+    const shortcutClassName = 'ml-1'
+
     return (
         <TooltipProvider delay={TOOLTIP_DELAY}>
             <div
@@ -45,7 +48,10 @@ export default function UndoRedoControls({
                             </Button>
                         }
                     />
-                    <TooltipContent>Undo <span className="text-background/60">⌘Z</span></TooltipContent>
+                    <TooltipContent>
+                        Undo
+                        <Kbd className={shortcutClassName}>⌘ Z</Kbd>
+                    </TooltipContent>
                 </TooltipRoot>
                 <Separator orientation="vertical" className="my-2" />
                 <TooltipRoot>
@@ -61,7 +67,10 @@ export default function UndoRedoControls({
                             </Button>
                         }
                     />
-                    <TooltipContent>Redo <span className="text-background/60">⇧⌘Z</span></TooltipContent>
+                    <TooltipContent>
+                        Redo
+                        <Kbd className={shortcutClassName}>⇧⌘ Z</Kbd>
+                    </TooltipContent>
                 </TooltipRoot>
             </div>
         </TooltipProvider>
