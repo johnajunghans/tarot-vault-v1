@@ -58,7 +58,7 @@ export default function ZoomControls({
     return (
         <TooltipProvider delay={TOOLTIP_DELAY}>
             <div
-                className={`flex h-11 items-center gap-1 rounded-xl border border-border/50 bg-background/90 px-1.5 shadow-md backdrop-blur-sm ${className ?? 'absolute top-2 right-2 z-10'}`}
+                className={`flex h-9 items-center gap-1 rounded-xl border border-border/50 bg-background/90 px-1.5 shadow-md backdrop-blur-sm ${className ?? 'absolute top-2 right-2 z-10'}`}
             >
                 {!isDefaultZoom && (
                     <>
@@ -79,7 +79,7 @@ export default function ZoomControls({
                                 <Kbd className={zoomShortcutClassName}>⇧⌘ 0</Kbd>
                             </TooltipContent>
                         </TooltipRoot>
-                        <Separator orientation="vertical" className="my-2" />
+                        <Separator orientation="vertical" className="my-1.5" />
                     </>
                 )}
                 <TooltipRoot>

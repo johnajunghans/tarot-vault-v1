@@ -4,11 +4,8 @@ import { useCallback, useState } from "react"
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { type Layout } from "react-resizable-panels"
 import { FormProvider } from "react-hook-form"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { PlusSignIcon, Settings02Icon } from "hugeicons-react"
 import SpreadCanvas, { ZoomControls, UndoRedoControls } from "../canvas"
-import { SpreadSettingsPanel, CardSettingsPanel } from "../panels"
+import { SpreadSettingsPanel, CardSettingsPanel, MobileSpreadToolbar } from "../panels"
 import ConfirmDialog from "@/app/_components/confirm-dialog"
 import { useAppHotkey } from "@/hooks/use-app-hotkey"
 import type { UseSpreadFormReturn } from "../panels/hooks/use-spread-form"
@@ -133,30 +130,11 @@ export default function SpreadEditorLayout({
 
                 {isMobile ? (
                     <>
-                        {/* Floating Toolbar */}
-                        <Card className="absolute top-3 left-3 py-2 z-10 shadow-md bg-background/90 backdrop-blur-sm border-border/50 pointer-events-auto">
-                            <CardContent>
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={() => setSpreadSheetOpen(true)}
-                                    >
-                                        <Settings02Icon />
-                                    </Button>
-                                    {!isViewMode && (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            onClick={addCard}
-                                            disabled={cards.length >= 78}
-                                        >
-                                            <PlusSignIcon />
-                                        </Button>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <MobileSpreadToolbar
+                            onOpenSpreadSettings={() => setSpreadSheetOpen(true)}
+                            onAddCard={isViewMode ? undefined : addCard}
+                            canAddCard={canAddCard}
+                        />
 
                         {/* Canvas Controls */}
                         <div className="absolute top-2 right-2 z-10 flex items-center gap-2">

@@ -192,7 +192,7 @@ export default function SpreadSettingsPanel({
       </Button>
     );
 
-    const panelToggleIcon = !isMobile && (
+    const spreadDetailsHeaderActions = !isMobile ? (
       <TooltipProvider delay={TOOLTIP_DELAY}>
         <TooltipRoot>
           <TooltipTrigger render={panelToggleButton} />
@@ -202,16 +202,50 @@ export default function SpreadSettingsPanel({
           </TooltipContent>
         </TooltipRoot>
       </TooltipProvider>
-    );
+    ) : null;
+
+    const spreadSettingsHeaderActions = !isMobile ? (
+      <TooltipProvider delay={TOOLTIP_DELAY}>
+        <div className="flex items-center gap-1">
+          {!isViewMode && addCard && (
+            <TooltipRoot>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={addCard}
+                    disabled={cards.length >= 78}
+                  >
+                    <PlusSignIcon />
+                  </Button>
+                }
+              />
+              <TooltipContent>
+                Add Position
+                <Kbd className={shortcutClassName}>⌘ J</Kbd>
+              </TooltipContent>
+            </TooltipRoot>
+          )}
+          <TooltipRoot>
+            <TooltipTrigger render={panelToggleButton} />
+            <TooltipContent>
+              {panelToggleLabel}
+              <Kbd className={shortcutClassName}>⌘ H</Kbd>
+            </TooltipContent>
+          </TooltipRoot>
+        </div>
+      </TooltipProvider>
+    ) : null;
 
     return (
       <>
           <Card className={`
-              absolute py-2 h-11 z-10 top-2 left-2 min-w-[150px] max-w-[350px] shadow-md bg-background/90 backdrop-blur-sm border-border/50 transition-[scale] duration-50
+              absolute flex h-9 flex-row items-center gap-0 py-0 z-10 top-2 left-2 min-w-[150px] max-w-[350px] shadow-md bg-background/90 backdrop-blur-sm border-border/50 transition-[scale] duration-50
               ${hideSettings ? "scale-100 opacity-100 pointer-events-auto" : "scale-110 opacity-0 pointer-events-none"}
             `}
           >
-            <CardContent className="px-2">
+            <CardContent className="flex flex-1 items-center px-2 py-0">
               <div className="flex w-full justify-between items-center gap-8">
                 <h3 className="font-display text-sm font-bold tracking-tight">{panelTitle}</h3>
                 <TooltipProvider delay={TOOLTIP_DELAY}>
@@ -272,7 +306,7 @@ export default function SpreadSettingsPanel({
                 cards={cards}
                 selectedCardIndex={selectedCardIndex}
                 setSelectedCardIndex={setSelectedCardIndex}
-                headerActions={panelToggleIcon}
+                headerActions={spreadDetailsHeaderActions}
               />
             ) : (
               <SpreadSettingsContent
@@ -282,7 +316,7 @@ export default function SpreadSettingsPanel({
                 move={move!}
                 selectedCardIndex={selectedCardIndex}
                 setSelectedCardIndex={setSelectedCardIndex}
-                headerActions={panelToggleIcon}
+                headerActions={spreadSettingsHeaderActions}
                 isMobile={isMobile}
               />
             )}
