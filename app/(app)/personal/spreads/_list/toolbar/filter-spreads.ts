@@ -1,6 +1,6 @@
 import type { CardDB, SpreadDB, SpreadDraft } from "@/types/spreads"
-import type { SpreadFilter } from "../components/spreads-toolbar"
 
+export type SpreadFilter = "all" | "saved" | "drafts"
 export type SpreadSortField = "date" | "name" | "cards"
 export type SpreadSortDir = "asc" | "desc"
 
@@ -23,6 +23,18 @@ export type SpreadListItem =
         id: SpreadDB["_id"]
         favorite: boolean | undefined
       }
+
+export const FILTER_OPTIONS: Array<{ value: SpreadFilter; label: string }> = [
+    { value: "all", label: "All" },
+    { value: "saved", label: "Saved" },
+    { value: "drafts", label: "Drafts" },
+]
+
+export const SORT_FIELD_OPTIONS: Array<{ value: SpreadSortField; label: string }> = [
+    { value: "date", label: "Date" },
+    { value: "name", label: "Name" },
+    { value: "cards", label: "Card count" },
+]
 
 /** Parse a search param value into a valid SpreadFilter, defaulting to "all". */
 export function getFilter(value: string | null): SpreadFilter {

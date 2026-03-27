@@ -1,14 +1,13 @@
 // Components
 export { default as SpreadCard } from './components/spread-card'
 export { default as SpreadThumbnail } from './components/spread-thumbnail'
-export { default as SpreadsToolbar } from './components/spreads-toolbar'
+export { default as SpreadsToolbar } from './toolbar'
 export { default as LoadingGrid } from './components/loading-grid'
 export { default as EmptyState } from './components/empty-state'
 
 // Types
-export type { SpreadFilter } from './components/spreads-toolbar'
-export type { SpreadListItem, SpreadSortField, SpreadSortDir } from './lib/filter-spreads'
+export type { SpreadFilter, SpreadSortDir, SpreadSortField, SpreadListItem } from './toolbar/filter-spreads'
 
 // Lib
 export { loadDrafts } from './lib/load-drafts'
-export { getFilter, getSort, getSortDir, buildSpreadList } from './lib/filter-spreads'
+export { getFilter, getSort, getSortDir, buildSpreadList } from './toolbar'
