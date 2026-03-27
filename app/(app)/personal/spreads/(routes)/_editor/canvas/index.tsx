@@ -255,6 +255,7 @@ function SpreadCanvasComponent(
         effectiveCards,
         rotationAngles,
         draggingIndex: dragging?.index ?? null,
+        isMarqueeSelecting: marqueeRect !== null,
         selectedCardIndex,
         isMobile,
         isViewMode,

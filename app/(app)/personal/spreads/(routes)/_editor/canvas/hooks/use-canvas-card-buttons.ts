@@ -26,6 +26,7 @@ interface UseCanvasCardButtonsParams {
     effectiveCards: CanvasCard[]
     rotationAngles?: number[]
     draggingIndex: number | null
+    isMarqueeSelecting: boolean
     selectedCardIndex: number | null
     isMobile: boolean
     isViewMode: boolean
@@ -40,6 +41,7 @@ export function useCanvasCardButtons({
     effectiveCards,
     rotationAngles,
     draggingIndex,
+    isMarqueeSelecting,
     selectedCardIndex,
     isMobile,
     isViewMode,
@@ -73,24 +75,32 @@ export function useCanvasCardButtons({
         }
     }, [])
 
-    useEffect(() => cancelHoverLeaveTimeout, [cancelHoverLeaveTimeout])
-
-    useEffect(() => {
-        if (
-            hoveredCardIndex === null ||
-            draggingIndex !== null ||
-            isMobile ||
-            isViewMode
-        ) {
-            isButtonFrameHoveredRef.current = false
-        }
-    }, [draggingIndex, hoveredCardIndex, isMobile, isViewMode])
-
     const clearHoveredCard = useCallback(() => {
         isButtonFrameHoveredRef.current = false
         setHoveredCardIndex(null)
         hoverLeaveTimeoutRef.current = null
     }, [])
+
+    useEffect(() => cancelHoverLeaveTimeout, [cancelHoverLeaveTimeout])
+
+    useEffect(() => {
+        if (!isMarqueeSelecting) return
+
+        cancelHoverLeaveTimeout()
+        clearHoveredCard()
+    }, [cancelHoverLeaveTimeout, clearHoveredCard, isMarqueeSelecting])
+
+    useEffect(() => {
+        if (
+            hoveredCardIndex === null ||
+            draggingIndex !== null ||
+            isMarqueeSelecting ||
+            isMobile ||
+            isViewMode
+        ) {
+            isButtonFrameHoveredRef.current = false
+        }
+    }, [draggingIndex, hoveredCardIndex, isMarqueeSelecting, isMobile, isViewMode])
 
     const scheduleHoverLeave = useCallback(() => {
         cancelHoverLeaveTimeout()
@@ -99,7 +109,14 @@ export function useCanvasCardButtons({
 
     const handleSvgPointerMove = useCallback(
         (e: PointerEvent<SVGSVGElement>) => {
-            if (isMobile || isViewMode || draggingIndex !== null) return
+            if (
+                isMobile ||
+                isViewMode ||
+                draggingIndex !== null ||
+                isMarqueeSelecting
+            ) {
+                return
+            }
 
             const { x, y } = clientToSVG(e.clientX, e.clientY)
             cancelHoverLeaveTimeout()
@@ -143,6 +160,7 @@ export function useCanvasCardButtons({
             draggingIndex,
             effectiveCards,
             hoveredCardIndex,
+            isMarqueeSelecting,
             isMobile,
             isViewMode,
             layeredCardIndices,
@@ -168,6 +186,7 @@ export function useCanvasCardButtons({
         !isMobile &&
         !isViewMode &&
         draggingIndex === null &&
+        !isMarqueeSelecting &&
         hoveredCardIndex !== null &&
         effectiveCards[hoveredCardIndex]
             ? hoveredCardIndex
@@ -183,6 +202,7 @@ export function useCanvasCardButtons({
         hoveredCard !== null &&
         !isMobile &&
         !isViewMode &&
+        !isMarqueeSelecting &&
         draggingIndex === null
 
     const buttonFrameLayerInfo = useMemo(() => {
