@@ -12,7 +12,6 @@ import {
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
     DropdownMenuSeparator,
-    DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
@@ -21,8 +20,6 @@ import {
     Search01Icon,
     SortByDown01Icon,
     SortByUp01Icon,
-    ArrowUp01Icon,
-    ArrowDown01Icon,
 } from "hugeicons-react"
 import type { SpreadSortField, SpreadSortDir } from "../lib/filter-spreads"
 
@@ -152,6 +149,7 @@ export default function SpreadsToolbar({
                         <Search01Icon className="w-4 h-4" strokeWidth={1.5} />
                     </InputGroupAddon>
                     <InputGroupInput
+                        aria-label="Search spreads"
                         placeholder="Search spreads..."
                         value={search}
                         onChange={(e) => onSearchChange(e.target.value)}
@@ -160,7 +158,11 @@ export default function SpreadsToolbar({
                 <DropdownMenu>
                     <DropdownMenuTrigger
                         render={
-                            <Button variant="outline" className="h-8.5">
+                            <Button
+                                variant="outline"
+                                className="h-8.5"
+                                aria-label={`Sort spreads by ${currentSortLabel}, ${sortDir === "desc" ? "descending" : "ascending"}`}
+                            >
                                 <SortIcon className="w-4 h-4" strokeWidth={1.5} />
                                 <span>{currentSortLabel}</span>
                             </Button>
