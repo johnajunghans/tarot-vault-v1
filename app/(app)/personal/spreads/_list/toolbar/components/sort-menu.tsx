@@ -39,7 +39,7 @@ export default function SortMenu({
                 render={
                     <Button
                         variant="secondary"
-                        className="h-9 text-muted-foreground hover:text-foreground data-popup-open:text-foreground"
+                        className="h-9 text-muted-foreground hover:text-foreground hover:bg-secondary data-popup-open:text-foreground"
                         aria-label={`Sort spreads by ${currentSortLabel}, ${sortDir === "desc" ? "descending" : "ascending"}`}
                     >
                         <HugeiconsIcon icon={sortIcon} className="w-4 h-4" strokeWidth={1.5} />
