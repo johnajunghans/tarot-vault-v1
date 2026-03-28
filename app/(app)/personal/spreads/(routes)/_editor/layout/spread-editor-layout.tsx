@@ -1,5 +1,6 @@
 "use client"
 
+import { useDesktopCanvasControlsAnimation } from "./hooks/use-desktop-canvas-controls-animation"
 import { useCallback, useRef, useState } from "react"
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { type Layout } from "react-resizable-panels"
@@ -66,6 +67,15 @@ export default function SpreadEditorLayout({
     const [canvasDeleteIndex, setCanvasDeleteIndex] = useState<number | null>(null)
     const toggleLeftPanelRef = useRef<(() => void) | null>(null)
     const canAddCard = !isViewMode && cards.length < 78
+    const {
+        controlsPositionRef: desktopControlsPositionRef,
+        controlsContentRef: desktopControlsContentRef,
+        syncToPanelWidth,
+        animateForPanelOpen,
+        settleAfterPanelOpen,
+        animateForPanelClose,
+        settleAfterPanelClose,
+    } = useDesktopCanvasControlsAnimation()
 
     const handleCanvasDeleteConfirm = useCallback(() => {
         if (canvasDeleteIndex === null) return
@@ -215,24 +225,6 @@ export default function SpreadEditorLayout({
                         style={{ pointerEvents: "none" }}
                     >
                         <div className="relative h-full">
-                            <div className="absolute top-2 right-2 z-10 flex items-center gap-2 pointer-events-auto">
-                                {!isViewMode && (
-                                    <UndoRedoControls
-                                        canUndo={canUndo}
-                                        canRedo={canRedo}
-                                        onUndo={undo}
-                                        onRedo={redo}
-                                    />
-                                )}
-                                <ZoomControls
-                                    zoom={zoomDisplay}
-                                    minZoom={minZoomDisplay}
-                                    onZoomIn={zoomIn}
-                                    onZoomOut={zoomOut}
-                                    onResetZoom={resetZoom}
-                                    className="static"
-                                />
-                            </div>
                         </div>
                     </ResizablePanel>
 
@@ -245,9 +237,40 @@ export default function SpreadEditorLayout({
                         setSelectedCardIndex={setSelectedCardIndex}
                         onRotationChange={handleCardRotationChange}
                         remove={remove}
+                        onDesktopWidthChange={syncToPanelWidth}
+                        onBeforeDesktopOpen={animateForPanelOpen}
+                        onAfterDesktopOpen={settleAfterPanelOpen}
+                        onBeforeDesktopClose={animateForPanelClose}
+                        onAfterDesktopClose={settleAfterPanelClose}
                     />
 
                     </ResizablePanelGroup>
+                    <div
+                        ref={desktopControlsPositionRef}
+                        className="pointer-events-none absolute top-2 right-2 z-10"
+                    >
+                        <div
+                            ref={desktopControlsContentRef}
+                            className="pointer-events-auto flex items-center gap-2"
+                        >
+                            {!isViewMode && (
+                                <UndoRedoControls
+                                    canUndo={canUndo}
+                                    canRedo={canRedo}
+                                    onUndo={undo}
+                                    onRedo={redo}
+                                />
+                            )}
+                            <ZoomControls
+                                zoom={zoomDisplay}
+                                minZoom={minZoomDisplay}
+                                onZoomIn={zoomIn}
+                                onZoomOut={zoomOut}
+                                onResetZoom={resetZoom}
+                                className="static"
+                            />
+                        </div>
+                    </div>
                     </>
                 )}
             </FormProvider>

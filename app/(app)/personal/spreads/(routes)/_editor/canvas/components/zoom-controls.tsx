@@ -60,29 +60,26 @@ export default function ZoomControls({
         <TooltipProvider delay={TOOLTIP_DELAY}>
             <div
                 className={`flex h-10 items-center gap-0.5 md:gap-1 rounded-xl border border-border/50 bg-background/90 px-1 md:px-1.5 shadow-md backdrop-blur-sm ${className ?? 'absolute top-2 right-2 z-10'}`}
-            >
-                {!isDefaultZoom && (
-                    <>
-                        <TooltipRoot>
-                            <TooltipTrigger
-                                render={
-                                    <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        onClick={onResetZoom}
-                                    >
-                                        <HugeiconsIcon icon={Refresh01Icon} />
-                                    </Button>
-                                }
-                            />
-                            <TooltipContent>
-                                Reset zoom
-                                <Kbd className={zoomShortcutClassName}>⇧⌘ 0</Kbd>
-                            </TooltipContent>
-                        </TooltipRoot>
-                        <Separator orientation="vertical" className="my-1.5" />
-                    </>
-                )}
+            >     
+                <TooltipRoot>
+                    <TooltipTrigger
+                        render={
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={onResetZoom}
+                                disabled={isDefaultZoom}
+                            >
+                                <HugeiconsIcon icon={Refresh01Icon} />
+                            </Button>
+                        }
+                    />
+                    <TooltipContent>
+                        Reset zoom
+                        <Kbd className={zoomShortcutClassName}>⇧⌘ 0</Kbd>
+                    </TooltipContent>
+                </TooltipRoot>
+                <Separator orientation="vertical" className="my-1.5" /> 
                 <TooltipRoot>
                     <TooltipTrigger
                         render={
