@@ -11,7 +11,8 @@ import {
 import { useFormContext, useWatch } from "react-hook-form";
 import { UseFieldArrayMove, UseFieldArrayRemove } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Delete02Icon, DragDropVerticalIcon, PlusSignIcon } from "hugeicons-react";
+import { Delete02Icon, DragDropVerticalIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { CardForm } from "@/types/spreads";
 import ConfirmDialog from "@/app/_components/confirm-dialog";
 import { useCardOverviewReorder } from "../hooks/use-card-overview-reorder";
@@ -38,7 +39,8 @@ function CardTileName({ index, isHovering = false }: { index: number; isHovering
 
   return (
     <div className={`relative font-display truncate text-sm mx-1 overflow-visible ${doubleDigitIndex ? "pl-6" : "pl-4"}`}>
-      <DragDropVerticalIcon
+      <HugeiconsIcon
+        icon={DragDropVerticalIcon}
         size={20}
         color="var(--muted-foreground)"
         strokeWidth={2.5}
@@ -100,7 +102,7 @@ const CardTile = forwardRef<HTMLDivElement, CardTileProps>(
             style={{ touchAction: "none", flex: "0 0 40px" }}
             aria-label={`Drag position ${index + 1}`}
           >
-            <DragDropVerticalIcon size={20} strokeWidth={2.5} />
+            <HugeiconsIcon icon={DragDropVerticalIcon} size={20} strokeWidth={2.5} />
           </div>
         )}
       </div>
@@ -218,7 +220,7 @@ export default function CardOverview({
                   setDeleteIndex(index);
                 }}
               >
-                <Delete02Icon />
+                <HugeiconsIcon icon={Delete02Icon} />
               </Button>
             }
           />
@@ -233,7 +235,7 @@ export default function CardOverview({
         className="flex items-center justify-center rounded-lg border border-dashed border-border/50 text-muted-foreground/50 hover:text-gold hover:border-gold/30 hover:bg-gold/5 transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
         style={{ height: `${TILE_HEIGHT}px` }}
       >
-        <PlusSignIcon className="size-3.5 mr-1.5" />
+        <HugeiconsIcon icon={PlusSignIcon} className="size-3.5 mr-1.5" />
         <span className="text-sm">Add Position</span>
       </button>
 

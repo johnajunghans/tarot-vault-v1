@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { FieldSeparator, FieldSet } from "@/components/ui/field";
 import { Kbd } from "@/components/ui/kbd";
-import { PanelLeftIcon, PlusSignIcon } from "hugeicons-react";
+import { PanelLeftIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Dispatch, type RefObject, SetStateAction, useState } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 import { UseFieldArrayMove, UseFieldArrayRemove, useFormContext, useWatch } from "react-hook-form";
@@ -188,7 +189,7 @@ export default function SpreadSettingsPanel({
         size="icon-sm"
         onClick={handleTogglePanel}
       >
-        <PanelLeftIcon />
+        <HugeiconsIcon icon={PanelLeftIcon} />
       </Button>
     );
 
@@ -217,7 +218,7 @@ export default function SpreadSettingsPanel({
                     onClick={addCard}
                     disabled={cards.length >= 78}
                   >
-                    <PlusSignIcon />
+                    <HugeiconsIcon icon={PlusSignIcon} />
                   </Button>
                 }
               />
@@ -260,7 +261,7 @@ export default function SpreadSettingsPanel({
                               onClick={addCard}
                               disabled={cards.length >= 78}
                             >
-                              <PlusSignIcon />
+                              <HugeiconsIcon icon={PlusSignIcon} />
                             </Button>
                           }
                         />

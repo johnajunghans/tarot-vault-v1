@@ -5,8 +5,40 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { routes } from "@/lib/routes";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { ArrowDown01Icon, Cards01Icon, ConstellationIcon, LibraryIcon } from "hugeicons-react";
+import { ArrowDown01Icon, Cards01Icon, ConstellationIcon, LibraryIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { ReactNode } from "react";
+
+type NewMenuItem = {
+    id: string;
+    label: string;
+    href: string;
+    icon: IconSvgElement;
+    disabled?: boolean;
+};
+
+const NEW_MENU_ITEMS: NewMenuItem[] = [
+    {
+        id: "reading",
+        label: "Reading",
+        href: routes.personal.readings.root,
+        icon: LibraryIcon,
+        disabled: true, // no route here yet
+    },
+    {
+        id: "spread",
+        label: "Spread",
+        href: routes.personal.spreads.new.root,
+        icon: Cards01Icon,
+    },
+    {
+        id: "interpretation",
+        label: "Interpretation",
+        href: routes.personal.interpretations.root,
+        icon: ConstellationIcon,
+        disabled: true, // no route here yet
+    },
+];
 
 interface NewXButtonProps {
     compact?: boolean; // mainly for use in sidebar when topbarVisible is false
@@ -34,29 +66,17 @@ export function NewXDropdown({
                 sideOffset={8}
                 className="w-[min(18rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] sm:w-auto"
             >
-                <DropdownMenuItem
-                    render={<Link href={routes.personal.readings.root} />}
-                    className={itemClassName}
-                    disabled // no route here yet 
-                >
-                    <span>Reading</span>
-                    <LibraryIcon strokeWidth={1.25} className={iconClassName} />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    render={<Link href={routes.personal.spreads.new.root} />}
-                    className={itemClassName}
-                >
-                    <span>Spread</span>
-                    <Cards01Icon strokeWidth={1.25} className={iconClassName} />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    render={<Link href={routes.personal.interpretations.root} />}
-                    className={itemClassName}
-                    disabled // no route here yet
-                >
-                    <span>Interpretation</span>
-                    <ConstellationIcon strokeWidth={1.25} className={iconClassName} />
-                </DropdownMenuItem>
+                {NEW_MENU_ITEMS.map((item) => (
+                    <DropdownMenuItem
+                        key={item.id}
+                        render={<Link href={item.href} />}
+                        className={itemClassName}
+                        disabled={item.disabled}
+                    >
+                        <span>{item.label}</span>
+                        <HugeiconsIcon icon={item.icon} strokeWidth={1.25} className={iconClassName} />
+                    </DropdownMenuItem>
+                ))}
             </DropdownMenuContent>
         </DropdownMenu>
     )
@@ -76,7 +96,7 @@ export default function NewXButton({
                 )}
             >
                 {!compact && <span className="text-base font-normal md:text-base">New</span>}
-                <ArrowDown01Icon strokeWidth={2} className="h-5 w-5 duration-100 sm:h-4 sm:w-4" />
+                <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2} className="h-5 w-5 duration-100 sm:h-4 sm:w-4" />
             </DropdownMenuTrigger>
         </NewXDropdown>
     )

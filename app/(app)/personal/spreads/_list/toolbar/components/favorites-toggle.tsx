@@ -1,4 +1,5 @@
-import { StarIcon } from "hugeicons-react"
+import { StarIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { Toggle } from "@/components/ui/toggle"
 
 interface FavoritesToggleProps {
@@ -21,12 +22,7 @@ export default function FavoritesToggle({
             className="h-9"
             disabled={disabled}
         >
-            <StarIcon
-                className="w-4 h-4"
-                strokeWidth={1.5}
-                fill={favoritesOnly ? "var(--gold)" : "none"}
-                color={favoritesOnly ? "var(--gold)" : "currentColor"}
-            />
+            <HugeiconsIcon icon={StarIcon} />
             <span>Favorites</span>
         </Toggle>
     )

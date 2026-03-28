@@ -1,4 +1,5 @@
-import { ArrowDown01Icon, ArrowUp01Icon } from "hugeicons-react";
+import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import {
@@ -135,7 +136,7 @@ export default function NumberField({
                                         onClick={() => handleStep(1)}
                                         disabled={!canIncrement}
                                     >
-                                        <ArrowUp01Icon />
+                                        <HugeiconsIcon icon={ArrowUp01Icon} />
                                     </InputGroupButton>
                                     <InputGroupButton
                                         variant="ghost"
@@ -145,7 +146,7 @@ export default function NumberField({
                                         onClick={() => handleStep(-1)}
                                         disabled={!canDecrement}
                                     >
-                                        <ArrowDown01Icon />
+                                        <HugeiconsIcon icon={ArrowDown01Icon} />
                                     </InputGroupButton>
                                 </div>
                             </InputGroupAddon>

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { PlusSignIcon } from "hugeicons-react"
+import { PlusSignIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { routes } from "@/lib/routes"
 
 export default function EmptyState() {
@@ -19,7 +20,7 @@ export default function EmptyState() {
                 render={<Link href={routes.personal.spreads.new.root} />}
                 className="border-gold/50 text-gold hover:bg-gold/10 hover:border-gold"
             >
-                <PlusSignIcon className="w-4 h-4 mr-1.5" strokeWidth={2} />
+                <HugeiconsIcon icon={PlusSignIcon} className="w-4 h-4 mr-1.5" strokeWidth={2} />
                 New spread
             </Button>
         </div>

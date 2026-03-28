@@ -10,7 +10,8 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { MinusSignIcon, PlusSignIcon, Refresh01Icon } from 'hugeicons-react'
+import { MinusSignIcon, PlusSignIcon, Refresh01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import {
     DEFAULT_ZOOM,
     ZOOM_MIN,
@@ -70,7 +71,7 @@ export default function ZoomControls({
                                         size="icon-sm"
                                         onClick={onResetZoom}
                                     >
-                                        <Refresh01Icon />
+                                        <HugeiconsIcon icon={Refresh01Icon} />
                                     </Button>
                                 }
                             />
@@ -91,7 +92,7 @@ export default function ZoomControls({
                                 onClick={onZoomOut}
                                 disabled={normalizedZoom <= minZoom}
                             >
-                                <MinusSignIcon />
+                                <HugeiconsIcon icon={MinusSignIcon} />
                             </Button>
                         }
                     />
@@ -112,7 +113,7 @@ export default function ZoomControls({
                                 onClick={onZoomIn}
                                 disabled={normalizedZoom >= ZOOM_MAX}
                             >
-                                <PlusSignIcon />
+                                <HugeiconsIcon icon={PlusSignIcon} />
                             </Button>
                         }
                     />

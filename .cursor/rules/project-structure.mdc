@@ -24,7 +24,7 @@ Tarot Vault is a full-stack tarot reading application built with Next.js, Convex
 ### Frontend
 - **UI Library**: shadcn/ui (base-nova style)
 - **Styling**: Tailwind CSS 4
-- **Icons**: hugeicons-react
+- **Icons**: `@hugeicons/core-free-icons` with `HugeiconsIcon` from `@hugeicons/react`
 - **Animation/Drag**: GSAP + Draggable plugin
 
 ### Development

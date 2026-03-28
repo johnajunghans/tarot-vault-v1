@@ -10,7 +10,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
-import { HorseSaddleIcon, PineTreeIcon, SurpriseIcon } from "hugeicons-react"
+import { HorseSaddleIcon, PineTreeIcon, SurpriseIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import Link from "next/link"
 import type React from "react"
 import { ReactNode, type MouseEventHandler, useId } from "react"
@@ -35,15 +36,15 @@ export interface ConfirmDialogProps {
 const zanyTitles: { content: string, icon: ReactNode | undefined }[] = [
     {
         content: "Woah there, buddy ol' pal!",
-        icon: <SurpriseIcon className="w-4 h-4" />
+        icon: <HugeiconsIcon icon={SurpriseIcon} className="w-4 h-4" />
     },
     {
         content: "Hold yer horses, partner.",
-        icon: <HorseSaddleIcon className="w-4 h-4" />
+        icon: <HugeiconsIcon icon={HorseSaddleIcon} className="w-4 h-4" />
     },
     {
         content: "Jiminy Christmas!",
-        icon: <PineTreeIcon className="w-4 h-4" />
+        icon: <HugeiconsIcon icon={PineTreeIcon} className="w-4 h-4" />
     }
 ]
 

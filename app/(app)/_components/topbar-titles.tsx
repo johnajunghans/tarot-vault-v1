@@ -7,7 +7,8 @@ import {
   Cards01Icon,
   ConstellationIcon,
   LibraryIcon,
-} from "hugeicons-react"
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
 const TITLE_ICONS: Record<string, typeof Cards01Icon> = {
   spreads: Cards01Icon,
@@ -24,10 +25,10 @@ export default function TopbarTitle({ title, isMobile }: TopbarTitleProps) {
   if (!title) return null
 
   if (title.variant === "page") {
-    const Icon = title.icon ? TITLE_ICONS[title.icon] : null
+    const icon = title.icon ? TITLE_ICONS[title.icon] : null
     return (
       <div className="flex items-center gap-1.5 md:gap-3">
-        {Icon && <Icon strokeWidth={1.25} className="size-4 md:size-5 text-gold" />}
+        {icon && <HugeiconsIcon icon={icon} strokeWidth={1.25} className="size-4 md:size-5 text-gold" />}
         <h1 className="font-display text-base md:text-lg lg:text-xl font-bold tracking-tight">
           {title.label}
         </h1>

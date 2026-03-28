@@ -1,6 +1,7 @@
 'use client'
 
-import { ArrowUp01Icon } from 'hugeicons-react'
+import { ArrowUp01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import type { OffscreenPointer } from '../types'
 
 const POINTER_ICON_SIZE = 16
@@ -24,7 +25,8 @@ export default function CanvasPointerOverlay({
                     aria-hidden="true"
                     title={pointer.label}
                 >
-                    <ArrowUp01Icon
+                    <HugeiconsIcon
+                        icon={ArrowUp01Icon}
                         className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]"
                         size={POINTER_ICON_SIZE}
                         strokeWidth={2.15}

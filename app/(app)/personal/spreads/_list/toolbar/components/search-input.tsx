@@ -1,5 +1,6 @@
 import type { RefObject } from "react"
-import { Search01Icon } from "hugeicons-react"
+import { Search01Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group"
 import { Kbd } from "@/components/ui/kbd"
 
@@ -17,7 +18,7 @@ export default function SearchInput({
     return (
         <InputGroup className="h-9 w-full sm:w-64 md:w-72">
             <InputGroupAddon>
-                <Search01Icon className="w-4 h-4" strokeWidth={1.5} />
+                <HugeiconsIcon icon={Search01Icon} className="w-4 h-4" strokeWidth={1.5} />
             </InputGroupAddon>
             <InputGroupInput
                 aria-label="Search spreads"

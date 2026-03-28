@@ -9,7 +9,8 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Undo03Icon, Redo03Icon } from 'hugeicons-react'
+import { Redo03Icon, Undo03Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 
 const TOOLTIP_DELAY = 500
 
@@ -44,7 +45,7 @@ export default function UndoRedoControls({
                                 onClick={onUndo}
                                 disabled={!canUndo}
                             >
-                                <Undo03Icon />
+                                <HugeiconsIcon icon={Undo03Icon} />
                             </Button>
                         }
                     />
@@ -63,7 +64,7 @@ export default function UndoRedoControls({
                                 onClick={onRedo}
                                 disabled={!canRedo}
                             >
-                                <Redo03Icon />
+                                <HugeiconsIcon icon={Redo03Icon} />
                             </Button>
                         }
                     />

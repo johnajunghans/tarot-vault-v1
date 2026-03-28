@@ -1,4 +1,5 @@
-import { SortByDown01Icon, SortByUp01Icon } from "hugeicons-react"
+import { SortByDown01Icon, SortByUp01Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -29,7 +30,7 @@ export default function SortMenu({
     onSortFieldChange,
     onSortDirChange,
 }: SortMenuProps) {
-    const SortIcon = sortDir === "desc" ? SortByDown01Icon : SortByUp01Icon
+    const sortIcon = sortDir === "desc" ? SortByDown01Icon : SortByUp01Icon
     const currentSortLabel = SORT_FIELD_OPTIONS.find((option) => option.value === sortField)?.label ?? "Date"
 
     return (
@@ -41,7 +42,7 @@ export default function SortMenu({
                         className="h-9 text-muted-foreground hover:text-foreground data-popup-open:text-foreground"
                         aria-label={`Sort spreads by ${currentSortLabel}, ${sortDir === "desc" ? "descending" : "ascending"}`}
                     >
-                        <SortIcon className="w-4 h-4" strokeWidth={1.5} />
+                        <HugeiconsIcon icon={sortIcon} className="w-4 h-4" strokeWidth={1.5} />
                         <span>{currentSortLabel}</span>
                     </Button>
                 }

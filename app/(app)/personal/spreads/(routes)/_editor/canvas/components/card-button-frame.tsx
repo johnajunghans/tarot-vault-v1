@@ -1,15 +1,16 @@
 'use client'
 
-import type { ComponentType, PointerEvent as ReactPointerEvent } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import { memo, useCallback, useRef, useState } from 'react'
 import {
-    Rotate01Icon,
-    LayerSendToBackIcon,
+    Delete02Icon,
     LayerBringToFrontIcon,
+    LayerSendToBackIcon,
+    Rotate01Icon,
     RotateTopLeftIcon,
     RotateTopRightIcon,
-    Delete02Icon,
-} from 'hugeicons-react'
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { TooltipProvider, TooltipRoot, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -41,54 +42,6 @@ interface CardButtonFrameProps {
     isAtBack: boolean
     onFrameMouseEnter: () => void
     onFrameMouseLeave: () => void
-}
-
-function HtmlIconButton({
-    x,
-    y,
-    icon: Icon,
-    onClick,
-    disabled,
-    label,
-    isActive = false,
-}: {
-    x: number
-    y: number
-    icon: ComponentType<{ size?: number; className?: string }>
-    onClick: () => void
-    disabled?: boolean
-    label: string
-    isActive?: boolean
-}) {
-    return (
-        <foreignObject
-            x={x}
-            y={y}
-            width={BUTTON_SIZE}
-            height={BUTTON_SIZE}
-            style={{ pointerEvents: 'auto', overflow: 'visible' }}
-        >
-            <div className="flex size-full items-center justify-center">
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    aria-label={label}
-                    disabled={disabled}
-                    className={cn(
-                        'bg-background/25 shadow-sm backdrop-blur-xs',
-                        isActive && 'border-gold text-foreground'
-                    )}
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        onClick()
-                    }}
-                >
-                    <Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
-                </Button>
-            </div>
-        </foreignObject>
-    )
 }
 
 function BottomButtonGroup({
@@ -140,7 +93,7 @@ function BottomButtonGroup({
                                                 onSendToBack()
                                             }}
                                         >
-                                            <LayerSendToBackIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                            <HugeiconsIcon icon={LayerSendToBackIcon} size={BUTTON_ICON_SIZE} className="opacity-80" />
                                         </Button>
                                     }
                                 />
@@ -161,7 +114,7 @@ function BottomButtonGroup({
                                                 onBringToFront()
                                             }}
                                         >
-                                            <LayerBringToFrontIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                            <HugeiconsIcon icon={LayerBringToFrontIcon} size={BUTTON_ICON_SIZE} className="opacity-80" />
                                         </Button>
                                     }
                                 />
@@ -183,7 +136,7 @@ function BottomButtonGroup({
                                         onDelete()
                                     }}
                                 >
-                                    <Delete02Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                    <HugeiconsIcon icon={Delete02Icon} size={BUTTON_ICON_SIZE} className="opacity-80" />
                                 </Button>
                             }
                         />
@@ -240,7 +193,7 @@ function RotationButtonGroup({
                                             onRotateCCW()
                                         }}
                                     >
-                                        <RotateTopLeftIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                        <HugeiconsIcon icon={RotateTopLeftIcon} size={BUTTON_ICON_SIZE} className="opacity-80" />
                                     </Button>
                                 }
                             />
@@ -263,7 +216,7 @@ function RotationButtonGroup({
                                         onPointerMove={onPointerMove}
                                         onPointerUp={onPointerUp}
                                     >
-                                        <Rotate01Icon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                        <HugeiconsIcon icon={Rotate01Icon} size={BUTTON_ICON_SIZE} className="opacity-80" />
                                     </Button>
                                 }
                             />
@@ -283,7 +236,7 @@ function RotationButtonGroup({
                                             onRotateCW()
                                         }}
                                     >
-                                        <RotateTopRightIcon size={BUTTON_ICON_SIZE} className="opacity-80" />
+                                        <HugeiconsIcon icon={RotateTopRightIcon} size={BUTTON_ICON_SIZE} className="opacity-80" />
                                     </Button>
                                 }
                             />

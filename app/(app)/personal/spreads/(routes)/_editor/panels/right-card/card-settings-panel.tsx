@@ -22,7 +22,8 @@ import {
   Delete02Icon,
   LayerBringToFrontIcon,
   LayerSendToBackIcon,
-} from "hugeicons-react";
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useFormContext, useWatch, UseFieldArrayRemove } from "react-hook-form";
 import { CardForm } from "@/types/spreads";
@@ -259,9 +260,9 @@ export function CardSettingsContent({
               onClick={() => setPlacementOpen((prev) => !prev)}
             >
               {placementOpen ? (
-                <ArrowDown01Icon className="w-3.5 h-3.5" />
+                <HugeiconsIcon icon={ArrowDown01Icon} className="w-3.5 h-3.5" />
               ) : (
-                <ArrowRight01Icon className="w-3.5 h-3.5" />
+                <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
               )}
               Placement
             </button>
@@ -353,7 +354,7 @@ export function CardSettingsContent({
                                 className="aria-disabled:opacity-50"
                                 onClick={handleMoveToBack}
                               >
-                                <LayerSendToBackIcon />
+                                <HugeiconsIcon icon={LayerSendToBackIcon} />
                               </Button>
                               <TooltipContent>Move to Back</TooltipContent>
                             </Tooltip>
@@ -368,7 +369,7 @@ export function CardSettingsContent({
                                 className="aria-disabled:opacity-50"
                                 onClick={handleBringToFront}
                               >
-                                <LayerBringToFrontIcon />
+                                <HugeiconsIcon icon={LayerBringToFrontIcon} />
                               </Button>
                               <TooltipContent>Bring to Front</TooltipContent>
                             </Tooltip>
@@ -392,7 +393,7 @@ export function CardSettingsContent({
               if (selectedCardIndex !== null) setDeleteIndex(selectedCardIndex);
             }}
           >
-            <Delete02Icon className="w-4 h-4" />
+            <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" />
             Remove Position
           </Button>
         </FieldSet>
@@ -508,7 +509,7 @@ export default function CardSettingsPanel({
                 size="icon-sm"
                 onClick={handleClosePanel}
               >
-                <Cancel01Icon />
+                <HugeiconsIcon icon={Cancel01Icon} />
               </Button>
             }
           />

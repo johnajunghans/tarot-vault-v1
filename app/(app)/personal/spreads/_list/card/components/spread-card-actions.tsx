@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { TooltipContent, TooltipRoot, TooltipTrigger } from "@/components/ui/tooltip"
-import { Delete02Icon, StarIcon } from "hugeicons-react"
+import { Delete02Icon, StarIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
 interface SpreadCardActionsProps {
     isDraft?: boolean
@@ -33,7 +34,7 @@ export default function SpreadCardActions({
                     className="relative z-20 text-muted-foreground hover:text-destructive"
                     onClick={onDeleteDraft}
                 >
-                    <Delete02Icon className="w-4 h-4" />
+                    <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" />
                 </Button>
             )}
             {!isDraft && showFavorite && (
@@ -46,10 +47,10 @@ export default function SpreadCardActions({
                                 className="relative z-20"
                                 onClick={onToggleFavorite}
                             >
-                                <StarIcon
+                                <HugeiconsIcon
+                                    icon={StarIcon}
                                     className="w-4 h-4"
                                     color="var(--gold)"
-                                    fill={favorite ? "var(--gold)" : "none"}
                                 />
                             </Button>
                         }

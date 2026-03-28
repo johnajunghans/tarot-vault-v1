@@ -11,7 +11,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { ArrowRight01Icon } from "hugeicons-react"
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import type { BreadcrumbConfig, BreadcrumbDescriptor } from "@/types/layout"
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -81,7 +82,7 @@ export default function TopbarBreadcrumbs({ config }: TopbarBreadcrumbsProps) {
               </BreadcrumbItem>
               {!isLast && (
                 <BreadcrumbSeparator>
-                  <ArrowRight01Icon strokeWidth={2} />
+                  <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
                 </BreadcrumbSeparator>
               )}
             </Fragment>

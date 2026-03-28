@@ -19,7 +19,8 @@
 
 import { Button } from "@/components/ui/button";
 import { SignInButton, SignUpButton } from "@clerk/clerk-react";
-import { TaskAdd01Icon } from "hugeicons-react";
+import { TaskAdd01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const SVG_W = 320;
@@ -270,7 +271,7 @@ export default function HeroCard() {
                         className="flex-[2] border border-gold/50 bg-transparent text-gold hover:bg-gold/10 hover:border-gold font-semibold rounded-lg transition-all duration-300 text-[clamp(0.8rem,1.4vw,1rem)] h-[clamp(2.25rem,4vw,3rem)]"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <TaskAdd01Icon />
+                        <HugeiconsIcon icon={TaskAdd01Icon} />
                         Join the waitlist
                         {/* <ArrowRight01Icon className="ml-2 w-4 h-4" strokeWidth={2} /> */}
                       </Button>

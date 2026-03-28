@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { PlusSignIcon, Settings02Icon } from "hugeicons-react"
+import { PlusSignIcon, Settings02Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
 interface MobileSpreadToolbarProps {
     onOpenSpreadSettings: () => void
@@ -24,7 +25,7 @@ export default function MobileSpreadToolbar({
                         size="icon-sm"
                         onClick={onOpenSpreadSettings}
                     >
-                        <Settings02Icon />
+                        <HugeiconsIcon icon={Settings02Icon} />
                     </Button>
                     {onAddCard && (
                         <Button
@@ -33,7 +34,7 @@ export default function MobileSpreadToolbar({
                             onClick={onAddCard}
                             disabled={!canAddCard}
                         >
-                            <PlusSignIcon />
+                            <HugeiconsIcon icon={PlusSignIcon} />
                         </Button>
                     )}
                 </div>
