@@ -31,14 +31,15 @@ interface CardOverviewProps {
   isMobile?: boolean;
 }
 
-// Render the tile label and swap the index for a drag handle on hover.
 function CardTileName({ index, isHovering = false }: { index: number; isHovering?: boolean }) {
   const { control } = useFormContext<{ positions: CardForm[] }>();
   const name = useWatch({ control, name: `positions.${index}.name` });
   const doubleDigitIndex = index >= 9;
 
   return (
-    <div className={`relative font-display truncate text-sm mx-1 overflow-visible ${doubleDigitIndex ? "pl-6" : "pl-4"}`}>
+    <div
+      className={`relative mx-1 overflow-visible truncate font-display text-sm ${doubleDigitIndex ? "pl-6" : "pl-4"}`}
+    >
       <HugeiconsIcon
         icon={DragDropVerticalIcon}
         size={20}
@@ -46,8 +47,12 @@ function CardTileName({ index, isHovering = false }: { index: number; isHovering
         strokeWidth={2.5}
         className={`absolute ${doubleDigitIndex ? "-left-0.5" : "-left-1.5"} ${isHovering ? "scale-100" : "scale-0"} duration-150`}
       />
-      <span className={`absolute left-0 text-muted-foreground/80 font-medium font-mono mr-1.5 ${isHovering ? "scale-0" : "scale-100"} duration-150`}>{index + 1}</span>
-      {name || <span className="text-muted-foreground/40 italic">Untitled</span>}
+      <span
+        className={`absolute left-0 mr-1.5 font-mono font-medium text-muted-foreground/80 ${isHovering ? "scale-0" : "scale-100"} duration-150`}
+      >
+        {index + 1}
+      </span>
+      {name || <span className="italic text-muted-foreground/40">Untitled</span>}
     </div>
   );
 }
@@ -62,7 +67,6 @@ interface CardTileProps {
   rightSlot?: ReactNode;
 }
 
-// Render a single selectable card tile with optional trailing actions.
 const CardTile = forwardRef<HTMLDivElement, CardTileProps>(
   ({ index, isSelected, isMobile = false, variant = "editable", onSelect, handleRef, rightSlot }, ref) => {
     const [isHovering, setIsHovering] = useState(false);
@@ -79,8 +83,10 @@ const CardTile = forwardRef<HTMLDivElement, CardTileProps>(
       >
         <div
           onClick={onSelect}
-          className={`flex min-w-0 flex-1 items-center justify-between rounded-lg border px-3 cursor-pointer transition-all duration-200 !overflow-visible ${
-            isSelected ? "border-gold/80 bg-gold/10 shadow-sm !-translate-y-0.25" : "border-border/80 bg-surface/50 hover:bg-surface hover:border-border !-translate-y-0"
+          className={`!overflow-visible flex min-w-0 flex-1 cursor-pointer items-center justify-between rounded-lg border px-3 transition-all duration-200 ${
+            isSelected
+              ? "border-gold/80 bg-gold/10 shadow-sm !-translate-y-0.25"
+              : "border-border/80 bg-surface/50 !-translate-y-0 hover:border-border hover:bg-surface"
           }`}
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
@@ -89,7 +95,7 @@ const CardTile = forwardRef<HTMLDivElement, CardTileProps>(
             index={index}
             isHovering={variant === "editable" && !showMobileHandle ? isHovering : false}
           />
-          {rightSlot && <div className="flex items-center shrink-0">{rightSlot}</div>}
+          {rightSlot && <div className="flex shrink-0 items-center">{rightSlot}</div>}
         </div>
         {showMobileHandle && (
           <div
@@ -111,25 +117,24 @@ const CardTile = forwardRef<HTMLDivElement, CardTileProps>(
 );
 CardTile.displayName = "CardTile";
 
-// ------------ Read-Only Card Overview ------------ //
-
 interface CardOverviewReadOnlyProps {
   cardCount: number;
   selectedCardIndex: number | null;
   setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
 }
 
-// Show a non-draggable list of positions for read-only contexts.
 export function CardOverviewReadOnly({
   cardCount,
   selectedCardIndex,
   setSelectedCardIndex,
 }: CardOverviewReadOnlyProps) {
   return (
-    <div className="flex flex-col gap-1.5 group">
-      <div className="flex justify-between items-center px-1">
+    <div className="group flex flex-col gap-1.5">
+      <div className="flex items-center justify-between px-1">
         <span className="font-display text-sm font-bold tracking-tight">Positions</span>
-        <span className="text-[10px] text-muted-foreground/40 italic opacity-0 group-hover:opacity-100 duration-300">Click to view</span>
+        <span className="text-[10px] italic text-muted-foreground/40 opacity-0 duration-300 group-hover:opacity-100">
+          Click to view
+        </span>
       </div>
       <div className="relative flex flex-col" style={{ gap: `${TILE_GAP}px` }}>
         {Array.from({ length: cardCount }, (_, index) => (
@@ -145,8 +150,6 @@ export function CardOverviewReadOnly({
     </div>
   );
 }
-
-// ------------ Editable Card Overview ------------ //
 
 export default function CardOverview({
   cardIds,
@@ -168,7 +171,6 @@ export default function CardOverview({
     isMobile,
   });
 
-  // Remove the chosen card and keep selection aligned with the updated list.
   const handleDeleteConfirm = useCallback(() => {
     if (deleteIndex === null) return;
 
@@ -185,11 +187,11 @@ export default function CardOverview({
   }, [deleteIndex, selectedCardIndex, setSelectedCardIndex, remove]);
 
   return (
-    <div className="flex flex-col gap-1.5 mb-24 group">
-      <div className="flex justify-between items-center px-1">
+    <div className="group mb-24 flex flex-col gap-1.5">
+      <div className="flex items-center justify-between px-1">
         <span className="font-display text-sm font-bold tracking-tight">Positions</span>
         <span
-          className={`text-[10px] text-muted-foreground/40 italic duration-300 ${
+          className={`text-[10px] italic text-muted-foreground/40 duration-300 ${
             isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}
         >
@@ -227,19 +229,16 @@ export default function CardOverview({
         ))}
       </div>
 
-      {/* New Position button */}
       <button
         type="button"
         onClick={addCard}
         disabled={cardCount >= maxCards}
-        className="flex items-center justify-center rounded-lg border border-dashed border-border/50 text-muted-foreground/50 hover:text-gold hover:border-gold/30 hover:bg-gold/5 transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-        style={{ height: `${TILE_HEIGHT}px` }}
+        className="flex h-10 cursor-pointer items-center justify-center rounded-lg border border-dashed border-border/50 text-muted-foreground/50 transition-all duration-200 hover:border-gold/30 hover:bg-gold/5 hover:text-gold disabled:pointer-events-none disabled:opacity-30"
       >
-        <HugeiconsIcon icon={PlusSignIcon} className="size-3.5 mr-1.5" />
+        <HugeiconsIcon icon={PlusSignIcon} className="mr-1.5 size-3.5" />
         <span className="text-sm">Add Position</span>
       </button>
 
-      {/* Delete confirmation dialog */}
       <ConfirmDialog
         open={deleteIndex !== null}
         onOpenChange={(open) => {

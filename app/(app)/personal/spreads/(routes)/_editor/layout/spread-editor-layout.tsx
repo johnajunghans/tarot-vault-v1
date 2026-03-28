@@ -5,7 +5,7 @@ import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { type Layout } from "react-resizable-panels"
 import { FormProvider } from "react-hook-form"
 import SpreadCanvas, { ZoomControls, UndoRedoControls } from "../canvas"
-import { SpreadSettingsPanel, CardSettingsPanel, MobileSpreadToolbar } from "../panels"
+import { SpreadSettingsPanel, CardSettingsPanel, SpreadFloatingToolbar } from "../panels"
 import ConfirmDialog from "@/app/_components/confirm-dialog"
 import { useAppHotkey } from "@/hooks/use-app-hotkey"
 import type { UseSpreadFormReturn } from "../panels/hooks/use-spread-form"
@@ -130,10 +130,13 @@ export default function SpreadEditorLayout({
 
                 {isMobile ? (
                     <>
-                        <MobileSpreadToolbar
-                            onOpenSpreadSettings={() => setSpreadSheetOpen(true)}
+                        <SpreadFloatingToolbar
+                            title={isViewMode ? "Spread Details" : "Spread Settings"}
+                            onOpenPanel={() => setSpreadSheetOpen(true)}
                             onAddCard={isViewMode ? undefined : addCard}
                             canAddCard={canAddCard}
+                            showAddCard={!isViewMode}
+                            isMobile
                         />
 
                         {/* Canvas Controls */}
