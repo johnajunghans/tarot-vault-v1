@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { type Layout } from "react-resizable-panels"
 import { FormProvider } from "react-hook-form"
@@ -64,6 +64,7 @@ export default function SpreadEditorLayout({
     } = editor
 
     const [canvasDeleteIndex, setCanvasDeleteIndex] = useState<number | null>(null)
+    const toggleLeftPanelRef = useRef<(() => void) | null>(null)
     const canAddCard = !isViewMode && cards.length < 78
 
     const handleCanvasDeleteConfirm = useCallback(() => {
@@ -87,16 +88,8 @@ export default function SpreadEditorLayout({
             return
         }
 
-        const panel = spreadSettingsPanelRef.current
-        if (!panel) return
-
-        if (panel.isCollapsed()) {
-            panel.expand()
-            return
-        }
-
-        panel.collapse()
-    }, [isMobile, setSpreadSheetOpen, spreadSettingsPanelRef])
+        toggleLeftPanelRef.current?.()
+    }, [isMobile, setSpreadSheetOpen])
 
     useAppHotkey("Mod+H", toggleLeftPanel, {
         ignoreInputs: false,
@@ -172,6 +165,7 @@ export default function SpreadEditorLayout({
                             selectedCardIndex={selectedCardIndex}
                             setSelectedCardIndex={setSelectedCardIndex}
                             panelRef={spreadSettingsPanelRef}
+                            togglePanelRef={toggleLeftPanelRef}
                         />
 
                         {/* Card Settings (Sheet on mobile) */}
@@ -212,6 +206,7 @@ export default function SpreadEditorLayout({
                         selectedCardIndex={selectedCardIndex}
                         setSelectedCardIndex={setSelectedCardIndex}
                         panelRef={spreadSettingsPanelRef}
+                        togglePanelRef={toggleLeftPanelRef}
                     />
 
                     {/* Center Spacer — transparent, passes events to canvas */}

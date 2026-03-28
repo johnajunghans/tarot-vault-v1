@@ -6,12 +6,13 @@ import { TooltipContent, TooltipProvider, TooltipRoot, TooltipTrigger } from "@/
 import { ResponsivePanel } from "@/app/(app)/_components/responsive-panel";
 import { PanelLeftIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { type Dispatch, type RefObject, type SetStateAction, useEffect, useState } from "react";
+import { type Dispatch, type RefObject, type SetStateAction, useEffect } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 import type { UseFieldArrayMove, UseFieldArrayRemove } from "react-hook-form";
 import SpreadDetailsContent from "./components/spread-details-content";
 import SpreadSettingsContent from "./components/spread-settings-content";
 import SpreadFloatingToolbar from "./components/spread-floating-toolbar";
+import { useSpreadPanelAnimation } from "./hooks/use-spread-panel-animation";
 
 const TOOLTIP_DELAY = 500;
 
@@ -27,6 +28,7 @@ interface SpreadSettingsPanelProps {
   isViewMode?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  togglePanelRef?: RefObject<(() => void) | null>;
 }
 
 export default function SpreadSettingsPanel({
@@ -41,38 +43,32 @@ export default function SpreadSettingsPanel({
   isViewMode = false,
   open = false,
   onOpenChange,
+  togglePanelRef,
 }: SpreadSettingsPanelProps) {
-  const [hideSettings, setHideSettings] = useState(false);
   const shortcutClassName = "ml-1";
-
-  function handleResize() {
-    if (panelRef.current) {
-      setHideSettings(panelRef.current.isCollapsed());
-    }
-  }
-
-  function handleTogglePanel() {
-    if (!panelRef.current) return;
-
-    if (panelRef.current.isCollapsed()) {
-      panelRef.current.expand();
-      return;
-    }
-
-    panelRef.current.collapse();
-  }
+  const {
+    hideSettings,
+    toolbarRef,
+    panelContentRef,
+    handleResize,
+    handleTogglePanel,
+  } = useSpreadPanelAnimation({
+    isMobile,
+    open,
+    onOpenChange,
+    panelRef,
+    focusTargetId: isViewMode ? undefined : "spread-name",
+  });
 
   useEffect(() => {
-    if (isMobile) return;
+    if (!togglePanelRef) return;
 
-    const frame = requestAnimationFrame(() => {
-      if (panelRef.current) {
-        setHideSettings(panelRef.current.isCollapsed());
-      }
-    });
+    togglePanelRef.current = handleTogglePanel;
 
-    return () => cancelAnimationFrame(frame);
-  }, [isMobile, panelRef]);
+    return () => {
+      togglePanelRef.current = null;
+    };
+  }, [handleTogglePanel, togglePanelRef]);
 
   const panelTitle = isViewMode ? "Spread Details" : "Spread Settings";
   const panelToggleLabel = hideSettings ? "Show Panel" : "Hide Panel";
@@ -129,9 +125,8 @@ export default function SpreadSettingsPanel({
     <>
       {!isMobile && (
         <div
-          className={`transition-[scale] duration-50 ${
-            hideSettings ? "pointer-events-auto scale-100 opacity-100" : "pointer-events-none scale-110 opacity-0"
-          }`}
+          ref={toolbarRef}
+          className={hideSettings ? "pointer-events-auto" : "pointer-events-none"}
         >
           <SpreadFloatingToolbar
             title={panelTitle}
@@ -160,7 +155,10 @@ export default function SpreadSettingsPanel({
         open={open}
         onOpenChange={onOpenChange}
       >
-        <div className={isMobile ? "h-full" : "h-full bg-background/85 backdrop-blur-xs"}>
+        <div
+          ref={panelContentRef}
+          className={isMobile ? "h-full" : "h-full bg-background/85 backdrop-blur-xs"}
+        >
           {isViewMode ? (
             <SpreadDetailsContent
               cards={cards}
