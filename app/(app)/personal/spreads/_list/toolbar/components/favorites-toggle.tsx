@@ -19,7 +19,7 @@ export default function FavoritesToggle({
             pressed={favoritesOnly}
             onPressedChange={onToggle}
             aria-label="Show favorites only"
-            className="h-9"
+            className="h-9 data-[pressed]:[&>svg]:fill-gold"
             disabled={disabled}
         >
             <HugeiconsIcon icon={StarIcon} />
