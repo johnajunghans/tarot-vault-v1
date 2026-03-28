@@ -7,9 +7,11 @@ import { useCallback, useRef } from "react";
 const PANEL_GAP = 12;
 const CONTROLS_HIDDEN_STATE = { autoAlpha: 0, x: -4, scale: 0.96 };
 const CONTROLS_VISIBLE_STATE = { autoAlpha: 1, x: 0, scale: 1 };
-const CONTROLS_HIDE_DURATION = 0.16;
-const CONTROLS_SHOW_DURATION = 0.22;
-const CONTROLS_CLOSE_REAPPEAR_DELAY = 0.50;
+const CONTROLS_OPEN_HIDE_DURATION = 0.10;
+const CONTROLS_OPEN_SHOW_DURATION = 0.14;
+const CONTROLS_CLOSE_HIDE_DURATION = 0.09;
+const CONTROLS_CLOSE_SHOW_DURATION = 0.12;
+const CONTROLS_CLOSE_REAPPEAR_DELAY = 0.09;
 
 function getControlsXOffset(panelWidth: number) {
   if (panelWidth <= 0) return 0;
@@ -44,15 +46,16 @@ export function useDesktopCanvasControlsAnimation() {
     });
   }, []);
 
-  const animateForPanelOpen = useCallback(() => {
+  const animateForPanelOpen = useCallback((onComplete?: () => void) => {
     pendingPhaseRef.current = "opening";
     cancelPendingReappear();
     gsap.killTweensOf(controlsContentRef.current);
     gsap.to(controlsContentRef.current, {
       ...CONTROLS_HIDDEN_STATE,
-      duration: CONTROLS_HIDE_DURATION,
+      duration: CONTROLS_OPEN_HIDE_DURATION,
       ease: "power2.in",
       overwrite: "auto",
+      onComplete,
     });
   }, [cancelPendingReappear]);
 
@@ -73,22 +76,23 @@ export function useDesktopCanvasControlsAnimation() {
     });
     gsap.fromTo(controlsContentRef.current, CONTROLS_HIDDEN_STATE, {
       ...CONTROLS_VISIBLE_STATE,
-      duration: CONTROLS_SHOW_DURATION,
+      duration: CONTROLS_OPEN_SHOW_DURATION,
       ease: "power2.out",
       overwrite: "auto",
       clearProps: "opacity,transform",
     });
   }, [cancelPendingReappear]);
 
-  const animateForPanelClose = useCallback(() => {
+  const animateForPanelClose = useCallback((onComplete?: () => void) => {
     pendingPhaseRef.current = "closing";
     cancelPendingReappear();
     gsap.killTweensOf(controlsContentRef.current);
     gsap.to(controlsContentRef.current, {
       ...CONTROLS_HIDDEN_STATE,
-      duration: CONTROLS_HIDE_DURATION,
+      duration: CONTROLS_CLOSE_HIDE_DURATION,
       ease: "power2.in",
       overwrite: "auto",
+      onComplete,
     });
   }, [cancelPendingReappear]);
 
@@ -102,12 +106,13 @@ export function useDesktopCanvasControlsAnimation() {
     pendingPhaseRef.current = null;
     cancelPendingReappear();
     gsap.killTweensOf(controlsContentRef.current);
+    gsap.set(controlsContentRef.current, CONTROLS_HIDDEN_STATE);
     gsap.set(controlsPositionRef.current, { x: 0 });
     delayedReappearRef.current = gsap.delayedCall(CONTROLS_CLOSE_REAPPEAR_DELAY, () => {
       delayedReappearRef.current = null;
       gsap.fromTo(controlsContentRef.current, CONTROLS_HIDDEN_STATE, {
         ...CONTROLS_VISIBLE_STATE,
-        duration: CONTROLS_SHOW_DURATION,
+        duration: CONTROLS_CLOSE_SHOW_DURATION,
         ease: "power2.out",
         overwrite: "auto",
         clearProps: "opacity,transform",

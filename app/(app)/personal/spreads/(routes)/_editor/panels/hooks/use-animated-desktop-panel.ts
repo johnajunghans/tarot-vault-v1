@@ -23,6 +23,8 @@ interface UseAnimatedDesktopPanelArgs {
   closeContentEase?: string;
   closeTriggerDuration?: number;
   closeTriggerEase?: string;
+  beforeOpen?: (proceed: () => void) => void;
+  beforeClose?: (proceed: () => void) => void;
   beforeOpenDelay?: number;
   beforeCloseDelay?: number;
   onBeforeOpen?: () => void;
@@ -59,6 +61,8 @@ export function useAnimatedDesktopPanel({
   closeContentEase = "power2.in",
   closeTriggerDuration = 0.22,
   closeTriggerEase = "power2.out",
+  beforeOpen,
+  beforeClose,
   beforeOpenDelay = 0,
   beforeCloseDelay = 0,
   onBeforeOpen,
@@ -168,6 +172,12 @@ export function useAnimatedDesktopPanel({
       };
 
       isAnimatingRef.current = true;
+
+      if (beforeOpen) {
+        beforeOpen(finishOpen);
+        return;
+      }
+
       onBeforeOpen?.();
 
       if (hasTriggerAnimation) {
@@ -188,6 +198,7 @@ export function useAnimatedDesktopPanel({
       finishOpen();
     },
     [
+      beforeOpen,
       beforeOpenDelay,
       contentHiddenState,
       contentVisibleState,
@@ -250,28 +261,32 @@ export function useAnimatedDesktopPanel({
       };
 
       isAnimatingRef.current = true;
-      onBeforeClose?.();
 
-      if (beforeCloseDelay > 0) {
-        gsap.delayedCall(beforeCloseDelay, () => {
-          gsap.to(panelContentRef.current, {
-            ...contentHiddenState,
-            duration: closeContentDuration,
-            ease: closeContentEase,
-            onComplete: finishClose,
-          });
+      const animateContentOut = () => {
+        gsap.to(panelContentRef.current, {
+          ...contentHiddenState,
+          duration: closeContentDuration,
+          ease: closeContentEase,
+          onComplete: finishClose,
         });
+      };
+
+      if (beforeClose) {
+        beforeClose(animateContentOut);
         return;
       }
 
-      gsap.to(panelContentRef.current, {
-        ...contentHiddenState,
-        duration: closeContentDuration,
-        ease: closeContentEase,
-        onComplete: finishClose,
-      });
+      onBeforeClose?.();
+
+      if (beforeCloseDelay > 0) {
+        gsap.delayedCall(beforeCloseDelay, animateContentOut);
+        return;
+      }
+
+      animateContentOut();
     },
     [
+      beforeClose,
       beforeCloseDelay,
       closeContentDuration,
       closeContentEase,

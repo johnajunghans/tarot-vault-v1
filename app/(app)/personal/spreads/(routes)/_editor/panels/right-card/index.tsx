@@ -25,9 +25,9 @@ interface CardSettingsPanelProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onDesktopWidthChange?: (panelWidth: number) => void;
-  onBeforeDesktopOpen?: (panelWidth: number) => void;
+  onBeforeDesktopOpen?: (panelWidth: number, onComplete?: () => void) => void;
   onAfterDesktopOpen?: (panelWidth: number) => void;
-  onBeforeDesktopClose?: (panelWidth: number) => void;
+  onBeforeDesktopClose?: (panelWidth: number, onComplete?: () => void) => void;
   onAfterDesktopClose?: (panelWidth: number) => void;
 }
 

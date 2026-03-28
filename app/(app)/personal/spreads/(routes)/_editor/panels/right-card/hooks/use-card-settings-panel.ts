@@ -14,9 +14,9 @@ interface UseCardSettingsPanelArgs {
   onOpenChange?: (open: boolean) => void;
   focusTargetId?: string;
   onDesktopWidthChange?: (panelWidth: number) => void;
-  onBeforeDesktopOpen?: (panelWidth: number) => void;
+  onBeforeDesktopOpen?: (panelWidth: number, onComplete?: () => void) => void;
   onAfterDesktopOpen?: (panelWidth: number) => void;
-  onBeforeDesktopClose?: (panelWidth: number) => void;
+  onBeforeDesktopClose?: (panelWidth: number, onComplete?: () => void) => void;
   onAfterDesktopClose?: (panelWidth: number) => void;
 }
 
@@ -69,18 +69,30 @@ export function useCardSettingsPanel({
     focusTargetId,
     contentHiddenState: PANEL_HIDDEN_STATE,
     contentVisibleState: PANEL_VISIBLE_STATE,
-    beforeOpenDelay: 0.16,
-    beforeCloseDelay: 0,
-    onBeforeOpen: () => onBeforeDesktopOpen?.(getPanelWidth()),
+    openContentDuration: 0.16,
+    closeContentDuration: 0.10,
+    beforeOpen: (proceed) => {
+      if (onBeforeDesktopOpen) {
+        onBeforeDesktopOpen(getPanelWidth(), proceed);
+      } else {
+        proceed();
+      }
+    },
     onAfterOpen: () => {
       const panelWidth = getPanelWidth();
       onDesktopWidthChange?.(panelWidth);
       onAfterDesktopOpen?.(panelWidth);
     },
-    onBeforeClose: () => onBeforeDesktopClose?.(getPanelWidth()),
+    beforeClose: (proceed) => {
+      if (onBeforeDesktopClose) {
+        onBeforeDesktopClose(getPanelWidth(), proceed);
+      } else {
+        proceed();
+      }
+    },
     onAfterClose: () => {
-      onDesktopWidthChange?.(0);
       onAfterDesktopClose?.(0);
+      onDesktopWidthChange?.(0);
     },
   });
 
@@ -145,7 +157,7 @@ export function useCardSettingsPanel({
       if (selectedCardIndex !== null) {
         setVisibleSelectedCardIndex(selectedCardIndex);
         openPanel();
-      } else {
+      } else if (!panel.isCollapsed()) {
         isClosingRef.current = true;
         closePanel(() => {
           isClosingRef.current = false;
