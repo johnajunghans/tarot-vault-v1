@@ -51,7 +51,7 @@ export default function SpreadCardActions({
                                     icon={StarIcon}
                                     className="w-4 h-4"
                                     color="var(--gold)"
-                                    fill={favorite ? "var(--gold)": undefined}
+                                    fill={favorite ? "var(--gold)": "none"}
                                 />
                             </Button>
                         }

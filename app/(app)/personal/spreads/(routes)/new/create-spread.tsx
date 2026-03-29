@@ -6,7 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { routes } from "@/lib/routes";
 import { toast } from "sonner";
 import { Layout } from "react-resizable-panels";
-import ConfirmDialog from "../../../../../_components/confirm-dialog";
+import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { useRouter } from "next/navigation";
 import { useLayoutDispatch } from "@/components/providers/layout-provider";
 import type { ActionDescriptor } from "@/types/layout";

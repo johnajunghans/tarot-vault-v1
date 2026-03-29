@@ -1,6 +1,6 @@
 "use client";
 
-import ConfirmDialog from "@/app/_components/confirm-dialog";
+import ConfirmDialog from "@/app/(app)/_components/confirm-dialog";
 import {
   clampLayer,
   getLayersWithBackCard,

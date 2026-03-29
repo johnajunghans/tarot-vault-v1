@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Layout } from "react-resizable-panels";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import ConfirmDialog from "../../../../../_components/confirm-dialog";
+import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { SpreadDB, SpreadForm } from "@/types/spreads";
 import { useRouter } from "next/navigation";
 import { useLayoutDispatch } from "@/components/providers/layout-provider";

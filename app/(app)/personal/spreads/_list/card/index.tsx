@@ -12,7 +12,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import ConfirmDialog from "@/app/_components/confirm-dialog"
+import ConfirmDialog from "@/app/(app)/_components/confirm-dialog"
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
 import { routes } from "@/lib/routes"

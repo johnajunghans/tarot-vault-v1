@@ -1,11 +1,19 @@
-import { SignInButton } from "@clerk/nextjs";
-import HeroCard from "./_components/hero-card";
-import AuthContainer from "./_components/auth-container";
+import { auth } from "@clerk/nextjs/server";
 import { Diamond01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
+import { routes } from "@/lib/routes";
+import AuthContainer from "./_auth/auth-container";
+import HeroCard from "./_landing/hero-card";
+import LandingSignInButton from "./_auth/landing-sign-in-button";
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth();
+
+  if (userId) {
+    redirect(routes.personal.root);
+  }
+
   return (
     <AuthContainer>
       <LandingPage />
@@ -24,11 +32,7 @@ function LandingPage() {
             Tarot Vault
           </span>
         </div>
-        <SignInButton mode="modal">
-          <Button variant="text" className="text-lg">
-            Sign in
-          </Button>
-        </SignInButton>
+        <LandingSignInButton />
       </header>
 
       {/* ── Hero: The Card ── */}

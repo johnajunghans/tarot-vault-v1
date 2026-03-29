@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Delete02Icon, DragDropVerticalIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CardForm } from "@/types/spreads";
-import ConfirmDialog from "@/app/_components/confirm-dialog";
+import ConfirmDialog from "@/app/(app)/_components/confirm-dialog";
 import { useCardOverviewReorder } from "../hooks/use-card-overview-reorder";
 
 const TILE_HEIGHT = 40;
