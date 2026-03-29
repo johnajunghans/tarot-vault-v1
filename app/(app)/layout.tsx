@@ -1,5 +1,6 @@
 import AppSidebar from "@/app/(app)/_components/app-sidebar"
 import AppTopbar from "@/app/(app)/_components/app-topbar"
+import AuthContainer from "@/app/_auth/auth-container"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { LayoutProvider } from "@/components/providers/layout-provider"
 import { cookies } from "next/headers"
@@ -23,7 +24,9 @@ export default async function AppLayout({
                     <AppTopbar />
                     <div className="min-h-0 flex-1 overflow-hidden">
                         {/* <ViewTransition default="cross-fade"> */}
-                            { children }
+                            <AuthContainer authenticated={children}>
+                                {children}
+                            </AuthContainer>
                         {/* </ViewTransition> */}
                     </div>
                 </SidebarInset>
