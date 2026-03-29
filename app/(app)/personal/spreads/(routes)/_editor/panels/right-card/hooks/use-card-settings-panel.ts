@@ -1,6 +1,6 @@
 "use client";
 
-import { useAnimatedDesktopPanel } from "@/app/(app)/personal/spreads/(routes)/_editor/panels/hooks/use-animated-desktop-panel";
+import { useCardPanelAnimation } from "./use-card-panel-animation";
 import { useAppHotkey } from "@/hooks/use-app-hotkey";
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { usePanelRef } from "react-resizable-panels";
@@ -14,14 +14,11 @@ interface UseCardSettingsPanelArgs {
   onOpenChange?: (open: boolean) => void;
   focusTargetId?: string;
   onDesktopWidthChange?: (panelWidth: number) => void;
-  onBeforeDesktopOpen?: (panelWidth: number, onComplete?: () => void) => void;
+  onBeforeDesktopOpen?: (panelWidth: number) => void;
   onAfterDesktopOpen?: (panelWidth: number) => void;
-  onBeforeDesktopClose?: (panelWidth: number, onComplete?: () => void) => void;
+  onBeforeDesktopClose?: (panelWidth: number) => void;
   onAfterDesktopClose?: (panelWidth: number) => void;
 }
-
-const PANEL_HIDDEN_STATE = { autoAlpha: 0, x: 20 };
-const PANEL_VISIBLE_STATE = { autoAlpha: 1, x: 0 };
 
 export function useCardSettingsPanel({
   cards,
@@ -56,39 +53,27 @@ export function useCardSettingsPanel({
   }, [panelRef]);
 
   const {
-    isCollapsed,
+    hideHandle: isCollapsed,
     panelContentRef,
     handleResize: syncCollapsedState,
     openPanel,
     closePanel,
-  } = useAnimatedDesktopPanel({
+  } = useCardPanelAnimation({
     isMobile,
     open,
     onOpenChange,
     panelRef,
     focusTargetId,
-    contentHiddenState: PANEL_HIDDEN_STATE,
-    contentVisibleState: PANEL_VISIBLE_STATE,
-    openContentDuration: 0.16,
-    closeContentDuration: 0.10,
-    beforeOpen: (proceed) => {
-      if (onBeforeDesktopOpen) {
-        onBeforeDesktopOpen(getPanelWidth(), proceed);
-      } else {
-        proceed();
-      }
+    onBeforeOpen: () => {
+      onBeforeDesktopOpen?.(getPanelWidth());
     },
     onAfterOpen: () => {
       const panelWidth = getPanelWidth();
       onDesktopWidthChange?.(panelWidth);
       onAfterDesktopOpen?.(panelWidth);
     },
-    beforeClose: (proceed) => {
-      if (onBeforeDesktopClose) {
-        onBeforeDesktopClose(getPanelWidth(), proceed);
-      } else {
-        proceed();
-      }
+    onBeforeClose: () => {
+      onBeforeDesktopClose?.(getPanelWidth());
     },
     onAfterClose: () => {
       onAfterDesktopClose?.(0);

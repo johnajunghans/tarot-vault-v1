@@ -5,6 +5,12 @@ import { gsap } from "gsap";
 import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 
+// Both panels: shared default durations and easing
+export const OPEN_CONTENT_DURATION = 0.24; // panel content slides in
+export const OPEN_CONTENT_EASE = "power2.out";
+export const CLOSE_CONTENT_DURATION = 0.18; // panel content slides out
+export const CLOSE_CONTENT_EASE = "power2.in";
+
 interface UseAnimatedDesktopPanelArgs {
   isMobile: boolean;
   open: boolean;
@@ -13,20 +19,12 @@ interface UseAnimatedDesktopPanelArgs {
   focusTargetId?: string;
   contentHiddenState: gsap.TweenVars;
   contentVisibleState: gsap.TweenVars;
-  triggerHiddenState?: gsap.TweenVars;
-  triggerVisibleState?: gsap.TweenVars;
-  openTriggerDuration?: number;
-  openTriggerEase?: string;
   openContentDuration?: number;
   openContentEase?: string;
   closeContentDuration?: number;
   closeContentEase?: string;
-  closeTriggerDuration?: number;
-  closeTriggerEase?: string;
   beforeOpen?: (proceed: () => void) => void;
   beforeClose?: (proceed: () => void) => void;
-  beforeOpenDelay?: number;
-  beforeCloseDelay?: number;
   onBeforeOpen?: () => void;
   onAfterOpen?: () => void;
   onBeforeClose?: () => void;
@@ -35,7 +33,6 @@ interface UseAnimatedDesktopPanelArgs {
 
 interface UseAnimatedDesktopPanelReturn {
   isCollapsed: boolean;
-  triggerRef: RefObject<HTMLDivElement | null>;
   panelContentRef: RefObject<HTMLDivElement | null>;
   handleResize: () => void;
   openPanel: (onComplete?: () => void) => void;
@@ -51,57 +48,28 @@ export function useAnimatedDesktopPanel({
   focusTargetId,
   contentHiddenState,
   contentVisibleState,
-  triggerHiddenState,
-  triggerVisibleState,
-  openTriggerDuration = 0.16,
-  openTriggerEase = "power2.in",
-  openContentDuration = 0.24,
-  openContentEase = "power2.out",
-  closeContentDuration = 0.18,
-  closeContentEase = "power2.in",
-  closeTriggerDuration = 0.22,
-  closeTriggerEase = "power2.out",
+  openContentDuration = OPEN_CONTENT_DURATION,
+  openContentEase = OPEN_CONTENT_EASE,
+  closeContentDuration = CLOSE_CONTENT_DURATION,
+  closeContentEase = CLOSE_CONTENT_EASE,
   beforeOpen,
   beforeClose,
-  beforeOpenDelay = 0,
-  beforeCloseDelay = 0,
   onBeforeOpen,
   onAfterOpen,
   onBeforeClose,
   onAfterClose,
 }: UseAnimatedDesktopPanelArgs): UseAnimatedDesktopPanelReturn {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const triggerRef = useRef<HTMLDivElement | null>(null);
   const panelContentRef = useRef<HTMLDivElement | null>(null);
   const isAnimatingRef = useRef(false);
-  const hasTriggerAnimation = !!(triggerHiddenState && triggerVisibleState);
 
   useGSAP(
     () => {
       if (isMobile || isAnimatingRef.current) return;
 
-      if (isCollapsed) {
-        if (hasTriggerAnimation) {
-          gsap.set(triggerRef.current, triggerVisibleState!);
-        }
-        gsap.set(panelContentRef.current, contentHiddenState);
-        return;
-      }
-
-      if (hasTriggerAnimation) {
-        gsap.set(triggerRef.current, triggerHiddenState!);
-      }
-      gsap.set(panelContentRef.current, contentVisibleState);
+      gsap.set(panelContentRef.current, isCollapsed ? contentHiddenState : contentVisibleState);
     },
-    [
-      isCollapsed,
-      isMobile,
-      hasTriggerAnimation,
-      contentHiddenState,
-      contentVisibleState,
-      triggerHiddenState,
-      triggerVisibleState,
-    ]
+    [isCollapsed, isMobile, contentHiddenState, contentVisibleState]
   );
 
   useEffect(() => {
@@ -179,41 +147,20 @@ export function useAnimatedDesktopPanel({
       }
 
       onBeforeOpen?.();
-
-      if (hasTriggerAnimation) {
-        gsap.to(triggerRef.current, {
-          ...triggerHiddenState,
-          duration: openTriggerDuration,
-          ease: openTriggerEase,
-          onComplete: finishOpen,
-        });
-        return;
-      }
-
-      if (beforeOpenDelay > 0) {
-        gsap.delayedCall(beforeOpenDelay, finishOpen);
-        return;
-      }
-
       finishOpen();
     },
     [
       beforeOpen,
-      beforeOpenDelay,
       contentHiddenState,
       contentVisibleState,
       focusTarget,
-      hasTriggerAnimation,
       isMobile,
       onOpenChange,
       onAfterOpen,
       onBeforeOpen,
       openContentDuration,
       openContentEase,
-      openTriggerDuration,
-      openTriggerEase,
       panelRef,
-      triggerHiddenState,
     ]
   );
 
@@ -237,27 +184,9 @@ export function useAnimatedDesktopPanel({
       const finishClose = () => {
         panelRef.current?.collapse();
         setIsCollapsed(true);
-
-        if (!hasTriggerAnimation) {
-          isAnimatingRef.current = false;
-          onAfterClose?.();
-          onComplete?.();
-          return;
-        }
-
-        requestAnimationFrame(() => {
-          gsap.fromTo(triggerRef.current, triggerHiddenState!, {
-            ...triggerVisibleState,
-            duration: closeTriggerDuration,
-            ease: closeTriggerEase,
-            clearProps: "transform",
-            onComplete: () => {
-              isAnimatingRef.current = false;
-              onAfterClose?.();
-              onComplete?.();
-            },
-          });
-        });
+        isAnimatingRef.current = false;
+        onAfterClose?.();
+        onComplete?.();
       };
 
       isAnimatingRef.current = true;
@@ -277,30 +206,18 @@ export function useAnimatedDesktopPanel({
       }
 
       onBeforeClose?.();
-
-      if (beforeCloseDelay > 0) {
-        gsap.delayedCall(beforeCloseDelay, animateContentOut);
-        return;
-      }
-
       animateContentOut();
     },
     [
       beforeClose,
-      beforeCloseDelay,
       closeContentDuration,
       closeContentEase,
-      closeTriggerDuration,
-      closeTriggerEase,
       contentHiddenState,
-      hasTriggerAnimation,
       isMobile,
       onOpenChange,
       onAfterClose,
       onBeforeClose,
       panelRef,
-      triggerHiddenState,
-      triggerVisibleState,
     ]
   );
 
@@ -320,7 +237,6 @@ export function useAnimatedDesktopPanel({
 
   return {
     isCollapsed,
-    triggerRef,
     panelContentRef,
     handleResize,
     openPanel,

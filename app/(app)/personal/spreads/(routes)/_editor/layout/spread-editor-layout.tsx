@@ -238,9 +238,9 @@ export default function SpreadEditorLayout({
                         onRotationChange={handleCardRotationChange}
                         remove={remove}
                         onDesktopWidthChange={syncToPanelWidth}
-                        onBeforeDesktopOpen={(_, onComplete) => animateForPanelOpen(onComplete)}
+                        onBeforeDesktopOpen={() => animateForPanelOpen()}
                         onAfterDesktopOpen={settleAfterPanelOpen}
-                        onBeforeDesktopClose={(_, onComplete) => animateForPanelClose(onComplete)}
+                        onBeforeDesktopClose={() => animateForPanelClose()}
                         onAfterDesktopClose={settleAfterPanelClose}
                     />
 

@@ -25,9 +25,9 @@ interface CardSettingsPanelProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onDesktopWidthChange?: (panelWidth: number) => void;
-  onBeforeDesktopOpen?: (panelWidth: number, onComplete?: () => void) => void;
+  onBeforeDesktopOpen?: (panelWidth: number) => void;
   onAfterDesktopOpen?: (panelWidth: number) => void;
-  onBeforeDesktopClose?: (panelWidth: number, onComplete?: () => void) => void;
+  onBeforeDesktopClose?: (panelWidth: number) => void;
   onAfterDesktopClose?: (panelWidth: number) => void;
 }
 
@@ -108,10 +108,12 @@ export default function CardSettingsPanel({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <div className={isMobile ? "h-full overflow-hidden" : "h-full overflow-hidden bg-background/85 backdrop-blur-xs"}>
-        <div ref={panelContentRef} className="h-full will-change-[opacity,transform]">
-          {isViewMode ? (
-            <CardDetailsContent
+      <div
+        ref={panelContentRef}
+        className={isMobile ? "h-full overflow-hidden" : "h-full overflow-hidden bg-background/85 backdrop-blur-xs"}
+      >
+        {isViewMode ? (
+          <CardDetailsContent
             selectedCardIndex={activeSelectedCardIndex}
             headerActions={closeHeaderAction}
           />
@@ -122,11 +124,10 @@ export default function CardSettingsPanel({
             setSelectedCardIndex={setSelectedCardIndex}
             onRotationChange={onRotationChange!}
             remove={remove!}
-              headerActions={closeHeaderAction}
-              isMobile={isMobile}
-            />
-          )}
-        </div>
+            headerActions={closeHeaderAction}
+            isMobile={isMobile}
+          />
+        )}
       </div>
     </ResponsivePanel>
   );

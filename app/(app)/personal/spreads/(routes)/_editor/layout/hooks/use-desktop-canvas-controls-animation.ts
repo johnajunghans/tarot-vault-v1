@@ -3,19 +3,20 @@
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { useCallback, useRef } from "react";
-
-const PANEL_GAP = 12;
-const CONTROLS_HIDDEN_STATE = { autoAlpha: 0, x: -4, scale: 0.96 };
-const CONTROLS_VISIBLE_STATE = { autoAlpha: 1, x: 0, scale: 1 };
-const CONTROLS_OPEN_HIDE_DURATION = 0.10;
-const CONTROLS_OPEN_SHOW_DURATION = 0.14;
-const CONTROLS_CLOSE_HIDE_DURATION = 0.09;
-const CONTROLS_CLOSE_SHOW_DURATION = 0.12;
-const CONTROLS_CLOSE_REAPPEAR_DELAY = 0.09;
+import {
+  CONTROLS_PANEL_GAP,
+  CONTROLS_HIDDEN_STATE,
+  CONTROLS_VISIBLE_STATE,
+  CONTROLS_OPEN_HIDE_DURATION,
+  CONTROLS_OPEN_SHOW_DURATION,
+  CONTROLS_CLOSE_HIDE_DURATION,
+  CONTROLS_CLOSE_SHOW_DURATION,
+  CONTROLS_CLOSE_REAPPEAR_DELAY,
+} from "@/app/(app)/personal/spreads/(routes)/_editor/panels/right-card/hooks/use-card-panel-animation";
 
 function getControlsXOffset(panelWidth: number) {
   if (panelWidth <= 0) return 0;
-  return -(panelWidth + PANEL_GAP);
+  return -(panelWidth + CONTROLS_PANEL_GAP);
 }
 
 export function useDesktopCanvasControlsAnimation() {
