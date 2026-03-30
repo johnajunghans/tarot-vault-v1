@@ -6,6 +6,8 @@ import { IconSvgElement } from "@hugeicons/react"
 
 export type ActionVariant = NonNullable<VariantProps<typeof buttonVariants>["variant"]>
 
+// Base Descriptor 
+
 interface BaseActionDescriptor {
   variant: ActionVariant
   label: string
@@ -14,7 +16,10 @@ interface BaseActionDescriptor {
   className?: string
   disabled?: boolean
   loading?: boolean
+  titleIconOnly?: boolean
 }
+
+// Button Descriptor 
 
 interface ButtonActionDescriptor extends BaseActionDescriptor {
   type: "button"
@@ -23,6 +28,8 @@ interface ButtonActionDescriptor extends BaseActionDescriptor {
   menuStructure?: never
 }
 
+// Link Descriptor
+
 interface LinkActionDescriptor extends BaseActionDescriptor {
   type: "link"
   href: string
@@ -30,9 +37,14 @@ interface LinkActionDescriptor extends BaseActionDescriptor {
   menuStructure?: never
 }
 
+// Dropdown Menu Descriptors
+
 interface BaseMenuOption {
   label: string
   icon?: IconSvgElement
+  variant: "default" | "destructive"
+  loading?: boolean
+  disabled?: boolean
 }
 
 interface ButtonMenuOption extends BaseMenuOption {
@@ -47,20 +59,22 @@ interface LinkMenuOption extends BaseMenuOption {
   onClick?: never
 }
 
-export type MenuOption =
+type MenuOption =
   | ButtonMenuOption
   | LinkMenuOption
 
-export type MenuStructureItem =
+type MenuStructureItem =
   | MenuOption
   | "separator"
 
-export interface DropdownMenuActionDescriptor extends BaseActionDescriptor {
+interface DropdownMenuActionDescriptor extends BaseActionDescriptor {
   type: "dropdown"
   menuStructure: MenuStructureItem[]
   href?: never
   onClick?: never
 }
+
+// Final Action Descriptor
 
 export type ActionDescriptor = 
   | ButtonActionDescriptor 
