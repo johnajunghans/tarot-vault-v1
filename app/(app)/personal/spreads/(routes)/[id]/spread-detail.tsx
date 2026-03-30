@@ -9,6 +9,13 @@ import { toast } from "sonner";
 import { Layout } from "react-resizable-panels";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import {
+    Cancel01Icon,
+    Delete02Icon,
+    FloppyDiskIcon,
+    MultiplicationSignIcon,
+    PencilEdit02Icon,
+} from "@hugeicons/core-free-icons";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { SpreadDB, SpreadForm } from "@/types/spreads";
 import { useRouter } from "next/navigation";
@@ -239,13 +246,20 @@ export default function SpreadDetail({
         if (isViewMode) {
             return [
                 {
-                    type: "edit",
+                    variant: "default",
+                    type: "link",
                     label: "Edit Spread",
+                    icon: PencilEdit02Icon,
+                    iconStrokeWidth: 2,
+                    className: "bg-gold hover:bg-gold/90 text-background font-semibold",
                     href: routes.personal.spreads.id(spreadId, "edit"),
                 },
                 {
-                    type: "close",
+                    variant: "ghost",
+                    type: "link",
                     label: "Close",
+                    icon: MultiplicationSignIcon,
+                    iconStrokeWidth: 1.5,
                     href: routes.personal.spreads.root,
                 },
             ];
@@ -253,20 +267,30 @@ export default function SpreadDetail({
 
         return [
             {
-                type: "save",
+                variant: "default",
+                type: "button",
                 label: "Save Changes",
+                icon: FloppyDiskIcon,
+                iconStrokeWidth: 2,
+                className: "bg-gold hover:bg-gold/90 text-background font-semibold",
                 onClick: handleSave,
                 disabled: isSaving || !isDirty,
                 loading: isSaving,
             },
             {
-                type: "delete",
+                variant: "destructive",
+                type: "button",
                 label: "Delete",
+                icon: Delete02Icon,
+                iconStrokeWidth: 1.5,
                 onClick: () => setShowDeleteDialog(true),
             },
             {
-                type: "cancel",
+                variant: "ghost",
+                type: "button",
                 label: "Cancel",
+                icon: Cancel01Icon,
+                iconStrokeWidth: 1.5,
                 onClick: handleCancel,
             },
         ];

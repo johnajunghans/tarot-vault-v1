@@ -1,23 +1,71 @@
+import { buttonVariants } from "@/components/ui/button"
+import { type VariantProps } from "class-variance-authority"
+import { IconSvgElement } from "@hugeicons/react"
+
 // ─── Action Types ──────────────────────────────────────────────────────────
 
-export type ActionType = "new" | "save" | "edit" | "delete" | "discard" | "cancel" | "close" 
+export type ActionVariant = NonNullable<VariantProps<typeof buttonVariants>["variant"]>
 
 interface BaseActionDescriptor {
-  type: ActionType
+  variant: ActionVariant
   label: string
+  icon: IconSvgElement
+  iconStrokeWidth?: number
+  className?: string
   disabled?: boolean
   loading?: boolean
 }
 
-export type ActionDescriptor =
-  | (BaseActionDescriptor & {
-      href: string
-      onClick?: () => void
-    })
-  | (BaseActionDescriptor & {
-      onClick: () => void
-      href?: never
-    })
+interface ButtonActionDescriptor extends BaseActionDescriptor {
+  type: "button"
+  onClick: () => void
+  href?: never
+  menuStructure?: never
+}
+
+interface LinkActionDescriptor extends BaseActionDescriptor {
+  type: "link"
+  href: string
+  onClick?: never
+  menuStructure?: never
+}
+
+interface BaseMenuOption {
+  label: string
+  icon?: IconSvgElement
+}
+
+interface ButtonMenuOption extends BaseMenuOption {
+  type: "button"
+  onClick: () => void
+  href?: never
+}
+
+interface LinkMenuOption extends BaseMenuOption {
+  type: "link"
+  href: string
+  onClick?: never
+}
+
+export type MenuOption =
+  | ButtonMenuOption
+  | LinkMenuOption
+
+export type MenuStructureItem =
+  | MenuOption
+  | "separator"
+
+export interface DropdownMenuActionDescriptor extends BaseActionDescriptor {
+  type: "dropdown"
+  menuStructure: MenuStructureItem[]
+  href?: never
+  onClick?: never
+}
+
+export type ActionDescriptor = 
+  | ButtonActionDescriptor 
+  | LinkActionDescriptor
+  | DropdownMenuActionDescriptor
 
 // ─── Title Types ───────────────────────────────────────────────────────────
 

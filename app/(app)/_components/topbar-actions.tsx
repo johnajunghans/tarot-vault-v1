@@ -7,38 +7,8 @@ import { cn } from "@/lib/utils"
 import type { ActionDescriptor } from "@/types/layout"
 import { HugeiconsIcon } from "@hugeicons/react"
 import Link from "next/link"
-import { ACTION_CONFIG, type ActionTone } from "./actions/config"
 import { getActionClickHandler, isActionDisabled } from "./actions/helpers"
 import NewXButton from "./new-x-button"
-
-const TOPBAR_TONE_STYLES: Record<
-  Exclude<ActionTone, "danger"> | "dangerGhost",
-  { variant: "default" | "ghost"; className?: string }
-> = {
-  primary: {
-    variant: "default",
-    className: "bg-gold hover:bg-gold/90 text-background font-semibold",
-  },
-  neutral: {
-    variant: "ghost",
-  },
-  dangerGhost: {
-    variant: "ghost",
-    className: "text-muted-foreground hover:text-destructive",
-  },
-}
-
-function getTopbarButtonStyle(action: ActionDescriptor, tone: ActionTone) {
-  if (action.type === "discard") {
-    return { variant: "destructive" as const, className: undefined }
-  }
-
-  if (tone === "danger") {
-    return TOPBAR_TONE_STYLES.dangerGhost
-  }
-
-  return TOPBAR_TONE_STYLES[tone]
-}
 
 // ─── Topbar Buttons ────────────────────────────────────────────────────────
 
@@ -66,8 +36,6 @@ export default function TopbarButtons({ actions, isMobile }: TopbarButtonsProps)
   return (
     <>
       {[...actions].reverse().map((action, index) => {
-        const config = ACTION_CONFIG[action.type]
-        const { variant, className } = getTopbarButtonStyle(action, config.tone)
         const disabled = isActionDisabled(action)
         const isLastButton = index === actions.length - 1
         const abridgedLabel = isLastButton && isMobile ? action.label.split(" ")[0] : undefined
@@ -75,19 +43,19 @@ export default function TopbarButtons({ actions, isMobile }: TopbarButtonsProps)
 
         return (
           <Button
-            key={action.type}
-            type={action.href ? undefined : "button"}
-            variant={variant}
+            key={`${action.type}-${action.label}-${index}`}
+            type={action.type === "button" ? "button" : undefined}
+            variant={action.variant}
             size={isMobile && !isLastButton ? "icon" : "default"}
-            disabled={action.href ? undefined : disabled}
-            nativeButton={action.href ? false : undefined}
+            disabled={action.type === "button" ? disabled : undefined}
+            nativeButton={action.type === "link" ? false : undefined}
             onClick={handleClick}
-            render={action.href ? <Link href={action.href} /> : undefined}
-            className={cn(action.href && disabled && "pointer-events-none opacity-50", className)}
+            render={action.type === "link" ? <Link href={action.href} /> : undefined}
+            className={cn(action.type === "link" && disabled && "pointer-events-none opacity-50", action.className)}
           >
             {action.loading && <Spinner />}
             {isMobile && !action.loading && (
-              <HugeiconsIcon icon={config.icon} strokeWidth={config.strokeWidth} />
+              <HugeiconsIcon icon={action.icon} strokeWidth={action.iconStrokeWidth} />
             )}
             {(!isMobile || isLastButton) && <span className="text-xs lg:text-sm">{abridgedLabel ?? action.label}</span>}
           

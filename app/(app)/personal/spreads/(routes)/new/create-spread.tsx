@@ -6,6 +6,11 @@ import { api } from "@/convex/_generated/api";
 import { routes } from "@/lib/routes";
 import { toast } from "sonner";
 import { Layout } from "react-resizable-panels";
+import {
+    Delete02Icon,
+    FloppyDiskIcon,
+    MultiplicationSignIcon,
+} from "@hugeicons/core-free-icons";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
 import { useRouter } from "next/navigation";
 import { useLayoutDispatch } from "@/components/providers/layout-provider";
@@ -112,22 +117,32 @@ export default function CreateSpread({
     useEffect(() => {
         const items: ActionDescriptor[] = [
             {
-                type: "save",
+                variant: "default",
+                type: "button",
                 label: "Save Spread",
+                icon: FloppyDiskIcon,
+                iconStrokeWidth: 2,
+                className: "bg-gold hover:bg-gold/90 text-background font-semibold",
                 onClick: handleSave,
                 disabled: isSaving || (!isDirty && !loadedDraftDate),
                 loading: isSaving,
             },
             {
-                type: "discard",
+                variant: "destructive",
+                type: "button",
                 label: "Discard",
+                icon: Delete02Icon,
+                iconStrokeWidth: 1.5,
                 onClick: handleDiscard,
             },
         ];
         if (loadedDraftDate) {
             items.push({
-                type: "close",
+                variant: "ghost",
+                type: "link",
                 label: "Close",
+                icon: MultiplicationSignIcon,
+                iconStrokeWidth: 1.5,
                 href: routes.personal.spreads.root,
             });
         }

@@ -189,7 +189,23 @@ Future considerations/recommendations/warnings
 7. Tests for versioning, archiving, soft-delete, cascade delete, auto-cleanup, readingCount management.
 
 ### 1.4.9_Load Spread Template
-1. Users should be able to load an existing spread as a template for a new spread. Should give the user the option to copy card positions only, or entire spread.
+1. Users should be able to load an existing spread as a template for a new spread.
+	1. First, create the button:
+		1. Create an icon button using hugeicons MoreVerticalIcon and place to the left of the primary action button in view/edit spread (spreads/[id]/page.tsx).
+		2. This icon button should have a tooltip saying "More Actions" with delayDuration={0}.
+		3. This icon button should trigger a dropdown menu with the following options and structure:
+			1. Option 1: "Create reading with this spread" — Placeholder option, functionality to come later
+			2. Option 2: "Use as template for new spread"
+			3. Separator
+			4. Option 3: "Delete Spread" (with destructive styling) — Delete button in edit mode should be removed to be replaced with this option
+		4. This icon button and dropdown menu should appear as outlined above in both edit and view mode. (Note: this will also effectively add delete functionality to view mode, so users don't have to go into edit mode to delete a spread).
+		5. Additionally, Close/Cancel button should be replaced with icon button using hugeicons Cancel01Icon. This also should have tooltip saying either "Cancel" or "Close" with delayDuration={0}.
+	2. Second, create the functionality
+		1. Clicking "Use as template for new spread" should:
+			1. Create a new draft in localStorage from the current spread's data (name with " (copy)" suffix truncated to 50 chars, description, positions)
+			2. Navigate to spreads/new?draft=<timestamp>
+		2. The existing draft loading flow on the new page handles the rest — no additional logic needed there.
+		3. Once loaded, the draft behaves identically to any manually-created draft.
 
 ### 1.4.10_Pagination/"Load More"
 1. This feature is fundamental. Allows users to either load more spreads (more than the default 10) via a "Load More button at the bottom" or via pagination.

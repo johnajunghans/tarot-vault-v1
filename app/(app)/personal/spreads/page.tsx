@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api"
 import { routes } from "@/lib/routes"
 import { useLayoutDispatch } from "@/components/providers/layout-provider"
 import { useAppHotkey } from "@/hooks/use-app-hotkey"
+import { PlusSignIcon } from "@hugeicons/core-free-icons"
 import { shouldFocusSpreadsSearchHotkey } from "./lib/hotkeys"
 import SpreadsList from "./_list"
 
@@ -24,8 +25,12 @@ export default function Spreads() {
 
     useEffect(() => {
         setActions([{
-            type: "new",
+            variant: "default",
+            type: "link",
             label: "New Spread",
+            icon: PlusSignIcon,
+            iconStrokeWidth: 2,
+            className: "bg-gold hover:bg-gold/90 text-background font-semibold",
             href: routes.personal.spreads.new.root
         }])
     }, [setActions])

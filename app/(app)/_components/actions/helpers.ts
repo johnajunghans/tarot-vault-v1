@@ -8,16 +8,15 @@ export function isActionDisabled(action: ActionDescriptor) {
 export function getActionClickHandler(action: ActionDescriptor): MouseEventHandler<HTMLElement> | undefined {
   const disabled = isActionDisabled(action)
 
-  if (!action.href) {
+  if (action.type === "button") {
     return action.onClick
   }
 
-  return (event) => {
-    if (disabled) {
-      event.preventDefault()
-      return
-    }
+  if (!disabled) {
+    return undefined
+  }
 
-    action.onClick?.()
+  return (event) => {
+    event.preventDefault()
   }
 }

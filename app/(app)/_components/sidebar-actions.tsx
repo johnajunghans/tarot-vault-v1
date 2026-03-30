@@ -10,18 +10,22 @@ import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import type { ActionDescriptor } from "@/types/layout"
+import type { ActionDescriptor, ActionVariant } from "@/types/layout"
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ACTION_CONFIG, type ActionTone } from "./actions/config"
 import { getActionClickHandler, isActionDisabled } from "./actions/helpers"
 import { NewXDropdown } from "./new-x-button"
 import Link from "next/link"
 
-const SIDEBAR_TONE_STYLES: Record<ActionTone, string> = {
-  primary: "hover:bg-gold/10 [&_svg]:text-gold",
-  danger: "hover:bg-destructive/10 [&_svg]:text-destructive",
-  neutral: "[&_svg]:text-muted-foreground",
+const SIDEBAR_VARIANT_STYLES: Record<ActionVariant, string> = {
+  default: "hover:bg-gold/10 [&_svg]:text-gold",
+  primaryOutline: "hover:bg-gold/10 [&_svg]:text-gold",
+  destructive: "hover:bg-destructive/10 [&_svg]:text-destructive",
+  ghost: "[&_svg]:text-muted-foreground",
+  outline: "[&_svg]:text-muted-foreground",
+  secondary: "[&_svg]:text-muted-foreground",
+  link: "[&_svg]:text-muted-foreground",
+  text: "[&_svg]:text-muted-foreground",
 }
 
 // ─── Single action button ──────────────────────────────────────────────────────
@@ -32,9 +36,8 @@ interface SidebarActionButtonProps {
 }
 
 export function SidebarActionButton({ action, className }: SidebarActionButtonProps) {
-  const config = ACTION_CONFIG[action.type]
   const disabled = isActionDisabled(action)
-  const renderAsLink = action.href !== undefined
+  const renderAsLink = action.type === "link"
   const handleClick = getActionClickHandler(action)
 
   return (
@@ -44,12 +47,12 @@ export function SidebarActionButton({ action, className }: SidebarActionButtonPr
         render={renderAsLink ? <Link href={action.href} /> : undefined}
         onClick={handleClick}
         disabled={disabled}
-        className={cn(SIDEBAR_TONE_STYLES[config.tone], className, "disabled:opacity-50")}
+        className={cn(SIDEBAR_VARIANT_STYLES[action.variant], className, "disabled:opacity-50")}
         suppressTooltipOnPress={renderAsLink}
       >
         {action.loading
           ? <Spinner className="shrink-0" />
-          : <HugeiconsIcon icon={config.icon} strokeWidth={config.strokeWidth} />
+          : <HugeiconsIcon icon={action.icon} strokeWidth={action.iconStrokeWidth} />
         }
         <span className="group-data-[collapsible=icon]:scale-0 duration-150">{action.label}</span>
       </SidebarMenuButton>
@@ -66,8 +69,8 @@ interface SidebarActionsProps {
 export function SidebarActions({ actions }: SidebarActionsProps) {
   return (
     <SidebarMenu className="gap-1">
-      {actions.map((action) => (
-        <SidebarActionButton key={action.type} action={action} />
+      {actions.map((action, index) => (
+        <SidebarActionButton key={`${action.type}-${action.label}-${index}`} action={action} />
       ))}
     </SidebarMenu>
   )
