@@ -12,6 +12,10 @@ export function getActionClickHandler(action: ActionDescriptor): MouseEventHandl
     return action.onClick
   }
 
+  if (action.type === "dropdown") {
+    return undefined
+  }
+
   if (!disabled) {
     return undefined
   }

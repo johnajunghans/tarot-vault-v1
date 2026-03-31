@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
     Cancel01Icon,
+    Copy01Icon,
     Delete02Icon,
     FloppyDiskIcon,
-    MultiplicationSignIcon,
+    LibraryIcon,
+    MoreHorizontalIcon,
     PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
@@ -25,6 +27,7 @@ import Link from "next/link";
 import {
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
+    createDraftTimestamp,
     useSpreadForm,
     useSpreadEditor,
     mapPositionsForApi,
@@ -218,6 +221,32 @@ export default function SpreadDetail({
         router.push(viewUrl);
     }, [form, router, setSelectedCardIndex, setSpreadSheetOpen, setShowDiscardDialog, viewUrl]);
 
+    // ------------ USE AS TEMPLATE ------------ //
+
+    const handleUseAsTemplate = useCallback(() => {
+        if (!spread) return;
+        const name = `${spread.name} (copy)`.slice(0, 50);
+        const timestamp = createDraftTimestamp();
+        const draft = {
+            name,
+            description: spread.description ?? "",
+            positions: spread.positions.map((p, i) => ({
+                name: p.name,
+                description: p.description,
+                allowReverse: p.allowReverse,
+                x: p.x,
+                y: p.y,
+                r: p.r,
+                z: p.z,
+                position: i + 1,
+            })),
+            date: timestamp,
+            numberOfCards: spread.positions.length,
+        };
+        localStorage.setItem(`spread-draft-${timestamp}`, JSON.stringify(draft));
+        router.push(routes.personal.spreads.new.draft(timestamp));
+    }, [spread, router]);
+
     // ------------ LAYOUT DISPATCH ------------ //
 
     const { setActions, setTitle, setBreadcrumbs, reset } = useLayoutDispatch();
@@ -240,6 +269,39 @@ export default function SpreadDetail({
         })
     }, [watchedName, watchedPositions?.length, setTitle])
 
+    const moreActionsMenu: ActionDescriptor = useMemo(() => ({
+        variant: "ghost",
+        type: "dropdown" as const,
+        label: "More Actions",
+        icon: MoreHorizontalIcon,
+        iconStrokeWidth: 1.5,
+        menuStructure: [
+            {
+                type: "button" as const,
+                label: "Create reading with this spread",
+                icon: LibraryIcon,
+                variant: "default" as const,
+                disabled: true,
+                onClick: () => {},
+            },
+            {
+                type: "button" as const,
+                label: "Use as template for new spread",
+                icon: Copy01Icon,
+                variant: "default" as const,
+                onClick: handleUseAsTemplate,
+            },
+            "separator" as const,
+            {
+                type: "button" as const,
+                label: "Delete Spread",
+                icon: Delete02Icon,
+                variant: "destructive" as const,
+                onClick: () => setShowDeleteDialog(true),
+            },
+        ],
+    }), [handleUseAsTemplate]);
+
     const actions = useMemo<ActionDescriptor[] | null>(() => {
         if (!spread) return null;
 
@@ -254,12 +316,14 @@ export default function SpreadDetail({
                     className: "bg-gold hover:bg-gold/90 text-background font-semibold",
                     href: routes.personal.spreads.id(spreadId, "edit"),
                 },
+                moreActionsMenu,
                 {
                     variant: "ghost",
                     type: "link",
                     label: "Close",
-                    icon: MultiplicationSignIcon,
+                    icon: Cancel01Icon,
                     iconStrokeWidth: 1.5,
+                    titleIconOnly: true,
                     href: routes.personal.spreads.root,
                 },
             ];
@@ -277,24 +341,18 @@ export default function SpreadDetail({
                 disabled: isSaving || !isDirty,
                 loading: isSaving,
             },
-            {
-                variant: "destructive",
-                type: "button",
-                label: "Delete",
-                icon: Delete02Icon,
-                iconStrokeWidth: 1.5,
-                onClick: () => setShowDeleteDialog(true),
-            },
+            moreActionsMenu,
             {
                 variant: "ghost",
                 type: "button",
                 label: "Cancel",
                 icon: Cancel01Icon,
                 iconStrokeWidth: 1.5,
+                titleIconOnly: true,
                 onClick: handleCancel,
             },
         ];
-    }, [spread, isViewMode, handleCancel, handleSave, isSaving, isDirty, spreadId]);
+    }, [spread, isViewMode, handleCancel, handleSave, isSaving, isDirty, spreadId, moreActionsMenu]);
 
     useEffect(() => {
         setActions(actions);
@@ -335,45 +393,45 @@ export default function SpreadDetail({
             isViewMode={isViewMode}
         />
 
-        {/* Dialogs (edit mode only) */}
+        {/* Discard dialog (edit mode only) */}
         {!isViewMode && (
-            <>
-                <ConfirmDialog
-                    open={showDiscardDialog}
-                    onOpenChange={setShowDiscardDialog}
-                    title="Discard changes?"
-                    description="Your edits haven't been saved. Are you sure you want to leave?"
-                    cancelLabel="Keep editing"
-                    confirmLabel="Discard"
-                    onConfirm={handleConfirmDiscard}
-                />
-                {spread.readingCount > 0 ? (
-                    <ConfirmDialog
-                        open={showDeleteDialog}
-                        onOpenChange={setShowDeleteDialog}
-                        title="Delete this spread?"
-                        description={`This spread is referenced by ${spread.readingCount} reading${spread.readingCount === 1 ? "" : "s"}. You can delete just the spread (readings will keep their layout) or delete the spread and all its readings.`}
-                        cancelLabel="Keep it"
-                        confirmLabel={`Delete spread and ${spread.readingCount} reading${spread.readingCount === 1 ? "" : "s"}`}
-                        onConfirm={handleCascadeDelete}
-                        secondaryLabel="Delete spread only"
-                        onSecondary={handleConfirmDelete}
-                        secondaryVariant="secondary"
-                        isConfirming={isDeleting}
-                    />
-                ) : (
-                    <ConfirmDialog
-                        open={showDeleteDialog}
-                        onOpenChange={setShowDeleteDialog}
-                        title="Delete this spread?"
-                        description="This spread and all its positions will be permanently deleted. This cannot be undone."
-                        cancelLabel="Keep it"
-                        confirmLabel="Delete"
-                        onConfirm={handleConfirmDelete}
-                        isConfirming={isDeleting}
-                    />
-                )}
-            </>
+            <ConfirmDialog
+                open={showDiscardDialog}
+                onOpenChange={setShowDiscardDialog}
+                title="Discard changes?"
+                description="Your edits haven't been saved. Are you sure you want to leave?"
+                cancelLabel="Keep editing"
+                confirmLabel="Discard"
+                onConfirm={handleConfirmDiscard}
+            />
+        )}
+
+        {/* Delete dialog (both modes) */}
+        {spread.readingCount > 0 ? (
+            <ConfirmDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+                title="Delete this spread?"
+                description={`This spread is referenced by ${spread.readingCount} reading${spread.readingCount === 1 ? "" : "s"}. You can delete just the spread (readings will keep their layout) or delete the spread and all its readings.`}
+                cancelLabel="Keep it"
+                confirmLabel={`Delete spread and ${spread.readingCount} reading${spread.readingCount === 1 ? "" : "s"}`}
+                onConfirm={handleCascadeDelete}
+                secondaryLabel="Delete spread only"
+                onSecondary={handleConfirmDelete}
+                secondaryVariant="secondary"
+                isConfirming={isDeleting}
+            />
+        ) : (
+            <ConfirmDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+                title="Delete this spread?"
+                description="This spread and all its positions will be permanently deleted. This cannot be undone."
+                cancelLabel="Keep it"
+                confirmLabel="Delete"
+                onConfirm={handleConfirmDelete}
+                isConfirming={isDeleting}
+            />
         )}
         </>
     )

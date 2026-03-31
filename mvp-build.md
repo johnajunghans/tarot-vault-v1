@@ -33,6 +33,23 @@ Future considerations/recommendations/warnings
 ## 0.2_Recent_Entries
 *For context about what has recently been done. Most recent at the top.*
 
+**03/30/2026 -- 1.4.9 Load Spread Template -- Claude Opus 4.6**
+Summary of actions taken:
+- Extended `ActionDescriptor` union in `types/layout.ts` with `DropdownMenuActionDescriptor` (type: "dropdown"), `MenuOption`, `MenuStructureItem` types, and `titleIconOnly` flag on `BaseActionDescriptor`
+- Updated `topbar-actions.tsx` with `TopbarDropdownAction` (dropdown trigger with tooltip suppressed when menu open, fully controlled state to avoid controlled/uncontrolled warning) and `TopbarIconAction` (icon-only button with tooltip) components
+- Updated `sidebar-actions.tsx` with `SidebarDropdownAction` using `SidebarMenuButton` + `DropdownMenuTrigger` pattern (matching existing `DefaultSidebarActions` approach), with collapsed sidebar tooltip support
+- Updated `actions/helpers.ts` to return `undefined` click handler for dropdown action type
+- Extracted `createDraftTimestamp()` from `use-spread-draft.ts` to shared `_editor/lib/draft-utils.ts`, re-exported through barrel
+- Restructured `spread-detail.tsx` actions: added "More Actions" dropdown with three options (Create reading — disabled placeholder with `LibraryIcon`, Use as template with `Copy01Icon`, Delete Spread with `Delete02Icon`), replaced Close/Cancel with icon-only `Cancel01Icon` buttons, removed standalone Delete action from edit mode
+- Added `handleUseAsTemplate` — creates draft in localStorage from current spread data (name + " (copy)" truncated to 50 chars, description, positions), navigates to `spreads/new?draft=<timestamp>`
+- Moved delete dialogs outside `{!isViewMode}` guard so delete works from both view and edit modes
+
+Future considerations/recommendations/warnings
+- "Create reading with this spread" is a disabled placeholder — implement when readings feature is built
+- The same More Actions dropdown pattern can be added to spread cards in the `_list` module for quick access without opening the spread
+- When sharing/default spreads are added, the template feature works naturally — users view a shared spread, then click "Use as template" to fork it into their own drafts
+- `ButtonMenuOption` requires `onClick` even when disabled — consider making it optional in the type to avoid no-op handlers
+
 **03/26/2026 -- 1.4.11 Search/Sort for Spreads List -- Claude Opus 4.6**
 Summary of actions taken:
 - Extended `SpreadListItem` with `description` field and added `SpreadSortField`/`SpreadSortDir` types with URL param parsers in `filter-spreads.ts`
