@@ -59,7 +59,8 @@
   --radius-4xl: calc(var(--radius) + 16px);
 
   /* WIDTHS AND HEIGHTS */
-  --height-app-content: var(--app-content-height)
+  --height-app-content: var(--app-content-height);
+  --height-app-content-inset: var(--app-content-height-inset);
 }
 
 /* ─── Light: near-surface sandstone ─── */
@@ -108,8 +109,9 @@
   --canvas-stone: #ece7dc;
   --canvas-vein: #a58520;
 
-  --app-content-height: calc(100vh - 57px);
-  --app-content-height-inset: calc(100vh - 73px);
+  /* --app-content-height: 100vh;
+  --inset-padding: 8px;
+  --app-content-height-inset: calc(100vh - var(--inset-padding) * 2); */
   --theme-transition-duration: 240ms;
   --theme-transition-easing: ease;
 }
@@ -193,10 +195,10 @@ body.theme-transitioning * {
 }
 
 /* ─── Layout: no topbar ─── */
-[data-topbar="hidden"] {
+/* [data-topbar="hidden"] {
   --app-content-height: 100vh;
   --app-content-height-inset: 100vh;
-}
+} */
 
 /* ─── Animations ─── */
 @keyframes fade-up {

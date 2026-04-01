@@ -175,6 +175,7 @@ export default function AppSidebar() {
 
   return (
     <Sidebar
+      // variant="inset"
       collapsible="icon"
       className="bg-transparent"
       onMouseEnter={() => !topbarVisible && setSidebarHovered(true)}
