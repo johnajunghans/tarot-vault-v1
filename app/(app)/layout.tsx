@@ -1,5 +1,5 @@
-import AppSidebar from "@/app/(app)/_components/app-sidebar"
-import AppTopbar from "@/app/(app)/_components/app-topbar"
+import AppSidebar from "@/app/(app)/_layout/sidebar"
+import AppTopbar from "@/app/(app)/_layout/topbar"
 import AuthContainer from "@/app/_auth/auth-container"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { LayoutProvider } from "@/components/providers/layout-provider"

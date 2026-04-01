@@ -6,9 +6,6 @@ import {
   Layout01Icon,
   LayoutLeftIcon,
   LibraryIcon,
-  Menu01Icon,
-  PanelLeftCloseIcon,
-  PanelLeftOpenIcon,
   Settings01Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon, IconSvgElement } from "@hugeicons/react"
@@ -32,13 +29,13 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { routes } from "@/lib/routes"
-import ThemeToggle from "./theme-toggle"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useLayoutMode, useLayoutContent } from "@/components/providers/layout-provider"
-import { SidebarActions, SidebarActionsSkeleton, DefaultSidebarActions } from "./layout/actions"
-import { SidebarLogo } from "./sidebar-logo"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { SidebarToggle } from "../shared/sidebar-toggle"
+import { SidebarActions, SidebarActionsSkeleton, DefaultSidebarActions } from "./sidebar-actions"
+import { SidebarLogo } from "./sidebar-logo"
+import ThemeToggle from "./theme-toggle"
 
 const sidebarRoutes = {
   personal: [
@@ -146,28 +143,6 @@ function LayoutToggleItem() {
         </span>
       </SidebarMenuButton>
     </SidebarMenuItem>
-  )
-}
-
-// ─── Sidebar toggle button ────────────────────────────────────────────────────
-
-export function SidebarToggle({ className }: { className?: string }) {
-  const isMobile = useIsMobile()
-  const { open, toggleSidebar } = useSidebar()
-
-  const icon = isMobile ? Menu01Icon : open ? PanelLeftOpenIcon : PanelLeftCloseIcon
-
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      onClick={toggleSidebar}
-      aria-label="Toggle sidebar"
-      className={cn("text-muted-foreground hover:text-foreground shrink-0", className)}
-    >
-      <HugeiconsIcon icon={icon} strokeWidth={1.5} />
-    </Button>
   )
 }
 
