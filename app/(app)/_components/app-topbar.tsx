@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation"
 import { useSidebar } from "@/components/ui/sidebar"
 import { useLayoutMode, useLayoutContent } from "@/components/providers/layout-provider"
 import { SidebarToggle } from "./app-sidebar"
-import TopbarTitle from "./topbar-titles"
-import TopbarButtons from "./topbar-actions"
-import TopbarBreadcrumbs from "./topbar-breadcrumbs"
+import TopbarTitle from "./layout/topbar-titles"
+import { TopbarActions } from "./layout/actions"
+import TopbarBreadcrumbs from "./layout/topbar-breadcrumbs"
 import { routes } from "@/lib/routes"
 
 export default function AppTopbar() {
@@ -55,8 +55,8 @@ export default function AppTopbar() {
         )}
 
         {/* Right Section */}
-        <div className="flex items-center gap-1 lg:gap-2 shrink-0">
-          <TopbarButtons actions={actions} isMobile={isMobile} />
+        <div className="flex items-center gap-0 lg:gap-1 shrink-0">
+          <TopbarActions actions={actions} isMobile={isMobile} />
         </div>
       </header>
     </div>

@@ -13,6 +13,8 @@ interface BaseActionDescriptor {
   label: string
   icon: IconSvgElement
   iconStrokeWidth?: number
+  topbarIconSize?: number
+  sidebarIconSize?: number
   className?: string
   disabled?: boolean
   loading?: boolean

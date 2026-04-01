@@ -117,12 +117,11 @@ export default function CreateSpread({
     useEffect(() => {
         const items: ActionDescriptor[] = [
             {
-                variant: "default",
+                variant: "primary",
                 type: "button",
                 label: "Save Spread",
                 icon: FloppyDiskIcon,
                 iconStrokeWidth: 2,
-                className: "bg-gold hover:bg-gold/90 text-background font-semibold",
                 onClick: handleSave,
                 disabled: isSaving || (!isDirty && !loadedDraftDate),
                 loading: isSaving,

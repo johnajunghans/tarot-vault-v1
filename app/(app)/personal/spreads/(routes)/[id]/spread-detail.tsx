@@ -15,7 +15,8 @@ import {
     Delete02Icon,
     FloppyDiskIcon,
     LibraryIcon,
-    MoreHorizontalIcon,
+    MoreIcon,
+    MoreVertical,
     PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import ConfirmDialog from "../../../../_components/confirm-dialog";
@@ -260,6 +261,7 @@ export default function SpreadDetail({
     }, [isViewMode, setBreadcrumbs])
 
     useEffect(() => {
+        if (!spread) return;
         setTitle({
             variant: "spread",
             name: watchedName,
@@ -267,13 +269,15 @@ export default function SpreadDetail({
             count: watchedPositions?.length ?? 0,
             countUnit: "position",
         })
-    }, [watchedName, watchedPositions?.length, setTitle])
+    }, [spread, watchedName, watchedPositions?.length, setTitle])
 
     const moreActionsMenu: ActionDescriptor = useMemo(() => ({
         variant: "ghost",
         type: "dropdown" as const,
-        label: "More Actions",
-        icon: MoreHorizontalIcon,
+        label: "Actions",
+        icon: MoreIcon,
+        topbarIconSize: 18,
+        sidebarIconSize: 22,
         iconStrokeWidth: 1.5,
         menuStructure: [
             {
@@ -302,18 +306,18 @@ export default function SpreadDetail({
         ],
     }), [handleUseAsTemplate]);
 
-    const actions = useMemo<ActionDescriptor[] | null>(() => {
-        if (!spread) return null;
+    const actions = useMemo<ActionDescriptor[] | undefined>(() => {
+        if (!spread) return undefined;
 
         if (isViewMode) {
             return [
                 {
-                    variant: "default",
+                    variant: "primary",
                     type: "link",
                     label: "Edit Spread",
                     icon: PencilEdit02Icon,
                     iconStrokeWidth: 2,
-                    className: "bg-gold hover:bg-gold/90 text-background font-semibold",
+                    className: "ml-2",
                     href: routes.personal.spreads.id(spreadId, "edit"),
                 },
                 moreActionsMenu,
@@ -322,7 +326,7 @@ export default function SpreadDetail({
                     type: "link",
                     label: "Close",
                     icon: Cancel01Icon,
-                    iconStrokeWidth: 1.5,
+                    iconStrokeWidth: 1.25,
                     titleIconOnly: true,
                     href: routes.personal.spreads.root,
                 },
@@ -331,12 +335,12 @@ export default function SpreadDetail({
 
         return [
             {
-                variant: "default",
+                variant: "primary",
                 type: "button",
                 label: "Save Changes",
                 icon: FloppyDiskIcon,
                 iconStrokeWidth: 2,
-                className: "bg-gold hover:bg-gold/90 text-background font-semibold",
+                className: "ml-2",
                 onClick: handleSave,
                 disabled: isSaving || !isDirty,
                 loading: isSaving,
@@ -347,7 +351,7 @@ export default function SpreadDetail({
                 type: "button",
                 label: "Cancel",
                 icon: Cancel01Icon,
-                iconStrokeWidth: 1.5,
+                iconStrokeWidth: 1.25,
                 titleIconOnly: true,
                 onClick: handleCancel,
             },

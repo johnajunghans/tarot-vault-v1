@@ -25,12 +25,11 @@ export default function Spreads() {
 
     useEffect(() => {
         setActions([{
-            variant: "default",
+            variant: "primary",
             type: "link",
             label: "New Spread",
             icon: PlusSignIcon,
             iconStrokeWidth: 2,
-            className: "bg-gold hover:bg-gold/90 text-background font-semibold",
             href: routes.personal.spreads.new.root
         }])
     }, [setActions])
