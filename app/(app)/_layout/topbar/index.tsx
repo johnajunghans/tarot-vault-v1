@@ -55,7 +55,7 @@ export default function AppTopbar() {
         )}
 
         {/* Right Section */}
-        <div className="flex items-center gap-0 lg:gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 lg:gap-1.5 shrink-0">
           <TopbarActions actions={actions} isMobile={isMobile} />
         </div>
       </header>

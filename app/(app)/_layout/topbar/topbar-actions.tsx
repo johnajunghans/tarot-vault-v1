@@ -34,12 +34,46 @@ import {
 
 function TopbarDropdownAction({
   action,
+  isMobile,
 }: {
   action: Extract<ActionDescriptor, { type: "dropdown" }>
+  isMobile: boolean
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [tooltipOpen, setTooltipOpen] = useState(false)
   const disabled = isActionDisabled(action)
+  const renderIconOnly = isMobile || action.topbarIconOnly
+
+  if (!renderIconOnly) {
+    return (
+      <DropdownMenu
+        open={dropdownOpen}
+        onOpenChange={setDropdownOpen}
+      >
+        <Button
+          type="button"
+          variant={action.variant}
+          disabled={disabled}
+          render={<DropdownMenuTrigger />}
+          className={cn(
+            "data-[popup-open]:[&_svg]:rotate-180",
+            action.className,
+          )}
+        >
+          {action.loading && <Spinner />}
+          <span className="text-xs lg:text-sm">{action.label}</span>
+          {!action.loading && (
+            <HugeiconsIcon
+              icon={ArrowDown01Icon}
+              strokeWidth={2}
+              className="h-5 w-5 duration-100 sm:h-4 sm:w-4"
+            />
+          )}
+        </Button>
+        <ActionDropdownContent items={action.menuStructure} />
+      </DropdownMenu>
+    )
+  }
 
   return (
     <DropdownMenu
@@ -245,10 +279,10 @@ export function TopbarActions({ actions, isMobile }: TopbarActionsProps) {
         const key = `${action.type}-${action.label}-${index}`
 
         if (action.type === "dropdown") {
-          return <TopbarDropdownAction key={key} action={action} />
+          return <TopbarDropdownAction key={key} action={action} isMobile={isMobile} />
         }
 
-        if (action.titleIconOnly) {
+        if (action.topbarIconOnly) {
           return <TopbarIconAction key={key} action={action} />
         }
 

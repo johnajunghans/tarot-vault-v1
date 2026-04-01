@@ -18,7 +18,7 @@ interface BaseActionDescriptor {
   className?: string
   disabled?: boolean
   loading?: boolean
-  titleIconOnly?: boolean
+  topbarIconOnly?: boolean
 }
 
 // Button Descriptor 

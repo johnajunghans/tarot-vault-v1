@@ -272,7 +272,7 @@ export default function SpreadDetail({
     }, [spread, watchedName, watchedPositions?.length, setTitle])
 
     const moreActionsMenu: ActionDescriptor = useMemo(() => ({
-        variant: "ghost",
+        variant: "secondary",
         type: "dropdown" as const,
         label: "Actions",
         icon: MoreIcon,
@@ -317,17 +317,16 @@ export default function SpreadDetail({
                     label: "Edit Spread",
                     icon: PencilEdit02Icon,
                     iconStrokeWidth: 2,
-                    className: "ml-2",
                     href: routes.personal.spreads.id(spreadId, "edit"),
                 },
                 moreActionsMenu,
                 {
-                    variant: "ghost",
+                    variant: "link",
                     type: "link",
                     label: "Close",
                     icon: Cancel01Icon,
                     iconStrokeWidth: 1.25,
-                    titleIconOnly: true,
+                    // topbarIconOnly: true,
                     href: routes.personal.spreads.root,
                 },
             ];
@@ -340,19 +339,18 @@ export default function SpreadDetail({
                 label: "Save Changes",
                 icon: FloppyDiskIcon,
                 iconStrokeWidth: 2,
-                className: "ml-2",
                 onClick: handleSave,
                 disabled: isSaving || !isDirty,
                 loading: isSaving,
             },
             moreActionsMenu,
             {
-                variant: "ghost",
+                variant: "link",
                 type: "button",
                 label: "Cancel",
                 icon: Cancel01Icon,
                 iconStrokeWidth: 1.25,
-                titleIconOnly: true,
+                // topbarIconOnly: true,
                 onClick: handleCancel,
             },
         ];

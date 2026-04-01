@@ -19,7 +19,7 @@ const buttonVariants = cva(
         primary: "bg-gold hover:bg-gold/90 text-background font-semibold",
         ghost: "hover:bg-muted hover:text-foreground dark:hover:bg-muted aria-expanded:bg-muted aria-expanded:text-foreground",
         destructive: "bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-muted-foreground hover:text-foreground",
         primaryOutline: "bg-gold/30 border border-solid border-gold/60 hover:bg-gold/40 hover:border-gold/80",
         text: "text-muted-foreground/50 hover:text-foreground/80 transition-colors duration-300 cursor-pointer"
       },
