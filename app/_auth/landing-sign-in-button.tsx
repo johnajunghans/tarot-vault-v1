@@ -7,7 +7,7 @@ import { routes } from "@/lib/routes";
 export default function LandingSignInButton() {
   return (
     <SignInButton mode="modal" forceRedirectUrl={routes.personal.root}>
-      <Button variant="text" className="text-lg">
+      <Button variant="text" className="text-lg text-foreground/40 group-hover:text-foreground/70 hover:text-foreground">
         Sign in
       </Button>
     </SignInButton>
