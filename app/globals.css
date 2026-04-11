@@ -43,11 +43,7 @@
   /* CUSTOM COLORS */
   --color-gold: var(--gold);
   --color-gold-muted: var(--gold-muted);
-  --color-amethyst: var(--amethyst);
-  --color-surface: var(--surface);
-  --color-surface-hover: var(--surface-hover);
-  --color-stone: var(--stone);
-  --color-stone-light: var(--stone-light);
+  --color-canvas-bg: var(--canvas-bg);
 
   /* BORDER RADIUS */
   --radius-sm: calc(var(--radius) - 4px);
@@ -63,103 +59,87 @@
   --height-app-content-inset: var(--app-content-height-inset);
 }
 
-/* ─── Light: near-surface sandstone ─── */
+/* ─── Light: illuminated parchment ─── */
+
 :root {
   --radius: 0.625rem;
-  --background: #f0ece4;
-  --foreground: #1c1a18;
-  --card: #f7f4ed;
-  --card-foreground: #1c1a18;
-  --popover: #f7f4ed;
-  --popover-foreground: #1c1a18;
-  --primary: #a58520;
-  --primary-foreground: #f0ece4;
-  --secondary: #E2DED7;
-  --secondary-foreground: #1c1a18;
-  --muted: #DDD9D1; 
-  --muted-foreground: #585350;
-  --accent: #DDD9D1;
-  --accent-foreground: #1c1a18;
+  --background: #f4f3f0;
+  --foreground: #1a1a1e;
+  --card: #ffffff;
+  --card-foreground: #1a1a1e;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1e;
+  --primary: #8b6914;
+  --primary-foreground: #ffffff;
+  --secondary: #e8e7e4;
+  --secondary-foreground: #1a1a1e;
+  --muted: #e8e7e4;
+  --muted-foreground: #6b6b73;
+  --accent: #f0efec;
+  --accent-foreground: #1a1a1e;
   --destructive: #c53030;
-  --border: #c2b9a4;
-  --input: #c2b9a4;
-  --ring: #7a5c10;
-  --gold: #a58520;
-  --gold-muted: #7a5c10;
-  --amethyst: #7b5fb0;
-  --stone: #e0d8ca;
-  --stone-light: #ebe4d6;
-  --surface: #eae5da;
-  --surface-hover: #e0dace;
-  --chart-1: #a58520;
-  --chart-2: #223e27;
-  --chart-3: #8b6c5c;
-  --chart-4: #4a6fa5;
-  --chart-5: #a0522d;
-  --sidebar: #e4dfd2;
-  --sidebar-foreground: #1c1a18;
-  --sidebar-primary: #7a5c10;
-  --sidebar-primary-foreground: #f0ece4;
-  --sidebar-accent: #dad4c5;
-  --sidebar-accent-foreground: #1c1a18;
-  --sidebar-border: #bfb6a2;
-  --sidebar-ring: #7a5c10;
-  --scrollbar: #7a5c1040;
-  --canvas-bg: #f7f3eb;
-  --canvas-stone: #ece7dc;
-  --canvas-vein: #a58520;
+  --border: #d4d3d0;
+  --input: #d4d3d0;
+  --ring: #8b6914;
+  --gold: #8b6914;
+  --gold-muted: #a68523;
+  --chart-1: #8b6914;
+  --chart-2: #1a3520;
+  --chart-3: #6e4e3c;
+  --chart-4: #355285;
+  --chart-5: #8a3518;
+  --sidebar: #eae9e6;
+  --sidebar-foreground: #1a1a1e;
+  --sidebar-primary: #8b6914;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e0dfdc;
+  --sidebar-accent-foreground: #1a1a1e;
+  --sidebar-border: #d4d3d0;
+  --sidebar-ring: #8b6914;
+  --scrollbar: #8b691425;
+  --canvas-bg: #fafaf8;
 
-  /* --app-content-height: 100vh;
-  --inset-padding: 8px;
-  --app-content-height-inset: calc(100vh - var(--inset-padding) * 2); */
   --theme-transition-duration: 240ms;
   --theme-transition-easing: ease;
 }
 
-/* ─── Dark: deep underground cavern ─── */
+/* ─── Dark: obsidian & gilt ─── */
 .dark {
-  --background: #0f0f12;
-  --foreground: #d4cfc6;
-  --card: #121214;
-  --card-foreground: #d4cfc6;
-  --popover: #121214;
-  --popover-foreground: #d4cfc6;
-  --primary: #c9a84c;
-  --primary-foreground: #0a0a0c;
-  --secondary: #212125;
-  --secondary-foreground: #d4cfc6;
-  --muted: #212125;
-  --muted-foreground: #908e86;
-  --accent: #212125;
-  --accent-foreground: #d4cfc6;
-  --destructive: #c44040;
-  --border: #28282e;
-  --input: #28282e;
-  --ring: #c9a84c;
-  --gold: #c9a84c;
-  --gold-muted: #8a7030;
-  --amethyst: #9b7ec8;
-  --stone: #1e1e22;
-  --stone-light: #2a2a30;
-  --surface: #0f0f12;
-  --surface-hover: #18181c;
-  --chart-1: #c9a84c;
+  --background: #0e0e12;
+  --foreground: #e8e8ec;
+  --card: #16161a;
+  --card-foreground: #e8e8ec;
+  --popover: #16161a;
+  --popover-foreground: #e8e8ec;
+  --primary: #d4a932;
+  --primary-foreground: #0e0e12;
+  --secondary: #1e1e24;
+  --secondary-foreground: #e8e8ec;
+  --muted: #1e1e24;
+  --muted-foreground: #8a8a94;
+  --accent: #1e1e24;
+  --accent-foreground: #e8e8ec;
+  --destructive: #d94444;
+  --border: #2a2a32;
+  --input: #2a2a32;
+  --ring: #d4a932;
+  --gold: #d4a932;
+  --gold-muted: #9e7d20;
+  --chart-1: #d4a932;
   --chart-2: #6b8f71;
-  --chart-3: #8b6c5c;
-  --chart-4: #4a6fa5;
-  --chart-5: #a0522d;
-  --sidebar: #06060a;
-  --sidebar-foreground: #d4cfc6;
-  --sidebar-primary: #c9a84c;
-  --sidebar-primary-foreground: #06060a;
-  --sidebar-accent: #111118;
-  --sidebar-accent-foreground: #d4cfc6;
-  --sidebar-border: #28282e;
-  --sidebar-ring: #c9a84c;
-  --scrollbar: #8a703040;
-  --canvas-bg: #141419;
-  --canvas-stone: #1e1e24;
-  --canvas-vein: #c9a84c;
+  --chart-3: #c0856e;
+  --chart-4: #5a82bf;
+  --chart-5: #c06030;
+  --sidebar: #121216;
+  --sidebar-foreground: #e8e8ec;
+  --sidebar-primary: #d4a932;
+  --sidebar-primary-foreground: #0e0e12;
+  --sidebar-accent: #1c1c22;
+  --sidebar-accent-foreground: #e8e8ec;
+  --sidebar-border: #2a2a32;
+  --sidebar-ring: #d4a932;
+  --scrollbar: #d4a93220;
+  --canvas-bg: #0a0a0e;
 }
 
 body.theme-transitioning,
@@ -238,31 +218,6 @@ body.theme-transitioning * {
   to { opacity: 1; }
 }
 
-@keyframes rotate-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes gentle-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-@keyframes vein-shimmer {
-  0%, 100% { opacity: 0.1; }
-  50% { opacity: 0.3; }
-}
-
 .animate-fade-up {
   animation: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -273,14 +228,6 @@ body.theme-transitioning * {
 
 .animate-fade-in-scale {
   animation: fade-in-scale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-rotate-slow {
-  animation: rotate-slow 180s linear infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 5s ease-in-out infinite;
 }
 
 /* ─── Route view transitions ─── */
@@ -296,39 +243,16 @@ body.theme-transitioning * {
   animation-timing-function: linear;
 }
 
-.animate-shimmer {
-  background-size: 200% 100%;
-  animation: shimmer 3s ease-in-out infinite;
-}
-
-.animate-gentle-pulse {
-  animation: gentle-pulse 3s ease-in-out infinite;
-}
-
-.animate-vein-shimmer {
-  animation: vein-shimmer 6s ease-in-out infinite;
-}
-
 /* Stagger delays */
-.delay-75 { animation-delay: 75ms; }
 .delay-150 { animation-delay: 150ms; }
-.delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
 .delay-500 { animation-delay: 500ms; }
-.delay-700 { animation-delay: 700ms; }
-.delay-1000 { animation-delay: 1000ms; }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-fade-in,
   .animate-fade-in-scale,
-  .animate-rotate-slow,
-  .animate-pulse-glow,
-  .animate-shimmer,
-  .animate-gentle-pulse,
-  .animate-vein-shimmer,
-  .animate-hint-bounce,
-  .hero-card-glow {
+  .animate-hint-bounce {
     animation: none !important;
     opacity: 1 !important;
   }
@@ -339,94 +263,9 @@ body.theme-transitioning * {
   }
 }
 
-/* ─── Stone texture overlay ─── */
-.stone-surface::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='stone'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='6' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23stone)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 512px 512px;
-  z-index: 1;
-}
-
-.dark .stone-surface::before {
-  opacity: 0.08;
-}
-
-/* ─── Gold vein border accent ─── */
-.vein-border-b {
-  position: relative;
-}
-
-.vein-border-b::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 8%;
-  right: 25%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--gold) 15%,
-    var(--gold) 35%,
-    transparent 50%,
-    var(--gold) 65%,
-    transparent 100%
-  );
-  opacity: 0.2;
-  pointer-events: none;
-}
-
-/* ─── Glass morphism surface ─── */
-.glass {
-  background: color-mix(in srgb, var(--background) 85%, transparent);
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-}
-
-/* ─── Gold gradient text ─── */
-.text-gold-gradient {
-  background: linear-gradient(135deg, var(--gold) 0%, #d4b44a 40%, var(--gold-muted) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ——— Gold gradient for button bg ——— */
-.gold-gradient {
-  background: linear-gradient(135deg, var(--gold) 0%, #fbde80 40%, var(--gold-muted) 100%);
-  background-size: 250% 250%;
-  background-position: 0% 0%;
-  transition: background-position 500ms cubic-bezier(0.4, 0, 0.2, 1);
-    &:focus-visible, &[aria-expanded=true] {
-      background-position: 100% 100%;
-    }
-}
-
-/* ─── Hero card responsive sizing ─── */
-/* Maintains 2:3 aspect ratio, fills ~75% of viewport height on desktop,
-   scales down on mobile. Width is derived from height × (2/3). */
-.hero-card-size {
-  --_card-h: min(75vh, 90vw * 1.5);
-  height: var(--_card-h);
-  width: calc(var(--_card-h) / 1.5);
-}
-
-@media (max-width: 767px) {
-  .hero-card-size {
-    --_card-h: min(70vh, 88vw * 1.5);
-    height: var(--_card-h);
-    width: calc(var(--_card-h) / 1.5);
-  }
-}
-
 /* ─── Hero card lift + glow ─── */
-/* On hover: left edge lifts up with gold glow, hinting the card is flippable.
-   Transitions smoothly in and out. Glow pulses while hovered. */
+/* On hover: left edge lifts up with a glow, hinting the card is flippable.
+   Transitions smoothly in and out. */
 .hero-card-container {
   perspective: 1200px;
 }
@@ -446,22 +285,8 @@ body.theme-transitioning * {
 
 .hero-card-container:hover .hero-card-glow {
   box-shadow:
-    -6px 0 24px -4px color-mix(in srgb, var(--gold) 25%, transparent),
-    0 0 40px -8px color-mix(in srgb, var(--gold) 10%, transparent);
-  animation: card-glow-pulse 4s ease-in-out infinite;
-}
-
-@keyframes card-glow-pulse {
-  0%, 100% {
-    box-shadow:
-      -6px 0 24px -4px color-mix(in srgb, var(--gold) 20%, transparent),
-      0 0 40px -8px color-mix(in srgb, var(--gold) 8%, transparent);
-  }
-  50% {
-    box-shadow:
-      -8px 0 32px -4px color-mix(in srgb, var(--gold) 35%, transparent),
-      0 0 48px -8px color-mix(in srgb, var(--gold) 15%, transparent);
-  }
+    -6px 0 24px -4px color-mix(in srgb, var(--primary) 25%, transparent),
+    0 0 40px -8px color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 /* ─── Hint bounce ─── */

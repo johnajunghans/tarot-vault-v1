@@ -17,12 +17,12 @@ export function SidebarToggle({ className }: { className?: string }) {
     <Button
       type="button"
       variant="ghost"
-      size="icon-sm"
+      size="icon"
       onClick={toggleSidebar}
       aria-label="Toggle sidebar"
       className={cn("text-muted-foreground hover:text-foreground shrink-0", className)}
     >
-      <HugeiconsIcon icon={icon} strokeWidth={1.5} />
+      <HugeiconsIcon icon={icon} strokeWidth={1.5} className="size-4.5" />
     </Button>
   )
 }
