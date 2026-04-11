@@ -550,7 +550,9 @@ function SidebarMenuButton({
         />
       )
     } else {
-      composedRender = TooltipTrigger
+      composedRender = (props: React.ComponentProps<typeof TooltipTrigger>) => (
+        <TooltipTrigger {...props} />
+      )
     }
   }
 
