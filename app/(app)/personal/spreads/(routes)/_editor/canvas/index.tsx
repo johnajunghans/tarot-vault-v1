@@ -13,12 +13,11 @@ import CardButtonFrame from './components/card-button-frame'
 import CanvasBackground from './components/background'
 import CanvasDefs from './components/defs'
 import CanvasEmptyPrompt from './components/empty-prompt'
-import CanvasGuides from './components/guides'
+import CanvasGuides from './guide-lines'
 import CanvasMarquee from './components/marquee'
 import CanvasPointerOverlay from './components/pointer-overlay'
 import CanvasScrollbars from './components/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
-import { useCanvasGuides } from './hooks/use-canvas-guides'
 import { useCanvasOffscreenPointers } from './hooks/use-canvas-offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
 import { useCanvasCardButtons } from './hooks/use-canvas-card-buttons'
@@ -198,14 +197,6 @@ function SpreadCanvasComponent(
     // Expose the viewport's imperative methods to the parent via `ref`.
     useImperativeHandle(ref, () => imperativeHandle, [imperativeHandle])
 
-    // Derive alignment guides for the currently dragged card.
-    const guides = useCanvasGuides({
-        effectiveCards,
-        dragging,
-        groupSelectedIndices,
-        isViewMode,
-    })
-
     // Double-clicking the background creates a new card centered at the click
     // position, snapped and clamped within canvas bounds.
     const handleBackgroundDoubleClick = useCallback(
@@ -328,7 +319,10 @@ function SpreadCanvasComponent(
 
                         {/* Drag-time overlays rendered behind the cards. */}
                         <CanvasGuides
-                            guides={guides}
+                            effectiveCards={effectiveCards}
+                            dragging={dragging}
+                            groupSelectedIndices={groupSelectedIndices}
+                            isViewMode={isViewMode}
                             svgWidth={svgWidth}
                             svgHeight={svgHeight}
                         />

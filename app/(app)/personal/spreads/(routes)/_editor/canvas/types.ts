@@ -23,6 +23,12 @@ export interface CanvasGuide {
     pos: number
 }
 
+export interface CanvasDragState {
+    index: number
+    x: number
+    y: number
+}
+
 export interface OffscreenPointer {
     index: number
     x: number

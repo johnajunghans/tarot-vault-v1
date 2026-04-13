@@ -1,18 +1,42 @@
 'use client'
 
-import type { CanvasGuide } from '../types'
+import { useMemo } from 'react'
+import { CanvasCard, CanvasDragState, CanvasGuide } from '../types'
+import { generateGuideLines } from './generate-guide-lines'
 
 interface CanvasGuidesProps {
-    guides: CanvasGuide[]
+    effectiveCards: CanvasCard[]
+    dragging: CanvasDragState | null
+    groupSelectedIndices: ReadonlySet<number>
+    isViewMode: boolean
     svgWidth: number
     svgHeight: number
 }
 
 export default function CanvasGuides({
-    guides,
+    effectiveCards,
+    dragging,
+    groupSelectedIndices,
+    isViewMode,
     svgWidth,
     svgHeight,
 }: CanvasGuidesProps) {
+
+    const guides = useMemo<CanvasGuide[]>(() => {
+        // No guides while viewing or when nothing is actively being dragged.
+        if (isViewMode || !dragging) return []
+
+        // Group drags intentionally skip guides to avoid noisy overlays.
+        if (
+            groupSelectedIndices.size > 1 &&
+            groupSelectedIndices.has(dragging.index)
+        ) {
+            return []
+        }
+
+        return generateGuideLines(effectiveCards, dragging)
+    }, [effectiveCards, dragging, groupSelectedIndices, isViewMode])
+
     return (
         <>
             {guides.map((guide) =>

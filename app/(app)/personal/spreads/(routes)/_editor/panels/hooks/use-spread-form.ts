@@ -13,7 +13,6 @@ import {
     generateCardAt,
 } from "../../lib"
 import { useSpreadCanvasModel } from "../../canvas/hooks/use-canvas-model"
-import z from "zod"
 
 interface UseSpreadFormOptions {
     defaultValues?: SpreadForm
