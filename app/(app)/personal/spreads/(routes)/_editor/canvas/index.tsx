@@ -8,8 +8,7 @@ import {
     useMemo,
     useRef,
 } from 'react'
-import SpreadCard from './components/card'
-import CardButtonFrame from './components/card-button-frame'
+import SpreadCard from './card'
 import CanvasBackground from './components/background'
 import CanvasDefs from './components/defs'
 import CanvasEmptyPrompt from './components/empty-prompt'
@@ -20,7 +19,6 @@ import CanvasScrollbars from './components/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
 import { useCanvasOffscreenPointers } from './hooks/use-canvas-offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
-import { useCanvasCardButtons } from './hooks/use-canvas-card-buttons'
 import { useCanvasSelection } from './hooks/use-canvas-selection'
 import { useCanvasViewport } from './hooks/use-canvas-viewport'
 import type {
@@ -42,6 +40,7 @@ import {
     CARD_WIDTH,
     GRID_SIZE,
 } from '../lib'
+import { useCanvasCardButtonActions } from './hooks/use-canvas-card-button-actions'
 
 interface SpreadCanvasProps {
     cards: CanvasCard[]
@@ -227,33 +226,21 @@ function SpreadCanvasComponent(
         zoom,
     })
 
-    // ------------ CARD BUTTON FRAME ------------ //
+    // ------------ CARD BUTTON ACTIONS ------------ //
 
     const {
-        hoveredCard,
-        hoveredCardIndex,
-        showButtonFrame,
-        buttonFrameLayerInfo,
-        handleSvgPointerMove,
-        handleSvgPointerLeave,
-        handleButtonFrameMouseEnter,
-        handleButtonFrameMouseLeave,
+        layers,
+        layerBounds,
         handleRotateStep,
         handleButtonRotationChange,
         handleBringToFront,
-        handleSendToBack,
-    } = useCanvasCardButtons({
+        handleSendToBack
+    } = useCanvasCardButtonActions(
         effectiveCards,
-        rotationAngles,
-        draggingIndex: dragging?.index ?? null,
-        isMarqueeSelecting: marqueeRect !== null,
-        selectedCardIndex,
-        isMobile,
-        isViewMode,
-        clientToSVG,
         onRotationChange,
-        onLayerChange,
-    })
+        rotationAngles,
+        onLayerChange
+    )
 
     // ------------ RENDER ------------ //
 
@@ -271,16 +258,6 @@ function SpreadCanvasComponent(
                     viewBox={viewBox}
                     xmlns="http://www.w3.org/2000/svg"
                     className="select-none"
-                    onPointerMove={
-                        !isMobile && !isViewMode
-                            ? handleSvgPointerMove
-                            : undefined
-                    }
-                    onPointerLeave={
-                        !isMobile && !isViewMode
-                            ? handleSvgPointerLeave
-                            : undefined
-                    }
                 >
                         {/* SVG defs and reusable background layer. */}
                         <CanvasDefs />
@@ -344,9 +321,13 @@ function SpreadCanvasComponent(
                                         renderRotation={
                                             rotationAngles?.[index] ?? card.r
                                         }
-                                        isButtonHoverActive={
-                                            showButtonFrame &&
-                                            hoveredCardIndex === index
+                                        zoom={zoom}
+                                        totalCards={effectiveCards.length}
+                                        isAtFront={
+                                            (layers[index] ?? 0) >= layerBounds.max
+                                        }
+                                        isAtBack={
+                                            (layers[index] ?? 0) <= layerBounds.min
                                         }
                                         selected={index === selectedCardIndex}
                                         groupSelected={
@@ -360,6 +341,11 @@ function SpreadCanvasComponent(
                                         isViewMode={isViewMode}
                                         isMobile={isMobile}
                                         disableHeavyEffects={isZoomInteractionActive}
+                                        onRotateStep={handleRotateStep}
+                                        onRotationChange={handleButtonRotationChange}
+                                        onBringToFront={handleBringToFront}
+                                        onSendToBack={handleSendToBack}
+                                        onDeleteCard={onDeleteCard ?? (() => {})}
                                         onDragStart={handleDragStart}
                                         onDragEnd={handleDragEnd}
                                         onDrag={handleDrag}
@@ -369,25 +355,6 @@ function SpreadCanvasComponent(
                                 )
                             })}
                         </g>
-
-                        {/* Button frame overlay — always above all cards. */}
-                        {showButtonFrame && hoveredCard && hoveredCardIndex !== null && (
-                            <CardButtonFrame
-                                card={hoveredCard}
-                                cardIndex={hoveredCardIndex}
-                                zoom={zoom}
-                                totalCards={effectiveCards.length}
-                                onRotateStep={handleRotateStep}
-                                onRotationChange={handleButtonRotationChange}
-                                onBringToFront={handleBringToFront}
-                                onSendToBack={handleSendToBack}
-                                onDeleteCard={onDeleteCard ?? (() => {})}
-                                isAtFront={buttonFrameLayerInfo.isAtFront}
-                                isAtBack={buttonFrameLayerInfo.isAtBack}
-                                onFrameMouseEnter={handleButtonFrameMouseEnter}
-                                onFrameMouseLeave={handleButtonFrameMouseLeave}
-                            />
-                        )}
 
                         {/* Marquee rectangle sits above the card/content layers. */}
                         <CanvasMarquee rect={marqueeRect} />

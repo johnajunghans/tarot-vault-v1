@@ -17,6 +17,7 @@ gsap.registerPlugin(Draggable)
 
 export { CARD_WIDTH, CARD_HEIGHT } from '../../lib'
 import { CardBack } from './card-back'
+import CardButtonPanel from '../card/button-panel'
 
 const CORNER_R = 8
 const FULL_ROTATION = 360
@@ -96,13 +97,21 @@ interface CanvasCardProps {
     card: CanvasCard
     index: number
     renderRotation: number
-    isButtonHoverActive: boolean
+    zoom: number
+    totalCards: number
+    isAtFront: boolean
+    isAtBack: boolean
     selected: boolean
     groupSelected: boolean
     isDraggingInGroup: boolean
     isViewMode: boolean
     isMobile: boolean
     disableHeavyEffects: boolean
+    onRotateStep: (index: number, direction: 1 | -1) => void
+    onRotationChange: (index: number, value: number) => void
+    onBringToFront: (index: number) => void
+    onSendToBack: (index: number) => void
+    onDeleteCard: (index: number) => void
     onDragStart: (index: number, x: number, y: number) => void
     onDragEnd: (index: number, x: number, y: number) => void
     onDrag: (index: number, x: number, y: number) => void
@@ -114,13 +123,21 @@ function CanvasCard({
     card,
     index,
     renderRotation,
-    isButtonHoverActive,
+    zoom,
+    totalCards,
+    isAtFront,
+    isAtBack,
     selected,
     groupSelected,
     isDraggingInGroup,
     isViewMode,
     isMobile,
     disableHeavyEffects,
+    onRotateStep,
+    onRotationChange,
+    onBringToFront,
+    onSendToBack,
+    onDeleteCard,
     onDragStart,
     onDragEnd,
     onDrag,
@@ -128,6 +145,7 @@ function CanvasCard({
     registerRef,
 }: CanvasCardProps) {
     const [isDraggingState, setIsDraggingState] = useState(false)
+    const [isHovered, setIsHovered] = useState(false)
 
     const groupRef = useRef<SVGGElement>(null)
     const rotationRef = useRef<SVGGElement>(null)
@@ -246,6 +264,8 @@ function CanvasCard({
     }, [index, registerRef])
 
     const isActiveDrag = isDraggingState || isDraggingInGroup
+    const showButtonFrame =
+        !isViewMode && !isMobile && !isActiveDrag && isHovered
     const isHighlighted = selected || groupSelected
     const badgeColor = isHighlighted ? 'var(--gold)' : 'var(--gold-muted)'
     const cardName = card.name?.trim() ?? ''
@@ -289,6 +309,16 @@ function CanvasCard({
             aria-label={`Select card ${index + 1}: ${displayName}`}
             onClick={isViewMode ? () => onClick(index) : undefined}
             onKeyDown={handleKeyDown}
+            onPointerEnter={
+                !isViewMode && !isMobile
+                    ? () => setIsHovered(true)
+                    : undefined
+            }
+            onPointerLeave={
+                !isViewMode && !isMobile
+                    ? () => setIsHovered(false)
+                    : undefined
+            }
             className="outline-none focus-visible:[&_[data-focus-ring]]:opacity-100"
             style={{ cursor: 'pointer' }}
         >
@@ -346,7 +376,7 @@ function CanvasCard({
                     <CardBack
                         selected={selected}
                         groupSelected={groupSelected}
-                        isButtonHoverActive={isButtonHoverActive}
+                        isButtonHoverActive={showButtonFrame}
                     />
 
                     <g ref={badgeRef}>
@@ -355,7 +385,7 @@ function CanvasCard({
                             cy={16}
                             r={10}
                             fill={badgeColor}
-                            fillOpacity={isButtonHoverActive || isHighlighted ? 0.9 : 0.7}
+                            fillOpacity={showButtonFrame || isHighlighted ? 0.9 : 0.7}
                         />
                         <text
                             x={15.75}
@@ -388,7 +418,7 @@ function CanvasCard({
                                     textAnchor="middle"
                                     dominantBaseline="middle"
                                     fill="var(--foreground)"
-                                    fillOpacity={hasCardName ? (isButtonHoverActive || isHighlighted ? 0.9 : 0.7) : 0.5}
+                                    fillOpacity={hasCardName ? (showButtonFrame || isHighlighted ? 0.9 : 0.7) : 0.5}
                                     fontSize={cardNameFontSize}
                                     fontStyle={hasCardName ? undefined : 'italic'}
                                     fontWeight={hasCardName ? 600 : 500}
@@ -405,6 +435,21 @@ function CanvasCard({
                     )}
                 </g>
             </g>
+            {showButtonFrame && (
+                <CardButtonPanel
+                    cardIndex={index}
+                    rotation={renderRotation}
+                    zoom={zoom}
+                    totalCards={totalCards}
+                    onRotateStep={onRotateStep}
+                    onRotationChange={onRotationChange}
+                    onBringToFront={onBringToFront}
+                    onSendToBack={onSendToBack}
+                    onDeleteCard={onDeleteCard}
+                    isAtFront={isAtFront}
+                    isAtBack={isAtBack}
+                />
+            )}
         </g>
     )
 }
@@ -414,13 +459,21 @@ function arePropsEqual(prev: CanvasCardProps, next: CanvasCardProps): boolean {
         prev.card === next.card &&
         prev.index === next.index &&
         prev.renderRotation === next.renderRotation &&
-        prev.isButtonHoverActive === next.isButtonHoverActive &&
+        prev.zoom === next.zoom &&
+        prev.totalCards === next.totalCards &&
+        prev.isAtFront === next.isAtFront &&
+        prev.isAtBack === next.isAtBack &&
         prev.selected === next.selected &&
         prev.groupSelected === next.groupSelected &&
         prev.isDraggingInGroup === next.isDraggingInGroup &&
         prev.isViewMode === next.isViewMode &&
         prev.isMobile === next.isMobile &&
         prev.disableHeavyEffects === next.disableHeavyEffects &&
+        prev.onRotateStep === next.onRotateStep &&
+        prev.onRotationChange === next.onRotationChange &&
+        prev.onBringToFront === next.onBringToFront &&
+        prev.onSendToBack === next.onSendToBack &&
+        prev.onDeleteCard === next.onDeleteCard &&
         prev.onDragStart === next.onDragStart &&
         prev.onDragEnd === next.onDragEnd &&
         prev.onDrag === next.onDrag &&
