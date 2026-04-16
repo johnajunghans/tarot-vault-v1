@@ -1,6 +1,6 @@
 'use client'
 
-import { DEFAULT_ZOOM, ZOOM_MAX, ZOOM_MIN, normalizeZoom } from '../zoom'
+import { DEFAULT_ZOOM, ZOOM_MAX, ZOOM_MIN, normalizeZoom } from './zoom'
 
 interface CanvasViewportInput {
     panX: number

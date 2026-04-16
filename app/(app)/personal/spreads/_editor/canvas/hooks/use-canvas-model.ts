@@ -8,7 +8,7 @@ import type {
     SpreadCanvasHandle,
     SpreadCanvasPositionUpdate,
 } from '../types'
-import { ZOOM_MIN } from '../lib/zoom'
+import { ZOOM_MIN } from '../viewport/zoom/zoom'
 import {
     reconcileContinuousRotations,
     resolveContinuousRotation,

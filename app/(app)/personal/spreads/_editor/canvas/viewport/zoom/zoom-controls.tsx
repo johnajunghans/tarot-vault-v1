@@ -17,7 +17,7 @@ import {
     ZOOM_MIN,
     ZOOM_MAX,
     normalizeZoom,
-} from '../lib/zoom'
+} from './zoom'
 
 const TOOLTIP_DELAY = 500
 

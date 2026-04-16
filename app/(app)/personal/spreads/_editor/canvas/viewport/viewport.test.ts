@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
     resolveViewportRequest,
     shouldApplyViewportRequest,
-} from './viewport/viewport-request'
-import { reconcileViewportBounds } from './viewport/viewport-state'
+} from './viewport-request'
+import { reconcileViewportBounds } from './viewport-state'
 import {
     clampPan,
     getCanvasPointAtViewportPoint,
@@ -11,8 +11,8 @@ import {
     getClampedPanForZoomAnchor,
     getMinZoomForViewport,
     getPanForCanvasPoint,
-} from './viewport/viewport'
-import { getSteppedZoom, normalizeZoom } from './zoom'
+} from './viewport'
+import { getSteppedZoom, normalizeZoom } from './zoom/zoom'
 
 describe('viewport helpers', () => {
     describe('viewport request helpers', () => {

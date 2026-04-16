@@ -5,7 +5,7 @@ import {
     getCanvasViewportRect,
     getPanForCanvasPoint,
 } from './viewport'
-import { normalizeZoom } from '../zoom'
+import { normalizeZoom } from './zoom'
 
 // ------------ VIEWPORT RECONCILIATION ------------ //
 

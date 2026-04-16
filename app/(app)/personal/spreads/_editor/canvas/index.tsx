@@ -19,7 +19,7 @@ import CanvasScrollbars from './components/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
 import { useCanvasOffscreenPointers } from './hooks/use-canvas-offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
-import { useCanvasViewport } from './hooks/use-canvas-viewport'
+import { useCanvasViewport } from './viewport/use-canvas-viewport'
 import type {
     CanvasCard,
     SpreadCanvasHandle,
@@ -389,7 +389,7 @@ const SpreadCanvas = memo(forwardRef(SpreadCanvasComponent))
 SpreadCanvas.displayName = 'SpreadCanvas'
 
 export default SpreadCanvas
-export { default as ZoomControls } from './components/zoom-controls'
+export { default as ZoomControls } from './viewport/zoom/zoom-controls'
 export { default as UndoRedoControls } from './components/undo-redo-controls'
 export type {
     CanvasCard,

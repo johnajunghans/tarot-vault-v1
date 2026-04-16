@@ -8,7 +8,7 @@ import {
     isRectFullyOutsideRect,
     projectVectorToEdge,
 } from '../lib/geometry'
-import { getCanvasViewportRect } from '../lib/viewport/viewport'
+import { getCanvasViewportRect } from '../viewport/viewport'
 import { CARD_HEIGHT, CARD_WIDTH } from '../../lib'
 
 const POINTER_EDGE_PADDING = 18
