@@ -1,7 +1,6 @@
-import { cookies } from "next/headers";
 import SpreadDetail from "./spread-detail";
-import { Layout } from "react-resizable-panels";
 import { Id } from "@/convex/_generated/dataModel";
+import { getPanelLayout } from "../_lib/get-panel-layout";
 
 interface EditSpreadPageProps {
   params: Promise<{ id: string }>
@@ -9,17 +8,15 @@ interface EditSpreadPageProps {
 }
 
 export default async function EditSpreadPage({ params, searchParams }: EditSpreadPageProps) {
-  const [cookieStore, resolvedParams, resolvedSearchParams] = await Promise.all([
-    cookies(),
+  const [resolvedParams, resolvedSearchParams] = await Promise.all([
     params,
     searchParams,
   ])
   const mode: "view" | "edit" = resolvedSearchParams.mode === "view" ? "view" : "edit"
-  const groupId = "spread-creation-layout"
-  const defaultLayoutString = cookieStore.get(groupId)?.value
-  const defaultLayout = defaultLayoutString
-    ? (JSON.parse(defaultLayoutString) as Layout)
-    : undefined
+  const groupId = "spread-id-layout"
+  const defaultLayout = await getPanelLayout(
+    groupId
+  )
 
   return (
     <SpreadDetail
