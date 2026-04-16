@@ -1,4 +1,4 @@
-import { cardSchema, spreadSchema } from "@spreads/(routes)/_editor/panels/schema";
+import { cardSchema, spreadSchema } from "@/app/(app)/personal/spreads/_editor/schema";
 import { Doc } from "@/convex/_generated/dataModel";
 import { spreadPositionValidator } from "@/convex/schema";
 import { Infer } from "convex/values";
