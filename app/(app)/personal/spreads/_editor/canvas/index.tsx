@@ -14,10 +14,9 @@ import CanvasDefs from './components/defs'
 import CanvasEmptyPrompt from './components/empty-prompt'
 import CanvasGuides from './guide-lines'
 import { useCanvasSelection, CanvasMarquee } from './multi-select'
-import CanvasPointerOverlay from './components/pointer-overlay'
 import CanvasScrollbars from './components/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
-import { useCanvasOffscreenPointers } from './hooks/use-canvas-offscreen-pointers'
+import { OffscreenPointers, useCanvasOffscreenPointers } from '@spreads/_editor/canvas/offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
 import { useCanvasViewport } from './viewport/use-canvas-viewport'
 import type {
@@ -363,7 +362,7 @@ function SpreadCanvasComponent(
             </div>
 
             {/* UI overlays positioned outside the SVG so they can ignore clipping. */}
-            <CanvasPointerOverlay
+            <OffscreenPointers
                 pointers={offscreenPointers}
             />
 
