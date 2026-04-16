@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { TooltipContent, TooltipProvider, TooltipRoot, TooltipTrigger } from "@/components/ui/tooltip";
-import { ResponsivePanel } from "@/app/(app)/_components/responsive-panel";
+import { ResponsivePanel } from "../responsive-panel";
 import { PanelLeftIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type Dispatch, type RefObject, type SetStateAction, useEffect } from "react";
@@ -123,7 +123,7 @@ export default function SpreadSettingsPanel({
 
   return (
     <>
-      {!isMobile && (
+      {/* {!isMobile && ( */}
         <div
           ref={toolbarRef}
           className={hideSettings ? "pointer-events-auto" : "pointer-events-none"}
@@ -134,10 +134,10 @@ export default function SpreadSettingsPanel({
             onAddCard={addCard}
             canAddCard={canAddCard}
             showAddCard={!isViewMode}
-            isMobile={false}
+            isMobile={isMobile}
           />
         </div>
-      )}
+      {/* )} */}
 
       <ResponsivePanel
         isMobile={isMobile}
