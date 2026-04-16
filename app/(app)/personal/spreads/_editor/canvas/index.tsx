@@ -14,7 +14,7 @@ import CanvasDefs from './components/defs'
 import CanvasEmptyPrompt from './components/empty-prompt'
 import CanvasGuides from './guide-lines'
 import { useCanvasSelection, CanvasMarquee } from './multi-select'
-import CanvasScrollbars from './components/scrollbars'
+import CanvasScrollbars from './viewport/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
 import { OffscreenPointers, useCanvasOffscreenPointers } from '@spreads/_editor/canvas/offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
@@ -389,7 +389,7 @@ SpreadCanvas.displayName = 'SpreadCanvas'
 
 export default SpreadCanvas
 export { default as ZoomControls } from './viewport/zoom/zoom-controls'
-export { default as UndoRedoControls } from './components/undo-redo-controls'
+export { UndoRedoControls } from './undo-redo'
 export type {
     CanvasCard,
     SpreadCanvasHandle,

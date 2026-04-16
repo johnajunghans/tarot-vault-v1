@@ -16,7 +16,7 @@ import {
 import {
     normalizeRotationForStorage,
 } from '../../lib/rotation'
-import { useCanvasHistory } from './use-canvas-history'
+import { useCanvasHistory } from '../undo-redo'
 
 interface UseSpreadCanvasModelArgs {
     cards: ReadonlyArray<{ id: string }>
