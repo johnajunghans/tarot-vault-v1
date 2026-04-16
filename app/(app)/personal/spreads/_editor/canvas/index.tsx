@@ -13,13 +13,12 @@ import CanvasBackground from './components/background'
 import CanvasDefs from './components/defs'
 import CanvasEmptyPrompt from './components/empty-prompt'
 import CanvasGuides from './guide-lines'
-import CanvasMarquee from './components/marquee'
+import { useCanvasSelection, CanvasMarquee } from './multi-select'
 import CanvasPointerOverlay from './components/pointer-overlay'
 import CanvasScrollbars from './components/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
 import { useCanvasOffscreenPointers } from './hooks/use-canvas-offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
-import { useCanvasSelection } from './hooks/use-canvas-selection'
 import { useCanvasViewport } from './hooks/use-canvas-viewport'
 import type {
     CanvasCard,
@@ -105,10 +104,6 @@ function SpreadCanvasComponent(
     const svgWidth = CANVAS_WIDTH
     const svgHeight = CANVAS_HEIGHT
 
-    // Shared mutable flag used by viewport and selection logic while marquee
-    // selection is active.
-    const isMarqueeActive = useRef(false)
-
     // Convert browser client coordinates into the transformed SVG coordinate
     // system so drag, select, and add-card interactions line up visually.
     const clientToSVG = useCallback((clientX: number, clientY: number) => {
@@ -123,7 +118,33 @@ function SpreadCanvasComponent(
         }
     }, [])
 
-    // ------------ VIEWPORT AND INPUT HOOKS ------------ //
+    // ------------ DRAG ------------ //
+
+    // Owns drag state and produces the "effective" card positions while a drag
+    // is in progress before changes are committed back to the form.
+    const {
+        dragging,
+        effectiveCards,
+        updateGroupSelection: updateDragSelection,
+        handleDragStart,
+        handleDrag,
+        handleDragEnd,
+    } = useCanvasDrag({
+        cards,
+        onPositionsCommit,
+    })
+
+    // Selection state also needs to update the drag hook so multi-select drags
+    // move the same set of cards.
+    const updateGroupSelection = useCallback((next: Set<number>) => {
+        updateDragSelection(next)
+    }, [updateDragSelection])
+
+    // ------------ VIEWPORT AND MULTI-SELECT ------------ //
+
+    // Shared mutable flag used by viewport and selection logic while marquee
+    // selection is active.
+    const isMarqueeActive = useRef(false)
 
     // Owns pan/zoom, viewport fitting, scrollbar state, and the imperative API
     // used by the external zoom controls.
@@ -148,26 +169,6 @@ function SpreadCanvasComponent(
         onZoomBoundsChange,
         isMarqueeActiveRef: isMarqueeActive,
     })
-
-    // Owns drag state and produces the "effective" card positions while a drag
-    // is in progress before changes are committed back to the form.
-    const {
-        dragging,
-        effectiveCards,
-        updateGroupSelection: updateDragSelection,
-        handleDragStart,
-        handleDrag,
-        handleDragEnd,
-    } = useCanvasDrag({
-        cards,
-        onPositionsCommit,
-    })
-
-    // Selection state also needs to update the drag hook so multi-select drags
-    // move the same set of cards.
-    const updateGroupSelection = useCallback((next: Set<number>) => {
-        updateDragSelection(next)
-    }, [updateDragSelection])
 
     // Handles click selection, marquee selection, and background deselection.
     const {
