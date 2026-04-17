@@ -9,16 +9,15 @@ import {
     useRef,
 } from 'react'
 import SpreadCard from './card'
-import CanvasBackground from './components/background'
-import CanvasDefs from './components/defs'
-import CanvasEmptyPrompt from './components/empty-prompt'
 import CanvasGuides from './guide-lines'
 import { useCanvasSelection, CanvasMarquee } from './multi-select'
-import CanvasScrollbars from './viewport/scrollbars'
 import { useCanvasDrag } from './hooks/use-canvas-drag'
 import { OffscreenPointers, useCanvasOffscreenPointers } from '@spreads/_editor/canvas/offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
-import { useCanvasViewport } from './viewport/use-canvas-viewport'
+import { 
+    useCanvasViewport,
+    CanvasScrollbars 
+} from '@spreads/_editor/canvas/viewport'
 import type {
     CanvasCard,
     SpreadCanvasHandle,
@@ -37,6 +36,7 @@ import {
     CARD_HEIGHT,
     CARD_WIDTH,
     GRID_SIZE,
+    CANVAS_CENTER
 } from '../lib'
 import { useCanvasCardButtonActions } from './hooks/use-canvas-card-button-actions'
 
@@ -260,8 +260,6 @@ function SpreadCanvasComponent(
                     className="select-none"
                 >
                         {/* SVG defs and reusable background layer. */}
-                        <CanvasDefs />
-
                         <CanvasBackground
                             svgWidth={svgWidth}
                             svgHeight={svgHeight}
@@ -396,3 +394,158 @@ export type {
     SpreadCanvasPositionUpdate,
     SpreadCanvasViewportRequest,
 } from './types'
+
+// ================== COMPONENT FUNCTIONS ==================
+
+interface CanvasEmptyPromptProps {
+    strokeOpacity: string
+}
+
+function CanvasEmptyPrompt({
+    strokeOpacity,
+}: CanvasEmptyPromptProps) {
+    return (
+        <g pointerEvents="none">
+            <rect
+                x={CANVAS_CENTER.x - CARD_WIDTH / 2}
+                y={CANVAS_CENTER.y - CARD_HEIGHT / 2}
+                width={CARD_WIDTH}
+                height={CARD_HEIGHT}
+                rx={8}
+                fill="none"
+                stroke="var(--gold)"
+                strokeWidth={1}
+                strokeOpacity={strokeOpacity}
+                strokeDasharray="6 4"
+                className="animate-gentle-pulse"
+            />
+            <text
+                x={CANVAS_CENTER.x}
+                y={CANVAS_CENTER.y + CARD_HEIGHT / 2 + 34}
+                textAnchor="middle"
+                fontSize={13}
+                fill="var(--muted-foreground)"
+                fillOpacity={0.6}
+                fontFamily="var(--font-nunito), sans-serif"
+            >
+                Double-click to place your first position
+            </text>
+        </g>
+    )
+}
+
+interface CanvasBackgroundProps {
+    svgWidth: number
+    svgHeight: number
+    gridSize: number
+    isViewMode: boolean
+    dragGridFill: string
+    dragGridFillOpacity: string
+}
+
+function CanvasBackground({
+    svgWidth,
+    svgHeight,
+    gridSize,
+    isViewMode,
+    dragGridFill,
+    dragGridFillOpacity,
+}: CanvasBackgroundProps) {
+    return (
+        <>
+            <defs>
+                <filter
+                    id="canvas-card-shadow-active"
+                    x="-25%"
+                    y="-25%"
+                    width="150%"
+                    height="150%"
+                >
+                    <feDropShadow
+                        dx={0}
+                        dy={5}
+                        stdDeviation={6}
+                        floodColor="black"
+                        floodOpacity={0.24}
+                    />
+                </filter>
+
+                <pattern
+                    id="drag-grid"
+                    width={gridSize * 2}
+                    height={gridSize * 2}
+                    patternUnits="userSpaceOnUse"
+                >
+                    <circle
+                        cx={gridSize}
+                        cy={gridSize}
+                        r={0.6}
+                        fill={dragGridFill}
+                        fillOpacity={dragGridFillOpacity}
+                    />
+                </pattern>
+
+                <radialGradient id="canvas-vignette" cx="50%" cy="40%" r="55%">
+                    <stop
+                        offset="0%"
+                        stopColor="var(--gold)"
+                        stopOpacity="0.02"
+                    />
+                    <stop
+                        offset="100%"
+                        stopColor="transparent"
+                        stopOpacity="0"
+                    />
+                </radialGradient>
+            </defs>
+
+            <rect
+                width={svgWidth}
+                height={svgHeight}
+                fill="url(#stone-texture)"
+            />
+
+            <rect
+                width={svgWidth}
+                height={svgHeight}
+                fill="url(#canvas-vignette)"
+            />
+
+            {!isViewMode && (
+                <rect
+                    width={svgWidth}
+                    height={svgHeight}
+                    fill="url(#drag-grid)"
+                    style={{
+                        opacity: 1,
+                        transition: 'opacity 200ms ease',
+                    }}
+                    pointerEvents="none"
+                />
+            )}
+
+            <line
+                x1={svgWidth - 1}
+                y1={0}
+                x2={svgWidth - 1}
+                y2={svgHeight}
+                stroke="var(--border)"
+                strokeOpacity={0.85}
+                strokeWidth={2}
+                pointerEvents="none"
+            />
+            <line
+                x1={0}
+                y1={svgHeight - 1}
+                x2={svgWidth}
+                y2={svgHeight - 1}
+                stroke="var(--border)"
+                strokeOpacity={0.85}
+                strokeWidth={2}
+                pointerEvents="none"
+            />
+        </>
+    )
+}
+
+
