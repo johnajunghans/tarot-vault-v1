@@ -49,6 +49,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="dark"
           enableSystem
+          storageKey="tarot-vault-theme"
         >
           <ConvexClientProvider>
             <TooltipProvider delay={1000}>

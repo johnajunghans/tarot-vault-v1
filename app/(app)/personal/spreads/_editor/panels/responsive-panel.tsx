@@ -4,6 +4,7 @@ import type { RefObject } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ResizableHandle, ResizablePanel } from "@/components/ui/resizable";
+import { cn } from "@/lib/utils";
 
 interface ResponsivePanelProps {
     children: React.ReactNode;
@@ -49,6 +50,15 @@ export function ResponsivePanel({
     hideHandle = false,
 }: ResponsivePanelProps) {
 
+    const isPanelInset = true
+
+    const isCollapsed = panelRef?.current?.isCollapsed()
+    const insetVariantStyles = cn(
+        "my-2 border shadow-sm rounded-xl",
+        side === "left" ? "ml-2" : "mr-2",
+        isCollapsed ? "border-transparent" : "border-border"
+    )
+
     if (isMobile) {
         return (
             <Sheet open={open} onOpenChange={onOpenChange}>
@@ -62,7 +72,7 @@ export function ResponsivePanel({
 
     return (
         <>
-            {handlePosition === "before" && <ResizableHandle withHandle className={hideHandle ? "hidden" : ""} />}
+            {handlePosition === "before" && <ResizableHandle className={isPanelInset ? "hidden" : (hideHandle ? "hidden" : "")} />}
             <ResizablePanel
                 id={panelId}
                 collapsible={collapsible}
@@ -71,11 +81,14 @@ export function ResponsivePanel({
                 maxSize={maxSize}
                 panelRef={panelRef}
                 onResize={onPanelResize}
-                className="pointer-events-auto"
+                className={cn(
+                    "pointer-events-auto",
+                    isPanelInset && insetVariantStyles
+                )}
             >
                 {children}
             </ResizablePanel>
-            {handlePosition === "after" && <ResizableHandle withHandle className={hideHandle ? "hidden" : ""} />}
+            {handlePosition === "after" && <ResizableHandle className={isPanelInset ? "hidden" : (hideHandle ? "hidden" : "")} />}
         </>
     );
 }
