@@ -1,5 +1,10 @@
-import type { CanvasCard, CanvasDragState, CanvasGuide } from '../types'
+import type { CanvasCard, CanvasDragState } from '../types'
 import { CARD_HEIGHT, CARD_WIDTH } from '../../lib'
+
+export interface CanvasGuide {
+    axis: 'v' | 'h'
+    pos: number
+}
 
 export function generateGuideLines(
     effectiveCards: CanvasCard[],

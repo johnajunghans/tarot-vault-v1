@@ -3,11 +3,10 @@ import { gsap } from 'gsap'
 import { Draggable } from 'gsap/Draggable'
 import { useGSAP } from '@gsap/react'
 import {
-    CANVAS_BOUNDS,
     CARD_HEIGHT,
     CARD_WIDTH,
-    GRID_SIZE,
 } from '../../lib'
+import { snapClampAxis } from '../drag/snap'
 import { CanvasCard } from '../types'
 
 gsap.registerPlugin(Draggable)
@@ -54,20 +53,8 @@ export default function useCanvasCardTransform(
             const [instance] = Draggable.create(group, {
                 type: 'x,y',
                 liveSnap: {
-                    x: (value) => {
-                        const snapped = Math.round(value / GRID_SIZE) * GRID_SIZE
-                        return Math.max(
-                            CANVAS_BOUNDS.minX,
-                            Math.min(CANVAS_BOUNDS.maxX, snapped)
-                        )
-                    },
-                    y: (value) => {
-                        const snapped = Math.round(value / GRID_SIZE) * GRID_SIZE
-                        return Math.max(
-                            CANVAS_BOUNDS.minY,
-                            Math.min(CANVAS_BOUNDS.maxY, snapped)
-                        )
-                    },
+                    x: (value) => snapClampAxis(value, 'x'),
+                    y: (value) => snapClampAxis(value, 'y'),
                 },
                 onDragStart: function () {
                     console.log("drag start")

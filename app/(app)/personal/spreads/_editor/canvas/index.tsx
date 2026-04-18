@@ -11,13 +11,13 @@ import {
 import SpreadCard from './card'
 import CanvasGuides from './guide-lines'
 import { useCanvasSelection, CanvasMarquee } from './multi-select'
-import { useCanvasDrag } from './hooks/use-canvas-drag'
-import { OffscreenPointers, useCanvasOffscreenPointers } from '@spreads/_editor/canvas/offscreen-pointers'
+import { useCanvasDrag } from './drag'
+import { OffscreenPointers, useCanvasOffscreenPointers } from './offscreen-pointers'
 import { useCardLayering } from './hooks/use-canvas-card-layering'
 import { 
     useCanvasViewport,
     CanvasScrollbars 
-} from '@spreads/_editor/canvas/viewport'
+} from './viewport'
 import type {
     CanvasCard,
     SpreadCanvasHandle,

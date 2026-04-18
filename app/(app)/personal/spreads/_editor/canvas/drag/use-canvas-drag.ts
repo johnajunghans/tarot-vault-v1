@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLatestRef } from '@/hooks/use-latest-ref'
-import { getSnappedClampedPosition } from '../lib/geometry'
-import { CANVAS_BOUNDS, GRID_SIZE } from '../../lib'
 import type { CanvasCard } from '../types'
 import type { CanvasPoint, SpreadCanvasPositionUpdate } from '../types'
+import { snapClampDragPoint } from './snap'
 
 type TransientPositions = Record<number, CanvasPoint>
 
@@ -48,9 +47,7 @@ function buildDragUpdates(
     x: number,
     y: number,
     groupDragOrigins: Map<number, CanvasPoint>,
-    dragStartPos: CanvasPoint | null,
-    bounds = CANVAS_BOUNDS,
-    gridSize = GRID_SIZE
+    dragStartPos: CanvasPoint | null
 ) {
     const updates: TransientPositions = {
         [index]: { x, y },
@@ -61,14 +58,10 @@ function buildDragUpdates(
         const dy = y - dragStartPos.y
 
         for (const [groupIndex, origin] of groupDragOrigins) {
-            const { x: clampedX, y: clampedY } = getSnappedClampedPosition(
+            updates[groupIndex] = snapClampDragPoint(
                 origin.x + dx,
-                origin.y + dy,
-                bounds,
-                gridSize
+                origin.y + dy
             )
-
-            updates[groupIndex] = { x: clampedX, y: clampedY }
         }
     }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { CanvasCard, OffscreenPointer } from '../types'
+import type { CanvasCard } from '../types'
 import {
     getRect,
     getRectCenter,
@@ -12,6 +12,14 @@ import { getCanvasViewportRect } from '../viewport/viewport'
 import { CARD_HEIGHT, CARD_WIDTH } from '../../lib'
 
 const POINTER_EDGE_PADDING = 18
+
+export interface OffscreenPointer {
+    index: number
+    x: number
+    y: number
+    rotation: number
+    label: string
+}
 
 interface UseCanvasOffscreenPointersArgs {
     effectiveCards: CanvasCard[]

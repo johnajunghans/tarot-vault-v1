@@ -1,8 +1,8 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { useCanvasOffscreenPointers } from './use-canvas-offscreen-pointers'
-import type { CanvasCard, OffscreenPointer } from '../types'
+import { OffscreenPointer, useCanvasOffscreenPointers } from './use-canvas-offscreen-pointers'
+import type { CanvasCard } from '../types'
 
 function makeCard(overrides: Partial<CanvasCard>): CanvasCard {
     return {

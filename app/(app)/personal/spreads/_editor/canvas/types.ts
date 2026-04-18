@@ -18,23 +18,10 @@ export interface CanvasPoint {
     y: number
 }
 
-export interface CanvasGuide {
-    axis: 'v' | 'h'
-    pos: number
-}
-
 export interface CanvasDragState {
     index: number
     x: number
     y: number
-}
-
-export interface OffscreenPointer {
-    index: number
-    x: number
-    y: number
-    rotation: number
-    label: string
 }
 
 export type SpreadCanvasViewportRequest =

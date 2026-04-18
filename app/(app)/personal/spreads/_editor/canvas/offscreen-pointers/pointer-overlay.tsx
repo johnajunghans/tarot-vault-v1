@@ -2,7 +2,7 @@
 
 import { ArrowUp01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import type { OffscreenPointer } from '../types'
+import { OffscreenPointer } from './use-canvas-offscreen-pointers'
 
 const POINTER_ICON_SIZE = 16
 

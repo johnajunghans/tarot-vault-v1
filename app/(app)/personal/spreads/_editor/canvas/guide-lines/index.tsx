@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import { CanvasCard, CanvasDragState, CanvasGuide } from '../types'
-import { generateGuideLines } from './generate-guide-lines'
+import { CanvasCard, CanvasDragState } from '../types'
+import { CanvasGuide, generateGuideLines } from './generate-guide-lines'
 
 interface CanvasGuidesProps {
     effectiveCards: CanvasCard[]
