@@ -5,18 +5,12 @@ import { memo, useCallback, useRef, useState } from 'react'
 import { CARD_WIDTH, CARD_HEIGHT } from '../../../lib'
 import { getNextKeyAngle, normalizeRotationForStorage } from '../../../lib/rotation'
 import CardButtonGroup from './card-button-group'
-
-const BUTTON_R = 14
-const BUTTON_ICON_SIZE = 14
-const BUTTON_SIZE = BUTTON_R * 2
-const TOOLTIP_DELAY = 1000
-const ROTATION_SENSITIVITY = 1.2
-/** 1 = full 1/zoom compensation; lower = softer (less shrink at max zoom, less growth at min zoom). */
-const BUTTON_ZOOM_COMPENSATION = 0.72
-const PANEL_COLS = 3
-const PANEL_ROWS = 2
-const PANEL_WIDTH = BUTTON_SIZE * PANEL_COLS
-const PANEL_HEIGHT = BUTTON_SIZE * PANEL_ROWS
+import {
+    BUTTON_ZOOM_COMPENSATION,
+    PANEL_HEIGHT,
+    PANEL_WIDTH,
+    ROTATION_SENSITIVITY,
+} from './button-panel-constants'
 
 interface CardButtonPanelProps {
     cardIndex: number

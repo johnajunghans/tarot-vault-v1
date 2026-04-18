@@ -10,14 +10,11 @@ import {
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import CardButton from './card-button'
-
-const BUTTON_R = 14
-const BUTTON_SIZE = BUTTON_R * 2
-const TOOLTIP_DELAY = 1000
-const PANEL_COLS = 3
-const PANEL_ROWS = 2
-const PANEL_WIDTH = BUTTON_SIZE * PANEL_COLS
-const PANEL_HEIGHT = BUTTON_SIZE * PANEL_ROWS
+import {
+    PANEL_HEIGHT,
+    PANEL_WIDTH,
+    TOOLTIP_DELAY,
+} from './button-panel-constants'
 
 interface CenteredButtonPanelProps {
     x: number

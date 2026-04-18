@@ -6,8 +6,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { Button } from '@/components/ui/button'
 import { TooltipRoot, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-
-const BUTTON_ICON_SIZE = 14
+import { BUTTON_ICON_SIZE } from './button-panel-constants'
 
 interface CardButtonProps {
     label: string
