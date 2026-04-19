@@ -44,7 +44,7 @@ function getLayeredCardIndices(
 // Keeps SVG card groups stacked in the right visual order. The base order comes
 // from card z-values, then DOM order is adjusted so selected and dragged cards
 // are visually on top while interacting.
-export function useCardLayering({
+export function useCanvasCardLayering({
     effectiveCards,
     selectedCardIndex,
     draggingIndex,

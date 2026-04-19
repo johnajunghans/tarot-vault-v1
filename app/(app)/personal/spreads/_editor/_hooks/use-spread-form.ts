@@ -11,16 +11,22 @@ import {
     CARD_SPACING_X,
     CARD_WIDTH,
     generateCardAt,
-} from "../lib"
-import { useSpreadCanvasModel } from "../canvas/hooks/use-canvas-model"
+} from "../_lib"
+import { useSpreadCanvasModel } from "./use-canvas-model"
 
 interface UseSpreadFormOptions {
     defaultValues?: SpreadForm
     isViewMode?: boolean
 }
 
-// Central hook for spread editing. It owns the form state, the positions field
-// array, and the higher-level actions shared by both create and edit screens.
+/**
+ * Central hook for spread editing. It owns the form state, the positions field
+ * array, and the higher-level actions shared by both create and edit screens.
+ *
+ * @param {UseSpreadFormOptions} [options] - Optional settings for the spread form:
+ *   - defaultValues: Pre-populated form values for editing mode.
+ *   - isViewMode: If true, disables editing and canvas undo/redo history.
+ */
 export function useSpreadForm(options?: UseSpreadFormOptions) {
     // ------------ FORM STATE ------------ //
 

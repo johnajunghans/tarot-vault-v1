@@ -4,8 +4,8 @@ import {
     getLayersWithBackCard,
     getLayersWithFrontCard,
     getNextKeyAngle,
-} from '../../lib'
-import { CanvasCard } from '../types'
+} from '../../../_lib'
+import { CanvasCard } from '../../types'
 
 export function useCanvasCardButtonActions (
     effectiveCards: CanvasCard[],

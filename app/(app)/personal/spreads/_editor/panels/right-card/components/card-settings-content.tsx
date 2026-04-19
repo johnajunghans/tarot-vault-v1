@@ -7,7 +7,7 @@ import {
   getLayersWithFrontCard,
   normalizeRotationForStorage,
   snapToGrid,
-} from "@/app/(app)/personal/spreads/_editor/lib";
+} from "../../../_lib";
 import NumberField from "@/components/form/number-field";
 import SwitchField from "@/components/form/switch-field";
 import TextareaField from "@/components/form/textarea-field";

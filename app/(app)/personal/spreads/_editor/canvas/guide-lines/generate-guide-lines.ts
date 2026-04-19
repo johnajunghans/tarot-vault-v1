@@ -1,5 +1,5 @@
 import type { CanvasCard, CanvasDragState } from '../types'
-import { CARD_HEIGHT, CARD_WIDTH } from '../../lib'
+import { CARD_HEIGHT, CARD_WIDTH } from '../../_lib'
 
 export interface CanvasGuide {
     axis: 'v' | 'h'

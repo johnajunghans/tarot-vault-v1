@@ -3,20 +3,18 @@
 import type { SpreadForm } from '@/types/spreads'
 import type { UseFormReturn } from 'react-hook-form'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CanvasCard } from '../types'
+import type { CanvasCard } from '../canvas/types'
 import type {
     SpreadCanvasHandle,
     SpreadCanvasPositionUpdate,
-} from '../types'
-import { ZOOM_MIN } from '../viewport/zoom/zoom'
-import {
-    reconcileContinuousRotations,
-    resolveContinuousRotation,
-} from '../lib/continuous-rotation'
+} from '../canvas/types'
+import { ZOOM_MIN } from '../canvas/viewport/zoom/zoom'
 import {
     normalizeRotationForStorage,
-} from '../../lib/rotation'
-import { useCanvasHistory } from '../undo-redo'
+    reconcileContinuousRotations,
+    resolveContinuousRotation
+} from '../_lib/rotation'
+import { useCanvasHistory } from '../canvas/undo-redo'
 
 interface UseSpreadCanvasModelArgs {
     cards: ReadonlyArray<{ id: string }>
@@ -27,9 +25,17 @@ interface UseSpreadCanvasModelArgs {
     enabled?: boolean
 }
 
-// Keeps canvas-specific UI state in sync with the spread form. The form remains
-// the source of truth for persisted values, while this hook handles selection,
-// zoom display, and rotation behavior needed for smooth canvas interactions.
+/**
+ * Keeps canvas-specific UI state in sync with the spread form. Intended to be
+ * called only from `useSpreadForm`, which owns RHF `useForm` / `useFieldArray`.
+ * The form remains the source of truth for persisted values; this hook handles
+ * selection, zoom display, and rotation behavior for smooth canvas interactions.
+ *
+ * @param cards - Field array rows from RHF `useFieldArray` (stable ids per card).
+ * @param form - Full RHF form instance for `SpreadForm`.
+ * @param watchedPositions - Live `positions` slice from `useWatch` (partial while typing).
+ * @param enabled - When false, undo/redo history does not record (e.g. view mode).
+ */
 export function useSpreadCanvasModel({
     cards,
     form,

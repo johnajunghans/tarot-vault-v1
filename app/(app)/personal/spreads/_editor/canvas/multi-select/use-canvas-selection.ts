@@ -10,8 +10,8 @@ import {
 } from 'react'
 import { useLatestRef } from '@/hooks/use-latest-ref'
 import type { CanvasCard } from '../types'
-import { getRect, rectsIntersect } from '../lib/geometry'
-import { CARD_HEIGHT, CARD_WIDTH } from '../../lib'
+import { getRect, rectsIntersect } from '../_lib/geometry'
+import { CARD_HEIGHT, CARD_WIDTH } from '../../_lib'
 import type { CanvasPoint } from '../types'
 
 interface UseCanvasSelectionArgs {

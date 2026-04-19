@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { generateGuideLines } from './generate-guide-lines'
 import type { CanvasCard, CanvasDragState } from '../types'
-import { CARD_HEIGHT, CARD_WIDTH } from '../../lib'
+import { CARD_HEIGHT, CARD_WIDTH } from '../../_lib'
 
 function makeCard(overrides: Partial<CanvasCard> = {}): CanvasCard {
     return {

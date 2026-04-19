@@ -13,7 +13,7 @@ import CanvasGuides from './guide-lines'
 import { useCanvasSelection, CanvasMarquee } from './multi-select'
 import { useCanvasDrag } from './drag'
 import { OffscreenPointers, useCanvasOffscreenPointers } from './offscreen-pointers'
-import { useCardLayering } from './hooks/use-canvas-card-layering'
+import { useCanvasCardLayering } from './layering'
 import { 
     useCanvasViewport,
     CanvasScrollbars 
@@ -28,7 +28,7 @@ import { useTheme } from 'next-themes'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
     getCenteredCardPlacement,
-} from './lib/geometry'
+} from './_lib/geometry'
 import {
     CANVAS_BOUNDS,
     CANVAS_HEIGHT,
@@ -37,8 +37,8 @@ import {
     CARD_WIDTH,
     GRID_SIZE,
     CANVAS_CENTER
-} from '../lib'
-import { useCanvasCardButtonActions } from './hooks/use-canvas-card-button-actions'
+} from '../_lib'
+import { useCanvasCardButtonActions } from './card/button-panel/use-canvas-card-button-actions'
 
 interface SpreadCanvasProps {
     cards: CanvasCard[]
@@ -187,7 +187,7 @@ function SpreadCanvasComponent(
 
     // Determines DOM/card stacking order and keeps refs to rendered card groups
     // for effects that depend on the actual SVG elements.
-    const { cardsLayerRef, registerCardRef, baseSortedCards } = useCardLayering({
+    const { cardsLayerRef, registerCardRef, baseSortedCards } = useCanvasCardLayering({
         effectiveCards,
         selectedCardIndex,
         draggingIndex: dragging?.index ?? null,

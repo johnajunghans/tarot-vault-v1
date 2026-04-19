@@ -1,6 +1,6 @@
 import SpreadDetail from "./spread-detail";
 import { Id } from "@/convex/_generated/dataModel";
-import { getPanelLayout } from "../_lib/get-panel-layout";
+import { getPanelLayout } from "../__lib/get-panel-layout";
 
 interface EditSpreadPageProps {
   params: Promise<{ id: string }>

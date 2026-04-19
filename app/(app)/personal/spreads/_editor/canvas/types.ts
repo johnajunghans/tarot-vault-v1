@@ -1,6 +1,6 @@
 'use client'
 
-import type { SpreadBounds } from '../lib'
+import type { SpreadBounds } from '../_lib'
 
 /** Card data for canvas (no position field; index is used instead). */
 export interface CanvasCard {

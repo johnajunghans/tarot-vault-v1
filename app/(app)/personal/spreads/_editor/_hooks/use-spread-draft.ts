@@ -10,7 +10,7 @@ import {
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
     createDraftTimestamp,
-} from "../lib"
+} from "../_lib"
 
 interface UseSpreadDraftOptions {
     form: UseFormReturn<SpreadForm>

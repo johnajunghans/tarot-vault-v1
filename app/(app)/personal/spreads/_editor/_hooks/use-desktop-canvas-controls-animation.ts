@@ -12,7 +12,7 @@ import {
   CONTROLS_CLOSE_HIDE_DURATION,
   CONTROLS_CLOSE_SHOW_DURATION,
   CONTROLS_CLOSE_REAPPEAR_DELAY,
-} from "@/app/(app)/personal/spreads/_editor/panels/right-card/hooks/use-card-panel-animation";
+} from "../panels/right-card/hooks/use-card-panel-animation";
 
 function getControlsXOffset(panelWidth: number) {
   if (panelWidth <= 0) return 0;

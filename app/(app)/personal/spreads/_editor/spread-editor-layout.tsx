@@ -1,6 +1,6 @@
 "use client"
 
-import { useDesktopCanvasControlsAnimation } from "./hooks/use-desktop-canvas-controls-animation"
+import { useDesktopCanvasControlsAnimation } from "./_hooks/use-desktop-canvas-controls-animation"
 import { useCallback, useRef, useState } from "react"
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { type Layout } from "react-resizable-panels"
@@ -10,8 +10,8 @@ import SpreadSettingsPanel from "@spreads/_editor/panels/left-spread"
 import CardSettingsPanel from "@spreads/_editor/panels/right-card"
 import ConfirmDialog from "@/app/(app)/_components/confirm-dialog"
 import { useAppHotkey } from "@/hooks/use-app-hotkey"
-import type { UseSpreadFormReturn } from "./hooks/use-spread-form"
-import type { UseSpreadEditorReturn } from "./hooks/use-spread-editor"
+import type { UseSpreadFormReturn } from "./_hooks/use-spread-form"
+import type { UseSpreadEditorReturn } from "./_hooks/use-spread-editor"
 
 interface SpreadEditorLayoutProps {
     spreadForm: UseSpreadFormReturn
