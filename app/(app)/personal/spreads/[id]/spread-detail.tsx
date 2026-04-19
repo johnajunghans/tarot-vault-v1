@@ -34,6 +34,7 @@ import {
     mapPositionsForApi,
     SpreadEditorLayout,
 } from "../_editor";
+import { DRAFT_KEY_PREFIX } from "../_editor/_lib";
 
 interface SpreadDetailProps {
     spreadId: Id<"spreads">
@@ -244,7 +245,7 @@ export default function SpreadDetail({
             date: timestamp,
             numberOfCards: spread.positions.length,
         };
-        localStorage.setItem(`spread-draft-${timestamp}`, JSON.stringify(draft));
+        localStorage.setItem(`${DRAFT_KEY_PREFIX}${timestamp}`, JSON.stringify(draft));
         router.push(routes.personal.spreads.new.draft(timestamp));
     }, [spread, router]);
 

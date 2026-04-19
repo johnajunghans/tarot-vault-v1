@@ -10,6 +10,7 @@ import {
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
     createDraftTimestamp,
+    DRAFT_KEY_PREFIX,
 } from "../_lib"
 
 interface UseSpreadDraftOptions {
@@ -35,7 +36,7 @@ export function useSpreadDraft({
     const router = useRouter()
 
     const [draftDate] = useState(() => loadedDraftDate ?? createDraftTimestamp())
-    const draftKey = draftDate ? `spread-draft-${draftDate}` : ""
+    const draftKey = draftDate ? `${DRAFT_KEY_PREFIX}${draftDate}` : ""
     const isDiscardingRef = useRef(false)
 
     // ------------ LOAD DRAFT ------------ //
@@ -51,7 +52,7 @@ export function useSpreadDraft({
             return () => window.cancelAnimationFrame(frame)
         }
 
-        const raw = localStorage.getItem(`spread-draft-${loadedDraftDate}`)
+        const raw = localStorage.getItem(`${DRAFT_KEY_PREFIX}${loadedDraftDate}`)
         if (!raw) {
             const frame = window.requestAnimationFrame(() => {
                 setViewportRequest(emptyCanvasViewportRequest)

@@ -19,6 +19,7 @@ import { routes } from "@/lib/routes"
 import type { CardDB, SpreadDraft } from "@/types/spreads"
 import SpreadCardActions from "./components/spread-card-actions"
 import SpreadThumbnail from "./components/spread-thumbnail"
+import { DRAFT_KEY_PREFIX } from "../../_editor/_lib"
 
 export interface SpreadCardProps {
     name: string
@@ -48,7 +49,7 @@ export default function SpreadCard({
           : ""
 
     function handleDeleteDraft(draftDate: number) {
-        localStorage.removeItem(`spread-draft-${draftDate}`)
+        localStorage.removeItem(`${DRAFT_KEY_PREFIX}${draftDate}`)
         setDrafts((prevDrafts) => prevDrafts.filter((draft) => draft.date !== draftDate))
         setShowDeleteDialog(false)
     }
