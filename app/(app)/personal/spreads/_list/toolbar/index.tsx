@@ -1,9 +1,15 @@
 "use client"
 
 import type { RefObject } from "react"
+import { useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { FilterIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Button } from "@/components/ui/button"
+import { useIsMobile } from "@/hooks/use-mobile"
 import FilterToggleGroup from "./components/filter-toggle-group"
 import FavoritesToggle from "./components/favorites-toggle"
+import FilterSheet from "./components/filter-sheet"
 import SearchInput from "./components/search-input"
 import SortMenu from "./components/sort-menu"
 import type { SpreadFilter, SpreadSortDir, SpreadSortField } from "./filter-spreads"
@@ -27,6 +33,8 @@ export default function SpreadsToolbar({
     onSearchChange,
     searchInputRef,
 }: SpreadsToolbarProps) {
+    const isMobile = useIsMobile()
+    const [sheetOpen, setSheetOpen] = useState(false)
     const pathname = usePathname()
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -60,23 +68,55 @@ export default function SpreadsToolbar({
         updateParams(updates)
     }
 
+    function handleReset() {
+        updateParams({ view: null, fav: null, sort: null, dir: null })
+    }
+
     return (
         <div className="flex flex-wrap items-center gap-2 w-full pb-4">
-            <FilterToggleGroup
-                filter={filter}
-                onChange={handleFilterChange}
-            />
-            <FavoritesToggle
-                favoritesOnly={favoritesOnly}
-                onToggle={(pressed) => updateParams({ fav: pressed ? "1" : null })}
-                disabled={filter === "drafts"}
-            />
-            <SortMenu
-                    sortField={sortField}
-                    sortDir={sortDir}
-                    onSortFieldChange={(field) => updateParams({ sort: field === "date" ? null : field })}
-                    onSortDirChange={(dir) => updateParams({ dir: dir === "desc" ? null : dir })}
-                />
+            {isMobile ? (
+                <>
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        aria-label="Filters and sort"
+                        onClick={() => setSheetOpen(true)}
+                    >
+                        <HugeiconsIcon icon={FilterIcon} />
+                    </Button>
+                    <FilterSheet
+                        open={sheetOpen}
+                        onOpenChange={setSheetOpen}
+                        filter={filter}
+                        favoritesOnly={favoritesOnly}
+                        sortField={sortField}
+                        sortDir={sortDir}
+                        onFilterChange={handleFilterChange}
+                        onFavoritesToggle={(pressed) => updateParams({ fav: pressed ? "1" : null })}
+                        onSortFieldChange={(field) => updateParams({ sort: field === "date" ? null : field })}
+                        onSortDirChange={(dir) => updateParams({ dir: dir === "desc" ? null : dir })}
+                        onReset={handleReset}
+                    />
+                </>
+            ) : (
+                <>
+                    <FilterToggleGroup
+                        filter={filter}
+                        onChange={handleFilterChange}
+                    />
+                    <FavoritesToggle
+                        favoritesOnly={favoritesOnly}
+                        onToggle={(pressed) => updateParams({ fav: pressed ? "1" : null })}
+                        disabled={filter === "drafts"}
+                    />
+                    <SortMenu
+                        sortField={sortField}
+                        sortDir={sortDir}
+                        onSortFieldChange={(field) => updateParams({ sort: field === "date" ? null : field })}
+                        onSortDirChange={(dir) => updateParams({ dir: dir === "desc" ? null : dir })}
+                    />
+                </>
+            )}
             <div className="ml-auto flex items-center gap-2">
                 <SearchInput
                     search={search}
