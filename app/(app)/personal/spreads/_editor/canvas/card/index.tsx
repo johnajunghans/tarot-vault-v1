@@ -8,7 +8,7 @@ import {
     CARD_HOVER_HIT_PADDING_X,
     CARD_HOVER_HIT_PADDING_Y,
     CARD_WIDTH,
-} from '../../_lib'
+} from '../../lib'
 
 gsap.registerPlugin(Draggable)
 

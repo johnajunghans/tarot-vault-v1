@@ -34,7 +34,7 @@ import {
     mapPositionsForApi,
     SpreadEditorLayout,
 } from "../_editor";
-import { DRAFT_KEY_PREFIX } from "../_editor/_lib";
+import { DRAFT_KEY_PREFIX } from "../_editor/lib";
 
 interface SpreadDetailProps {
     spreadId: Id<"spreads">

@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useAppHotkey } from '../use-app-hotkey'
-import { shouldFocusSpreadsSearchHotkey } from '@/app/(app)/personal/spreads/__lib/hotkeys'
+import { shouldFocusSpreadsSearchHotkey } from '@/app/(app)/personal/spreads/_lib/hotkeys'
 
 afterEach(() => {
     cleanup()

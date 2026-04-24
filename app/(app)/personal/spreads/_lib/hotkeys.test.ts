@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
     isEditableHotkeyTarget,
     shouldFocusSpreadsSearchHotkey,
-} from '../hotkeys'
+} from './hotkeys'
 
 describe('spreads hotkey helpers', () => {
     it('treats form controls and contenteditable elements as editable targets', () => {

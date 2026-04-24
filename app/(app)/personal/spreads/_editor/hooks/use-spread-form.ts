@@ -11,7 +11,7 @@ import {
     CARD_SPACING_X,
     CARD_WIDTH,
     generateCardAt,
-} from "../_lib"
+} from "../lib"
 import { useSpreadCanvasModel } from "./use-canvas-model"
 
 interface UseSpreadFormOptions {

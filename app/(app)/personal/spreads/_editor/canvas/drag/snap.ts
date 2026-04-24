@@ -1,11 +1,11 @@
 'use client'
 
-import { CANVAS_BOUNDS, GRID_SIZE } from '../../_lib'
+import { CANVAS_BOUNDS, GRID_SIZE } from '../../lib'
 import {
     clampToRange,
     getSnappedClampedPosition,
     snapToGrid,
-} from '../_lib/geometry'
+} from '../lib/geometry'
 import type { CanvasPoint } from '../types'
 
 // Snap + clamp helpers used by every drag surface (GSAP liveSnap on the card

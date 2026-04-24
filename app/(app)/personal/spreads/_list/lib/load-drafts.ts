@@ -1,5 +1,5 @@
 import type { SpreadDraft } from "@/types/spreads"
-import { DRAFT_KEY_PREFIX } from "../../_editor/_lib"
+import { DRAFT_KEY_PREFIX } from "../../_editor/lib"
 
 /**
  * Reads all spread drafts from localStorage.

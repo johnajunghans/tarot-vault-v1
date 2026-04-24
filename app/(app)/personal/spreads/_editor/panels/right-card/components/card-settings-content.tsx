@@ -7,7 +7,7 @@ import {
   getLayersWithFrontCard,
   normalizeRotationForStorage,
   snapToGrid,
-} from "../../../_lib";
+} from "../../../lib";
 import NumberField from "@/components/form/number-field";
 import SwitchField from "@/components/form/switch-field";
 import TextareaField from "@/components/form/textarea-field";
@@ -27,7 +27,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { type Dispatch, type ReactNode, type SetStateAction, useCallback, useMemo, useState } from "react";
 import { Controller, type UseFieldArrayRemove, useFormContext, useWatch } from "react-hook-form";
 import type { CardForm } from "@/types/spreads";
-import CardPanelHeader from "./card-panel-header";
+import { PanelHeader } from "../../shared/panel-header";
 
 const TOOLTIP_DELAY = 500;
 
@@ -321,7 +321,7 @@ export default function CardSettingsContent({
   return (
     <>
       <div className="flex h-full flex-col gap-5 overflow-y-auto p-4">
-        <CardPanelHeader
+        <PanelHeader
           title={`Position ${selectedCardIndex !== null ? selectedCardIndex + 1 : ""}`.trim()}
           actions={headerActions}
         />

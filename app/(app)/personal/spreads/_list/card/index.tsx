@@ -19,7 +19,7 @@ import { routes } from "@/lib/routes"
 import type { CardDB, SpreadDraft } from "@/types/spreads"
 import SpreadCardActions from "./components/spread-card-actions"
 import SpreadThumbnail from "./components/spread-thumbnail"
-import { DRAFT_KEY_PREFIX } from "../../_editor/_lib"
+import { DRAFT_KEY_PREFIX } from "../../_editor/lib"
 
 export interface SpreadCardProps {
     name: string

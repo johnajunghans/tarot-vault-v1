@@ -1,6 +1,6 @@
 "use client";
 
-import { useAnimatedDesktopPanel } from "@/app/(app)/personal/spreads/_editor/panels/use-animated-desktop-panel";
+import { useAnimatedDesktopPanel } from "@/app/(app)/personal/spreads/_editor/panels/shared/use-animated-desktop-panel";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { type RefObject, useRef } from "react";

@@ -5,7 +5,7 @@ import { useGSAP } from '@gsap/react'
 import {
     CARD_HEIGHT,
     CARD_WIDTH,
-} from '../../_lib'
+} from '../../lib'
 import { snapClampAxis } from '../drag/snap'
 import { CanvasCard } from '../types'
 

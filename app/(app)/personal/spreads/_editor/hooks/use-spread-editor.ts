@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from "react"
 import type { PanelImperativeHandle } from "react-resizable-panels"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { CANVAS_CENTER } from "../_lib"
+import { CANVAS_CENTER } from "../lib"
 import { useValidationErrorHandler } from "./use-validation-error-handler"
 import type { SpreadCanvasViewportRequest } from "../canvas/types"
 import type { UseSpreadFormReturn } from "./use-spread-form"

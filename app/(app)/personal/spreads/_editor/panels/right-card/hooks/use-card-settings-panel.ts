@@ -2,6 +2,7 @@
 
 import { useCardPanelAnimation } from "./use-card-panel-animation";
 import { useAppHotkey } from "@/hooks/use-app-hotkey";
+import { useLatestRef } from "@/hooks/use-latest-ref";
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { usePanelRef } from "react-resizable-panels";
 
@@ -52,6 +53,25 @@ export function useCardSettingsPanel({
     return lastExpandedWidthRef.current;
   }, [panelRef]);
 
+  const onPanelBeforeOpen = useCallback(() => {
+    onBeforeDesktopOpen?.(getPanelWidth());
+  }, [getPanelWidth, onBeforeDesktopOpen]);
+
+  const onPanelAfterOpen = useCallback(() => {
+    const panelWidth = getPanelWidth();
+    onDesktopWidthChange?.(panelWidth);
+    onAfterDesktopOpen?.(panelWidth);
+  }, [getPanelWidth, onAfterDesktopOpen, onDesktopWidthChange]);
+
+  const onPanelBeforeClose = useCallback(() => {
+    onBeforeDesktopClose?.(getPanelWidth());
+  }, [getPanelWidth, onBeforeDesktopClose]);
+
+  const onPanelAfterClose = useCallback(() => {
+    onAfterDesktopClose?.(0);
+    onDesktopWidthChange?.(0);
+  }, [onAfterDesktopClose, onDesktopWidthChange]);
+
   const {
     hideHandle: isCollapsed,
     panelContentRef,
@@ -64,21 +84,10 @@ export function useCardSettingsPanel({
     onOpenChange,
     panelRef,
     focusTargetId,
-    onBeforeOpen: () => {
-      onBeforeDesktopOpen?.(getPanelWidth());
-    },
-    onAfterOpen: () => {
-      const panelWidth = getPanelWidth();
-      onDesktopWidthChange?.(panelWidth);
-      onAfterDesktopOpen?.(panelWidth);
-    },
-    onBeforeClose: () => {
-      onBeforeDesktopClose?.(getPanelWidth());
-    },
-    onAfterClose: () => {
-      onAfterDesktopClose?.(0);
-      onDesktopWidthChange?.(0);
-    },
+    onBeforeOpen: onPanelBeforeOpen,
+    onAfterOpen: onPanelAfterOpen,
+    onBeforeClose: onPanelBeforeClose,
+    onAfterClose: onPanelAfterClose,
   });
 
   const handleClosePanel = useCallback(() => {
@@ -115,6 +124,14 @@ export function useCardSettingsPanel({
     onDesktopWidthChange?.(getPanelWidth());
   }, [getPanelWidth, onDesktopWidthChange, panelRef, setSelectedCardIndex, syncCollapsedState]);
 
+  // Latest refs for the desktop sync effect (deps stay `selectedCardIndex`-driven only). See
+  // useLatestRef — values are read inside rAF, after that commit's effects, so refs are current.
+  const openPanelRef = useLatestRef(openPanel);
+  const closePanelRef = useLatestRef(closePanel);
+  const syncCollapsedStateRef = useLatestRef(syncCollapsedState);
+  const getPanelWidthRef = useLatestRef(getPanelWidth);
+  const onDesktopWidthChangeRef = useLatestRef(onDesktopWidthChange);
+
   useEffect(() => {
     if (isMobile) return;
 
@@ -126,13 +143,13 @@ export function useCardSettingsPanel({
         if (selectedCardIndex !== null) {
           setVisibleSelectedCardIndex(selectedCardIndex);
           panel.expand();
-          onDesktopWidthChange?.(getPanelWidth());
+          onDesktopWidthChangeRef.current?.(getPanelWidthRef.current());
         } else {
           setVisibleSelectedCardIndex(null);
           panel.collapse();
-          onDesktopWidthChange?.(0);
+          onDesktopWidthChangeRef.current?.(0);
         }
-        syncCollapsedState();
+        syncCollapsedStateRef.current();
         didInitRef.current = true;
         return;
       }
@@ -141,10 +158,10 @@ export function useCardSettingsPanel({
 
       if (selectedCardIndex !== null) {
         setVisibleSelectedCardIndex(selectedCardIndex);
-        openPanel();
+        openPanelRef.current();
       } else if (!panel.isCollapsed()) {
         isClosingRef.current = true;
-        closePanel(() => {
+        closePanelRef.current(() => {
           isClosingRef.current = false;
           setVisibleSelectedCardIndex(null);
         });
@@ -152,7 +169,7 @@ export function useCardSettingsPanel({
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [closePanel, getPanelWidth, isMobile, onDesktopWidthChange, openPanel, panelRef, selectedCardIndex, syncCollapsedState]);
+  }, [isMobile, panelRef, selectedCardIndex]);
 
   useEffect(() => {
     if (selectedCardIndex === null || cards.some((_, index) => index === selectedCardIndex)) return;

@@ -4,8 +4,8 @@ import { type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { FieldSeparator } from "@/components/ui/field";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { SpreadForm } from "@/types/spreads";
-import { CardOverviewReadOnly } from "./card-overview";
-import SpreadPanelHeader from "./spread-panel-header";
+import { CardOverviewReadOnly } from "../card-overview";
+import { PanelHeader } from "../../shared/panel-header";
 
 interface SpreadDetailsContentProps {
   cards: Record<"id", string>[];
@@ -26,7 +26,7 @@ export default function SpreadDetailsContent({
 
   return (
     <div className="flex h-full flex-col gap-5 overflow-y-auto p-4">
-      <SpreadPanelHeader title="Spread Details" actions={headerActions} />
+      <PanelHeader title="Spread Details" actions={headerActions} />
       <div className="flex flex-col gap-3">
         <div>
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">

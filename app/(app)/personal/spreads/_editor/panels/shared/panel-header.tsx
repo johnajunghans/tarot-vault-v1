@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
-interface CardPanelHeaderProps {
+interface PanelHeaderProps {
   title: string;
   actions?: ReactNode;
 }
 
-export default function CardPanelHeader({ title, actions }: CardPanelHeaderProps) {
+export function PanelHeader({ title, actions }: PanelHeaderProps) {
   return (
     <div className="flex w-full items-center justify-between gap-8">
       <h3 className="font-display text-base font-bold tracking-tight">{title}</h3>

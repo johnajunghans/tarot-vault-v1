@@ -28,7 +28,7 @@ import { useTheme } from 'next-themes'
 import { useIsMobile } from '@/hooks/use-mobile'
 import {
     getCenteredCardPlacement,
-} from './_lib/geometry'
+} from './lib/geometry'
 import {
     CANVAS_BOUNDS,
     CANVAS_HEIGHT,
@@ -37,7 +37,7 @@ import {
     CARD_WIDTH,
     GRID_SIZE,
     CANVAS_CENTER
-} from '../_lib'
+} from '../lib'
 import { useCanvasCardButtonActions } from './card/button-panel/use-canvas-card-button-actions'
 
 interface SpreadCanvasProps {

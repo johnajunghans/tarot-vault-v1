@@ -4,7 +4,7 @@ import { FieldSeparator } from "@/components/ui/field";
 import type { CardForm } from "@/types/spreads";
 import type { ReactNode } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import CardPanelHeader from "./card-panel-header";
+import { PanelHeader } from "../../shared/panel-header";
 
 interface CardDetailsContentProps {
   selectedCardIndex: number | null;
@@ -23,7 +23,7 @@ export default function CardDetailsContent({
 
   return (
     <div className="flex h-full flex-col gap-5 overflow-y-auto p-4">
-      <CardPanelHeader
+      <PanelHeader
         title={`Position ${selectedCardIndex !== null ? selectedCardIndex + 1 : ""}`.trim()}
         actions={headerActions}
       />

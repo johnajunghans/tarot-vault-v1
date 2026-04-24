@@ -11,7 +11,7 @@ import {
     normalizeCardsToCanvasCenter,
     createDraftTimestamp,
     DRAFT_KEY_PREFIX,
-} from "../_lib"
+} from "../lib"
 
 interface UseSpreadDraftOptions {
     form: UseFormReturn<SpreadForm>

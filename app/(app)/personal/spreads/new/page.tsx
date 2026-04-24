@@ -1,5 +1,5 @@
 import CreateSpread from "./create-spread";
-import { getPanelLayout } from "../__lib/get-panel-layout";
+import { getPanelLayout } from "../_lib/get-panel-layout";
 
 interface NewSpreadPageProps {
   searchParams: Promise<{ draft?: string }>

@@ -104,6 +104,7 @@ export function useAnimatedDesktopPanel({
 
   const openPanel = useCallback(
     (onComplete?: () => void) => {
+      console.log("open panel run")
       if (isMobile) {
         onOpenChange?.(true);
         onComplete?.();

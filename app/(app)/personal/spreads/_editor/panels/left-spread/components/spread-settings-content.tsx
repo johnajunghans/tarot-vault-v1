@@ -6,8 +6,8 @@ import { UseFieldArrayMove, UseFieldArrayRemove, useFormContext } from "react-ho
 import TextField from "@/components/form/text-field";
 import TextareaField from "@/components/form/textarea-field";
 import type { SpreadForm } from "@/types/spreads";
-import CardOverview from "./card-overview";
-import SpreadPanelHeader from "./spread-panel-header";
+import CardOverview from "../card-overview";
+import { PanelHeader } from "../../shared/panel-header";
 
 interface SpreadSettingsContentProps {
   cards: Record<"id", string>[];
@@ -34,7 +34,7 @@ export default function SpreadSettingsContent({
 
   return (
     <div className="flex h-full flex-col gap-5 overflow-y-auto p-4">
-      <SpreadPanelHeader title="Spread Settings" actions={headerActions} />
+      <PanelHeader title="Spread Settings" actions={headerActions} />
       <form>
         <FieldSet>
           <TextField

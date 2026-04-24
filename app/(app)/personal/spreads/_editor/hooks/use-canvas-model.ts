@@ -13,7 +13,7 @@ import {
     normalizeRotationForStorage,
     reconcileContinuousRotations,
     resolveContinuousRotation
-} from '../_lib/rotation'
+} from '../lib/rotation'
 import { useCanvasHistory } from '../canvas/undo-redo'
 
 interface UseSpreadCanvasModelArgs {

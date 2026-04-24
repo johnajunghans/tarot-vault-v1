@@ -1,7 +1,7 @@
 'use client'
 
 import { DEFAULT_ZOOM, clampZoom, normalizeZoom } from './zoom'
-import { CANVAS_CENTER } from '../../_lib'
+import { CANVAS_CENTER } from '../../lib'
 import type { SpreadCanvasViewportRequest } from '../types'
 import { clampPan, getPanForCanvasPoint } from './viewport'
 

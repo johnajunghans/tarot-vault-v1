@@ -7,7 +7,7 @@ import { routes } from "@/lib/routes"
 import { useLayoutDispatch } from "@/components/providers/layout-provider"
 import { useAppHotkey } from "@/hooks/use-app-hotkey"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
-import { shouldFocusSpreadsSearchHotkey } from "./__lib/hotkeys"
+import { shouldFocusSpreadsSearchHotkey } from "./_lib/hotkeys"
 import SpreadsList from "./_list"
 
 export default function Spreads() {

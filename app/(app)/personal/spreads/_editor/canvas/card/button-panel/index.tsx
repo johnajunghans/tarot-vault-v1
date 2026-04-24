@@ -2,8 +2,8 @@
 
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { memo, useCallback, useRef, useState } from 'react'
-import { CARD_WIDTH, CARD_HEIGHT } from '../../../_lib'
-import { getNextKeyAngle, normalizeRotationForStorage } from '../../../_lib/rotation'
+import { CARD_WIDTH, CARD_HEIGHT } from '../../../lib'
+import { getNextKeyAngle, normalizeRotationForStorage } from '../../../lib/rotation'
 import CardButtonGroup from './card-button-group'
 import {
     BUTTON_ZOOM_COMPENSATION,

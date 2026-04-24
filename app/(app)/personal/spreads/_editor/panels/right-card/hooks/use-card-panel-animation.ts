@@ -1,8 +1,8 @@
 "use client";
 
-import { useAnimatedDesktopPanel } from "@/app/(app)/personal/spreads/_editor/panels/use-animated-desktop-panel";
+import { useAnimatedDesktopPanel } from "@/app/(app)/personal/spreads/_editor/panels/shared/use-animated-desktop-panel";
 import { gsap } from "gsap";
-import { type RefObject } from "react";
+import { useCallback, type RefObject } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 
 interface UseCardPanelAnimationArgs {
@@ -52,6 +52,14 @@ export function useCardPanelAnimation({
   onBeforeClose,
   onAfterClose,
 }: UseCardPanelAnimationArgs): UseCardPanelAnimationReturn {
+  const beforeOpen = useCallback(
+    (proceed: () => void) => {
+      onBeforeOpen?.();
+      gsap.delayedCall(BEFORE_OPEN_DELAY, proceed);
+    },
+    [onBeforeOpen]
+  );
+
   const {
     isCollapsed,
     panelContentRef,
@@ -66,10 +74,7 @@ export function useCardPanelAnimation({
     focusTargetId,
     contentHiddenState: PANEL_HIDDEN_STATE,
     contentVisibleState: PANEL_VISIBLE_STATE,
-    beforeOpen: (proceed) => {
-      onBeforeOpen?.();
-      gsap.delayedCall(BEFORE_OPEN_DELAY, proceed);
-    },
+    beforeOpen,
     onAfterOpen,
     onBeforeClose,
     onAfterClose,
