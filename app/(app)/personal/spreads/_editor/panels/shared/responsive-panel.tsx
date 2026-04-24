@@ -54,9 +54,9 @@ export function ResponsivePanel({
 
     const isCollapsed = panelRef?.current?.isCollapsed()
     const insetVariantStyles = cn(
-        "my-2 border shadow-sm rounded-xl",
+        "my-2 shadow-sm rounded-xl",
         side === "left" ? "ml-2" : "mr-2",
-        isCollapsed ? "border-transparent" : "border-border"
+        isCollapsed ? "border-none" : "border border-border"
     )
 
     if (isMobile) {
