@@ -22,15 +22,15 @@ export default function FilterToggleGroup({
             value={[filter]}
             onValueChange={handleValueChange}
             aria-label="Filter spreads by status"
-            size="sm"
+            size={isMobile ? "mobile-lg" : "sm"}
             spacing={1}
-            className={isMobile ? "w-full h-12 px-1 text-base" : "h-9 px-1"}
+            className={isMobile ? "w-full" : "h-9 px-1"}
         >
             {FILTER_OPTIONS.map((option) => (
                 <ToggleGroupItem
                     key={option.value}
                     value={option.value}
-                    className={isMobile ? "flex-1 h-full text-base" : undefined}
+                    className={isMobile ? "flex-1" : undefined}
                 >
                     {option.label}
                 </ToggleGroupItem>

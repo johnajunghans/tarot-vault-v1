@@ -42,7 +42,7 @@ function ToggleGroup({
       data-orientation={orientation}
       style={{ "--gap": spacing } as React.CSSProperties}
       className={cn(
-        "bg-secondary p-[3px] !rounded-lg data-[size=sm]:rounded-[min(var(--radius-md),10px)] group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] data-vertical:flex-col data-vertical:items-stretch",
+        "bg-secondary p-[3px] !rounded-lg data-[size=sm]:rounded-[min(var(--radius-md),10px)] data-[size=mobile-lg]:h-12 data-[size=mobile-lg]:px-1 data-[size=mobile-lg]:py-0 group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] data-vertical:flex-col data-vertical:items-stretch",
         className
       )}
       {...props}
@@ -77,6 +77,7 @@ function ToggleGroupItem({
           variant: context.variant || variant,
           size: context.size || size,
         }),
+        "group-data-[size=mobile-lg]/toggle-group:h-full",
         "hover:bg-transparent",
         className
       )}

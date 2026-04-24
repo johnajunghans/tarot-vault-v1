@@ -108,15 +108,15 @@ export function SortMenuInline({
                 value={[sortField]}
                 onValueChange={handleFieldChange}
                 aria-label="Sort spreads by field"
-                size="sm"
+                size="mobile-lg"
                 spacing={1}
-                className="w-full h-12 px-1"
+                className="w-full"
             >
                 {SORT_FIELD_OPTIONS.map((option) => (
                     <ToggleGroupItem
                         key={option.value}
                         value={option.value}
-                        className="flex-1 h-full text-base"
+                        className="flex-1"
                     >
                         {option.label}
                     </ToggleGroupItem>
@@ -126,14 +126,14 @@ export function SortMenuInline({
                 value={[sortDir]}
                 onValueChange={handleDirChange}
                 aria-label="Sort direction"
-                size="sm"
+                size="mobile-lg"
                 spacing={1}
-                className="w-full h-12 px-1"
+                className="w-full"
             >
-                <ToggleGroupItem value="asc" className="flex-1 h-full text-base">
+                <ToggleGroupItem value="asc" className="flex-1">
                     Ascending
                 </ToggleGroupItem>
-                <ToggleGroupItem value="desc" className="flex-1 h-full text-base">
+                <ToggleGroupItem value="desc" className="flex-1">
                     Descending
                 </ToggleGroupItem>
             </ToggleGroup>

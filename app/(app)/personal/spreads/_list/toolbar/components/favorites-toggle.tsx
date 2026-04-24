@@ -18,13 +18,14 @@ export default function FavoritesToggle({
     return (
         <Toggle
             variant="single"
+            size={isMobile ? "mobile-lg" : "lg"}
             pressed={favoritesOnly}
             onPressedChange={onToggle}
             aria-label="Show favorites only"
             className={
                 isMobile
-                    ? "w-full h-12 text-base data-[pressed]:[&>svg]:fill-gold"
-                    : "h-9 data-[pressed]:[&>svg]:fill-gold"
+                    ? "w-full data-[pressed]:[&>svg]:fill-gold"
+                    : "data-[pressed]:[&>svg]:fill-gold"
             }
             disabled={disabled}
         >

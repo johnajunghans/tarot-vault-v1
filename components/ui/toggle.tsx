@@ -14,12 +14,13 @@ const toggleVariants = cva(
           "bg-transparent text-foreground/60 hover:bg-muted aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm",
         outline:
           "border-input hover:bg-muted border bg-transparent aria-pressed:bg-muted data-[state=on]:bg-muted",
-        single: "bg-secondary text-muted-foreground hover:text-foreground data-[pressed]:text-foreground"
+        single: "bg-secondary text-muted-foreground hover:text-foreground data-[pressed]:text-foreground",
       },
       size: {
         default: "h-8 min-w-8 px-2",
         sm: "h-7 min-w-7 rounded-[min(var(--radius-md),12px)] px-1.5 text-[0.8rem]",
         lg: "h-9 min-w-9 px-2.5",
+        "mobile-lg": "h-12 min-w-12 px-4 text-base",
       },
     },
     defaultVariants: {
