@@ -11,6 +11,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
     SORT_FIELD_OPTIONS,
     type SpreadSortDir,
@@ -81,5 +82,61 @@ export default function SortMenu({
                 </DropdownMenuGroup>
             </DropdownMenuContent>
         </DropdownMenu>
+    )
+}
+
+export function SortMenuInline({
+    sortField,
+    sortDir,
+    onSortFieldChange,
+    onSortDirChange,
+}: SortMenuProps) {
+    function handleFieldChange(values: unknown[]) {
+        if (values.length === 0) return
+        onSortFieldChange(values[0] as SpreadSortField)
+    }
+
+    function handleDirChange(values: unknown[]) {
+        if (values.length === 0) return
+        onSortDirChange(values[0] as SpreadSortDir)
+    }
+
+    return (
+        <div className="flex flex-col gap-2">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sort by</span>
+            <ToggleGroup
+                value={[sortField]}
+                onValueChange={handleFieldChange}
+                aria-label="Sort spreads by field"
+                size="sm"
+                spacing={1}
+                className="w-full h-12 px-1"
+            >
+                {SORT_FIELD_OPTIONS.map((option) => (
+                    <ToggleGroupItem
+                        key={option.value}
+                        value={option.value}
+                        className="flex-1 h-full text-base"
+                    >
+                        {option.label}
+                    </ToggleGroupItem>
+                ))}
+            </ToggleGroup>
+            <ToggleGroup
+                value={[sortDir]}
+                onValueChange={handleDirChange}
+                aria-label="Sort direction"
+                size="sm"
+                spacing={1}
+                className="w-full h-12 px-1"
+            >
+                <ToggleGroupItem value="asc" className="flex-1 h-full text-base">
+                    Ascending
+                </ToggleGroupItem>
+                <ToggleGroupItem value="desc" className="flex-1 h-full text-base">
+                    Descending
+                </ToggleGroupItem>
+            </ToggleGroup>
+        </div>
     )
 }

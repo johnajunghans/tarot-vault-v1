@@ -3,7 +3,7 @@
 import type { RefObject } from "react"
 import { useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { FilterIcon } from "@hugeicons/core-free-icons"
+import { FilterHorizontalIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -78,11 +78,11 @@ export default function SpreadsToolbar({
                 <>
                     <Button
                         variant="secondary"
-                        size="icon"
+                        size="icon-lg"
                         aria-label="Filters and sort"
                         onClick={() => setSheetOpen(true)}
                     >
-                        <HugeiconsIcon icon={FilterIcon} />
+                        <HugeiconsIcon icon={FilterHorizontalIcon} size={20} strokeWidth={1.25} color="var(--muted-foreground)" className="size-5" />
                     </Button>
                     <FilterSheet
                         open={sheetOpen}
@@ -117,7 +117,7 @@ export default function SpreadsToolbar({
                     />
                 </>
             )}
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center flex-1 md:flex-0 gap-2">
                 <SearchInput
                     search={search}
                     onSearchChange={onSearchChange}

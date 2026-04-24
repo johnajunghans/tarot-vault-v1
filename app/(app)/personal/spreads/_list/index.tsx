@@ -38,7 +38,7 @@ export default function SpreadsList({ spreads, searchInputRef }: SpreadsListProp
     const spreadItems = buildSpreadList(spreads, drafts, filter, favoritesOnly, search, sortField, sortDir)
 
     return (
-        <div className="h-full min-h-0 overflow-y-auto p-4 pt-3">
+        <div className="h-full min-h-0 overflow-y-auto p-4">
             <SpreadsToolbar
                 filter={filter}
                 favoritesOnly={favoritesOnly}

@@ -6,12 +6,14 @@ interface FavoritesToggleProps {
     favoritesOnly: boolean
     onToggle: (pressed: boolean) => void
     disabled?: boolean
+    isMobile?: boolean
 }
 
 export default function FavoritesToggle({
     favoritesOnly,
     onToggle,
-    disabled=false
+    disabled = false,
+    isMobile = false,
 }: FavoritesToggleProps) {
     return (
         <Toggle
@@ -19,7 +21,11 @@ export default function FavoritesToggle({
             pressed={favoritesOnly}
             onPressedChange={onToggle}
             aria-label="Show favorites only"
-            className="h-9 data-[pressed]:[&>svg]:fill-gold"
+            className={
+                isMobile
+                    ? "w-full h-12 text-base data-[pressed]:[&>svg]:fill-gold"
+                    : "h-9 data-[pressed]:[&>svg]:fill-gold"
+            }
             disabled={disabled}
         >
             <HugeiconsIcon icon={StarIcon} />
