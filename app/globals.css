@@ -266,6 +266,12 @@ body.theme-transitioning * {
 /* ─── Hero card lift + glow ─── */
 /* On hover: left edge lifts up with a glow, hinting the card is flippable.
    Transitions smoothly in and out. */
+.hero-card-size {
+  aspect-ratio: 2 / 3;
+  flex: 0 0 auto;
+  width: min(calc(100vw - 2rem), 50svh, 32rem);
+}
+
 .hero-card-container {
   perspective: 1200px;
 }
