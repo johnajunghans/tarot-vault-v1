@@ -2,10 +2,10 @@
 
 import Link from "next/link"
 import {
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
+  ResponsiveMenuContent,
+  ResponsiveMenuItem,
+  ResponsiveMenuSeparator,
+} from "@/components/ui/responsive-menu"
 import { HugeiconsIcon } from "@hugeicons/react"
 import type { ActionDescriptor } from "@/types/layout"
 
@@ -35,11 +35,11 @@ export function ActionMenuItems({
     <>
       {items.map((item, index) => {
         if (item === "separator") {
-          return <DropdownMenuSeparator key={`sep-${index}`} />
+          return <ResponsiveMenuSeparator key={`sep-${index}`} />
         }
 
         return (
-          <DropdownMenuItem
+          <ResponsiveMenuItem
             key={item.label}
             variant={item.variant}
             disabled={item.disabled}
@@ -50,7 +50,7 @@ export function ActionMenuItems({
               <HugeiconsIcon icon={item.icon} strokeWidth={1.5} />
             )}
             <span>{item.label}</span>
-          </DropdownMenuItem>
+          </ResponsiveMenuItem>
         )
       })}
     </>
@@ -61,6 +61,7 @@ export function ActionMenuItems({
 
 type ActionDropdownContentProps = {
   items: Extract<ActionDescriptor, { type: "dropdown" }>["menuStructure"]
+  title: string
   side?: "top" | "right" | "bottom" | "left"
   align?: "start" | "center" | "end"
   sideOffset?: number
@@ -68,19 +69,21 @@ type ActionDropdownContentProps = {
 
 export function ActionDropdownContent({
   items,
+  title,
   side = "bottom",
   align = "end",
   sideOffset = 8,
 }: ActionDropdownContentProps) {
   return (
-    <DropdownMenuContent
+    <ResponsiveMenuContent
+      title={title}
       side={side}
       align={align}
       sideOffset={sideOffset}
       className="min-w-56"
     >
       <ActionMenuItems items={items} />
-    </DropdownMenuContent>
+    </ResponsiveMenuContent>
   )
 }
 

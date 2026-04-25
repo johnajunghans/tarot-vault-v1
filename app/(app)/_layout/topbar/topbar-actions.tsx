@@ -4,11 +4,11 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  ResponsiveMenu,
+  ResponsiveMenuContent,
+  ResponsiveMenuItem,
+  ResponsiveMenuTrigger,
+} from "@/components/ui/responsive-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import {
@@ -46,7 +46,7 @@ function TopbarDropdownAction({
 
   if (!renderIconOnly) {
     return (
-      <DropdownMenu
+      <ResponsiveMenu
         open={dropdownOpen}
         onOpenChange={setDropdownOpen}
       >
@@ -54,7 +54,7 @@ function TopbarDropdownAction({
           type="button"
           variant={action.variant}
           disabled={disabled}
-          render={<DropdownMenuTrigger />}
+          render={<ResponsiveMenuTrigger />}
           className={cn(
             "data-[popup-open]:[&_svg]:rotate-180",
             action.className,
@@ -70,13 +70,13 @@ function TopbarDropdownAction({
             />
           )}
         </Button>
-        <ActionDropdownContent items={action.menuStructure} />
-      </DropdownMenu>
+        <ActionDropdownContent title={action.label} items={action.menuStructure} />
+      </ResponsiveMenu>
     )
   }
 
   return (
-    <DropdownMenu
+    <ResponsiveMenu
       open={dropdownOpen}
       onOpenChange={(open) => {
         setDropdownOpen(open)
@@ -91,7 +91,7 @@ function TopbarDropdownAction({
       >
         <TooltipTrigger
           render={
-            <DropdownMenuTrigger
+            <ResponsiveMenuTrigger
               className={cn(
                 "inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-colors",
                 "hover:bg-muted hover:text-foreground",
@@ -114,8 +114,8 @@ function TopbarDropdownAction({
         </TooltipTrigger>
         <TooltipContent side="bottom">{action.label}</TooltipContent>
       </Tooltip>
-      <ActionDropdownContent items={action.menuStructure} />
-    </DropdownMenu>
+      <ActionDropdownContent title={action.label} items={action.menuStructure} />
+    </ResponsiveMenu>
   )
 }
 
@@ -220,8 +220,8 @@ function TopbarCreateButton() {
   const iconClassName = "h-5 w-5 text-muted-foreground sm:h-4 sm:w-4"
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
+    <ResponsiveMenu>
+      <ResponsiveMenuTrigger
         type="button"
         className={cn(
           buttonVariants({ variant: "default", size: "default" }),
@@ -231,14 +231,15 @@ function TopbarCreateButton() {
       >
         <span className="text-base font-normal md:text-base">New</span>
         <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2} className="h-5 w-5 duration-100 sm:h-4 sm:w-4" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
+      </ResponsiveMenuTrigger>
+      <ResponsiveMenuContent
+        title="Create"
         align="end"
         sideOffset={8}
         className="w-[min(18rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] sm:w-auto"
       >
         {CREATE_MENU_ITEMS.map((item) => (
-          <DropdownMenuItem
+          <ResponsiveMenuItem
             key={item.id}
             render={<Link href={item.href} />}
             className={itemClassName}
@@ -246,10 +247,10 @@ function TopbarCreateButton() {
           >
             <span>{item.label}</span>
             <HugeiconsIcon icon={item.icon} strokeWidth={1.25} className={iconClassName} />
-          </DropdownMenuItem>
+          </ResponsiveMenuItem>
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </ResponsiveMenuContent>
+    </ResponsiveMenu>
   )
 }
 

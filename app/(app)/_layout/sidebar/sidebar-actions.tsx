@@ -2,11 +2,11 @@
 
 import Link from "next/link"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  ResponsiveMenu,
+  ResponsiveMenuContent,
+  ResponsiveMenuItem,
+  ResponsiveMenuTrigger,
+} from "@/components/ui/responsive-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import {
@@ -57,9 +57,9 @@ function SidebarDropdownAction({
 
   return (
     <SidebarMenuItem>
-      <DropdownMenu>
+      <ResponsiveMenu>
         <SidebarMenuButton
-          render={<DropdownMenuTrigger />}
+          render={<ResponsiveMenuTrigger />}
           disabled={disabled}
           suppressTooltipOnPress
           tooltip={{
@@ -86,12 +86,13 @@ function SidebarDropdownAction({
           </span>
         </SidebarMenuButton>
         <ActionDropdownContent
+          title={action.label}
           items={action.menuStructure}
           side={state === "collapsed" ? "right" : "bottom"}
           align="start"
           sideOffset={state === "collapsed" ? 8 : 4}
         />
-      </DropdownMenu>
+      </ResponsiveMenu>
     </SidebarMenuItem>
   )
 }
@@ -185,11 +186,11 @@ export function DefaultSidebarActions() {
   const iconClassName = "h-5 w-5 text-muted-foreground sm:h-4 sm:w-4"
 
   return (
-    <DropdownMenu>
+    <ResponsiveMenu>
       <SidebarMenu className="gap-1">
         <SidebarMenuItem>
           <SidebarMenuButton
-            render={<DropdownMenuTrigger />}
+            render={<ResponsiveMenuTrigger />}
             suppressTooltipOnPress
             tooltip={{
               children: "Create",
@@ -206,14 +207,15 @@ export function DefaultSidebarActions() {
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
-      <DropdownMenuContent
+      <ResponsiveMenuContent
+        title="Create"
         side={state === "collapsed" ? "right" : "bottom"}
         align="start"
         sideOffset={state === "collapsed" ? 8 : 4}
         className="w-[min(18rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] sm:w-auto"
       >
         {CREATE_MENU_ITEMS.map((item) => (
-          <DropdownMenuItem
+          <ResponsiveMenuItem
             key={item.id}
             render={<Link href={item.href} />}
             className={itemClassName}
@@ -221,9 +223,9 @@ export function DefaultSidebarActions() {
           >
             <span>{item.label}</span>
             <HugeiconsIcon icon={item.icon} strokeWidth={1.25} className={iconClassName} />
-          </DropdownMenuItem>
+          </ResponsiveMenuItem>
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </ResponsiveMenuContent>
+    </ResponsiveMenu>
   )
 }

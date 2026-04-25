@@ -2,15 +2,15 @@ import { SortByDown01Icon, SortByUp01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Button } from "@/components/ui/button"
 import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuSeparator,
-    DropdownMenuLabel,
-    DropdownMenuGroup,
-} from "@/components/ui/dropdown-menu"
+    ResponsiveMenu,
+    ResponsiveMenuTrigger,
+    ResponsiveMenuContent,
+    ResponsiveMenuRadioGroup,
+    ResponsiveMenuRadioItem,
+    ResponsiveMenuSeparator,
+    ResponsiveMenuLabel,
+    ResponsiveMenuGroup,
+} from "@/components/ui/responsive-menu"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
     SORT_FIELD_OPTIONS,
@@ -35,8 +35,8 @@ export default function SortMenu({
     const currentSortLabel = SORT_FIELD_OPTIONS.find((option) => option.value === sortField)?.label ?? "Date"
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
+        <ResponsiveMenu>
+            <ResponsiveMenuTrigger
                 render={
                     <Button
                         variant="secondary"
@@ -48,40 +48,40 @@ export default function SortMenu({
                     </Button>
                 }
             />
-            <DropdownMenuContent align="end">
-                <DropdownMenuGroup>
-                    <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                    <DropdownMenuRadioGroup
+            <ResponsiveMenuContent title="Sort" align="end">
+                <ResponsiveMenuGroup>
+                    <ResponsiveMenuLabel>Sort by</ResponsiveMenuLabel>
+                    <ResponsiveMenuRadioGroup
                         value={sortField}
                         onValueChange={(value) => onSortFieldChange(value as SpreadSortField)}
                     >
                         {SORT_FIELD_OPTIONS.map((option) => (
-                            <DropdownMenuRadioItem
+                            <ResponsiveMenuRadioItem
                                 key={option.value}
                                 value={option.value}
                             >
                                 {option.label}
-                            </DropdownMenuRadioItem>
+                            </ResponsiveMenuRadioItem>
                         ))}
-                    </DropdownMenuRadioGroup>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator className="opacity-50 dark:opacity-100" />
-                <DropdownMenuGroup>
-                    <DropdownMenuLabel>Direction</DropdownMenuLabel>
-                    <DropdownMenuRadioGroup
+                    </ResponsiveMenuRadioGroup>
+                </ResponsiveMenuGroup>
+                <ResponsiveMenuSeparator className="opacity-50 dark:opacity-100" />
+                <ResponsiveMenuGroup>
+                    <ResponsiveMenuLabel>Direction</ResponsiveMenuLabel>
+                    <ResponsiveMenuRadioGroup
                         value={sortDir}
                         onValueChange={(value) => onSortDirChange(value as SpreadSortDir)}
                     >
-                        <DropdownMenuRadioItem value="asc">
+                        <ResponsiveMenuRadioItem value="asc">
                             <span>Ascending</span>
-                        </DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="desc">
+                        </ResponsiveMenuRadioItem>
+                        <ResponsiveMenuRadioItem value="desc">
                             <span>Descending</span>
-                        </DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-                </DropdownMenuGroup>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                        </ResponsiveMenuRadioItem>
+                    </ResponsiveMenuRadioGroup>
+                </ResponsiveMenuGroup>
+            </ResponsiveMenuContent>
+        </ResponsiveMenu>
     )
 }
 
