@@ -139,6 +139,7 @@ export default function SpreadDetail({
     // ------------ SAVE SPREAD LOGIC ------------ //
 
     const updateSpread = useMutation(api.spreads.update);
+    const viewUrl = routes.personal.spreads.id(spreadId, "view");
 
     const handleSave = useCallback(() => {
         form.handleSubmit(async (data) => {
@@ -158,7 +159,7 @@ export default function SpreadDetail({
                 initialValuesRef.current = data;
                 form.reset(data);
                 toast.success("Spread updated!");
-                router.push(routes.personal.spreads.root);
+                router.push(viewUrl);
             } catch (error) {
                 toast.error(
                     `Failed to update spread: ${error instanceof Error ? error.message : "Unknown error"}`
@@ -204,8 +205,6 @@ export default function SpreadDetail({
     }, [removeSpread, spreadId, router]);
 
     // ------------ CANCEL / DISCARD LOGIC ------------ //
-
-    const viewUrl = routes.personal.spreads.id(spreadId, "view");
 
     const handleCancel = useCallback(() => {
         if (!form.formState.isDirty) {
