@@ -14,6 +14,8 @@ interface SpreadSettingsContentProps {
   addCard: () => void;
   remove: UseFieldArrayRemove;
   move: UseFieldArrayMove;
+  onTextEditStart: () => void;
+  onTextEditEnd: () => void;
   selectedCardIndex: number | null;
   setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
   headerActions?: ReactNode;
@@ -25,12 +27,16 @@ export default function SpreadSettingsContent({
   addCard,
   remove,
   move,
+  onTextEditStart,
+  onTextEditEnd,
   selectedCardIndex,
   setSelectedCardIndex,
   headerActions,
   isMobile,
 }: SpreadSettingsContentProps) {
   const form = useFormContext<SpreadForm>();
+  const nameField = form.register("name");
+  const descriptionField = form.register("description");
 
   return (
     <div className="flex h-full flex-col gap-5 overflow-y-auto p-4">
@@ -43,14 +49,24 @@ export default function SpreadSettingsContent({
             placeholder="e.g. Celtic Cross, Daily Draw..."
             autoFocus={!isMobile}
             error={form.formState.errors.name}
-            {...form.register("name")}
+            {...nameField}
+            onFocus={onTextEditStart}
+            onBlur={(event) => {
+              nameField.onBlur(event);
+              onTextEditEnd();
+            }}
           />
           <TextareaField
             label="Description"
             id="spread-description"
             placeholder="What is this spread for? (optional)"
             error={form.formState.errors.description}
-            {...form.register("description")}
+            {...descriptionField}
+            onFocus={onTextEditStart}
+            onBlur={(event) => {
+              descriptionField.onBlur(event);
+              onTextEditEnd();
+            }}
           />
           <FieldSeparator />
         </FieldSet>

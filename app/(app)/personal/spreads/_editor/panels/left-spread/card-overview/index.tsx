@@ -155,7 +155,7 @@ export default function CardOverview({
           if (!open) setDeleteIndex(null);
         }}
         title={deleteIndex !== null ? `Remove Position ${deleteIndex + 1}?` : ""}
-        description="This position will be removed from the spread. This cannot be undone."
+        description="This position will be removed from the spread. You can undo this change before saving."
         cancelLabel="Keep it"
         confirmLabel="Remove"
         onConfirm={handleDeleteConfirm}

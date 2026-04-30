@@ -52,6 +52,9 @@ export default function SpreadEditorLayout({
         canRedo,
         undo,
         redo,
+        beginTextEdit,
+        commitTextEdit,
+        recordImmediateChange,
     } = spreadForm
 
     const {
@@ -164,6 +167,8 @@ export default function SpreadEditorLayout({
                             addCard={addCard}
                             remove={remove}
                             move={move}
+                            onTextEditStart={beginTextEdit}
+                            onTextEditEnd={commitTextEdit}
                             selectedCardIndex={selectedCardIndex}
                             setSelectedCardIndex={setSelectedCardIndex}
                             panelRef={spreadSettingsPanelRef}
@@ -182,6 +187,9 @@ export default function SpreadEditorLayout({
                             selectedCardIndex={selectedCardIndex}
                             setSelectedCardIndex={setSelectedCardIndex}
                             onRotationChange={handleCardRotationChange}
+                            onImmediateFormChange={recordImmediateChange}
+                            onTextEditStart={beginTextEdit}
+                            onTextEditEnd={commitTextEdit}
                             remove={remove}
                         />
                     </>
@@ -204,6 +212,8 @@ export default function SpreadEditorLayout({
                         addCard={addCard}
                         remove={remove}
                         move={move}
+                        onTextEditStart={beginTextEdit}
+                        onTextEditEnd={commitTextEdit}
                         cards={cards}
                         selectedCardIndex={selectedCardIndex}
                         setSelectedCardIndex={setSelectedCardIndex}
@@ -228,6 +238,9 @@ export default function SpreadEditorLayout({
                         selectedCardIndex={selectedCardIndex}
                         setSelectedCardIndex={setSelectedCardIndex}
                         onRotationChange={handleCardRotationChange}
+                        onImmediateFormChange={recordImmediateChange}
+                        onTextEditStart={beginTextEdit}
+                        onTextEditEnd={commitTextEdit}
                         remove={remove}
                         onDesktopWidthChange={syncToPanelWidth}
                         onBeforeDesktopOpen={() => animateForPanelOpen()}
@@ -277,7 +290,7 @@ export default function SpreadEditorLayout({
                         ? `Remove Position ${canvasDeleteIndex + 1}?`
                         : ""
                 }
-                description="This position will be removed from the spread. This cannot be undone."
+                description="This position will be removed from the spread. You can undo this change before saving."
                 cancelLabel="Keep it"
                 confirmLabel="Remove"
                 onConfirm={handleCanvasDeleteConfirm}

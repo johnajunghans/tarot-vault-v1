@@ -39,7 +39,7 @@ export default function CreateSpread({
     // ------------ SPREAD FORM ------------ //
 
     const spreadForm = useSpreadForm();
-    const { form, watchedValues, watchedName, watchedPositions } = spreadForm;
+    const { form, watchedValues, watchedName, watchedPositions, clearHistory } = spreadForm;
 
     // ------------ EDITOR PLUMBING ------------ //
 
@@ -66,6 +66,7 @@ export default function CreateSpread({
         setViewportRequest,
         setShowDiscardDialog,
         watchedValues,
+        clearHistory,
     });
 
     // ------------ SAVE SPREAD LOGIC ------------ //

@@ -14,7 +14,6 @@ import {
     reconcileContinuousRotations,
     resolveContinuousRotation
 } from '../lib/rotation'
-import { useCanvasHistory } from '../canvas/undo-redo'
 
 interface UseSpreadCanvasModelArgs {
     cards: ReadonlyArray<{ id: string }>
@@ -22,7 +21,7 @@ interface UseSpreadCanvasModelArgs {
     watchedPositions:
         | Array<Partial<NonNullable<SpreadForm['positions']>[number]>>
         | undefined
-    enabled?: boolean
+    recordImmediateChange: () => void
 }
 
 /**
@@ -34,13 +33,14 @@ interface UseSpreadCanvasModelArgs {
  * @param cards - Field array rows from RHF `useFieldArray` (stable ids per card).
  * @param form - Full RHF form instance for `SpreadForm`.
  * @param watchedPositions - Live `positions` slice from `useWatch` (partial while typing).
- * @param enabled - When false, undo/redo history does not record (e.g. view mode).
+ * @param recordImmediateChange - Captures a form-history snapshot before a
+ * non-text edit writes back into RHF.
  */
 export function useSpreadCanvasModel({
     cards,
     form,
     watchedPositions,
-    enabled = true,
+    recordImmediateChange,
 }: UseSpreadCanvasModelArgs) {
     // ------------ UI STATE ------------ //
 
@@ -58,16 +58,6 @@ export function useSpreadCanvasModel({
     // visual rotation even if cards are reordered or removed.
     const [cardRotations, setCardRotations] = useState<Record<string, number>>({})
     const cardRotationsRef = useRef<Record<string, number>>({})
-
-    // ------------ UNDO / REDO ------------ //
-
-    const {
-        canUndo,
-        canRedo,
-        pushSnapshot,
-        undo,
-        redo,
-    } = useCanvasHistory({ form, cards, enabled })
 
     // ------------ DERIVED CANVAS DATA ------------ //
 
@@ -153,7 +143,7 @@ export function useSpreadCanvasModel({
             const cardId = cards[index]?.id
             if (!cardId) return
 
-            pushSnapshot()
+            recordImmediateChange()
             const currentStoredRotation = form.getValues(`positions.${index}.r`) ?? 0
             const previousActualRotation =
                 cardRotationsRef.current[cardId] ??
@@ -174,31 +164,31 @@ export function useSpreadCanvasModel({
                 shouldDirty: true,
             })
         },
-        [cards, form, pushSnapshot]
+        [cards, form, recordImmediateChange]
     )
 
     // Commit drag results back into the form after the canvas finishes moving
     // one or more cards.
     const handleCanvasPositionsCommit = useCallback(
         (updates: SpreadCanvasPositionUpdate[]) => {
-            pushSnapshot()
+            recordImmediateChange()
             updates.forEach(({ index, x, y }) => {
                 form.setValue(`positions.${index}.x`, x, { shouldDirty: true })
                 form.setValue(`positions.${index}.y`, y, { shouldDirty: true })
             })
         },
-        [form, pushSnapshot]
+        [form, recordImmediateChange]
     )
 
     // Update z-index from layer changes (bring to front / send to back).
     const handleCanvasLayerChange = useCallback(
         (updates: { index: number; z: number }[]) => {
-            pushSnapshot()
+            recordImmediateChange()
             updates.forEach(({ index, z }) => {
                 form.setValue(`positions.${index}.z`, z, { shouldDirty: true })
             })
         },
-        [form, pushSnapshot]
+        [form, recordImmediateChange]
     )
 
     // ------------ PUBLIC API ------------ //
@@ -217,9 +207,5 @@ export function useSpreadCanvasModel({
         handleCardRotationChange,
         handleCanvasPositionsCommit,
         handleCanvasLayerChange,
-        canUndo,
-        canRedo,
-        undo,
-        redo,
     }
 }

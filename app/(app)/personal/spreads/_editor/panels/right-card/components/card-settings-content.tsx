@@ -36,6 +36,9 @@ interface CardSettingsContentProps {
   selectedCardIndex: number | null;
   setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
   onRotationChange: (index: number, value: number) => void;
+  onImmediateFormChange: () => void;
+  onTextEditStart: () => void;
+  onTextEditEnd: () => void;
   remove: UseFieldArrayRemove;
   headerActions?: ReactNode;
   isMobile: boolean;
@@ -46,6 +49,9 @@ export default function CardSettingsContent({
   selectedCardIndex,
   setSelectedCardIndex,
   onRotationChange,
+  onImmediateFormChange,
+  onTextEditStart,
+  onTextEditEnd,
   remove,
   headerActions,
   isMobile,
@@ -76,13 +82,18 @@ export default function CardSettingsContent({
 
   const applyLayerValues = useCallback(
     (nextLayers: number[]) => {
+      const currentLayers = (form.getValues("positions") ?? []).map((card) => clampLayer(card.z ?? 0));
+      const hasChanged = nextLayers.some((layer, index) => layer !== currentLayers[index]);
+      if (!hasChanged) return;
+
+      onImmediateFormChange();
       nextLayers.forEach((layer, index) => {
         form.setValue(`positions.${index}.z`, layer, {
           shouldDirty: true,
         });
       });
     },
-    [form]
+    [form, onImmediateFormChange]
   );
 
   const handleBringToFront = useCallback(() => {
@@ -130,7 +141,11 @@ export default function CardSettingsContent({
                 placeholder="e.g. Past, Present, Future"
                 value={field.value ?? ""}
                 onChange={(e) => field.onChange(e.target.value)}
-                onBlur={field.onBlur}
+                onFocus={onTextEditStart}
+                onBlur={() => {
+                  field.onBlur();
+                  onTextEditEnd();
+                }}
                 error={fieldState.error}
               />
             )}
@@ -147,7 +162,11 @@ export default function CardSettingsContent({
                 placeholder="What does this position represent in the reading?"
                 value={field.value ?? ""}
                 onChange={(e) => field.onChange(e.target.value)}
-                onBlur={field.onBlur}
+                onFocus={onTextEditStart}
+                onBlur={() => {
+                  field.onBlur();
+                  onTextEditEnd();
+                }}
                 error={fieldState.error}
               />
             )}
@@ -161,7 +180,12 @@ export default function CardSettingsContent({
                 label="Allow Reversals"
                 id="card-allowReverse"
                 checked={field.value ?? true}
-                onCheckedChange={field.onChange}
+                onCheckedChange={(checked) => {
+                  if (checked !== field.value) {
+                    onImmediateFormChange();
+                  }
+                  field.onChange(checked);
+                }}
                 description="Can this position hold reversed cards?"
                 error={fieldState.error}
               />
@@ -196,7 +220,12 @@ export default function CardSettingsContent({
                       label="Horizontal"
                       id={field.name}
                       value={field.value}
-                      onChangeValue={field.onChange}
+                      onChangeValue={(value) => {
+                        if (value !== field.value) {
+                          onImmediateFormChange();
+                        }
+                        field.onChange(value);
+                      }}
                       onBlurTransform={snapToGrid}
                       onBlur={field.onBlur}
                       step={15}
@@ -214,7 +243,12 @@ export default function CardSettingsContent({
                       label="Vertical"
                       id={field.name}
                       value={field.value}
-                      onChangeValue={field.onChange}
+                      onChangeValue={(value) => {
+                        if (value !== field.value) {
+                          onImmediateFormChange();
+                        }
+                        field.onChange(value);
+                      }}
                       onBlurTransform={snapToGrid}
                       onBlur={field.onBlur}
                       step={15}
@@ -235,7 +269,11 @@ export default function CardSettingsContent({
                       label="Rotation"
                       id={field.name}
                       value={field.value}
-                      onChangeValue={(value) => onRotationChange(selectedCardIndex, value)}
+                      onChangeValue={(value) => {
+                        if (value !== field.value) {
+                          onRotationChange(selectedCardIndex, value);
+                        }
+                      }}
                       onBlurTransform={normalizeRotationForStorage}
                       onBlur={field.onBlur}
                       step={1}
@@ -252,7 +290,13 @@ export default function CardSettingsContent({
                       label="Layer"
                       id={field.name}
                       value={field.value}
-                      onChangeValue={(value) => field.onChange(clampLayer(value))}
+                      onChangeValue={(value) => {
+                        const nextLayer = clampLayer(value);
+                        if (nextLayer !== field.value) {
+                          onImmediateFormChange();
+                        }
+                        field.onChange(nextLayer);
+                      }}
                       onBlurTransform={clampLayer}
                       onBlur={field.onBlur}
                       step={1}
@@ -334,7 +378,7 @@ export default function CardSettingsContent({
           if (!nextOpen) setDeleteIndex(null);
         }}
         title={deleteIndex !== null ? `Remove Position ${deleteIndex + 1}?` : ""}
-        description="This position will be removed from the spread. This cannot be undone."
+        description="This position will be removed from the spread. You can undo this change before saving."
         cancelLabel="Keep it"
         confirmLabel="Remove"
         onConfirm={handleDeleteConfirm}

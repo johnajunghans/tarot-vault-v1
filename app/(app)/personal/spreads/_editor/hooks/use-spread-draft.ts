@@ -20,6 +20,7 @@ interface UseSpreadDraftOptions {
     setViewportRequest: (request: SpreadCanvasViewportRequest) => void
     setShowDiscardDialog: (open: boolean) => void
     watchedValues: DeepPartial<SpreadForm> | undefined
+    clearHistory: () => void
 }
 
 // Manages draft persistence for the create-spread screen. Handles loading a
@@ -32,6 +33,7 @@ export function useSpreadDraft({
     setViewportRequest,
     setShowDiscardDialog,
     watchedValues,
+    clearHistory,
 }: UseSpreadDraftOptions) {
     const router = useRouter()
 
@@ -75,6 +77,7 @@ export function useSpreadDraft({
                 description: draft.description ?? "",
                 positions: normalizedPositions,
             })
+            clearHistory()
 
             const bounds = getSpreadBounds(normalizedPositions)
             nextViewportRequest = bounds
@@ -92,7 +95,7 @@ export function useSpreadDraft({
         })
 
         return () => window.cancelAnimationFrame(frame)
-    }, [emptyCanvasViewportRequest, form, loadedDraftDate, setViewportRequest])
+    }, [clearHistory, emptyCanvasViewportRequest, form, loadedDraftDate, setViewportRequest])
 
     // ------------ AUTO-SAVE DRAFT ------------ //
 
@@ -124,9 +127,10 @@ export function useSpreadDraft({
         isDiscardingRef.current = true
         localStorage.removeItem(draftKey)
         form.reset()
+        clearHistory()
         setShowDiscardDialog(false)
         router.push(routes.personal.spreads.root)
-    }, [form, router, draftKey, setShowDiscardDialog])
+    }, [clearHistory, form, router, draftKey, setShowDiscardDialog])
 
     return {
         draftKey,

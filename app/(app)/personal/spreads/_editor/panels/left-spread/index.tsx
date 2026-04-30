@@ -21,6 +21,8 @@ interface SpreadSettingsPanelProps {
   addCard?: () => void;
   remove?: UseFieldArrayRemove;
   move?: UseFieldArrayMove;
+  onTextEditStart?: () => void;
+  onTextEditEnd?: () => void;
   selectedCardIndex: number | null;
   setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
   panelRef: RefObject<PanelImperativeHandle | null>;
@@ -36,6 +38,8 @@ export default function SpreadSettingsPanel({
   addCard,
   remove,
   move,
+  onTextEditStart,
+  onTextEditEnd,
   selectedCardIndex,
   setSelectedCardIndex,
   panelRef,
@@ -172,6 +176,8 @@ export default function SpreadSettingsPanel({
               addCard={addCard!}
               remove={remove!}
               move={move!}
+              onTextEditStart={onTextEditStart!}
+              onTextEditEnd={onTextEditEnd!}
               selectedCardIndex={selectedCardIndex}
               setSelectedCardIndex={setSelectedCardIndex}
               headerActions={spreadSettingsHeaderActions}

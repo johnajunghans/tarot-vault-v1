@@ -16,7 +16,6 @@ import {
     FloppyDiskIcon,
     LibraryIcon,
     MoreIcon,
-    MoreVertical,
     PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import ConfirmDialog from "../../../_components/confirm-dialog";
@@ -86,6 +85,7 @@ export default function SpreadDetail({
         watchedName,
         watchedPositions,
         setSelectedCardIndex,
+        clearHistory,
     } = spreadForm;
 
     // ------------ EDITOR PLUMBING ------------ //
@@ -124,6 +124,7 @@ export default function SpreadDetail({
         initialValuesRef.current = normalizedValues;
         hasReset.current = true;
         form.reset(normalizedValues);
+        clearHistory();
         setViewportRequest(
             bounds
                 ? {
@@ -134,7 +135,7 @@ export default function SpreadDetail({
                   }
                 : emptyCanvasViewportRequest
         );
-    }, [emptyCanvasViewportRequest, form, mode, spread, spreadId, setViewportRequest]);
+    }, [clearHistory, emptyCanvasViewportRequest, form, mode, spread, spreadId, setViewportRequest]);
 
     // ------------ SAVE SPREAD LOGIC ------------ //
 
@@ -158,6 +159,7 @@ export default function SpreadDetail({
 
                 initialValuesRef.current = data;
                 form.reset(data);
+                clearHistory();
                 toast.success("Spread updated!");
                 router.push(viewUrl);
             } catch (error) {
@@ -168,7 +170,7 @@ export default function SpreadDetail({
                 setIsSaving(false);
             }
         }, onInvalid)();
-    }, [form, updateSpread, spreadId, router, onInvalid, setIsSaving]);
+    }, [clearHistory, form, updateSpread, spreadId, router, onInvalid, setIsSaving, viewUrl]);
 
     // ------------ DELETE SPREAD LOGIC ------------ //
 
@@ -216,11 +218,12 @@ export default function SpreadDetail({
 
     const handleConfirmDiscard = useCallback(() => {
         form.reset(initialValuesRef.current ?? undefined);
+        clearHistory();
         setSelectedCardIndex(null);
         setSpreadSheetOpen(false);
         setShowDiscardDialog(false);
         router.push(viewUrl);
-    }, [form, router, setSelectedCardIndex, setSpreadSheetOpen, setShowDiscardDialog, viewUrl]);
+    }, [clearHistory, form, router, setSelectedCardIndex, setSpreadSheetOpen, setShowDiscardDialog, viewUrl]);
 
     // ------------ USE AS TEMPLATE ------------ //
 

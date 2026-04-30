@@ -5,6 +5,7 @@ import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { spreadSchema } from "../schema"
 import type { SpreadForm } from "@/types/spreads"
+import type { UseFieldArrayMove, UseFieldArrayRemove } from "react-hook-form"
 import {
     CANVAS_CENTER,
     CARD_HEIGHT,
@@ -13,6 +14,7 @@ import {
     generateCardAt,
 } from "../lib"
 import { useSpreadCanvasModel } from "./use-canvas-model"
+import { useSpreadFormHistory } from "./use-spread-form-history"
 
 interface UseSpreadFormOptions {
     defaultValues?: SpreadForm
@@ -47,6 +49,22 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         name: "positions",
     })
 
+    const isHistoryEnabled = !options?.isViewMode
+    const history = useSpreadFormHistory({
+        form,
+        enabled: isHistoryEnabled,
+    })
+    const {
+        canUndo,
+        canRedo,
+        pushSnapshot,
+        beginTextEdit,
+        commitTextEdit,
+        undo,
+        redo,
+        clearHistory,
+    } = history
+
     // Watch the live form so the canvas and page chrome react immediately to
     // field edits made in panels or on the canvas.
     const watchedValues = useWatch({ control: form.control })
@@ -58,7 +76,7 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         cards,
         form,
         watchedPositions,
-        enabled: !options?.isViewMode,
+        recordImmediateChange: pushSnapshot,
     })
 
     const { setSelectedCardIndex } = canvasModel
@@ -78,9 +96,10 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
                   CANVAS_CENTER.x - CARD_WIDTH / 2,
                   CANVAS_CENTER.y - CARD_HEIGHT / 2
               )
+        pushSnapshot()
         append(newCard, { focusName: `positions.${nextIndex}.name` })
         setSelectedCardIndex(nextIndex)
-    }, [append, cards.length, form, setSelectedCardIndex])
+    }, [append, cards.length, form, pushSnapshot, setSelectedCardIndex])
 
     // Add a card at an explicit canvas coordinate, used by double-clicking the
     // canvas. The 78-card cap matches the domain limit for a tarot deck.
@@ -88,10 +107,28 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         (x: number, y: number) => {
             if (cards.length >= 78) return
             const newCard = generateCardAt(x, y)
+            pushSnapshot()
             append(newCard)
             setSelectedCardIndex(cards.length)
         },
-        [cards.length, append, setSelectedCardIndex]
+        [cards.length, append, pushSnapshot, setSelectedCardIndex]
+    )
+
+    const removeWithHistory: UseFieldArrayRemove = useCallback(
+        (index?: number | number[]) => {
+            pushSnapshot()
+            remove(index)
+        },
+        [pushSnapshot, remove]
+    )
+
+    const moveWithHistory: UseFieldArrayMove = useCallback(
+        (from: number, to: number) => {
+            if (from === to) return
+            pushSnapshot()
+            move(from, to)
+        },
+        [pushSnapshot, move]
     )
 
     // ------------ PUBLIC API ------------ //
@@ -99,15 +136,22 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
     return {
         form,
         cards,
-        append,
-        remove,
-        move,
+        remove: removeWithHistory,
+        move: moveWithHistory,
         watchedValues,
         watchedName,
         watchedPositions,
         addCard,
         addCardAt,
         ...canvasModel,
+        canUndo,
+        canRedo,
+        undo,
+        redo,
+        clearHistory,
+        beginTextEdit,
+        commitTextEdit,
+        recordImmediateChange: pushSnapshot,
     }
 }
 

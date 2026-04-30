@@ -19,6 +19,9 @@ interface CardSettingsPanelProps {
   selectedCardIndex: number | null;
   setSelectedCardIndex: Dispatch<SetStateAction<number | null>>;
   onRotationChange?: (index: number, value: number) => void;
+  onImmediateFormChange?: () => void;
+  onTextEditStart?: () => void;
+  onTextEditEnd?: () => void;
   remove?: UseFieldArrayRemove;
   isMobile: boolean;
   isViewMode?: boolean;
@@ -36,6 +39,9 @@ export default function CardSettingsPanel({
   selectedCardIndex,
   setSelectedCardIndex,
   onRotationChange,
+  onImmediateFormChange,
+  onTextEditStart,
+  onTextEditEnd,
   remove,
   isMobile,
   isViewMode = false,
@@ -123,6 +129,9 @@ export default function CardSettingsPanel({
             selectedCardIndex={activeSelectedCardIndex}
             setSelectedCardIndex={setSelectedCardIndex}
             onRotationChange={onRotationChange!}
+            onImmediateFormChange={onImmediateFormChange!}
+            onTextEditStart={onTextEditStart!}
+            onTextEditEnd={onTextEditEnd!}
             remove={remove!}
             headerActions={closeHeaderAction}
             isMobile={isMobile}
