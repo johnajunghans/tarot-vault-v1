@@ -38,7 +38,7 @@ import {
     GRID_SIZE,
     CANVAS_CENTER
 } from '../lib'
-import { useCanvasCardButtonActions } from './card/button-panel/use-canvas-card-button-actions'
+// import { useCanvasCardButtonActions } from './card/button-panel/use-canvas-card-button-actions'
 
 interface SpreadCanvasProps {
     cards: CanvasCard[]
@@ -48,9 +48,9 @@ interface SpreadCanvasProps {
     onCardSelect: (index: number | null) => void
     onCanvasDoubleClick?: (x: number, y: number) => void
     onPositionsCommit?: (updates: SpreadCanvasPositionUpdate[]) => void
-    onRotationChange?: (index: number, value: number) => void
-    onLayerChange?: (updates: { index: number; z: number }[]) => void
-    onDeleteCard?: (index: number) => void
+    // onRotationChange?: (index: number, value: number) => void
+    // onLayerChange?: (updates: { index: number; z: number }[]) => void
+    // onDeleteCard?: (index: number) => void
     onZoomDisplayChange?: (zoom: number) => void
     onZoomBoundsChange?: (minZoom: number) => void
     isViewMode?: boolean
@@ -69,9 +69,9 @@ function SpreadCanvasComponent(
         onCardSelect,
         onCanvasDoubleClick,
         onPositionsCommit,
-        onRotationChange,
-        onLayerChange,
-        onDeleteCard,
+        // onRotationChange,
+        // onLayerChange,
+        // onDeleteCard,
         onZoomDisplayChange,
         onZoomBoundsChange,
         isViewMode = false,
@@ -228,19 +228,19 @@ function SpreadCanvasComponent(
 
     // ------------ CARD BUTTON ACTIONS ------------ //
 
-    const {
-        layers,
-        layerBounds,
-        handleRotateStep,
-        handleButtonRotationChange,
-        handleBringToFront,
-        handleSendToBack
-    } = useCanvasCardButtonActions(
-        effectiveCards,
-        onRotationChange,
-        rotationAngles,
-        onLayerChange
-    )
+    // const {
+    //     layers,
+    //     layerBounds,
+    //     handleRotateStep,
+    //     handleButtonRotationChange,
+    //     handleBringToFront,
+    //     handleSendToBack
+    // } = useCanvasCardButtonActions(
+    //     effectiveCards,
+    //     onRotationChange,
+    //     rotationAngles,
+    //     onLayerChange
+    // )
 
     // ------------ RENDER ------------ //
 
@@ -319,14 +319,6 @@ function SpreadCanvasComponent(
                                         renderRotation={
                                             rotationAngles?.[index] ?? card.r
                                         }
-                                        zoom={zoom}
-                                        totalCards={effectiveCards.length}
-                                        isAtFront={
-                                            (layers[index] ?? 0) >= layerBounds.max
-                                        }
-                                        isAtBack={
-                                            (layers[index] ?? 0) <= layerBounds.min
-                                        }
                                         selected={index === selectedCardIndex}
                                         groupSelected={
                                             isViewMode
@@ -339,16 +331,25 @@ function SpreadCanvasComponent(
                                         isViewMode={isViewMode}
                                         isMobile={isMobile}
                                         disableHeavyEffects={isZoomInteractionActive}
-                                        onRotateStep={handleRotateStep}
-                                        onRotationChange={handleButtonRotationChange}
-                                        onBringToFront={handleBringToFront}
-                                        onSendToBack={handleSendToBack}
-                                        onDeleteCard={onDeleteCard ?? (() => {})}
                                         onDragStart={handleDragStart}
                                         onDragEnd={handleDragEnd}
                                         onDrag={handleDrag}
                                         onClick={handleCardClick}
                                         registerRef={registerCardRef}
+
+                                        // zoom={zoom}
+                                        // totalCards={effectiveCards.length}
+                                        // isAtFront={
+                                        //     (layers[index] ?? 0) >= layerBounds.max
+                                        // }
+                                        // isAtBack={
+                                        //     (layers[index] ?? 0) <= layerBounds.min
+                                        // }
+                                        // onRotateStep={handleRotateStep}
+                                        // onRotationChange={handleButtonRotationChange}
+                                        // onBringToFront={handleBringToFront}
+                                        // onSendToBack={handleSendToBack}
+                                        // onDeleteCard={onDeleteCard ?? (() => {})}
                                     />
                                 )
                             })}

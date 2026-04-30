@@ -13,7 +13,7 @@ import {
 gsap.registerPlugin(Draggable)
 
 import { CardBack } from './card-back'
-import CardButtonPanel from './button-panel'
+// import CardButtonPanel from './button-panel'
 import type { CanvasCard } from '../types'
 import useCanvasCardTransform from './use-canvas-card-transform'
 import { getCardNameFontSize, normalizeRotationForDisplay, splitCardNameIntoLines } from './card-helpers'
@@ -25,52 +25,55 @@ interface CanvasCardProps {
     card: CanvasCard
     index: number
     renderRotation: number
-    zoom: number
-    totalCards: number
-    isAtFront: boolean
-    isAtBack: boolean
     selected: boolean
     groupSelected: boolean
     isDraggingInGroup: boolean
     isViewMode: boolean
     isMobile: boolean
     disableHeavyEffects: boolean
-    onRotateStep: (index: number, direction: 1 | -1) => void
-    onRotationChange: (index: number, value: number) => void
-    onBringToFront: (index: number) => void
-    onSendToBack: (index: number) => void
-    onDeleteCard: (index: number) => void
     onDragStart: (index: number, x: number, y: number) => void
     onDragEnd: (index: number, x: number, y: number) => void
     onDrag: (index: number, x: number, y: number) => void
     onClick: (index: number) => void
     registerRef: (index: number, el: SVGGElement | null) => void
+
+    // --- Button panel only props ---
+    // zoom: number
+    // totalCards: number
+    // isAtFront: boolean
+    // isAtBack: boolean
+    // onRotateStep: (index: number, direction: 1 | -1) => void
+    // onRotationChange: (index: number, value: number) => void
+    // onBringToFront: (index: number) => void
+    // onSendToBack: (index: number) => void
+    // onDeleteCard: (index: number) => void
 }
 
 function CanvasCard({
     card,
     index,
     renderRotation,
-    zoom,
-    totalCards,
-    isAtFront,
-    isAtBack,
     selected,
     groupSelected,
     isDraggingInGroup,
     isViewMode,
     isMobile,
     disableHeavyEffects,
-    onRotateStep,
-    onRotationChange,
-    onBringToFront,
-    onSendToBack,
-    onDeleteCard,
     onDragStart,
     onDragEnd,
     onDrag,
     onClick,
     registerRef,
+
+    // zoom,
+    // totalCards,
+    // isAtFront,
+    // isAtBack,
+    // onRotateStep,
+    // onRotationChange,
+    // onBringToFront,
+    // onSendToBack,
+    // onDeleteCard
 }: CanvasCardProps) {
 
     const [isHovered, setIsHovered] = useState(false)
@@ -81,7 +84,7 @@ function CanvasCard({
         rotationRef,
         badgeRef,
         isDraggingState,
-        setDisableDrag
+        // setDisableDrag // button panel only
     } = useCanvasCardTransform(
         card,
         index,
@@ -270,7 +273,7 @@ function CanvasCard({
                     )}
                 </g>
             </g>
-            {showButtonFrame && (
+            {/* {showButtonFrame && (
                 <CardButtonPanel
                     cardIndex={index}
                     rotation={renderRotation}
@@ -285,7 +288,7 @@ function CanvasCard({
                     isAtBack={isAtBack}
                     setDisableDrag={setDisableDrag}
                 />
-            )}
+            )} */}
         </g>
     )
 }
@@ -295,26 +298,27 @@ function arePropsEqual(prev: CanvasCardProps, next: CanvasCardProps): boolean {
         prev.card === next.card &&
         prev.index === next.index &&
         prev.renderRotation === next.renderRotation &&
-        prev.zoom === next.zoom &&
-        prev.totalCards === next.totalCards &&
-        prev.isAtFront === next.isAtFront &&
-        prev.isAtBack === next.isAtBack &&
         prev.selected === next.selected &&
         prev.groupSelected === next.groupSelected &&
         prev.isDraggingInGroup === next.isDraggingInGroup &&
         prev.isViewMode === next.isViewMode &&
         prev.isMobile === next.isMobile &&
         prev.disableHeavyEffects === next.disableHeavyEffects &&
-        prev.onRotateStep === next.onRotateStep &&
-        prev.onRotationChange === next.onRotationChange &&
-        prev.onBringToFront === next.onBringToFront &&
-        prev.onSendToBack === next.onSendToBack &&
-        prev.onDeleteCard === next.onDeleteCard &&
         prev.onDragStart === next.onDragStart &&
         prev.onDragEnd === next.onDragEnd &&
         prev.onDrag === next.onDrag &&
         prev.onClick === next.onClick &&
         prev.registerRef === next.registerRef
+
+        // prev.zoom === next.zoom &&
+        // prev.totalCards === next.totalCards &&
+        // prev.isAtFront === next.isAtFront &&
+        // prev.isAtBack === next.isAtBack &&
+        // prev.onRotateStep === next.onRotateStep &&
+        // prev.onRotationChange === next.onRotationChange &&
+        // prev.onBringToFront === next.onBringToFront &&
+        // prev.onSendToBack === next.onSendToBack &&
+        // prev.onDeleteCard === next.onDeleteCard &&
     )
 }
 

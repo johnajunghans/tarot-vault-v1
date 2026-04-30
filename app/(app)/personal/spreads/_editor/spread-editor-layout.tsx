@@ -43,7 +43,7 @@ export default function SpreadEditorLayout({
         move,
         handleCardRotationChange,
         handleCanvasPositionsCommit,
-        handleCanvasLayerChange,
+        // handleCanvasLayerChange,
         zoomDisplay,
         setZoomDisplay,
         minZoomDisplay,
@@ -127,9 +127,9 @@ export default function SpreadEditorLayout({
                     onCanvasDoubleClick={isViewMode ? undefined : addCardAt}
                     isViewMode={isViewMode}
                     onPositionsCommit={handleCanvasPositionsCommit}
-                    onRotationChange={handleCardRotationChange}
-                    onLayerChange={handleCanvasLayerChange}
-                    onDeleteCard={isViewMode ? undefined : setCanvasDeleteIndex}
+                    // onRotationChange={handleCardRotationChange}
+                    // onLayerChange={handleCanvasLayerChange}
+                    // onDeleteCard={isViewMode ? undefined : setCanvasDeleteIndex}
                     onZoomDisplayChange={setZoomDisplay}
                     onZoomBoundsChange={setMinZoomDisplay}
                     viewportRequest={viewportRequest}
