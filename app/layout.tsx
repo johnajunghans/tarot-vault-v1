@@ -40,7 +40,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html 
+      lang="en" 
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+    >
       <body
         className={`${philosopher.variable} ${nunito.variable} ${nunito.className} ${jetbrainsMono.variable} antialiased`}
       >
