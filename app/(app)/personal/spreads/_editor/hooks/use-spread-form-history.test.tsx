@@ -2,6 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
+import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import type { SpreadForm } from '@/types/spreads'
 import { useSpreadFormHistory } from './use-spread-form-history'
@@ -28,7 +29,13 @@ afterEach(() => {
 
 function HistoryHarness() {
     const form = useForm<SpreadForm>({ defaultValues })
-    const history = useSpreadFormHistory({ form, enabled: true })
+    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(0)
+    const history = useSpreadFormHistory({
+        form,
+        enabled: true,
+        selectedCardIndex,
+        setSelectedCardIndex,
+    })
     const values = useWatch({ control: form.control })
     const nameField = form.register('name')
 
@@ -46,6 +53,7 @@ function HistoryHarness() {
             <div data-testid="name">{values.name}</div>
             <div data-testid="x">{values.positions?.[0]?.x}</div>
             <div data-testid="count">{values.positions?.length ?? 0}</div>
+            <div data-testid="selected">{String(selectedCardIndex)}</div>
             <div data-testid="can-undo">{String(history.canUndo)}</div>
             <button
                 type="button"
@@ -61,6 +69,7 @@ function HistoryHarness() {
                 onClick={() => {
                     history.pushSnapshot()
                     form.setValue('positions', [], { shouldDirty: true })
+                    setSelectedCardIndex(null)
                 }}
             >
                 Remove card
@@ -111,9 +120,11 @@ describe('useSpreadFormHistory', () => {
 
         fireEvent.click(screen.getByText('Remove card'))
         expect(screen.getByTestId('count').textContent).toBe('0')
+        expect(screen.getByTestId('selected').textContent).toBe('null')
 
         fireEvent.click(screen.getByText('Undo'))
         expect(screen.getByTestId('count').textContent).toBe('1')
         expect(screen.getByTestId('x').textContent).toBe('10')
+        expect(screen.getByTestId('selected').textContent).toBe('0')
     })
 })

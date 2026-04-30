@@ -2,6 +2,7 @@
 
 import type { SpreadForm } from '@/types/spreads'
 import type { UseFormReturn } from 'react-hook-form'
+import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CanvasCard } from '../canvas/types'
 import type {
@@ -21,6 +22,8 @@ interface UseSpreadCanvasModelArgs {
     watchedPositions:
         | Array<Partial<NonNullable<SpreadForm['positions']>[number]>>
         | undefined
+    selectedCardIndex: number | null
+    setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
     recordImmediateChange: () => void
 }
 
@@ -33,6 +36,8 @@ interface UseSpreadCanvasModelArgs {
  * @param cards - Field array rows from RHF `useFieldArray` (stable ids per card).
  * @param form - Full RHF form instance for `SpreadForm`.
  * @param watchedPositions - Live `positions` slice from `useWatch` (partial while typing).
+ * @param selectedCardIndex - Currently selected card index owned by `useSpreadForm`.
+ * @param setSelectedCardIndex - Selection setter owned by `useSpreadForm`.
  * @param recordImmediateChange - Captures a form-history snapshot before a
  * non-text edit writes back into RHF.
  */
@@ -40,6 +45,8 @@ export function useSpreadCanvasModel({
     cards,
     form,
     watchedPositions,
+    selectedCardIndex,
+    setSelectedCardIndex,
     recordImmediateChange,
 }: UseSpreadCanvasModelArgs) {
     // ------------ UI STATE ------------ //
@@ -50,7 +57,6 @@ export function useSpreadCanvasModel({
 
     // Selection and zoom display live outside the form because they are view
     // concerns rather than persisted spread data.
-    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
     const [zoomDisplay, setZoomDisplay] = useState(1)
     const [minZoomDisplay, setMinZoomDisplay] = useState(ZOOM_MIN)
 
@@ -131,7 +137,7 @@ export function useSpreadCanvasModel({
         return () => {
             window.cancelAnimationFrame(frame)
         }
-    }, [cards.length])
+    }, [cards.length, setSelectedCardIndex])
 
     // ------------ FORM WRITE-BACKS ------------ //
 

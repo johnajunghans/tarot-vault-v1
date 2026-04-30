@@ -4,21 +4,27 @@ import { useCallback, useRef, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { useAppHotkey } from '@/hooks/use-app-hotkey'
 import type { CardForm, SpreadForm } from '@/types/spreads'
+import type { Dispatch, SetStateAction } from 'react'
 
 const MAX_HISTORY = 50
 
-type SpreadSnapshot = SpreadForm
+interface SpreadSnapshot {
+    form: SpreadForm
+    selectedCardIndex: number | null
+}
 
 interface UseSpreadFormHistoryArgs {
     form: UseFormReturn<SpreadForm>
     enabled: boolean
+    selectedCardIndex: number | null
+    setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
 }
 
 function cloneCard(card: CardForm): CardForm {
     return {
         name: card.name ?? '',
         description: card.description ?? '',
-        allowReverse: card.allowReverse,
+        allowReverse: card.allowReverse ?? true,
         x: card.x ?? 0,
         y: card.y ?? 0,
         r: card.r ?? 0,
@@ -26,12 +32,18 @@ function cloneCard(card: CardForm): CardForm {
     }
 }
 
-function cloneSnapshot(values: SpreadForm): SpreadSnapshot {
+function cloneFormSnapshot(values: SpreadForm): SpreadForm {
     return {
         name: values.name ?? '',
         description: values.description ?? '',
         positions: (values.positions ?? []).map(cloneCard),
     }
+}
+
+function clampSelectedIndex(index: number | null, cardCount: number) {
+    if (index === null) return null
+    if (cardCount === 0) return null
+    return Math.max(0, Math.min(index, cardCount - 1))
 }
 
 function cardsAreEqual(a: CardForm, b: CardForm) {
@@ -46,7 +58,7 @@ function cardsAreEqual(a: CardForm, b: CardForm) {
     )
 }
 
-function snapshotsAreEqual(a: SpreadSnapshot, b: SpreadSnapshot) {
+function formSnapshotsAreEqual(a: SpreadForm, b: SpreadForm) {
     return (
         a.name === b.name &&
         a.description === b.description &&
@@ -55,9 +67,18 @@ function snapshotsAreEqual(a: SpreadSnapshot, b: SpreadSnapshot) {
     )
 }
 
+function snapshotsAreEqual(a: SpreadSnapshot, b: SpreadSnapshot) {
+    return (
+        a.selectedCardIndex === b.selectedCardIndex &&
+        formSnapshotsAreEqual(a.form, b.form)
+    )
+}
+
 export function useSpreadFormHistory({
     form,
     enabled,
+    selectedCardIndex,
+    setSelectedCardIndex,
 }: UseSpreadFormHistoryArgs) {
     const undoStackRef = useRef<SpreadSnapshot[]>([])
     const redoStackRef = useRef<SpreadSnapshot[]>([])
@@ -72,8 +93,11 @@ export function useSpreadFormHistory({
     }, [])
 
     const takeSnapshot = useCallback(
-        () => cloneSnapshot(form.getValues()),
-        [form]
+        (): SpreadSnapshot => ({
+            form: cloneFormSnapshot(form.getValues()),
+            selectedCardIndex,
+        }),
+        [form, selectedCardIndex]
     )
 
     const pushSnapshot = useCallback(
@@ -104,7 +128,7 @@ export function useSpreadFormHistory({
     const pushSnapshotIfChangedSince = useCallback(
         (snapshot: SpreadSnapshot | null) => {
             if (!snapshot) return
-            if (snapshotsAreEqual(snapshot, takeSnapshot())) return
+            if (formSnapshotsAreEqual(snapshot.form, takeSnapshot().form)) return
             pushSnapshot(snapshot)
         },
         [pushSnapshot, takeSnapshot]
@@ -126,9 +150,15 @@ export function useSpreadFormHistory({
     const applySnapshot = useCallback(
         (snapshot: SpreadSnapshot) => {
             textEditStartSnapshotRef.current = null
-            form.reset(snapshot, { keepDefaultValues: true })
+            form.reset(snapshot.form, { keepDefaultValues: true })
+            setSelectedCardIndex(
+                clampSelectedIndex(
+                    snapshot.selectedCardIndex,
+                    snapshot.form.positions.length
+                )
+            )
         },
-        [form]
+        [form, setSelectedCardIndex]
     )
 
     const undo = useCallback(() => {
@@ -170,11 +200,6 @@ export function useSpreadFormHistory({
     })
 
     useAppHotkey('Mod+Z', undo, {
-        enabled,
-        ignoreInputs: true,
-    })
-
-    useAppHotkey('Mod+Y', redo, {
         enabled,
         ignoreInputs: true,
     })

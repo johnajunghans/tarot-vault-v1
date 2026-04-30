@@ -88,7 +88,9 @@ export function useSpreadDraft({
                       maxZoom: 1,
                   }
                 : emptyCanvasViewportRequest
-        } catch { /* ignore invalid draft data */ }
+        } catch {
+            clearHistory()
+        }
 
         const frame = window.requestAnimationFrame(() => {
             setViewportRequest(nextViewportRequest)

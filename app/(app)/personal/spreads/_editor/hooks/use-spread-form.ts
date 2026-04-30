@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { spreadSchema } from "../schema"
@@ -49,10 +49,16 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         name: "positions",
     })
 
+    // Selection lives beside the form history so undo/redo can restore the
+    // position the user was actually working on after reorders or removals.
+    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null)
+
     const isHistoryEnabled = !options?.isViewMode
     const history = useSpreadFormHistory({
         form,
         enabled: isHistoryEnabled,
+        selectedCardIndex,
+        setSelectedCardIndex,
     })
     const {
         canUndo,
@@ -76,10 +82,10 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         cards,
         form,
         watchedPositions,
+        selectedCardIndex,
+        setSelectedCardIndex,
         recordImmediateChange: pushSnapshot,
     })
-
-    const { setSelectedCardIndex } = canvasModel
 
     // ------------ CARD CREATION ------------ //
 
