@@ -6,6 +6,7 @@ import {
   getLayersWithBackCard,
   getLayersWithFrontCard,
   normalizeRotationForStorage,
+  ROTATION_STEP,
   snapToGrid,
 } from "../../../lib";
 import NumberField from "@/components/form/number-field";
@@ -15,13 +16,20 @@ import TextField from "@/components/form/text-field";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { FieldGroup, FieldSeparator, FieldSet } from "@/components/ui/field";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  TooltipContent,
+  TooltipProvider,
+  TooltipRoot,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   ArrowDown01Icon,
   ArrowRight01Icon,
   Delete02Icon,
   LayerBringToFrontIcon,
   LayerSendToBackIcon,
+  RotateTopLeftIcon,
+  RotateTopRightIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type Dispatch, type ReactNode, type SetStateAction, useCallback, useMemo, useState } from "react";
@@ -109,6 +117,17 @@ export default function CardSettingsContent({
     const nextLayers = (form.getValues("positions") ?? []).map((card) => clampLayer(card.z ?? 0));
     applyLayerValues(getLayersWithBackCard(nextLayers, selectedCardIndex));
   }, [applyLayerValues, form, isAtBack, selectedCardIndex]);
+
+  const handleRotateStep = useCallback(
+    (direction: 1 | -1) => {
+      if (selectedCardIndex === null) return;
+
+      const currentRotation = form.getValues(`positions.${selectedCardIndex}.r`) ?? 0;
+      const nextRotation = normalizeRotationForStorage(currentRotation + direction * ROTATION_STEP);
+      onRotationChange(selectedCardIndex, nextRotation);
+    },
+    [form, onRotationChange, selectedCardIndex]
+  );
 
   const handleDeleteConfirm = useCallback(() => {
     if (deleteIndex === null) return;
@@ -279,6 +298,38 @@ export default function CardSettingsContent({
                       step={1}
                       error={fieldState.error}
                       showStepper={!isMobile}
+                      trailingControls={
+                        <TooltipProvider delay={TOOLTIP_DELAY}>
+                          <ButtonGroup>
+                            <TooltipRoot>
+                              <Button
+                                render={<TooltipTrigger />}
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                aria-label="Rotate position counterclockwise 45 degrees"
+                                onClick={() => handleRotateStep(-1)}
+                              >
+                                <HugeiconsIcon icon={RotateTopLeftIcon} />
+                              </Button>
+                              <TooltipContent>Rotate Left 45&deg;</TooltipContent>
+                            </TooltipRoot>
+                            <TooltipRoot>
+                              <Button
+                                render={<TooltipTrigger />}
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                aria-label="Rotate position clockwise 45 degrees"
+                                onClick={() => handleRotateStep(1)}
+                              >
+                                <HugeiconsIcon icon={RotateTopRightIcon} />
+                              </Button>
+                              <TooltipContent>Rotate Right 45&deg;</TooltipContent>
+                            </TooltipRoot>
+                          </ButtonGroup>
+                        </TooltipProvider>
+                      }
                     />
                   )}
                 />
@@ -304,38 +355,40 @@ export default function CardSettingsContent({
                       error={fieldState.error}
                       showStepper={!isMobile}
                       trailingControls={
-                        <ButtonGroup>
-                          <Tooltip delay={TOOLTIP_DELAY}>
-                            <Button
-                              render={<TooltipTrigger />}
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              aria-label="Move position to back"
-                              aria-disabled={isAtBack || undefined}
-                              className="aria-disabled:opacity-50"
-                              onClick={handleMoveToBack}
-                            >
-                              <HugeiconsIcon icon={LayerSendToBackIcon} />
-                            </Button>
-                            <TooltipContent>Move to Back</TooltipContent>
-                          </Tooltip>
-                          <Tooltip delay={TOOLTIP_DELAY}>
-                            <Button
-                              render={<TooltipTrigger />}
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              aria-label="Bring position to front"
-                              aria-disabled={isAtFront || undefined}
-                              className="aria-disabled:opacity-50"
-                              onClick={handleBringToFront}
-                            >
-                              <HugeiconsIcon icon={LayerBringToFrontIcon} />
-                            </Button>
-                            <TooltipContent>Bring to Front</TooltipContent>
-                          </Tooltip>
-                        </ButtonGroup>
+                        <TooltipProvider delay={TOOLTIP_DELAY}>
+                          <ButtonGroup>
+                            <TooltipRoot>
+                              <Button
+                                render={<TooltipTrigger />}
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                aria-label="Move position to back"
+                                aria-disabled={isAtBack || undefined}
+                                className="aria-disabled:opacity-50"
+                                onClick={handleMoveToBack}
+                              >
+                                <HugeiconsIcon icon={LayerSendToBackIcon} />
+                              </Button>
+                              <TooltipContent>Move to Back</TooltipContent>
+                            </TooltipRoot>
+                            <TooltipRoot>
+                              <Button
+                                render={<TooltipTrigger />}
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                aria-label="Bring position to front"
+                                aria-disabled={isAtFront || undefined}
+                                className="aria-disabled:opacity-50"
+                                onClick={handleBringToFront}
+                              >
+                                <HugeiconsIcon icon={LayerBringToFrontIcon} />
+                              </Button>
+                              <TooltipContent>Bring to Front</TooltipContent>
+                            </TooltipRoot>
+                          </ButtonGroup>
+                        </TooltipProvider>
                       }
                     />
                   )}
