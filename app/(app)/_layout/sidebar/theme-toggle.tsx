@@ -1,33 +1,48 @@
 "use client"
 
 import { useTheme } from "next-themes"
-import { useEffect, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Moon01Icon, Sun02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Skeleton } from "@/components/ui/skeleton"
 
-let hasMounted = false
-
 type ThemeToggleProps = {
   asIconButton?: boolean
+}
+
+function useHasMounted() {
+  const hasMountedRef = useRef(false)
+
+  const subscribe = useCallback((onStoreChange: () => void) => {
+    hasMountedRef.current = true
+    onStoreChange()
+
+    return () => {
+      hasMountedRef.current = false
+    }
+  }, [])
+
+  const getSnapshot = useCallback(() => hasMountedRef.current, [])
+  const getServerSnapshot = useCallback(() => false, [])
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 }
 
 export default function ThemeToggle({
   asIconButton = false,
 }: ThemeToggleProps) {
   const { theme, resolvedTheme, setTheme } = useTheme()
-  const [isMounted, setIsMounted] = useState(hasMounted)
+  const isMounted = useHasMounted()
   const [isThemeTooltipEnabled, setIsThemeTooltipEnabled] = useState(true)
   const themeTransitionTimeoutRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    if (!hasMounted) {
-      hasMounted = true
-      setIsMounted(true)
-    }
-  }, [])
 
   const activeTheme = resolvedTheme ?? theme
   const isLightTheme = activeTheme === "light"
