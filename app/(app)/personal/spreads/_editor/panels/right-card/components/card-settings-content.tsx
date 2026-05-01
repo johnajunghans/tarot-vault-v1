@@ -5,6 +5,8 @@ import {
   clampLayer,
   getLayersWithBackCard,
   getLayersWithFrontCard,
+  isUniqueHighestLayer,
+  isUniqueLowestLayer,
   normalizeRotationForStorage,
   ROTATION_STEP,
   snapToGrid,
@@ -76,17 +78,14 @@ export default function CardSettingsContent({
     () => (positions ?? []).map((card) => clampLayer(card.z ?? 0)),
     [positions]
   );
-  const selectedLayer = selectedCardIndex !== null ? layers[selectedCardIndex] ?? null : null;
-  const maxLayer = layers.length > 0 ? Math.max(...layers) : null;
-  const minLayer = layers.length > 0 ? Math.min(...layers) : null;
   const isAtFront =
-    selectedCardIndex === null || selectedLayer === null || maxLayer === null
+    selectedCardIndex === null
       ? true
-      : selectedLayer >= maxLayer;
+      : isUniqueHighestLayer(layers, selectedCardIndex);
   const isAtBack =
-    selectedCardIndex === null || selectedLayer === null || minLayer === null
+    selectedCardIndex === null
       ? true
-      : selectedLayer <= minLayer;
+      : isUniqueLowestLayer(layers, selectedCardIndex);
 
   const applyLayerValues = useCallback(
     (nextLayers: number[]) => {

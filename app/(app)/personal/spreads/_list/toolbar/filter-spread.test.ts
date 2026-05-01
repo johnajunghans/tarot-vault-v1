@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { SpreadDB, SpreadDraft } from "@/types/spreads"
-import { buildSpreadList, getFilter, getSort, getSortDir } from "../filter-spreads"
+import { buildSpreadList, getFilter, getSort, getSortDir } from "./filter-spreads"
 
 const draftCards = [
     {

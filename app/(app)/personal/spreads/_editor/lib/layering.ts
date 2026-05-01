@@ -2,6 +2,24 @@ export function clampLayer(value: number): number {
     return Math.max(0, Math.round(value))
 }
 
+export function isUniqueHighestLayer(layers: number[], selectedIndex: number): boolean {
+    const selectedLayer = layers[selectedIndex]
+    if (selectedLayer === undefined) return true
+
+    return layers.every((layer, index) =>
+        index === selectedIndex || selectedLayer > layer
+    )
+}
+
+export function isUniqueLowestLayer(layers: number[], selectedIndex: number): boolean {
+    const selectedLayer = layers[selectedIndex]
+    if (selectedLayer === undefined) return true
+
+    return layers.every((layer, index) =>
+        index === selectedIndex || selectedLayer < layer
+    )
+}
+
 export function getLayersWithFrontCard(layers: number[], selectedIndex: number): number[] {
     const maxLayer = layers.reduce((max, layer) => Math.max(max, layer), 0)
     const nextLayers = [...layers]
