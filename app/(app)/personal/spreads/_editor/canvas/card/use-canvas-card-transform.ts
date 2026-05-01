@@ -57,7 +57,6 @@ export default function useCanvasCardTransform(
                     y: (value) => snapClampAxis(value, 'y'),
                 },
                 onDragStart: function () {
-                    console.log("drag start")
                     isDraggingRef.current = true
                     setIsDraggingState(true)
                     onDragStart(index, this.x, this.y)

@@ -2,6 +2,7 @@
 
 import {
   Dispatch,
+  memo,
   SetStateAction,
   useCallback,
   useState,
@@ -61,7 +62,7 @@ export function CardOverviewReadOnly({
   );
 }
 
-export default function CardOverview({
+function CardOverview({
   cardIds,
   selectedCardIndex,
   setSelectedCardIndex,
@@ -163,3 +164,5 @@ export default function CardOverview({
     </div>
   );
 }
+
+export default memo(CardOverview);

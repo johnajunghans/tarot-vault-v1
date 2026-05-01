@@ -197,6 +197,14 @@ export function useSpreadCanvasModel({
         [form, recordImmediateChange]
     )
 
+    const handleZoomDisplayChange = useCallback((nextZoom: number) => {
+        setZoomDisplay((previousZoom) =>
+            Math.round(previousZoom * 100) === Math.round(nextZoom * 100)
+                ? previousZoom
+                : nextZoom
+        )
+    }, [])
+
     // ------------ PUBLIC API ------------ //
 
     return {
@@ -207,7 +215,7 @@ export function useSpreadCanvasModel({
         selectedCardIndex,
         setSelectedCardIndex,
         zoomDisplay,
-        setZoomDisplay,
+        setZoomDisplay: handleZoomDisplayChange,
         minZoomDisplay,
         setMinZoomDisplay,
         handleCardRotationChange,

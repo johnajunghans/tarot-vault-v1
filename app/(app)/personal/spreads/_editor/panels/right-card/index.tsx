@@ -6,7 +6,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { TooltipContent, TooltipProvider, TooltipRoot, TooltipTrigger } from "@/components/ui/tooltip";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { type Dispatch, type SetStateAction } from "react";
+import { memo, type Dispatch, type SetStateAction } from "react";
 import type { UseFieldArrayRemove } from "react-hook-form";
 import CardDetailsContent from "./components/card-details-content";
 import CardSettingsContent from "./components/card-settings-content";
@@ -34,7 +34,7 @@ interface CardSettingsPanelProps {
   onAfterDesktopClose?: (panelWidth: number) => void;
 }
 
-export default function CardSettingsPanel({
+function CardSettingsPanel({
   cards,
   selectedCardIndex,
   setSelectedCardIndex,
@@ -141,3 +141,5 @@ export default function CardSettingsPanel({
     </ResponsivePanel>
   );
 }
+
+export default memo(CardSettingsPanel);

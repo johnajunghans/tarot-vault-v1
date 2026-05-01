@@ -52,7 +52,7 @@ export function ResponsivePanel({
 
     const isPanelInset = true
 
-    const isCollapsed = panelRef?.current?.isCollapsed()
+    const isCollapsed = hideHandle
     const insetVariantStyles = cn(
         "my-2 shadow-sm rounded-xl",
         side === "left" ? "ml-2" : "mr-2",

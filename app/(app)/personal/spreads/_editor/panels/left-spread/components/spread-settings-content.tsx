@@ -1,6 +1,6 @@
 "use client";
 
-import { type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { type Dispatch, type ReactNode, type SetStateAction, useMemo } from "react";
 import { FieldSeparator, FieldSet } from "@/components/ui/field";
 import { UseFieldArrayMove, UseFieldArrayRemove, useFormContext } from "react-hook-form";
 import TextField from "@/components/form/text-field";
@@ -37,6 +37,7 @@ export default function SpreadSettingsContent({
   const form = useFormContext<SpreadForm>();
   const nameField = form.register("name");
   const descriptionField = form.register("description");
+  const cardIds = useMemo(() => cards.map((card) => card.id), [cards]);
 
   return (
     <div className="flex h-full flex-col gap-5 overflow-y-auto p-4">
@@ -72,7 +73,7 @@ export default function SpreadSettingsContent({
         </FieldSet>
       </form>
       <CardOverview
-        cardIds={cards.map((card) => card.id)}
+        cardIds={cardIds}
         selectedCardIndex={selectedCardIndex}
         setSelectedCardIndex={setSelectedCardIndex}
         move={move}

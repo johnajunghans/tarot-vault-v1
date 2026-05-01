@@ -188,7 +188,6 @@ function SpreadCanvasComponent(
     // for effects that depend on the actual SVG elements.
     const { cardsLayerRef, registerCardRef, baseSortedCards } = useCanvasCardLayering({
         effectiveCards,
-        selectedCardIndex,
         draggingIndex: dragging?.index ?? null,
     })
 
@@ -547,5 +546,4 @@ function CanvasBackground({
         </>
     )
 }
-
 

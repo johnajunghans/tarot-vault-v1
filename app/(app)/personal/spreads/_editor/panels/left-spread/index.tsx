@@ -6,7 +6,7 @@ import { TooltipContent, TooltipProvider, TooltipRoot, TooltipTrigger } from "@/
 import { ResponsivePanel } from "../shared/responsive-panel";
 import { PanelLeftIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { type Dispatch, type RefObject, type SetStateAction, useEffect } from "react";
+import { memo, type Dispatch, type RefObject, type SetStateAction, useEffect } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
 import type { UseFieldArrayMove, UseFieldArrayRemove } from "react-hook-form";
 import SpreadDetailsContent from "./components/spread-details-content";
@@ -33,7 +33,7 @@ interface SpreadSettingsPanelProps {
   togglePanelRef?: RefObject<(() => void) | null>;
 }
 
-export default function SpreadSettingsPanel({
+function SpreadSettingsPanel({
   cards,
   addCard,
   remove,
@@ -189,3 +189,5 @@ export default function SpreadSettingsPanel({
     </>
   );
 }
+
+export default memo(SpreadSettingsPanel);

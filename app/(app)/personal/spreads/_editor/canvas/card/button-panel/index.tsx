@@ -59,7 +59,7 @@ function CardButtonPanel({
             setTooltipAngle(rotation)
             setDisableDrag(true)
         },
-        [rotation]
+        [rotation, setDisableDrag]
     )
 
     const handleContinuousPointerMove = useCallback(
@@ -97,7 +97,7 @@ function CardButtonPanel({
             setTooltipAngle(null)
             setDisableDrag(false)
         },
-        [cardIndex, onRotationChange]
+        [cardIndex, onRotationChange, setDisableDrag]
     )
 
     const STEP_TOOLTIP_DURATION = 800

@@ -81,6 +81,7 @@ export function useCardOverviewReorder({
   isMobile = false,
 }: UseCardOverviewReorderArgs) {
   const cardCount = cardIds.length;
+  const cardIdsKey = cardIds.join("\u0000");
   const tileRefs = useRef<(TileElement | null)[]>([]);
   const handleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const draggablesRef = useRef<Draggable[]>([]);
@@ -107,7 +108,7 @@ export function useCardOverviewReorder({
     resetTilesImmediately(tiles);
     restoreTileTransitions(tiles);
     didReorderRef.current = false;
-  }, [cardCount, cardIds]);
+  }, [cardCount, cardIdsKey]);
 
   useLayoutEffect(() => {
     if (selectedCardIdOverride === null) return;
@@ -203,7 +204,7 @@ export function useCardOverviewReorder({
     draggablesRef.current = newDraggables;
 
     return cleanupDraggables;
-  }, [cardCount, cardIds, cleanupDraggables, isMobile, move, setSelectedCardIndex]);
+  }, [cardCount, cardIdsKey, cleanupDraggables, isMobile, move, setSelectedCardIndex]);
 
   return {
     selectedCardId,

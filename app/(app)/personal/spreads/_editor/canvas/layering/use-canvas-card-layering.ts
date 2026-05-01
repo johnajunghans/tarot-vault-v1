@@ -5,7 +5,6 @@ import type { CanvasCard } from '../types'
 
 interface UseCardLayeringArgs {
     effectiveCards: CanvasCard[]
-    selectedCardIndex: number | null
     draggingIndex: number | null
 }
 
@@ -24,7 +23,6 @@ function getBaseSortedCards(effectiveCards: CanvasCard[]) {
 // mutating the underlying card data. Selection alone does not override layers.
 function getLayeredCardIndices(
     baseSortedCards: Array<{ card: CanvasCard; index: number }>,
-    _selectedCardIndex: number | null,
     draggingIndex: number | null
 ) {
     return baseSortedCards
@@ -43,7 +41,6 @@ function getLayeredCardIndices(
 // on top while interacting.
 export function useCanvasCardLayering({
     effectiveCards,
-    selectedCardIndex,
     draggingIndex,
 }: UseCardLayeringArgs) {
     // ------------ DOM REFS ------------ //
@@ -78,10 +75,9 @@ export function useCanvasCardLayering({
         () =>
             getLayeredCardIndices(
                 baseSortedCards,
-                selectedCardIndex,
                 draggingIndex
             ),
-        [baseSortedCards, draggingIndex, selectedCardIndex]
+        [baseSortedCards, draggingIndex]
     )
 
     // ------------ DOM LAYER SYNC ------------ //

@@ -38,7 +38,7 @@ describe('useCardLayering', () => {
             makeCard({ name: 'Top', z: 30 }),
         ])
 
-        expect(getLayeredCardIndices(baseSortedCards, 1, null)).toEqual([0, 1, 2])
+        expect(getLayeredCardIndices(baseSortedCards, null)).toEqual([0, 1, 2])
     })
 
     it('promotes the actively dragged card above the layer order', () => {
@@ -48,7 +48,7 @@ describe('useCardLayering', () => {
             makeCard({ name: 'Top', z: 30 }),
         ])
 
-        expect(getLayeredCardIndices(baseSortedCards, 1, 0)).toEqual([1, 2, 0])
+        expect(getLayeredCardIndices(baseSortedCards, 0)).toEqual([1, 2, 0])
     })
 
     it('keeps equal-z cards in stable index order', () => {

@@ -105,6 +105,21 @@ export default function SpreadEditorLayout({
         toggleLeftPanelRef.current?.()
     }, [isMobile, setSpreadSheetOpen])
 
+    const handleCardSheetOpenChange = useCallback(
+        (open: boolean) => {
+            if (!open) setSelectedCardIndex(null)
+        },
+        [setSelectedCardIndex]
+    )
+
+    const handleBeforeDesktopOpen = useCallback(() => {
+        animateForPanelOpen()
+    }, [animateForPanelOpen])
+
+    const handleBeforeDesktopClose = useCallback(() => {
+        animateForPanelClose()
+    }, [animateForPanelClose])
+
     useAppHotkey("Mod+H", toggleLeftPanel, {
         ignoreInputs: false,
     })
@@ -180,9 +195,7 @@ export default function SpreadEditorLayout({
                             isMobile={isMobile}
                             isViewMode={isViewMode}
                             open={selectedCardIndex !== null}
-                            onOpenChange={(open) => {
-                                if (!open) setSelectedCardIndex(null);
-                            }}
+                            onOpenChange={handleCardSheetOpenChange}
                             cards={cards}
                             selectedCardIndex={selectedCardIndex}
                             setSelectedCardIndex={setSelectedCardIndex}
@@ -243,9 +256,9 @@ export default function SpreadEditorLayout({
                         onTextEditEnd={commitTextEdit}
                         remove={remove}
                         onDesktopWidthChange={syncToPanelWidth}
-                        onBeforeDesktopOpen={() => animateForPanelOpen()}
+                        onBeforeDesktopOpen={handleBeforeDesktopOpen}
                         onAfterDesktopOpen={settleAfterPanelOpen}
-                        onBeforeDesktopClose={() => animateForPanelClose()}
+                        onBeforeDesktopClose={handleBeforeDesktopClose}
                         onAfterDesktopClose={settleAfterPanelClose}
                     />
 
