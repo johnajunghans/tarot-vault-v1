@@ -42,11 +42,11 @@ export default function ZoomControls({
     const defaultZoom = Math.max(DEFAULT_ZOOM, minZoom)
     const isDefaultZoom = normalizedZoom === defaultZoom
 
-    useAppHotkey('Mod+Shift+=', onZoomIn, {
+    useAppHotkey({ key: '=', mod: true, shift: true }, onZoomIn, {
         ignoreInputs: true,
     })
 
-    useAppHotkey('Mod+Shift+-', onZoomOut, {
+    useAppHotkey({ key: '-', mod: true, shift: true }, onZoomOut, {
         ignoreInputs: true,
     })
 

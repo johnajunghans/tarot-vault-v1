@@ -1,7 +1,7 @@
 'use client'
 
 import { useHotkey } from '@tanstack/react-hotkeys'
-import type { UseHotkeyOptions } from '@tanstack/react-hotkeys'
+import type { RegisterableHotkey, UseHotkeyOptions } from '@tanstack/react-hotkeys'
 
 export type AppHotkeyOptions = {
     enabled?: boolean
@@ -15,7 +15,7 @@ export type AppHotkeyOptions = {
 }
 
 export function useAppHotkey(
-    hotkey: string,
+    hotkey: RegisterableHotkey,
     callback: (event: KeyboardEvent) => void,
     options: AppHotkeyOptions = {}
 ) {
