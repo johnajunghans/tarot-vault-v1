@@ -30,7 +30,6 @@ interface CanvasCardProps {
     isDraggingInGroup: boolean
     isViewMode: boolean
     isMobile: boolean
-    disableHeavyEffects: boolean
     onDragStart: (index: number, x: number, y: number) => void
     onDragEnd: (index: number, x: number, y: number) => void
     onDrag: (index: number, x: number, y: number) => void
@@ -58,7 +57,6 @@ function CanvasCard({
     isDraggingInGroup,
     isViewMode,
     isMobile,
-    disableHeavyEffects,
     onDragStart,
     onDragEnd,
     onDrag,
@@ -75,7 +73,6 @@ function CanvasCard({
     // onSendToBack,
     // onDeleteCard
 }: CanvasCardProps) {
-
     const [isHovered, setIsHovered] = useState(false)
 
     // Invocation of card drag and rotation stateful logic
@@ -123,11 +120,10 @@ function CanvasCard({
     const cardNameTransform = shouldFlipCardName
         ? `rotate(180 ${CARD_WIDTH / 2} ${cardNameCenterY})`
         : undefined
-    const shadowFilter = disableHeavyEffects
-        ? undefined
-        : isActiveDrag
-          ? 'url(#canvas-card-shadow-active)'
-          : undefined
+    // Drop shadow only while dragging (not tied to viewport zoom).
+    const shadowFilter = isActiveDrag
+        ? 'url(#canvas-card-shadow-active)'
+        : undefined
 
     function handleKeyDown(event: KeyboardEvent<SVGGElement>) {
         if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') {
@@ -304,7 +300,6 @@ function arePropsEqual(prev: CanvasCardProps, next: CanvasCardProps): boolean {
         prev.isDraggingInGroup === next.isDraggingInGroup &&
         prev.isViewMode === next.isViewMode &&
         prev.isMobile === next.isMobile &&
-        prev.disableHeavyEffects === next.disableHeavyEffects &&
         prev.onDragStart === next.onDragStart &&
         prev.onDragEnd === next.onDragEnd &&
         prev.onDrag === next.onDrag &&

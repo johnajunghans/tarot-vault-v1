@@ -154,7 +154,6 @@ function SpreadCanvasComponent(
         zoom,
         viewBox,
         viewportDimensions,
-        isZoomInteractionActive,
         isScrollbarActive,
         handleScrollbarPan,
         imperativeHandle,
@@ -302,7 +301,8 @@ function SpreadCanvasComponent(
                             svgHeight={svgHeight}
                         />
 
-                        {/* Main card layer. Order comes from the layering hook. */}
+                        {/* Main card layer. Keep viewport-only state out of these
+                            props so memoized cards stay inert during zoom. */}
                         <g ref={cardsLayerRef}>
                             {baseSortedCards.map(({ card, index }) => {
                                 const isDraggingInGroup =
@@ -330,7 +330,6 @@ function SpreadCanvasComponent(
                                         }
                                         isViewMode={isViewMode}
                                         isMobile={isMobile}
-                                        disableHeavyEffects={isZoomInteractionActive}
                                         onDragStart={handleDragStart}
                                         onDragEnd={handleDragEnd}
                                         onDrag={handleDrag}

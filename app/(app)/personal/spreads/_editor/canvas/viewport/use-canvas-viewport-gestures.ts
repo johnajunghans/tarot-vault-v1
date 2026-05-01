@@ -40,7 +40,6 @@ interface UseCanvasViewportGesturesArgs {
         anchorViewportY: number
         targetViewportX?: number
         targetViewportY?: number
-        shouldFlagInteraction: boolean
     }) => void
     suppressCardSelection: () => void
 }
@@ -123,7 +122,6 @@ export function useCanvasViewportGestures({
                     nextZoom: targetZoomRef.current * scaleFactor,
                     anchorViewportX: e.clientX - rect.left,
                     anchorViewportY: e.clientY - rect.top,
-                    shouldFlagInteraction: true,
                 })
             } else {
                 e.preventDefault()
@@ -196,7 +194,6 @@ export function useCanvasViewportGestures({
                     anchorViewportY: previousPinch.midpointY - rect.top,
                     targetViewportX: midpointX - rect.left,
                     targetViewportY: midpointY - rect.top,
-                    shouldFlagInteraction: true,
                 })
 
                 pinchStateRef.current = {
@@ -261,7 +258,6 @@ export function useCanvasViewportGestures({
                 anchorViewportY: gesture.clientY - rect.top,
                 targetViewportX: clientX - rect.left,
                 targetViewportY: clientY - rect.top,
-                shouldFlagInteraction: true,
             })
 
             safariGestureStateRef.current = {

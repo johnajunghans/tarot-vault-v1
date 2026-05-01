@@ -31,7 +31,6 @@ import type {
     SpreadCanvasViewportRequest,
 } from '../types'
 
-const ZOOM_INTERACTION_IDLE_MS = 120
 const CARD_SELECTION_SUPPRESS_MS = 250
 const SCROLLBAR_IDLE_MS = 1500
 
@@ -64,7 +63,6 @@ export function useCanvasViewport({
     const [pan, setPan] = useState({ x: 0, y: 0 })
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
     const [zoom, setZoom] = useState(DEFAULT_ZOOM)
-    const [isZoomInteractionActive, setIsZoomInteractionActive] = useState(false)
     const [isScrollbarActive, setIsScrollbarActive] = useState(false)
 
     // Refs hold the current and target viewport values plus transient gesture
@@ -76,13 +74,11 @@ export function useCanvasViewport({
     const pendingViewportCommitRef = useRef<{
         zoom: number
         pan: { x: number; y: number }
-        shouldFlagInteraction: boolean
         viewportRequestKey: string | null
     } | null>(null)
     const panFrameRef = useRef(0)
     const viewportFrameRef = useRef(0)
     const panRef = useRef({ x: 0, y: 0 })
-    const zoomInteractionTimeoutRef = useRef<number | null>(null)
     const appliedViewportRequestKeyRef = useRef<string | null>(null)
     const scheduledViewportRequestKeyRef = useRef<string | null>(null)
     const onZoomDisplayChangeRef = useLatestRef(onZoomDisplayChange)
@@ -117,21 +113,6 @@ export function useCanvasViewport({
         )
     }, [])
 
-    // Zoom-heavy interactions temporarily disable expensive card effects so the
-    // canvas stays responsive.
-    const setZoomInteractionActiveForFrame = useCallback(() => {
-        setIsZoomInteractionActive(true)
-
-        if (zoomInteractionTimeoutRef.current !== null) {
-            window.clearTimeout(zoomInteractionTimeoutRef.current)
-        }
-
-        zoomInteractionTimeoutRef.current = window.setTimeout(() => {
-            setIsZoomInteractionActive(false)
-            zoomInteractionTimeoutRef.current = null
-        }, ZOOM_INTERACTION_IDLE_MS)
-    }, [])
-
     // Scrollbars remain visible briefly after any viewport movement.
     const setScrollbarActiveForFrame = useCallback(() => {
         setIsScrollbarActive(true)
@@ -161,9 +142,6 @@ export function useCanvasViewport({
             }
             if (panFrameRef.current !== 0) {
                 window.cancelAnimationFrame(panFrameRef.current)
-            }
-            if (zoomInteractionTimeoutRef.current !== null) {
-                window.clearTimeout(zoomInteractionTimeoutRef.current)
             }
             if (scrollbarIdleTimeoutRef.current !== null) {
                 window.clearTimeout(scrollbarIdleTimeoutRef.current)
@@ -265,10 +243,6 @@ export function useCanvasViewport({
         pendingViewportCommitRef.current = null
         if (!pending) return
 
-        if (pending.shouldFlagInteraction) {
-            setZoomInteractionActiveForFrame()
-        }
-
         panRef.current = pending.pan
         targetPanRef.current = pending.pan
         targetZoomRef.current = pending.zoom
@@ -283,18 +257,13 @@ export function useCanvasViewport({
         setZoom(pending.zoom)
         onZoomDisplayChangeRef.current?.(pending.zoom)
         setScrollbarActiveForFrame()
-    }, [
-        onZoomDisplayChangeRef,
-        setScrollbarActiveForFrame,
-        setZoomInteractionActiveForFrame,
-    ])
+    }, [onZoomDisplayChangeRef, setScrollbarActiveForFrame])
 
     // Queue a pan/zoom update into the shared viewport commit pipeline.
     const scheduleViewportCommit = useCallback(
         (
             nextZoom: number,
             nextPan: { x: number; y: number },
-            shouldFlagInteraction: boolean,
             viewportRequestKey: string | null = null
         ) => {
             targetZoomRef.current = nextZoom
@@ -307,7 +276,6 @@ export function useCanvasViewport({
             pendingViewportCommitRef.current = {
                 zoom: nextZoom,
                 pan: nextPan,
-                shouldFlagInteraction,
                 viewportRequestKey,
             }
 
@@ -329,14 +297,12 @@ export function useCanvasViewport({
             anchorViewportY,
             targetViewportX = anchorViewportX,
             targetViewportY = anchorViewportY,
-            shouldFlagInteraction,
         }: {
             nextZoom: number
             anchorViewportX: number
             anchorViewportY: number
             targetViewportX?: number
             targetViewportY?: number
-            shouldFlagInteraction: boolean
         }) => {
             const currentViewport = getViewportSnapshot()
             const minimumZoom = getMinimumZoom(
@@ -368,7 +334,7 @@ export function useCanvasViewport({
                 return
             }
 
-            scheduleViewportCommit(normalizedZoom, nextPan, shouldFlagInteraction)
+            scheduleViewportCommit(normalizedZoom, nextPan)
         },
         [getMinimumZoom, getViewportSnapshot, scheduleViewportCommit, svgHeight, svgWidth]
     )
@@ -412,7 +378,6 @@ export function useCanvasViewport({
         scheduleViewportCommit(
             resolvedViewport.zoom,
             resolvedViewport.pan,
-            false,
             viewportRequest.key
         )
     }, [
@@ -454,8 +419,7 @@ export function useCanvasViewport({
 
         scheduleViewportCommit(
             reconciledViewport.zoom,
-            reconciledViewport.pan,
-            false
+            reconciledViewport.pan
         )
     }, [
         containerSize.height,
@@ -565,7 +529,6 @@ export function useCanvasViewport({
                     nextZoom: DEFAULT_ZOOM,
                     anchorViewportX: size.width / 2,
                     anchorViewportY: size.height / 2,
-                    shouldFlagInteraction: true,
                 })
             },
             setZoom: (nextZoom: number) => {
@@ -574,7 +537,6 @@ export function useCanvasViewport({
                     nextZoom,
                     anchorViewportX: size.width / 2,
                     anchorViewportY: size.height / 2,
-                    shouldFlagInteraction: true,
                 })
             },
             zoomIn: () => {
@@ -587,7 +549,6 @@ export function useCanvasViewport({
                     ),
                     anchorViewportX: size.width / 2,
                     anchorViewportY: size.height / 2,
-                    shouldFlagInteraction: true,
                 })
             },
             zoomOut: () => {
@@ -600,7 +561,6 @@ export function useCanvasViewport({
                     ),
                     anchorViewportX: size.width / 2,
                     anchorViewportY: size.height / 2,
-                    shouldFlagInteraction: true,
                 })
             },
         }),
@@ -637,7 +597,6 @@ export function useCanvasViewport({
         zoom,
         viewBox,
         viewportDimensions,
-        isZoomInteractionActive,
         isScrollbarActive,
         handleScrollbarPan,
         imperativeHandle,
