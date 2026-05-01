@@ -1,4 +1,4 @@
-import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 interface TextFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {

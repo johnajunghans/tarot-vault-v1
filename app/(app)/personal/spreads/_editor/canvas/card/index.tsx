@@ -97,7 +97,7 @@ function CanvasCard({
     useEffect(() => {
         registerRef(index, groupRef.current)
         return () => registerRef(index, null)
-    }, [index, registerRef])
+    }, [groupRef, index, registerRef])
 
     const isActiveDrag = isDraggingState || isDraggingInGroup
     const showButtonFrame =

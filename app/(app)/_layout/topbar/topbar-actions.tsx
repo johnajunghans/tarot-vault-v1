@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import type { ActionDescriptor } from "@/types/layout"
-import { ArrowDown01Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { buttonVariants } from "@/components/ui/button"
 import { CREATE_MENU_ITEMS } from "../shared/create-menu-items"

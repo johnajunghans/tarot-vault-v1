@@ -1,4 +1,4 @@
-import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 
 interface TextareaFieldProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {

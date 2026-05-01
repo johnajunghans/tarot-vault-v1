@@ -124,8 +124,7 @@ export function useCardSettingsPanel({
     onDesktopWidthChange?.(getPanelWidth());
   }, [getPanelWidth, onDesktopWidthChange, panelRef, setSelectedCardIndex, syncCollapsedState]);
 
-  // Latest refs for the desktop sync effect (deps stay `selectedCardIndex`-driven only). See
-  // useLatestRef — values are read inside rAF, after that commit's effects, so refs are current.
+  // Latest refs for desktop sync: stable ref objects; `.current` updated each render via useLatestRef.
   const openPanelRef = useLatestRef(openPanel);
   const closePanelRef = useLatestRef(closePanel);
   const syncCollapsedStateRef = useLatestRef(syncCollapsedState);
@@ -169,7 +168,16 @@ export function useCardSettingsPanel({
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [isMobile, panelRef, selectedCardIndex]);
+  }, [
+    closePanelRef,
+    getPanelWidthRef,
+    isMobile,
+    onDesktopWidthChangeRef,
+    openPanelRef,
+    panelRef,
+    selectedCardIndex,
+    syncCollapsedStateRef,
+  ]);
 
   useEffect(() => {
     if (selectedCardIndex === null || cards.some((_, index) => index === selectedCardIndex)) return;
