@@ -110,9 +110,21 @@ export function useCardSettingsPanel({
   }, [closePanel, isMobile, onOpenChange, selectedCardIndex, setSelectedCardIndex]);
 
   const handleResize = useCallback(() => {
+    const panel = panelRef.current;
+
+    if (selectedCardIndex === null) {
+      if (panel && !panel.isCollapsed()) {
+        panel.collapse();
+      }
+      syncCollapsedState();
+      onDesktopWidthChange?.(0);
+      setVisibleSelectedCardIndex(null);
+      return;
+    }
+
     syncCollapsedState();
 
-    if (panelRef.current?.isCollapsed()) {
+    if (panel?.isCollapsed()) {
       if (!isClosingRef.current) {
         onDesktopWidthChange?.(0);
       }
@@ -122,7 +134,7 @@ export function useCardSettingsPanel({
     }
 
     onDesktopWidthChange?.(getPanelWidth());
-  }, [getPanelWidth, onDesktopWidthChange, panelRef, setSelectedCardIndex, syncCollapsedState]);
+  }, [getPanelWidth, onDesktopWidthChange, panelRef, selectedCardIndex, setSelectedCardIndex, syncCollapsedState]);
 
   // Latest refs for desktop sync: stable ref objects; `.current` updated each render via useLatestRef.
   const openPanelRef = useLatestRef(openPanel);
