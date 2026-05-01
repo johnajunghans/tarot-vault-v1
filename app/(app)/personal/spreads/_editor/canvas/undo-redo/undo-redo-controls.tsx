@@ -44,6 +44,8 @@ export default function UndoRedoControls({
                                 size="icon-sm"
                                 onClick={onUndo}
                                 disabled={!canUndo}
+                                aria-label="Undo"
+                                data-testid="undo-button"
                             >
                                 <HugeiconsIcon icon={Undo03Icon} />
                             </Button>
@@ -63,6 +65,8 @@ export default function UndoRedoControls({
                                 size="icon-sm"
                                 onClick={onRedo}
                                 disabled={!canRedo}
+                                aria-label="Redo"
+                                data-testid="redo-button"
                             >
                                 <HugeiconsIcon icon={Redo03Icon} />
                             </Button>
