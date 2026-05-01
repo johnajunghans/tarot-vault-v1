@@ -66,7 +66,7 @@ function getGeneratedCardPosition(index: number) {
 }
 
 // Create a new blank card at a specific canvas coordinate.
-function generateCardAt(x: number, y: number): CardForm {
+function generateCardAt(x: number, y: number, layer = 1): CardForm {
     return {
         name: '',
         description: '',
@@ -74,7 +74,7 @@ function generateCardAt(x: number, y: number): CardForm {
         x,
         y,
         r: 0,
-        z: 0,
+        z: layer,
     }
 }
 

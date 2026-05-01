@@ -13,6 +13,7 @@ export {
     mapPositionsForApi,
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
+    normalizeCardLayers,
     calcSpreadDimensions,
     createDraftTimestamp,
     CARD_HEIGHT,

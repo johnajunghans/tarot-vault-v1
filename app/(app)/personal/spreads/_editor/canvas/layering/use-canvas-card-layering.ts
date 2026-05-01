@@ -20,30 +20,27 @@ function getBaseSortedCards(effectiveCards: CanvasCard[]) {
         })
 }
 
-// Promote the selected and actively dragged cards to the top of the visual
-// stack without mutating the underlying card data.
+// Promote the actively dragged card to the top of the visual stack without
+// mutating the underlying card data. Selection alone does not override layers.
 function getLayeredCardIndices(
     baseSortedCards: Array<{ card: CanvasCard; index: number }>,
-    selectedCardIndex: number | null,
+    _selectedCardIndex: number | null,
     draggingIndex: number | null
 ) {
     return baseSortedCards
         .map(({ index }) => index)
         .sort((a, b) => {
-            const aSelected = a === selectedCardIndex ? 1 : 0
-            const bSelected = b === selectedCardIndex ? 1 : 0
             const aDragging = draggingIndex === a ? 1 : 0
             const bDragging = draggingIndex === b ? 1 : 0
 
             if (aDragging !== bDragging) return aDragging - bDragging
-            if (aSelected !== bSelected) return aSelected - bSelected
             return 0
         })
 }
 
 // Keeps SVG card groups stacked in the right visual order. The base order comes
-// from card z-values, then DOM order is adjusted so selected and dragged cards
-// are visually on top while interacting.
+// from card z-values, then DOM order is adjusted so a dragged card is visually
+// on top while interacting.
 export function useCanvasCardLayering({
     effectiveCards,
     selectedCardIndex,

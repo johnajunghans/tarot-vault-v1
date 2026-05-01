@@ -31,24 +31,24 @@ describe('useCardLayering', () => {
         ).toEqual([1, 2, 0])
     })
 
-    it('promotes the selected card above non-selected cards', () => {
+    it('keeps selected cards in layer order', () => {
         const baseSortedCards = getBaseSortedCards([
             makeCard({ name: 'Bottom', z: 10 }),
             makeCard({ name: 'Middle', z: 20 }),
             makeCard({ name: 'Top', z: 30 }),
         ])
 
-        expect(getLayeredCardIndices(baseSortedCards, 1, null)).toEqual([0, 2, 1])
+        expect(getLayeredCardIndices(baseSortedCards, 1, null)).toEqual([0, 1, 2])
     })
 
-    it('promotes the actively dragged card above the selected card', () => {
+    it('promotes the actively dragged card above the layer order', () => {
         const baseSortedCards = getBaseSortedCards([
             makeCard({ name: 'Bottom', z: 10 }),
             makeCard({ name: 'Middle', z: 20 }),
             makeCard({ name: 'Top', z: 30 }),
         ])
 
-        expect(getLayeredCardIndices(baseSortedCards, 1, 0)).toEqual([2, 1, 0])
+        expect(getLayeredCardIndices(baseSortedCards, 1, 0)).toEqual([1, 2, 0])
     })
 
     it('keeps equal-z cards in stable index order', () => {

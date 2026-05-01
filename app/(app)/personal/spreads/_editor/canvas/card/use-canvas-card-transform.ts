@@ -19,7 +19,7 @@ export default function useCanvasCardTransform(
     onDragStart: (index: number, x: number, y: number) => void,
     onDragEnd: (index: number, x: number, y: number) => void,
     onDrag: (index: number, x: number, y: number) => void,
-    // onClick: (index: number) => void
+    onClick: (index: number) => void
 ) {
     const [isDraggingState, setIsDraggingState] = useState(false)
     const [disableDrag, setDisableDrag] = useState(false)
@@ -70,9 +70,9 @@ export default function useCanvasCardTransform(
                     setIsDraggingState(false)
                     onDragEnd(index, this.x, this.y)
                 },
-                // onClick: function () {
-                //     onClick(index)
-                // },
+                onClick: function () {
+                    onClick(index)
+                },
                 cursor: 'pointer',
                 activeCursor: 'grabbing',
             })
@@ -90,7 +90,7 @@ export default function useCanvasCardTransform(
                 onDragStart,
                 onDragEnd,
                 onDrag,
-                // onClick,
+                onClick,
             ],
         }
     )

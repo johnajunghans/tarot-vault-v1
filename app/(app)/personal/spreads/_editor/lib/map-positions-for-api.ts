@@ -1,10 +1,11 @@
 import type { SpreadForm } from "@/types/spreads"
+import { normalizeCardLayers } from "./layering"
 
 /**
  * Maps form positions to the API format expected by Convex mutations.
  */
 export function mapPositionsForApi(positions: SpreadForm["positions"]) {
-    return positions.map((card, index) => ({
+    return normalizeCardLayers(positions).map((card, index) => ({
         position: index + 1,
         name: card.name,
         description: card.description,

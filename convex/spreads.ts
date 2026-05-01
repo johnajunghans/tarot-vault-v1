@@ -2,7 +2,8 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUserOrThrow } from "./users";
 import { Doc } from "./_generated/dataModel";
-import { spreadValidator, spreadVersionValidator } from "./schema";
+import { spreadValidator } from "./schema";
+import { positionsHaveCanonicalLayers } from "./layers";
 
 const spreadsCreateArgs = spreadValidator.omit(
   "userId",
@@ -17,6 +18,18 @@ const spreadsUpdateArgs = spreadValidator
   .omit("userId", "updatedAt", "favorite", "version", "readingCount", "deleted")
   .partial()
   .extend({ _id: v.id("spreads") });
+
+function validateCanonicalLayers(
+  positions: Array<{ z: number }>,
+  numberOfCards: number
+) {
+  if (positions.length !== numberOfCards) return;
+  if (positionsHaveCanonicalLayers(positions)) return;
+
+  throw new Error(
+    "positions layers must be unique integer values from 1 to numberOfCards"
+  );
+}
 
 /**
  * List the most recent 10 spreads for the current user, ordered by updatedAt desc.
@@ -149,6 +162,8 @@ export const create = mutation({
       throw new Error("numberOfCards must be between 1 and 78");
     }
 
+    validateCanonicalLayers(args.positions, args.numberOfCards);
+
     const spreadId = await ctx.db.insert("spreads", {
       userId: user._id,
       updatedAt: Date.now(),
@@ -201,6 +216,10 @@ export const update = mutation({
     // Validate numberOfCards is between 1 and 78
     if (newNumberOfCards < 1 || newNumberOfCards > 78) {
       throw new Error("numberOfCards must be between 1 and 78");
+    }
+
+    if (args.positions !== undefined || args.numberOfCards !== undefined) {
+      validateCanonicalLayers(newPositions, newNumberOfCards);
     }
 
     // Build update object

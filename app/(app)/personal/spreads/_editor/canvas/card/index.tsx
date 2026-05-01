@@ -92,7 +92,8 @@ function CanvasCard({
         isViewMode,
         onDragStart,
         onDragEnd,
-        onDrag
+        onDrag,
+        onClick
     )
 
     // Register cards with use-canvas-card-layering hook 
@@ -145,7 +146,7 @@ function CanvasCard({
             focusable="true"
             role="button"
             aria-label={`Select card ${index + 1}: ${displayName}`}
-            onClick={() => onClick(index)}
+            // onClick={() => onClick(index)}
             onKeyDown={handleKeyDown}
             onPointerEnter={
                 !isViewMode && !isMobile

@@ -59,8 +59,12 @@ describe('generateCardAt', () => {
             x: 100,
             y: 200,
             r: 0,
-            z: 0,
+            z: 1,
         })
+    })
+
+    it('uses the provided layer value', () => {
+        expect(generateCardAt(100, 200, 4).z).toBe(4)
     })
 })
 

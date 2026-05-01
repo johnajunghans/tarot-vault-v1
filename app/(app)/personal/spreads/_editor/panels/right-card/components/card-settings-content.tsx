@@ -7,6 +7,8 @@ import {
   getLayersWithFrontCard,
   isUniqueHighestLayer,
   isUniqueLowestLayer,
+  moveCardToLayer,
+  normalizeLayerValues,
   normalizeRotationForStorage,
   ROTATION_STEP,
   snapToGrid,
@@ -75,7 +77,7 @@ export default function CardSettingsContent({
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const [placementOpen, setPlacementOpen] = useState(false);
   const layers = useMemo(
-    () => (positions ?? []).map((card) => clampLayer(card.z ?? 0)),
+    () => normalizeLayerValues((positions ?? []).map((card) => card.z ?? 1)),
     [positions]
   );
   const isAtFront =
@@ -89,7 +91,9 @@ export default function CardSettingsContent({
 
   const applyLayerValues = useCallback(
     (nextLayers: number[]) => {
-      const currentLayers = (form.getValues("positions") ?? []).map((card) => clampLayer(card.z ?? 0));
+      const currentLayers = normalizeLayerValues(
+        (form.getValues("positions") ?? []).map((card) => card.z ?? 1)
+      );
       const hasChanged = nextLayers.some((layer, index) => layer !== currentLayers[index]);
       if (!hasChanged) return;
 
@@ -106,16 +110,26 @@ export default function CardSettingsContent({
   const handleBringToFront = useCallback(() => {
     if (selectedCardIndex === null || isAtFront) return;
 
-    const nextLayers = (form.getValues("positions") ?? []).map((card) => clampLayer(card.z ?? 0));
+    const nextLayers = (form.getValues("positions") ?? []).map((card) => card.z ?? 1);
     applyLayerValues(getLayersWithFrontCard(nextLayers, selectedCardIndex));
   }, [applyLayerValues, form, isAtFront, selectedCardIndex]);
 
   const handleMoveToBack = useCallback(() => {
     if (selectedCardIndex === null || isAtBack) return;
 
-    const nextLayers = (form.getValues("positions") ?? []).map((card) => clampLayer(card.z ?? 0));
+    const nextLayers = (form.getValues("positions") ?? []).map((card) => card.z ?? 1);
     applyLayerValues(getLayersWithBackCard(nextLayers, selectedCardIndex));
   }, [applyLayerValues, form, isAtBack, selectedCardIndex]);
+
+  const handleLayerChange = useCallback(
+    (value: number) => {
+      if (selectedCardIndex === null) return;
+
+      const currentLayers = (form.getValues("positions") ?? []).map((card) => card.z ?? 1);
+      applyLayerValues(moveCardToLayer(currentLayers, selectedCardIndex, value));
+    },
+    [applyLayerValues, form, selectedCardIndex]
+  );
 
   const handleRotateStep = useCallback(
     (direction: 1 | -1) => {
@@ -339,18 +353,13 @@ export default function CardSettingsContent({
                     <NumberField
                       label="Layer"
                       id={field.name}
-                      value={field.value}
-                      onChangeValue={(value) => {
-                        const nextLayer = clampLayer(value);
-                        if (nextLayer !== field.value) {
-                          onImmediateFormChange();
-                        }
-                        field.onChange(nextLayer);
-                      }}
-                      onBlurTransform={clampLayer}
+                      value={field.value ?? (selectedCardIndex === null ? 1 : layers[selectedCardIndex] ?? 1)}
+                      onChangeValue={handleLayerChange}
+                      onBlurTransform={(value) => clampLayer(value, layers.length)}
                       onBlur={field.onBlur}
                       step={1}
-                      min={0}
+                      min={1}
+                      max={layers.length}
                       error={fieldState.error}
                       showStepper={!isMobile}
                       trailingControls={

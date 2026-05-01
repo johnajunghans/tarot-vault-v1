@@ -1,8 +1,7 @@
 import { convexTest } from "convex-test";
 import { describe, it, expect } from "vitest";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { modules, schema } from "./test.setup";
-import { Id } from "../_generated/dataModel";
 
 // Helper to create a test user and return authenticated context
 async function setupAuthenticatedUser(t: ReturnType<typeof convexTest>) {
@@ -276,9 +275,9 @@ describe("spreads", () => {
         description: "Past, Present, Future",
         numberOfCards: 3,
         positions: [
-          { position: 1, name: "Past", description: "Past influences", x: 0, y: 0, r: 0, z: 0 },
-          { position: 2, name: "Present", description: "Current situation", x: 100, y: 0, r: 0, z: 1 },
-          { position: 3, name: "Future", description: "Outcome", x: 200, y: 0, r: 0, z: 2 },
+          { position: 1, name: "Past", description: "Past influences", x: 0, y: 0, r: 0, z: 1 },
+          { position: 2, name: "Present", description: "Current situation", x: 100, y: 0, r: 0, z: 2 },
+          { position: 3, name: "Future", description: "Outcome", x: 200, y: 0, r: 0, z: 3 },
         ],
       });
 
@@ -307,7 +306,7 @@ describe("spreads", () => {
         name: "Simple Spread",
         numberOfCards: 1,
         positions: [
-          { position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 },
+          { position: 1, name: "Card", x: 0, y: 0, r: 0, z: 1 },
         ],
       });
 
@@ -327,8 +326,8 @@ describe("spreads", () => {
           name: "Invalid Spread",
           numberOfCards: 5, // Mismatch!
           positions: [
-            { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 },
-            { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 1 },
+            { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 1 },
+            { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 2 },
           ],
         })
       ).rejects.toThrowError(
@@ -347,6 +346,48 @@ describe("spreads", () => {
           positions: [],
         })
       ).rejects.toThrowError("numberOfCards must be between 1 and 78");
+    });
+
+    it("throws error when layers are not canonical", async () => {
+      const t = convexTest(schema, modules);
+      const { asUser } = await setupAuthenticatedUser(t);
+
+      await expect(
+        asUser.mutation(api.spreads.create, {
+          name: "Duplicate Layers",
+          numberOfCards: 2,
+          positions: [
+            { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 1 },
+            { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 1 },
+          ],
+        })
+      ).rejects.toThrowError(
+        "positions layers must be unique integer values from 1 to numberOfCards"
+      );
+
+      await expect(
+        asUser.mutation(api.spreads.create, {
+          name: "Zero Layer",
+          numberOfCards: 1,
+          positions: [
+            { position: 1, name: "Card", x: 0, y: 0, r: 0, z: 0 },
+          ],
+        })
+      ).rejects.toThrowError(
+        "positions layers must be unique integer values from 1 to numberOfCards"
+      );
+
+      await expect(
+        asUser.mutation(api.spreads.create, {
+          name: "Fractional Layer",
+          numberOfCards: 1,
+          positions: [
+            { position: 1, name: "Card", x: 0, y: 0, r: 0, z: 1.5 },
+          ],
+        })
+      ).rejects.toThrowError(
+        "positions layers must be unique integer values from 1 to numberOfCards"
+      );
     });
   });
 
@@ -480,8 +521,8 @@ describe("spreads", () => {
         _id: spreadId,
         numberOfCards: 2,
         positions: [
-          { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 0 },
-          { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 1 },
+          { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 1 },
+          { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 2 },
         ],
       });
 
@@ -491,6 +532,36 @@ describe("spreads", () => {
 
       expect(spread?.numberOfCards).toBe(2);
       expect(spread?.positions).toHaveLength(2);
+    });
+
+    it("throws error when updated layers are not canonical", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, asUser } = await setupAuthenticatedUser(t);
+
+      const spreadId = await t.run(async (ctx) => {
+        return await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Layer Validation Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 1 }],
+          favorite: false,
+          ...SPREAD_DEFAULTS,
+        });
+      });
+
+      await expect(
+        asUser.mutation(api.spreads.update, {
+          _id: spreadId,
+          numberOfCards: 2,
+          positions: [
+            { position: 1, name: "Card 1", x: 0, y: 0, r: 0, z: 1 },
+            { position: 2, name: "Card 2", x: 100, y: 0, r: 0, z: 3 },
+          ],
+        })
+      ).rejects.toThrowError(
+        "positions layers must be unique integer values from 1 to numberOfCards"
+      );
     });
 
     it("throws error when spread does not exist", async () => {
@@ -1204,6 +1275,88 @@ describe("spreads", () => {
 
       const favorited = await asUser.query(api.spreads.listFavorited);
       expect(favorited).toEqual([]);
+    });
+  });
+
+  describe("layer migration", () => {
+    it("dry-runs and patches legacy spread layers in batches", async () => {
+      const t = convexTest(schema, modules);
+      const { userId } = await setupAuthenticatedUser(t);
+
+      const spreadId = await t.run(async (ctx) => {
+        return await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Legacy Layers",
+          numberOfCards: 3,
+          positions: [
+            { position: 1, name: "Top A", x: 0, y: 0, r: 0, z: 10 },
+            { position: 2, name: "Back", x: 100, y: 0, r: 0, z: 0 },
+            { position: 3, name: "Top B", x: 200, y: 0, r: 0, z: 10 },
+          ],
+          favorite: false,
+          ...SPREAD_DEFAULTS,
+        });
+      });
+
+      const dryRun = await t.mutation(internal.migrations.normalizeSpreadLayers.normalizeSpreads, {
+        dryRun: true,
+        paginationOpts: { numItems: 10, cursor: null },
+      });
+      expect(dryRun.changed).toBe(1);
+
+      let spread = await t.run(async (ctx) => await ctx.db.get(spreadId));
+      expect(spread?.positions.map((position) => position.z)).toEqual([10, 0, 10]);
+
+      const result = await t.mutation(internal.migrations.normalizeSpreadLayers.normalizeSpreads, {
+        dryRun: false,
+        paginationOpts: { numItems: 10, cursor: null },
+      });
+      expect(result.changed).toBe(1);
+
+      spread = await t.run(async (ctx) => await ctx.db.get(spreadId));
+      expect(spread?.positions.map((position) => position.z)).toEqual([2, 1, 3]);
+    });
+
+    it("patches legacy spread version layers", async () => {
+      const t = convexTest(schema, modules);
+      const { userId } = await setupAuthenticatedUser(t);
+
+      const versionId = await t.run(async (ctx) => {
+        const spreadId = await ctx.db.insert("spreads", {
+          userId,
+          updatedAt: Date.now(),
+          name: "Versioned Spread",
+          numberOfCards: 1,
+          positions: [{ position: 1, name: "Card", x: 0, y: 0, r: 0, z: 1 }],
+          favorite: false,
+          ...SPREAD_DEFAULTS,
+        });
+
+        return await ctx.db.insert("spread_versions", {
+          spreadId,
+          version: 1,
+          name: "Legacy Version",
+          numberOfCards: 2,
+          positions: [
+            { position: 1, name: "Top", x: 0, y: 0, r: 0, z: 4 },
+            { position: 2, name: "Back", x: 100, y: 0, r: 0, z: 0 },
+          ],
+          archivedAt: Date.now(),
+        });
+      });
+
+      const result = await t.mutation(
+        internal.migrations.normalizeSpreadLayers.normalizeSpreadVersions,
+        {
+          dryRun: false,
+          paginationOpts: { numItems: 10, cursor: null },
+        }
+      );
+      expect(result.changed).toBe(1);
+
+      const version = await t.run(async (ctx) => await ctx.db.get(versionId));
+      expect(version?.positions.map((position) => position.z)).toEqual([2, 1]);
     });
   });
 });

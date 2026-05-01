@@ -27,6 +27,7 @@ import Link from "next/link";
 import {
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
+    normalizeCardLayers,
     createDraftTimestamp,
     useSpreadForm,
     useSpreadEditor,
@@ -58,7 +59,7 @@ function toSpreadFormValues(spread: Pick<SpreadDB, "name" | "description" | "pos
     return {
         name: spread.name,
         description: spread.description ?? "",
-        positions: spread.positions.map(({ name, description, allowReverse, x, y, r, z }) => ({
+        positions: normalizeCardLayers(spread.positions).map(({ name, description, allowReverse, x, y, r, z }) => ({
             name, description, allowReverse, x, y, r, z,
         })),
     };
@@ -234,7 +235,7 @@ export default function SpreadDetail({
         const draft = {
             name,
             description: spread.description ?? "",
-            positions: spread.positions.map((p, i) => ({
+            positions: normalizeCardLayers(spread.positions).map((p, i) => ({
                 name: p.name,
                 description: p.description,
                 allowReverse: p.allowReverse,

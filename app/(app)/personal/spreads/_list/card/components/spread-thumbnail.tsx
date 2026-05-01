@@ -1,5 +1,5 @@
 import type { CardDB } from "@/types/spreads"
-import { calcSpreadDimensions, CARD_HEIGHT, CARD_WIDTH } from "../../../_editor"
+import { calcSpreadDimensions, CARD_HEIGHT, CARD_WIDTH, normalizeCardLayers } from "../../../_editor"
 
 interface SpreadThumbnailProps {
     width: number
@@ -56,8 +56,9 @@ function ThumbnailCard({ x, y, r }: { x: number; y: number; r: number }) {
 }
 
 export default function SpreadThumbnail({ cards, width, height }: SpreadThumbnailProps) {
-    const bounds = calcSpreadDimensions(cards)
-    const cardDataAtOrigin = cards.map((card) => ({
+    const normalizedCards = normalizeCardLayers(cards)
+    const bounds = calcSpreadDimensions(normalizedCards)
+    const cardDataAtOrigin = normalizedCards.map((card) => ({
         ...card,
         x: card.x - bounds.xMin,
         y: card.y - bounds.yMin,

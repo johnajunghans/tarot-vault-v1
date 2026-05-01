@@ -20,7 +20,7 @@ interface UseSpreadFormHistoryArgs {
     setSelectedCardIndex: Dispatch<SetStateAction<number | null>>
 }
 
-function cloneCard(card: CardForm): CardForm {
+function cloneCard(card: CardForm, index: number): CardForm {
     return {
         name: card.name ?? '',
         description: card.description ?? '',
@@ -28,7 +28,7 @@ function cloneCard(card: CardForm): CardForm {
         x: card.x ?? 0,
         y: card.y ?? 0,
         r: card.r ?? 0,
-        z: card.z ?? 0,
+        z: card.z ?? index + 1,
     }
 }
 

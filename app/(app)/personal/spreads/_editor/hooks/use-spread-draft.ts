@@ -9,6 +9,7 @@ import type { SpreadCanvasViewportRequest } from "../canvas/types"
 import {
     getSpreadBounds,
     normalizeCardsToCanvasCenter,
+    normalizeCardLayers,
     createDraftTimestamp,
     DRAFT_KEY_PREFIX,
 } from "../lib"
@@ -66,11 +67,11 @@ export function useSpreadDraft({
         try {
             const draft = JSON.parse(raw) as SpreadForm & { date?: number; numberOfCards?: number }
             const normalizedPositions = normalizeCardsToCanvasCenter(
-                (draft.positions ?? []).map(
+                normalizeCardLayers((draft.positions ?? []).map(
                     ({ name, description, allowReverse, x, y, r, z }) => ({
                         name, description, allowReverse, x, y, r, z,
                     })
-                )
+                ))
             )
             form.reset({
                 name: draft.name ?? "",
@@ -105,11 +106,23 @@ export function useSpreadDraft({
         if (isDiscardingRef.current) return
         if (!watchedValues) return
         if (form.formState.isDirty) {
+            const positions = watchedValues.positions
+                ? normalizeCardLayers(watchedValues.positions.map((position) => ({
+                      name: position?.name ?? "",
+                      description: position?.description,
+                      allowReverse: position?.allowReverse,
+                      x: position?.x ?? 0,
+                      y: position?.y ?? 0,
+                      r: position?.r ?? 0,
+                      z: position?.z ?? 1,
+                  })))
+                : undefined
+
             localStorage.setItem(draftKey, JSON.stringify({
                 ...watchedValues,
                 date: draftDate,
-                positions: watchedValues.positions?.map((p, i) => ({ ...p, position: i + 1 })),
-                numberOfCards: watchedValues.positions?.length
+                positions: positions?.map((p, i) => ({ ...p, position: i + 1 })),
+                numberOfCards: positions?.length
             }))
         }
     }, [watchedValues, form.formState.isDirty, draftDate, draftKey])

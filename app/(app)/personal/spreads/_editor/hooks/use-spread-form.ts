@@ -12,6 +12,7 @@ import {
     CARD_SPACING_X,
     CARD_WIDTH,
     generateCardAt,
+    normalizeCardLayers,
 } from "../lib"
 import { useSpreadCanvasModel } from "./use-canvas-model"
 import { useSpreadFormHistory } from "./use-spread-form-history"
@@ -44,7 +45,7 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
 
     // `positions` is the editable card list. `useFieldArray` gives us stable ids
     // for rendering plus helpers for insert/remove/reorder operations.
-    const { fields: cards, append, remove, move } = useFieldArray({
+    const { fields: cards, append, move, replace } = useFieldArray({
         control: form.control,
         name: "positions",
     })
@@ -97,10 +98,11 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
         const nextIndex = cards.length
         const lastCard = nextIndex > 0 ? form.getValues(`positions.${nextIndex - 1}`) : null
         const newCard = lastCard
-            ? generateCardAt(lastCard.x + CARD_SPACING_X, lastCard.y)
+            ? generateCardAt(lastCard.x + CARD_SPACING_X, lastCard.y, nextIndex + 1)
             : generateCardAt(
                   CANVAS_CENTER.x - CARD_WIDTH / 2,
-                  CANVAS_CENTER.y - CARD_HEIGHT / 2
+                  CANVAS_CENTER.y - CARD_HEIGHT / 2,
+                  nextIndex + 1
               )
         pushSnapshot()
         append(newCard, { focusName: `positions.${nextIndex}.name` })
@@ -112,7 +114,7 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
     const addCardAt = useCallback(
         (x: number, y: number) => {
             if (cards.length >= 78) return
-            const newCard = generateCardAt(x, y)
+            const newCard = generateCardAt(x, y, cards.length + 1)
             pushSnapshot()
             append(newCard)
             setSelectedCardIndex(cards.length)
@@ -123,9 +125,18 @@ export function useSpreadForm(options?: UseSpreadFormOptions) {
     const removeWithHistory: UseFieldArrayRemove = useCallback(
         (index?: number | number[]) => {
             pushSnapshot()
-            remove(index)
+            if (index === undefined) {
+                replace([])
+                return
+            }
+
+            const indicesToRemove = new Set(Array.isArray(index) ? index : [index])
+            const remainingCards = (form.getValues("positions") ?? []).filter(
+                (_card, cardIndex) => !indicesToRemove.has(cardIndex)
+            )
+            replace(normalizeCardLayers(remainingCards))
         },
-        [pushSnapshot, remove]
+        [form, pushSnapshot, replace]
     )
 
     const moveWithHistory: UseFieldArrayMove = useCallback(

@@ -75,14 +75,14 @@ export function useSpreadCanvasModel({
     // the canvas render layer.
     const canvasCards = useMemo<CanvasCard[]>(
         () =>
-            (watchedPositions ?? []).map((card) => ({
+            (watchedPositions ?? []).map((card, index) => ({
                 name: card.name ?? '',
                 description: card.description,
                 allowReverse: card.allowReverse,
                 x: card.x ?? 0,
                 y: card.y ?? 0,
                 r: card.r ?? 0,
-                z: card.z ?? 0,
+                z: card.z ?? index + 1,
             })),
         [watchedPositions]
     )

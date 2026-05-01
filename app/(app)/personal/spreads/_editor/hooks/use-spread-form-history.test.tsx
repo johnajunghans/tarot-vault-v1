@@ -18,7 +18,7 @@ const defaultValues: SpreadForm = {
             x: 10,
             y: 20,
             r: 0,
-            z: 0,
+            z: 1,
         },
     ],
 }

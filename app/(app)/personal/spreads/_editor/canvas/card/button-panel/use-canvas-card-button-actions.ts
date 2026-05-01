@@ -4,6 +4,7 @@ import {
     getLayersWithBackCard,
     getLayersWithFrontCard,
     getNextKeyAngle,
+    normalizeLayerValues,
 } from '../../../lib'
 import { CanvasCard } from '../../types'
 
@@ -14,7 +15,7 @@ export function useCanvasCardButtonActions (
     onLayerChange: ((updates: { index: number; z: number }[]) => void) | undefined
 ) {
     const layers = useMemo(
-        () => effectiveCards.map((card) => clampLayer(card.z)),
+        () => normalizeLayerValues(effectiveCards.map((card) => clampLayer(card.z, effectiveCards.length))),
         [effectiveCards]
     )
 
@@ -68,4 +69,3 @@ export function useCanvasCardButtonActions (
         handleSendToBack
     }
 }
-
