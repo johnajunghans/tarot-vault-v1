@@ -2,6 +2,80 @@
 
 *Ordered with most recent at the top*
 
+**03/30/2026 -- 1.4.9 Load Spread Template -- Claude Opus 4.6**
+Summary of actions taken:
+- Extended `ActionDescriptor` union in `types/layout.ts` with `DropdownMenuActionDescriptor` (type: "dropdown"), `MenuOption`, `MenuStructureItem` types, and `titleIconOnly` flag on `BaseActionDescriptor`
+- Updated `topbar-actions.tsx` with `TopbarDropdownAction` (dropdown trigger with tooltip suppressed when menu open, fully controlled state to avoid controlled/uncontrolled warning) and `TopbarIconAction` (icon-only button with tooltip) components
+- Updated `sidebar-actions.tsx` with `SidebarDropdownAction` using `SidebarMenuButton` + `DropdownMenuTrigger` pattern (matching existing `DefaultSidebarActions` approach), with collapsed sidebar tooltip support
+- Updated `actions/helpers.ts` to return `undefined` click handler for dropdown action type
+- Extracted `createDraftTimestamp()` from `use-spread-draft.ts` to shared `_editor/lib/draft-utils.ts`, re-exported through barrel
+- Restructured `spread-detail.tsx` actions: added "More Actions" dropdown with three options (Create reading — disabled placeholder with `LibraryIcon`, Use as template with `Copy01Icon`, Delete Spread with `Delete02Icon`), replaced Close/Cancel with icon-only `Cancel01Icon` buttons, removed standalone Delete action from edit mode
+- Added `handleUseAsTemplate` — creates draft in localStorage from current spread data (name + " (copy)" truncated to 50 chars, description, positions), navigates to `spreads/new?draft=<timestamp>`
+- Moved delete dialogs outside `{!isViewMode}` guard so delete works from both view and edit modes
+
+Future considerations/recommendations/warnings
+- "Create reading with this spread" is a disabled placeholder — implement when readings feature is built
+- The same More Actions dropdown pattern can be added to spread cards in the `_list` module for quick access without opening the spread
+- When sharing/default spreads are added, the template feature works naturally — users view a shared spread, then click "Use as template" to fork it into their own drafts
+- `ButtonMenuOption` requires `onClick` even when disabled — consider making it optional in the type to avoid no-op handlers
+
+**03/26/2026 -- 1.4.11 Search/Sort for Spreads List -- Claude Opus 4.6**
+Summary of actions taken:
+- Extended `SpreadListItem` with `description` field and added `SpreadSortField`/`SpreadSortDir` types with URL param parsers in `filter-spreads.ts`
+- Updated `buildSpreadList()` with client-side search filtering (name + description, case-insensitive) and dynamic sort comparator (date/name/cards, asc/desc)
+- Added search `InputGroup` with `Search01Icon` addon and sort `DropdownMenu` with `RadioGroup` field selection + direction toggle to `SpreadsToolbar`
+- Wired search as local `useState` in `page.tsx`; sort field/direction as URL search params via existing `updateParams` pattern
+- Updated `_list/index.ts` barrel exports
+
+Future considerations/recommendations/warnings
+- Search is client-side only — sufficient for current scale but will need backend search if spread counts grow significantly
+- `readingCount` sort option deliberately skipped — makes more sense for shared/collective spreads feature
+- No "no results" empty state for search yet — grid is simply empty when search yields no matches; consider adding a distinct message in a follow-up
+
+**03/26/2026 -- 1.4.12 Undo/Redo for Card Canvas Placement -- Claude Opus 4.6**
+Summary of actions taken:
+- Created `use-canvas-history.ts` — ref-based undo/redo stacks (max 50 entries) with `PlacementSnapshot` type, keyboard shortcuts (Ctrl+Z undo, Ctrl+Shift+Z/Ctrl+Y redo), input/textarea/select guard, `enabled` flag for view mode, auto-clear on card count change
+- Moved `handleCanvasLayerChange` from `spread-editor-layout.tsx` into `use-canvas-model.ts` to centralize all three form write-back paths (drag, rotation, layer)
+- Added `pushSnapshot()` call at the start of `handleCanvasPositionsCommit`, `handleCardRotationChange`, and `handleCanvasLayerChange` to capture state before each mutation
+- Threaded `isViewMode` through `useSpreadForm({ isViewMode })` → `useSpreadCanvasModel({ enabled })` → `useCanvasHistory({ enabled })` so history is disabled in view mode
+- Created `UndoRedoControls` component matching `ZoomControls` styling (same container classes, ghost icon buttons with `Undo03Icon`/`Redo03Icon`, disabled states, tooltips with shortcut hints)
+- Wrapped `UndoRedoControls` + `ZoomControls` in a shared `absolute top-2 right-2 z-10 flex` container in both mobile and desktop layouts; made `ZoomControls` positioning class-driven via `className` prop (defaults to `absolute top-2 right-2 z-10` when no className provided, accepts `static` override)
+- Exported `UndoRedoControls` from canvas barrel index
+- Refactored both `UndoRedoControls` and `ZoomControls` to use shared `TooltipProvider` + `TooltipRoot` pattern instead of individual `Tooltip` wrappers
+- Added keyboard shortcuts for zoom: ⇧⌘+ (zoom in), ⇧⌘- (zoom out), ⇧⌘0 (reset) — uses Shift modifier to avoid conflicting with browser zoom (⌘+/⌘-/⌘0)
+- Updated all tooltip contents to show keyboard shortcuts as lighter text with Mac symbols (⌘, ⇧)
+
+Future considerations/recommendations/warnings
+- History stores full snapshots of all card positions — memory usage is bounded by MAX_HISTORY (50) but could be optimized to delta-based storage if spreads grow very large
+- Undo/redo for rotation doesn't restore continuous rotation state (the visual angle cache in `cardRotationsRef`), only the stored 0-359 form value — this means undone rotations may take a different visual path but end at the correct angle
+- If card add/remove undo is added later, the snapshot format would need to include card identity (field-array IDs) rather than just positional arrays
+
+**03/26/2026 -- 1.4.8 Spread Versioning -- Claude Opus 4.6**
+Summary of actions taken:
+- Added `version` (int, starts at 1), `readingCount` (int, starts at 0), and `deleted` (boolean, default false) fields to `spreadValidator` in `convex/schema.ts`
+- Created `spreadVersionValidator` and `spread_versions` table with `by_spreadId_and_version` index for archived spread snapshots
+- Added `by_spreadId` index on readings table for efficient spread-to-readings lookups
+- Added `SpreadVersionDB` type to `types/spreads.ts`
+- Created backfill migration (`convex/migrations/backfillSpreadVersions.ts`) — internal mutation that patches existing spreads with new fields and counts existing readings per spread
+- Updated `spreads.create` to set `version: 1, readingCount: 0, deleted: false`; updated `spreadsCreateArgs` and `spreadsUpdateArgs` to omit the server-managed fields
+- Updated `spreads.update` to bump version when `readingCount > 0` (no archiving — snapshots are created lazily in `readings.create`); no-op on version when no readings exist
+- Updated `spreads.remove` with three flows: hard-delete (readingCount === 0), soft-delete (readingCount > 0, cascade false), cascade delete (readingCount > 0, cascade true — deletes all readings + versions + spread)
+- Updated `spreads.list` and `spreads.listFavorited` to filter out soft-deleted spreads
+- Added `spreads.getByVersion` query: returns live spread for current version, archived snapshot for older versions; works on soft-deleted spreads (readings still need layout)
+- Updated `readings.create` to increment spread's `readingCount`, server-enforce the spread's current version, and lazily archive the spread's current state to `spread_versions` if no snapshot exists for that version (only versions that readings actually reference get archived — edits between readings produce zero orphan rows)
+- Updated `readings.remove` to decrement spread's `readingCount` and auto-cleanup soft-deleted spreads when count hits 0
+- Updated `readings.update` to adjust `readingCount` on both old and new spreads when spread reference changes, and server-enforce the new spread's current version
+- Updated delete dialog in `spread-detail.tsx`: when `readingCount > 0`, shows three options via ConfirmDialog's secondary button — "Keep it" (cancel), "Delete spread only" (soft-delete), "Delete spread and all X readings" (cascade delete)
+- Added 18 new versioning tests across spreads.test.ts (versioning, soft-delete, cascade delete, getByVersion, list/listFavorited exclusion) and readings.test.ts (readingCount increment/decrement, version enforcement, lazy snapshot creation, snapshot deduplication, auto-cleanup, spread change count adjustment)
+- Updated all existing test spread inserts across spreads.test.ts, readings.test.ts, and interpretations.test.ts to include new required fields
+
+Future considerations/recommendations/warnings
+- Run `convex/migrations/backfillSpreadVersions` from the Convex dashboard after deploying schema changes to patch existing spreads
+- Cascade delete currently deletes all readings for the spread owner — when shared spreads are implemented, this should only delete the owner's readings
+- `getByVersion` does not check ownership — it returns data for any spread by ID, which is fine for now since readings already validate ownership, but should be revisited for shared spreads
+- The `by_spreadId` index on readings uses a nested field path (`spread.id`) — verify Convex supports this syntax in production (it works in convex-test)
+- Soft-deleted spreads remain in the database indefinitely until all their readings are removed; consider a periodic cleanup job if orphaned soft-deletes become a concern
+
 **03/22/2026 -- 1.4.7 Canvas Card Buttons -- Claude Opus 4.6**
 Summary of actions taken:
 - Created `CardButtonFrame` component (`canvas/components/card-button-frame.tsx`) — single shared SVG overlay rendered above all cards, positioned at hovered card's coordinates
@@ -1046,3 +1120,48 @@ Replaced CSS `scale()` zoom with dynamic SVG `viewBox`-based zoom/pan. SVG fills
 	3. IMPORTANT: These buttons should NOT be present in mobile, only desktop.
 	4. IMPORTANT: These buttons should be revealed on HOVER.
 	5. These buttons should be layered above all other cards. This is to prevent a card with higher layering to overlap another card's buttons, requiring the user to move the card in order to use the buttons rendering them effectively useless as quick, convenient buttons. Similarly, buttons need to be carefully structured so that they consume the click event rather than a card that is underneath.
+
+### ~~1.4.8_Spread Versioning~~
+1. Add `version` (int, starts at 1), `readingCount` (int, starts at 0), and `deleted` (boolean, default false) fields to `spreadValidator`. Create `spreadVersionValidator` and `spread_versions` table with `by_spreadId_and_version` index. Add `by_spreadId` index to readings table.
+2. Create backfill migration (`convex/migrations/backfillSpreadVersions.ts`) to patch existing spreads with `version: 1, readingCount: 0, deleted: false`.
+3. Update spread mutations: `create` sets new fields; `update` bumps version when `readingCount > 0` (no archiving — snapshots are created lazily in `readings.create`); `remove` supports soft-delete (when readings exist) and cascade delete. Filter soft-deleted spreads from `list`/`listFavorited`.
+4. New `getByVersion` query: returns live spread if version matches current, otherwise fetches from `spread_versions`.
+5. Update reading mutations: `create` increments `readingCount`, server-enforces version, and lazily archives the spread's current state to `spread_versions` if no snapshot exists for that version (deduplicates across multiple readings for the same version); `remove` decrements `readingCount` and auto-cleans soft-deleted spreads when count hits 0; `update` adjusts counts when spread reference changes.
+6. Update delete modal in spread detail page: when `readingCount > 0`, offer "Delete spread only" (soft-delete) and "Delete spread and all X readings" (cascade).
+7. Tests for versioning, archiving, soft-delete, cascade delete, auto-cleanup, readingCount management.
+
+### ~~1.4.9_Load Spread Template~~
+1. Users should be able to load an existing spread as a template for a new spread.
+	1. First, create the button:
+		1. Create an icon button using hugeicons MoreVerticalIcon and place to the left of the primary action button in view/edit spread (spreads/[id]/page.tsx).
+		2. This icon button should have a tooltip saying "More Actions" with delayDuration={0}.
+		3. This icon button should trigger a dropdown menu with the following options and structure:
+			1. Option 1: "Create reading with this spread" — Placeholder option, functionality to come later
+			2. Option 2: "Use as template for new spread"
+			3. Separator
+			4. Option 3: "Delete Spread" (with destructive styling) — Delete button in edit mode should be removed to be replaced with this option
+		4. This icon button and dropdown menu should appear as outlined above in both edit and view mode. (Note: this will also effectively add delete functionality to view mode, so users don't have to go into edit mode to delete a spread).
+		5. Additionally, Close/Cancel button should be replaced with icon button using hugeicons Cancel01Icon. This also should have tooltip saying either "Cancel" or "Close" with delayDuration={0}.
+	2. Second, create the functionality
+		1. Clicking "Use as template for new spread" should:
+			1. Create a new draft in localStorage from the current spread's data (name with " (copy)" suffix truncated to 50 chars, description, positions)
+			2. Navigate to spreads/new?draft=<timestamp>
+		2. The existing draft loading flow on the new page handles the rest — no additional logic needed there.
+		3. Once loaded, the draft behaves identically to any manually-created draft.
+
+### ~~1.4.11_Search/Sort~~
+1. Extend `SpreadListItem` with `description?: string` field. Add `SpreadSortField` (`"date" | "name" | "cards"`) and `SpreadSortDir` (`"asc" | "desc"`) types with URL param parsers (`getSort`, `getSortDir`) in `filter-spreads.ts`.
+2. Extend `buildSpreadList()` to accept `search`, `sortField`, `sortDir` params. Add client-side search filter matching against `name` and `description` (case-insensitive `includes`). Replace hardcoded timestamp sort with dynamic comparator (date=numeric, name=localeCompare, cards=length).
+3. Expand `SpreadsToolbar` with search input (`InputGroup` + `Search01Icon` addon, local state) on the right side and sort `DropdownMenu` button (outline, `SortByDown01Icon`/`SortByUp01Icon`) with `RadioGroup` for field selection and direction toggle item.
+4. Wire search as local `useState` in `page.tsx`; wire sort field/direction as URL search params (`sort`, `dir`) via existing `updateParams` pattern. Defaults omitted from URL (`date` + `desc`).
+5. Update `_list/index.ts` barrel exports with new types and parsers.
+
+### ~~1.4.12_Undo/Redo for card canvas placement~~
+1. Create `use-canvas-history.ts` hook with ref-based undo/redo stacks (max 50), snapshot capture, keyboard shortcuts (Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y) with input/textarea/select guard, `enabled` flag for view mode, and auto-clear on card count change.
+2. Move `handleCanvasLayerChange` from layout into `use-canvas-model.ts` alongside other form write-back handlers.
+3. Integrate history: call `pushSnapshot()` at the start of `handleCanvasPositionsCommit` (drag), `handleCardRotationChange` (rotation), and `handleCanvasLayerChange` (z-order). Export `canUndo`, `canRedo`, `undo`, `redo` through the hook chain.
+4. Pass `isViewMode` through `useSpreadForm` → `useSpreadCanvasModel` → `useCanvasHistory` via `enabled` flag.
+5. Create `UndoRedoControls` component matching `ZoomControls` styling (same container, ghost icon buttons, tooltips with shortcut hints).
+6. Wire controls into `spread-editor-layout.tsx`: wrap both `UndoRedoControls` and `ZoomControls` in a shared flex container; make ZoomControls positioning class-driven via `className` prop; only render undo/redo when not in view mode. Applied to both mobile and desktop layouts.
+7. Export `UndoRedoControls` from canvas barrel.
+8. Refactor both components to use `TooltipProvider` + `TooltipRoot` pattern for grouped tooltip behavior. Add zoom keyboard shortcuts (⇧⌘+, ⇧⌘-, ⇧⌘0) with input guard. Show shortcuts in tooltips as lighter text with Mac symbols.
