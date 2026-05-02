@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "npm-run-all --parallel dev:frontend dev:backend",
+    "dev:local": "npm-run-all --parallel dev:frontend-local dev:backend",
     "dev:frontend": "next dev",
+    "dev:frontend-local": "next dev -H localhost",
     "dev:backend": "convex dev",
     "predev": "convex dev --until-success && convex dashboard",
     "build": "next build",
