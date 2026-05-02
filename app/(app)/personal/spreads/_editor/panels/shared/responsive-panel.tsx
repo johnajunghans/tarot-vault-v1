@@ -26,7 +26,6 @@ interface ResponsivePanelProps {
     maxSize?: number | string;
     panelRef?: RefObject<PanelImperativeHandle | null>;
     onPanelResize?: () => void;
-    disableResize?: boolean;
 
     // Handle props (desktop)
     handlePosition?: "before" | "after";
@@ -47,7 +46,6 @@ export function ResponsivePanel({
     maxSize,
     panelRef,
     onPanelResize,
-    disableResize = false,
     handlePosition = "after",
     hideHandle = false,
 }: ResponsivePanelProps) {
@@ -74,34 +72,23 @@ export function ResponsivePanel({
 
     return (
         <>
-            {handlePosition === "before" && (
-                <ResizableHandle
-                    disabled={hideHandle || disableResize}
-                    className={isPanelInset || hideHandle ? "hidden" : ""}
-                />
-            )}
+            {handlePosition === "before" && <ResizableHandle className={isPanelInset ? "hidden" : (hideHandle ? "hidden" : "")} />}
             <ResizablePanel
                 id={panelId}
                 collapsible={collapsible}
-                disabled={disableResize}
                 defaultSize={defaultSize}
                 minSize={minSize}
                 maxSize={maxSize}
                 panelRef={panelRef}
                 onResize={onPanelResize}
                 className={cn(
-                    disableResize ? "pointer-events-none" : "pointer-events-auto",
+                    "pointer-events-auto",
                     isPanelInset && insetVariantStyles
                 )}
             >
                 {children}
             </ResizablePanel>
-            {handlePosition === "after" && (
-                <ResizableHandle
-                    disabled={hideHandle || disableResize}
-                    className={isPanelInset || hideHandle ? "hidden" : ""}
-                />
-            )}
+            {handlePosition === "after" && <ResizableHandle className={isPanelInset ? "hidden" : (hideHandle ? "hidden" : "")} />}
         </>
     );
 }

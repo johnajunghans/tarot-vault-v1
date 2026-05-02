@@ -263,6 +263,13 @@ export default function SpreadEditorLayout({
                     />
 
                     </ResizablePanelGroup>
+                    {/* Small overlay to prevent the right panel from being grabbed when collapsed (desktop only) */}
+                    {selectedCardIndex === null && !isMobile && (
+                        <div
+                            aria-hidden="true"
+                            className="absolute inset-y-0 right-0 z-[5] w-4 cursor-default"
+                        />
+                    )}
                     <div
                         ref={desktopControlsPositionRef}
                         className="pointer-events-none absolute top-2 right-2 z-10"

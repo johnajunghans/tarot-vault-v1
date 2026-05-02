@@ -103,7 +103,6 @@ function CardSettingsPanel({
       panelId="card-settings-panel"
       panelRef={panelRef}
       onPanelResize={handleResize}
-      disableResize={hideHandle && selectedCardIndex === null}
       collapsible
       defaultSize="20%"
       minSize={240}
