@@ -5,6 +5,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL(".", import.meta.url)),
+      "@personal": fileURLToPath(new URL("app/(app)/personal", import.meta.url)),
+      "@spreads": fileURLToPath(new URL("app/(app)/personal/spreads", import.meta.url)),
     },
   },
   test: {

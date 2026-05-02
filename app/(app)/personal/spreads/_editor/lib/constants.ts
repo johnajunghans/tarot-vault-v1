@@ -1,8 +1,10 @@
 // ------------ CARD DIMENSIONS ------------ //
 
-// Shared physical dimensions for a spread card anywhere it is rendered.
-export const CARD_WIDTH = 90
-export const CARD_HEIGHT = 150
+// Card dimensions are owned by the shared @personal/_card subsystem.
+// Imported here so CANVAS_BOUNDS can reference them, and re-exported so all
+// existing spreads imports continue to work unchanged.
+import { CARD_WIDTH, CARD_HEIGHT } from '@personal/_card'
+export { CARD_WIDTH, CARD_HEIGHT }
 
 // Axis-aligned padding around the card face in SVG space for drag + toolbar hover
 // hit-testing (matches the invisible rect in `card.tsx`). These must cover the

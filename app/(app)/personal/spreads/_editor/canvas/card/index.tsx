@@ -12,14 +12,12 @@ import {
 
 gsap.registerPlugin(Draggable)
 
-import { CardBack } from './card-back'
 // import CardButtonPanel from './button-panel'
 import type { CanvasCard } from '../types'
 import useCanvasCardTransform from './use-canvas-card-transform'
-import { getCardNameFontSize, normalizeRotationForDisplay, splitCardNameIntoLines } from './card-helpers'
+import { Card } from '@personal/_card'
 
 const CORNER_R = 8
-const FULL_ROTATION = 360
 
 interface CanvasCardProps {
     card: CanvasCard
@@ -93,7 +91,7 @@ function CanvasCard({
         onClick
     )
 
-    // Register cards with use-canvas-card-layering hook 
+    // Register cards with use-canvas-card-layering hook
     useEffect(() => {
         registerRef(index, groupRef.current)
         return () => registerRef(index, null)
@@ -102,28 +100,11 @@ function CanvasCard({
     const isActiveDrag = isDraggingState || isDraggingInGroup
     const showButtonFrame =
         !isViewMode && !isMobile && !isActiveDrag && isHovered
-    const isHighlighted = selected || groupSelected
-    const badgeColor = isHighlighted ? 'var(--gold)' : 'var(--gold-muted)'
-    const cardName = card.name?.trim() ?? ''
-    const hasCardName = cardName.length > 0
-    const displayName = hasCardName ? cardName : 'Untitled'
-    const cardNameFontSize = getCardNameFontSize(displayName)
-    const cardNameLines = splitCardNameIntoLines(displayName)
-    const normalizedRenderRotation = normalizeRotationForDisplay(renderRotation, FULL_ROTATION)
-    const shouldFlipCardName =
-        normalizedRenderRotation > 90 && normalizedRenderRotation < 270
-    const cardNameLineHeight = cardNameFontSize * 1.05
-    const cardNameBaseY =
-        CARD_HEIGHT - (cardNameLines.length === 1 ? 24 : 31)
-    const cardNameCenterY =
-        cardNameBaseY + ((cardNameLines.length - 1) * cardNameLineHeight) / 2
-    const cardNameTransform = shouldFlipCardName
-        ? `rotate(180 ${CARD_WIDTH / 2} ${cardNameCenterY})`
-        : undefined
     // Drop shadow only while dragging (not tied to viewport zoom).
     const shadowFilter = isActiveDrag
         ? 'url(#canvas-card-shadow-active)'
         : undefined
+    const cardLabel = card.name?.trim() || 'Untitled'
 
     function handleKeyDown(event: KeyboardEvent<SVGGElement>) {
         if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') {
@@ -141,7 +122,7 @@ function CanvasCard({
             tabIndex={0}
             focusable="true"
             role="button"
-            aria-label={`Select card ${index + 1}: ${displayName}`}
+            aria-label={`Select card ${index + 1}: ${cardLabel}`}
             onClick={() => isViewMode && onClick(index)}
             onKeyDown={handleKeyDown}
             onPointerEnter={
@@ -179,95 +160,15 @@ function CanvasCard({
                 }}
             >
                 <g ref={rotationRef}>
-                    <rect
-                        data-focus-ring
-                        x={-8}
-                        y={-8}
-                        width={CARD_WIDTH + 16}
-                        height={CARD_HEIGHT + 16}
-                        rx={CORNER_R + 8}
-                        fill="none"
-                        stroke="var(--gold)"
-                        strokeOpacity={0.55}
-                        strokeWidth={3}
-                        className="pointer-events-none opacity-0 transition-opacity duration-150"
-                    />
-
-                    {selected && !groupSelected && (
-                        <rect
-                            x={-4}
-                            y={-4}
-                            width={CARD_WIDTH + 8}
-                            height={CARD_HEIGHT + 8}
-                            rx={CORNER_R + 4}
-                            fill="none"
-                            stroke="var(--gold)"
-                            strokeOpacity={0.3}
-                            strokeWidth={6}
-                            style={{ pointerEvents: 'none' }}
-                        />
-                    )}
-
-                    <CardBack
+                    <Card
+                        index={index}
+                        name={card.name ?? ''}
+                        renderRotation={renderRotation}
                         selected={selected}
                         groupSelected={groupSelected}
                         isButtonHoverActive={showButtonFrame}
+                        badgeRef={badgeRef}
                     />
-
-                    <g ref={badgeRef}>
-                        <circle
-                            cx={16}
-                            cy={16}
-                            r={10}
-                            fill={badgeColor}
-                            fillOpacity={showButtonFrame || isHighlighted ? 0.9 : 0.7}
-                        />
-                        <text
-                            x={15.75}
-                            y={19.75}
-                            textAnchor="middle"
-                            fontSize={10}
-                            fill="var(--background)"
-                            style={{
-                                pointerEvents: 'none',
-                                userSelect: 'none',
-                            }}
-                            className="font-bold font-mono"
-                        >
-                            {index + 1}
-                        </text>
-                    </g>
-
-                    {cardNameLines.length > 0 && (
-                        <g transform={cardNameTransform}>
-                            {cardNameLines.map((line, lineIndex) => (
-                                <text
-                                    key={`${index}-name-${lineIndex}`}
-                                    x={CARD_WIDTH / 2}
-                                    y={
-                                        cardNameCenterY +
-                                        (lineIndex -
-                                            (cardNameLines.length - 1) / 2) *
-                                            cardNameLineHeight
-                                    }
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    fill="var(--foreground)"
-                                    fillOpacity={hasCardName ? (showButtonFrame || isHighlighted ? 0.9 : 0.7) : 0.5}
-                                    fontSize={cardNameFontSize}
-                                    fontStyle={hasCardName ? undefined : 'italic'}
-                                    fontWeight={hasCardName ? 600 : 500}
-                                    style={{
-                                        pointerEvents: 'none',
-                                        userSelect: 'none',
-                                        fontFamily: 'var(--font-philosopher)'
-                                    }}
-                                >
-                                    {line}
-                                </text>
-                            ))}
-                        </g>
-                    )}
                 </g>
             </g>
             {/* {showButtonFrame && (
