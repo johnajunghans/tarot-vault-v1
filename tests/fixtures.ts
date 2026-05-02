@@ -18,14 +18,14 @@ type Fixtures = {
 };
 
 export const test = base.extend<Fixtures>({
-  authenticatedPage: async ({ page }, use) => {
-    await use(page);
+  authenticatedPage: async ({ page }, provide) => {
+    await provide(page);
   },
 
-  spreadsPage: async ({ page }, use) => {
+  spreadsPage: async ({ page }, provide) => {
     await page.goto(routes.personal.spreads.root);
     await page.waitForLoadState('networkidle');
-    await use(page);
+    await provide(page);
   },
 });
 

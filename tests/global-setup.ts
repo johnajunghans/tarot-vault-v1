@@ -1,4 +1,4 @@
-import { chromium, type FullConfig } from '@playwright/test';
+import { chromium } from '@playwright/test';
 import { clerk, clerkSetup, setupClerkTestingToken } from '@clerk/testing/playwright';
 import fs from 'fs';
 import path from 'path';
@@ -26,7 +26,7 @@ import path from 'path';
  *   - For non-development Clerk instances, the `testing-token` API must be
  *     enabled (it is automatic on dev instances).
  */
-export default async function globalSetup(_config: FullConfig) {
+export default async function globalSetup() {
   const email = process.env.E2E_CLERK_USER_EMAIL;
   const password = process.env.E2E_CLERK_USER_PASSWORD;
 
