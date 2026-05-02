@@ -7,7 +7,7 @@ import TextField from "@/components/form/text-field";
 import TextareaField from "@/components/form/textarea-field";
 import type { SpreadForm } from "@/types/spreads";
 import CardOverview from "../card-overview";
-import { PanelHeader } from "../../shared/panel-header";
+import { PanelHeader } from "@personal/_panel";
 
 interface SpreadSettingsContentProps {
   cards: Record<"id", string>[];

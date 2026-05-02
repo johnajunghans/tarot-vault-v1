@@ -4,7 +4,7 @@ import { FieldSeparator } from "@/components/ui/field";
 import type { CardForm } from "@/types/spreads";
 import type { ReactNode } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { PanelHeader } from "../../shared/panel-header";
+import { PanelHeader } from "@personal/_panel";
 
 interface CardDetailsContentProps {
   selectedCardIndex: number | null;

@@ -27,7 +27,8 @@
       "@/*": [
         "./*",
       ],
-      "@spreads/*": ["app/(app)/personal/spreads/*"]
+      "@spreads/*": ["app/(app)/personal/spreads/*"],
+      "@personal/*": ["app/(app)/personal/*"]
     }
   },
   "include": [

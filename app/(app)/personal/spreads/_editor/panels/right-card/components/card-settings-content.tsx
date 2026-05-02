@@ -39,7 +39,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { type Dispatch, type ReactNode, type SetStateAction, useCallback, useMemo, useState } from "react";
 import { Controller, type UseFieldArrayRemove, useFormContext, useWatch } from "react-hook-form";
 import type { CardForm } from "@/types/spreads";
-import { PanelHeader } from "../../shared/panel-header";
+import { PanelHeader } from "@personal/_panel";
 
 const TOOLTIP_DELAY = 500;
 

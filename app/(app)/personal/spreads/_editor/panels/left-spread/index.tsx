@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { TooltipContent, TooltipProvider, TooltipRoot, TooltipTrigger } from "@/components/ui/tooltip";
-import { ResponsivePanel } from "../shared/responsive-panel";
+import { ResponsivePanel } from "@personal/_panel";
 import { PanelLeftIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { memo, type Dispatch, type RefObject, type SetStateAction, useEffect } from "react";

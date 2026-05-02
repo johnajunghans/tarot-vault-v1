@@ -1,6 +1,6 @@
 "use client";
 
-import { useAnimatedDesktopPanel } from "@/app/(app)/personal/spreads/_editor/panels/shared/use-animated-desktop-panel";
+import { useAnimatedDesktopPanel } from "@personal/_panel";
 import { gsap } from "gsap";
 import { useCallback, type RefObject } from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";

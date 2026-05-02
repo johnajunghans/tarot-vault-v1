@@ -1,6 +1,6 @@
 "use client";
 
-import { ResponsivePanel } from "../shared/responsive-panel";
+import { ResponsivePanel } from "@personal/_panel";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { TooltipContent, TooltipProvider, TooltipRoot, TooltipTrigger } from "@/components/ui/tooltip";

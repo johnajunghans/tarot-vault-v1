@@ -5,7 +5,7 @@ import { FieldSeparator } from "@/components/ui/field";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { SpreadForm } from "@/types/spreads";
 import { CardOverviewReadOnly } from "../card-overview";
-import { PanelHeader } from "../../shared/panel-header";
+import { PanelHeader } from "@personal/_panel";
 
 interface SpreadDetailsContentProps {
   cards: Record<"id", string>[];
