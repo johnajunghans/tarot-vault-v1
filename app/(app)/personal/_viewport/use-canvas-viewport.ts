@@ -27,19 +27,21 @@ import { useLatestRef } from '@/hooks/use-latest-ref'
 import { useCanvasSpacePan } from './use-canvas-space-pan'
 import { useCanvasViewportGestures } from './use-canvas-viewport-gestures'
 import type {
-    SpreadCanvasHandle,
-    SpreadCanvasViewportRequest,
-} from '../types'
+    ViewportHandle,
+    ViewportRequest,
+} from './types'
 
-const CARD_SELECTION_SUPPRESS_MS = 250
+const INTERACTION_SUPPRESS_MS = 250
 const SCROLLBAR_IDLE_MS = 1500
 
 interface UseCanvasViewportArgs {
     svgWidth: number
     svgHeight: number
-    viewportRequest?: SpreadCanvasViewportRequest | null
+    canvasCenter: { x: number; y: number }
+    viewportRequest?: ViewportRequest | null
     onZoomDisplayChange?: (zoom: number) => void
     onZoomBoundsChange?: (minZoom: number) => void
+    interactionSelector?: string
     isMarqueeActiveRef: { current: boolean }
 }
 
@@ -49,9 +51,11 @@ interface UseCanvasViewportArgs {
 export function useCanvasViewport({
     svgWidth,
     svgHeight,
+    canvasCenter,
     viewportRequest,
     onZoomDisplayChange,
     onZoomBoundsChange,
+    interactionSelector,
     isMarqueeActiveRef,
 }: UseCanvasViewportArgs) {
     // ------------ STATE AND REFS ------------ //
@@ -84,7 +88,7 @@ export function useCanvasViewport({
     const onZoomDisplayChangeRef = useLatestRef(onZoomDisplayChange)
     const onZoomBoundsChangeRef = useLatestRef(onZoomBoundsChange)
     const reportedMinZoomRef = useRef<number | null>(null)
-    const suppressCardSelectionUntilRef = useRef(0)
+    const suppressInteractionUntilRef = useRef(0)
     const scrollbarIdleTimeoutRef = useRef<number | null>(null)
     const pinchStateRef = useRef<{
         distance: number
@@ -129,9 +133,9 @@ export function useCanvasViewport({
 
     // Pinch and gesture zooms should suppress click selection briefly so the
     // end of the gesture is not mistaken for a card click.
-    const suppressCardSelection = useCallback(() => {
-        suppressCardSelectionUntilRef.current =
-            Date.now() + CARD_SELECTION_SUPPRESS_MS
+    const suppressInteraction = useCallback(() => {
+        suppressInteractionUntilRef.current =
+            Date.now() + INTERACTION_SUPPRESS_MS
     }, [])
 
     // Clean up any queued animation frames or timers when the hook unmounts.
@@ -368,6 +372,7 @@ export function useCanvasViewport({
 
         const resolvedViewport = resolveViewportRequest({
             viewportRequest,
+            canvasCenter,
             clientWidth,
             clientHeight,
             svgWidth,
@@ -383,6 +388,7 @@ export function useCanvasViewport({
     }, [
         containerSize.height,
         containerSize.width,
+        canvasCenter,
         getMinimumZoom,
         scheduleViewportCommit,
         svgHeight,
@@ -503,8 +509,9 @@ export function useCanvasViewport({
         safariGestureStateRef,
         getClampedPan,
         schedulePanUpdate,
+        interactionSelector,
         setZoomAroundViewportPoint,
-        suppressCardSelection,
+        suppressInteraction,
     })
 
     // Spacebar + mouse drag panning stays separate from gesture handling.
@@ -520,7 +527,7 @@ export function useCanvasViewport({
 
     // The canvas toolbar controls talk to the viewport through this imperative
     // handle, which always zooms relative to the current viewport center.
-    const imperativeHandle = useMemo<SpreadCanvasHandle>(
+    const imperativeHandle = useMemo<ViewportHandle>(
         () => ({
             getZoom: () => targetZoomRef.current,
             resetZoom: () => {
@@ -569,11 +576,11 @@ export function useCanvasViewport({
 
     // Selection hooks use this to ignore click selection while zoom gestures are
     // active or immediately after they end.
-    const isCardSelectionSuppressed = useCallback(
+    const isInteractionSuppressed = useCallback(
         () =>
             pinchStateRef.current !== null ||
             safariGestureStateRef.current !== null ||
-            Date.now() < suppressCardSelectionUntilRef.current,
+            Date.now() < suppressInteractionUntilRef.current,
         []
     )
 
@@ -600,7 +607,7 @@ export function useCanvasViewport({
         isScrollbarActive,
         handleScrollbarPan,
         imperativeHandle,
-        isCardSelectionSuppressed,
+        isInteractionSuppressed,
         isSpaceHeldRef,
     }
 }

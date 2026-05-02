@@ -130,7 +130,7 @@ export default function SpreadDetail({
             bounds
                 ? {
                       key: `spread-${spreadId}-${spread._creationTime}-${mode}`,
-                      type: "fit-spread",
+                      type: "fit-content",
                       bounds,
                       maxZoom: 1,
                   }

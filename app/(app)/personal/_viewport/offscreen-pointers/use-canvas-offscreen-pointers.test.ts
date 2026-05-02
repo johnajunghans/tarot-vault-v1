@@ -1,24 +1,30 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { OffscreenPointer, useCanvasOffscreenPointers } from './use-canvas-offscreen-pointers'
-import type { CanvasCard } from '../types'
+import { useCanvasOffscreenPointers } from './use-canvas-offscreen-pointers'
+import type { OffscreenPointer } from './use-canvas-offscreen-pointers'
 
-function makeCard(overrides: Partial<CanvasCard>): CanvasCard {
+interface CanvasItem {
+    name: string
+    x: number
+    y: number
+}
+
+function makeCard(overrides: Partial<CanvasItem>): CanvasItem {
     return {
         name: 'Card',
         x: 0,
         y: 0,
-        r: 0,
-        z: 0,
         ...overrides,
     }
 }
 
-function getPointers(effectiveCards: CanvasCard[]) {
+function getPointers(items: CanvasItem[]) {
     function TestHarness() {
         const pointers = useCanvasOffscreenPointers({
-            effectiveCards,
+            items,
+            itemWidth: 90,
+            itemHeight: 150,
             pan: { x: 100, y: 50 },
             containerSize: { width: 400, height: 200 },
             zoom: 1,

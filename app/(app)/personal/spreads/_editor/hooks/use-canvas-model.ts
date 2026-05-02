@@ -9,7 +9,7 @@ import type {
     SpreadCanvasHandle,
     SpreadCanvasPositionUpdate,
 } from '../canvas/types'
-import { ZOOM_MIN } from '../canvas/viewport/zoom/zoom'
+import { ZOOM_MIN } from '@personal/_viewport'
 import {
     normalizeRotationForStorage,
     reconcileContinuousRotations,

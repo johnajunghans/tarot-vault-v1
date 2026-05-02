@@ -12,12 +12,13 @@ import SpreadCard from './card'
 import CanvasGuides from './guide-lines'
 import { useCanvasSelection, CanvasMarquee } from './multi-select'
 import { useCanvasDrag } from './drag'
-import { OffscreenPointers, useCanvasOffscreenPointers } from './offscreen-pointers'
 import { useCanvasCardLayering } from './layering'
-import { 
+import {
+    OffscreenPointers,
     useCanvasViewport,
-    CanvasScrollbars 
-} from './viewport'
+    useCanvasOffscreenPointers,
+    CanvasScrollbars,
+} from '@personal/_viewport'
 import type {
     CanvasCard,
     SpreadCanvasHandle,
@@ -157,14 +158,16 @@ function SpreadCanvasComponent(
         isScrollbarActive,
         handleScrollbarPan,
         imperativeHandle,
-        isCardSelectionSuppressed,
+        isInteractionSuppressed,
         isSpaceHeldRef,
     } = useCanvasViewport({
         svgWidth,
         svgHeight,
+        canvasCenter: CANVAS_CENTER,
         viewportRequest,
         onZoomDisplayChange,
         onZoomBoundsChange,
+        interactionSelector: '[data-spread-card-interactive="true"]',
         isMarqueeActiveRef: isMarqueeActive,
     })
 
@@ -179,7 +182,7 @@ function SpreadCanvasComponent(
         onCardSelect,
         syncGroupSelection: updateGroupSelection,
         clientToSVG,
-        isCardSelectionSuppressed,
+        isCardSelectionSuppressed: isInteractionSuppressed,
         isSpaceHeldRef,
         isMarqueeActiveRef: isMarqueeActive,
     })
@@ -218,7 +221,9 @@ function SpreadCanvasComponent(
 
     // Compute edge pointers for cards that are currently offscreen.
     const offscreenPointers = useCanvasOffscreenPointers({
-        effectiveCards,
+        items: effectiveCards,
+        itemWidth: CARD_WIDTH,
+        itemHeight: CARD_HEIGHT,
         pan,
         containerSize,
         zoom,
@@ -386,8 +391,7 @@ const SpreadCanvas = memo(forwardRef(SpreadCanvasComponent))
 SpreadCanvas.displayName = 'SpreadCanvas'
 
 export default SpreadCanvas
-export { default as ZoomControls } from './viewport/zoom/zoom-controls'
-export { UndoRedoControls } from './undo-redo'
+export { ZoomControls, UndoRedoControls } from '@personal/_viewport'
 export type {
     CanvasCard,
     SpreadCanvasHandle,
@@ -547,4 +551,3 @@ function CanvasBackground({
         </>
     )
 }
-

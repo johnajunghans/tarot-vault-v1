@@ -1,15 +1,13 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { CanvasCard } from '../types'
 import {
     getRect,
     getRectCenter,
     isRectFullyOutsideRect,
     projectVectorToEdge,
 } from '../lib/geometry'
-import { getCanvasViewportRect } from '../viewport/viewport'
-import { CARD_HEIGHT, CARD_WIDTH } from '../../lib'
+import { getCanvasViewportRect } from '../viewport'
 
 const POINTER_EDGE_PADDING = 18
 
@@ -21,8 +19,16 @@ export interface OffscreenPointer {
     label: string
 }
 
+interface CanvasItem {
+    name: string
+    x: number
+    y: number
+}
+
 interface UseCanvasOffscreenPointersArgs {
-    effectiveCards: CanvasCard[]
+    items: CanvasItem[]
+    itemWidth: number
+    itemHeight: number
     pan: { x: number; y: number }
     containerSize: { width: number; height: number }
     zoom: number
@@ -32,7 +38,9 @@ interface UseCanvasOffscreenPointersArgs {
 // viewport. The overlay helps the user orient themselves when cards are off
 // screen after panning or zooming.
 export function useCanvasOffscreenPointers({
-    effectiveCards,
+    items,
+    itemWidth,
+    itemHeight,
     pan,
     containerSize,
     zoom,
@@ -62,20 +70,20 @@ export function useCanvasOffscreenPointers({
         // place pointers.
         if (maxOffsetX === 0 || maxOffsetY === 0) return []
 
-        return effectiveCards.flatMap((card, index) => {
-            const cardRect = getRect(card.x, card.y, CARD_WIDTH, CARD_HEIGHT)
+        return items.flatMap((item, index) => {
+            const itemRect = getRect(item.x, item.y, itemWidth, itemHeight)
 
-            // Only fully offscreen cards get a pointer. Partially visible cards
+            // Only fully offscreen items get a pointer. Partially visible items
             // are already discoverable in the canvas itself.
-            if (!isRectFullyOutsideRect(cardRect, viewport)) return []
+            if (!isRectFullyOutsideRect(itemRect, viewport)) return []
 
-            const cardCenter = getRectCenter(cardRect)
+            const itemCenter = getRectCenter(itemRect)
 
-            // Project the vector from viewport center to card center onto the
+            // Project the vector from viewport center to item center onto the
             // overlay edge so the pointer sits on the correct side.
             const pointerPosition = projectVectorToEdge(
-                cardCenter.x - viewport.centerX,
-                cardCenter.y - viewport.centerY,
+                itemCenter.x - viewport.centerX,
+                itemCenter.y - viewport.centerY,
                 overlayCenterX,
                 overlayCenterY,
                 maxOffsetX,
@@ -98,9 +106,9 @@ export function useCanvasOffscreenPointers({
                               : pointerPosition.edge === 'bottom'
                                 ? 180
                                 : -90,
-                    label: card.name?.trim() || `Card ${index + 1}`,
+                    label: item.name?.trim() || `Card ${index + 1}`,
                 },
             ]
         })
-    }, [containerSize, effectiveCards, pan, zoom])
+    }, [containerSize, itemHeight, itemWidth, items, pan, zoom])
 }

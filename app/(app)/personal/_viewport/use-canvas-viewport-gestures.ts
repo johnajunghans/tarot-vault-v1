@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 
 const WHEEL_DELTA_LINE_PX = 16
 const WHEEL_ZOOM_SENSITIVITY = 0.005
-const CARD_INTERACTION_SELECTOR = '[data-spread-card-interactive="true"]'
+const DEFAULT_INTERACTION_SELECTOR = '[data-canvas-interactive="true"]'
 
 interface WebKitGestureEvent extends Event {
     scale?: number
@@ -34,6 +34,7 @@ interface UseCanvasViewportGesturesArgs {
     safariGestureStateRef: { current: SafariGestureState | null }
     getClampedPan: (rawX: number, rawY: number) => { x: number; y: number }
     schedulePanUpdate: (nextPan: { x: number; y: number }) => void
+    interactionSelector?: string
     setZoomAroundViewportPoint: (args: {
         nextZoom: number
         anchorViewportX: number
@@ -41,14 +42,17 @@ interface UseCanvasViewportGesturesArgs {
         targetViewportX?: number
         targetViewportY?: number
     }) => void
-    suppressCardSelection: () => void
+    suppressInteraction: () => void
 }
 
 // Ignore wheel/touch panning when the pointer is interacting with a draggable
-// card element instead of the canvas background.
-function isCardInteractionTarget(target: EventTarget | null) {
+// element instead of the canvas background.
+function isInteractionTarget(
+    target: EventTarget | null,
+    interactionSelector: string
+) {
     return target instanceof Element
-        ? target.closest(CARD_INTERACTION_SELECTOR) !== null
+        ? target.closest(interactionSelector) !== null
         : false
 }
 
@@ -93,8 +97,9 @@ export function useCanvasViewportGestures({
     safariGestureStateRef,
     getClampedPan,
     schedulePanUpdate,
+    interactionSelector = DEFAULT_INTERACTION_SELECTOR,
     setZoomAroundViewportPoint,
-    suppressCardSelection,
+    suppressInteraction,
 }: UseCanvasViewportGesturesArgs) {
     // ------------ EVENT LIFECYCLE ------------ //
 
@@ -139,7 +144,7 @@ export function useCanvasViewportGestures({
         const handleTouchStart = (e: TouchEvent) => {
             if (e.touches.length === 2) {
                 e.preventDefault()
-                suppressCardSelection()
+                suppressInteraction()
                 touchPanState = null
                 const touchA = e.touches[0]
                 const touchB = e.touches[1]
@@ -154,7 +159,7 @@ export function useCanvasViewportGestures({
             } else if (
                 e.touches.length === 1 &&
                 !isMarqueeActiveRef.current &&
-                !isCardInteractionTarget(e.target)
+                !isInteractionTarget(e.target, interactionSelector)
             ) {
                 const touch = e.touches[0]
                 touchPanState = {
@@ -171,7 +176,7 @@ export function useCanvasViewportGestures({
         const handleTouchMove = (e: TouchEvent) => {
             if (e.touches.length === 2 && pinchStateRef.current) {
                 e.preventDefault()
-                suppressCardSelection()
+                suppressInteraction()
                 touchPanState = null
                 const touchA = e.touches[0]
                 const touchB = e.touches[1]
@@ -219,7 +224,7 @@ export function useCanvasViewportGestures({
         // selection suppressed briefly after pinch interactions.
         const clearTouchState = () => {
             if (pinchStateRef.current) {
-                suppressCardSelection()
+                suppressInteraction()
             }
             pinchStateRef.current = null
             touchPanState = null
@@ -230,7 +235,7 @@ export function useCanvasViewportGestures({
         const handleSafariGestureStart = (event: Event) => {
             const e = event as WebKitGestureEvent
             e.preventDefault()
-            suppressCardSelection()
+            suppressInteraction()
 
             const rect = container.getBoundingClientRect()
             safariGestureStateRef.current = {
@@ -246,7 +251,7 @@ export function useCanvasViewportGestures({
             if (!gesture) return
             if (!e.scale || e.scale <= 0) return
             e.preventDefault()
-            suppressCardSelection()
+            suppressInteraction()
 
             const rect = container.getBoundingClientRect()
             const clientX = e.clientX ?? gesture.clientX
@@ -269,7 +274,7 @@ export function useCanvasViewportGestures({
 
         // Clearing the Safari gesture mirrors the touch-pinch cleanup behavior.
         const clearSafariGestureState = () => {
-            suppressCardSelection()
+            suppressInteraction()
             safariGestureStateRef.current = null
         }
 
@@ -305,12 +310,13 @@ export function useCanvasViewportGestures({
         containerSizeRef,
         getClampedPan,
         isMarqueeActiveRef,
+        interactionSelector,
         panRef,
         pinchStateRef,
         safariGestureStateRef,
         schedulePanUpdate,
         setZoomAroundViewportPoint,
-        suppressCardSelection,
+        suppressInteraction,
         targetZoomRef,
     ])
 }

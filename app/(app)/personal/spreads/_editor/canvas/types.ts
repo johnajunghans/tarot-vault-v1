@@ -1,6 +1,10 @@
 'use client'
 
-import type { SpreadBounds } from '../lib'
+export type {
+    CanvasPoint,
+    ViewportHandle as SpreadCanvasHandle,
+    ViewportRequest as SpreadCanvasViewportRequest,
+} from '@personal/_viewport'
 
 /** Card data for canvas (no position field; index is used instead). */
 export interface CanvasCard {
@@ -13,42 +17,14 @@ export interface CanvasCard {
     z: number
 }
 
-export interface CanvasPoint {
-    x: number
-    y: number
-}
-
 export interface CanvasDragState {
     index: number
     x: number
     y: number
 }
 
-export type SpreadCanvasViewportRequest =
-    | {
-          key: string
-          type: 'center-canvas-point'
-          point: CanvasPoint
-          zoom?: number
-      }
-    | {
-          key: string
-          type: 'fit-spread'
-          bounds: SpreadBounds
-          maxZoom?: number
-          padding?: number
-      }
-
 export interface SpreadCanvasPositionUpdate {
     index: number
     x: number
     y: number
-}
-
-export interface SpreadCanvasHandle {
-    getZoom: () => number
-    resetZoom: () => void
-    setZoom: (zoom: number) => void
-    zoomIn: () => void
-    zoomOut: () => void
 }

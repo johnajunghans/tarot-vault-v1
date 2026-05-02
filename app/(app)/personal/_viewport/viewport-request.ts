@@ -1,8 +1,7 @@
 'use client'
 
 import { DEFAULT_ZOOM, clampZoom, normalizeZoom } from './zoom'
-import { CANVAS_CENTER } from '../../lib'
-import type { SpreadCanvasViewportRequest } from '../types'
+import type { ViewportRequest } from './types'
 import { clampPan, getPanForCanvasPoint } from './viewport'
 
 const VIEWPORT_FIT_PADDING = 48
@@ -12,7 +11,7 @@ const VIEWPORT_FIT_PADDING = 48
 // Ignore viewport requests that have already been applied or are already queued
 // for the next animation-frame commit.
 function shouldApplyViewportRequest(
-    viewportRequest: SpreadCanvasViewportRequest | null | undefined,
+    viewportRequest: ViewportRequest | null | undefined,
     appliedViewportRequestKey: string | null,
     scheduledViewportRequestKey: string | null
 ) {
@@ -28,13 +27,15 @@ function shouldApplyViewportRequest(
 // needed by the canvas viewport state machine.
 function resolveViewportRequest({
     viewportRequest,
+    canvasCenter,
     clientWidth,
     clientHeight,
     svgWidth,
     svgHeight,
     minimumZoom,
 }: {
-    viewportRequest: SpreadCanvasViewportRequest
+    viewportRequest: ViewportRequest
+    canvasCenter: { x: number; y: number }
     clientWidth: number
     clientHeight: number
     svgWidth: number
@@ -44,11 +45,11 @@ function resolveViewportRequest({
     // Default to the canvas center unless the request provides a more specific
     // zoom target.
     let nextZoom = DEFAULT_ZOOM
-    let contentX = CANVAS_CENTER.x
-    let contentY = CANVAS_CENTER.y
+    let contentX = canvasCenter.x
+    let contentY = canvasCenter.y
 
-    if (viewportRequest.type === 'fit-spread') {
-        // Fit the spread bounds into the viewport while respecting optional
+    if (viewportRequest.type === 'fit-content') {
+        // Fit the content bounds into the viewport while respecting optional
         // padding and a caller-provided max zoom cap.
         const padding = viewportRequest.padding ?? VIEWPORT_FIT_PADDING
         const availableWidth = Math.max(clientWidth - padding * 2, 1)

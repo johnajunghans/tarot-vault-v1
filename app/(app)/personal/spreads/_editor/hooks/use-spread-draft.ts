@@ -84,7 +84,7 @@ export function useSpreadDraft({
             nextViewportRequest = bounds
                 ? {
                       key: `draft-${loadedDraftDate}-${normalizedPositions.length}`,
-                      type: "fit-spread",
+                      type: "fit-content",
                       bounds,
                       maxZoom: 1,
                   }

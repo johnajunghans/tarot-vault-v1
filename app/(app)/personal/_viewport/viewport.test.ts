@@ -55,6 +55,7 @@ describe('viewport helpers', () => {
                     },
                     clientWidth: 400,
                     clientHeight: 300,
+                    canvasCenter: { x: 1200, y: 900 },
                     svgWidth: 2400,
                     svgHeight: 1800,
                     minimumZoom: 0.5,
@@ -68,16 +69,12 @@ describe('viewport helpers', () => {
             })
         })
 
-        it('resolves fit-spread viewport requests using bounds, padding, and max zoom', () => {
+        it('resolves fit-content viewport requests using bounds, padding, and max zoom', () => {
             const resolvedViewport = resolveViewportRequest({
                 viewportRequest: {
                     key: 'fit',
-                    type: 'fit-spread',
+                    type: 'fit-content',
                     bounds: {
-                        left: 100,
-                        top: 100,
-                        right: 400,
-                        bottom: 300,
                         width: 300,
                         height: 200,
                         centerX: 250,
@@ -88,6 +85,7 @@ describe('viewport helpers', () => {
                 },
                 clientWidth: 600,
                 clientHeight: 400,
+                canvasCenter: { x: 1200, y: 900 },
                 svgWidth: 2400,
                 svgHeight: 1800,
                 minimumZoom: 0.5,
